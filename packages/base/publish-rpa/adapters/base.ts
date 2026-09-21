@@ -170,3 +170,115 @@ export async function probeByProfile(
     verifiedAt: new Date().toISOString(),
   };
 }
+
+/* ================= 图文/文章通道（B-18：公众号/微博/知乎/头条/百家号） ================= */
+
+/** 图文通道就绪分级：rpa=骨架可联调执行；placeholder=占位需真实账号联调；official-api=官方 API 通道 */
+export type TextChannelTier = "rpa" | "placeholder" | "official-api";
+
+export interface ArticleProfile {
+  platform: Platform;
+  uploadUrl: string;
+  selectors: {
+    loginIndicator: string;
+    titleInput: string;
+    /** 正文编辑区（contenteditable / textarea） */
+    bodyInput: string;
+    imageInput?: string;
+    tagInput?: string;
+    publishButton: string;
+    successToast: string;
+  };
+  captionSpec: CaptionSpec;
+  humanPace: HumanPace;
+  tier: TextChannelTier;
+}
+
+export interface ArticleUploadInput {
+  title: string;
+  body: string;
+  /** 正文配图（本地路径；官方图床/素材库由后续工位桥接入） */
+  imagePaths: string[];
+  tags: string[];
+  scheduleAt?: string;
+}
+
+export interface ArticleAdapter {
+  readonly profile: ArticleProfile;
+  loginCheck(driver: BrowserDriver): Promise<boolean>;
+  upload(driver: BrowserDriver, input: ArticleUploadInput): Promise<UploadResult>;
+  receiptProbe(driver: BrowserDriver, ctx: { taskId: string; upload: UploadResult }): Promise<PublishReceipt>;
+}
+
+/** 图文文案规格校验：标题/正文长度、话题数、图片数（超限直接拒，不进入编辑器） */
+export function assertArticleSpec(profile: ArticleProfile, input: ArticleUploadInput): void {
+  const spec = profile.captionSpec;
+  if (spec.captionMaxChars > 0 && input.title.length > spec.captionMaxChars) {
+    throw new AdapterSpecError(`${profile.platform} 标题 ${input.title.length} 字超上限 ${spec.captionMaxChars}`);
+  }
+  if (input.tags.length > spec.maxTags) {
+    throw new AdapterSpecError(`${profile.platform} 话题数 ${input.tags.length} 超上限 ${spec.maxTags}`);
+  }
+  if (input.imagePaths.length > 0 && !profile.selectors.imageInput) {
+    throw new AdapterSpecError(`${profile.platform} 当前通道未提供图片上传位，禁止盲传`);
+  }
+  if (input.scheduleAt && spec.scheduleMinAheadMinutes > 0) {
+    const aheadMs = new Date(input.scheduleAt).getTime() - Date.now();
+    if (aheadMs < spec.scheduleMinAheadMinutes * 60_000) {
+      throw new AdapterSpecError(`${profile.platform} 定时发布须至少提前 ${spec.scheduleMinAheadMinutes} 分钟`);
+    }
+  }
+}
+
+/**
+ * 图文通道公共骨架：入口 → 标题 → 正文 → 配图 → 话题 → 发布 → 回执探测。
+ * placeholder 通道不会走到这里（adapter 直接拒绝），避免「选择器没联调也照发」。
+ */
+export async function uploadArticleByProfile(
+  profile: ArticleProfile,
+  driver: BrowserDriver,
+  input: ArticleUploadInput,
+): Promise<UploadResult> {
+  if (profile.tier === "placeholder") {
+    throw new Error(`${profile.platform} 通道为占位（tier=placeholder）：需真实账号环境联调后启用`);
+  }
+  assertArticleSpec(profile, input);
+  const sel = profile.selectors;
+  const pace = profile.humanPace;
+  await driver.goto(profile.uploadUrl);
+  await driver.wait(pace.pageWaitMs);
+  await driver.typeText(sel.titleInput, input.title, { delayMs: pace.typeDelayMs });
+  await driver.typeText(sel.bodyInput, input.body, { delayMs: pace.typeDelayMs });
+  for (const image of input.imagePaths) {
+    if (!sel.imageInput) break;
+    await driver.uploadFile(sel.imageInput, image);
+    await driver.wait(pace.pageWaitMs);
+  }
+  if (sel.tagInput) {
+    for (const tag of input.tags) {
+      await driver.typeText(sel.tagInput, `#${tag}`, { delayMs: pace.typeDelayMs });
+    }
+  }
+  await driver.click(sel.publishButton);
+  await driver.wait(pace.postUploadWaitMs);
+  const ok = await driver.waitForSelector(sel.successToast, { timeoutMs: 15_000 });
+  if (!ok) throw new Error(`${profile.platform} 发布未检测到成功回执选择器（转人工接管点）`);
+  return { evidenceUri: `rpa-evidence://${profile.platform}/${Date.now().toString(36)}` };
+}
+
+/** 图文通道回执探测（与视频通道同口径：无回执 = 未核实）。 */
+export async function probeArticleByProfile(
+  profile: ArticleProfile,
+  _driver: BrowserDriver,
+  ctx: { taskId: string; upload: UploadResult },
+): Promise<PublishReceipt> {
+  return {
+    taskId: ctx.taskId,
+    platform: profile.platform,
+    platformPostId: ctx.upload.platformPostId,
+    url: ctx.upload.url,
+    evidenceUri: ctx.upload.evidenceUri,
+    synced: true,
+    verifiedAt: new Date().toISOString(),
+  };
+}

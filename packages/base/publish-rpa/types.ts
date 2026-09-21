@@ -4,8 +4,14 @@
  */
 import { z } from "zod";
 
-/** 全平台枚举（决策 5：抖音/TikTok/小红书/视频号/B站/YouTube） */
-export const PlatformSchema = z.enum(["douyin", "tiktok", "xiaohongshu", "shipinhao", "bilibili", "youtube"]);
+/**
+ * 全平台枚举（决策 5 六视频平台 + B-18 五国内图文通道）。
+ * 新增值必须同步迁移 0041 的 publish_tasks.platform CHECK（单一事实源同源）。
+ */
+export const PlatformSchema = z.enum([
+  "douyin", "tiktok", "xiaohongshu", "shipinhao", "bilibili", "youtube",
+  "wechat-mp", "weibo", "zhihu", "toutiao", "baijia",
+]);
 export type Platform = z.infer<typeof PlatformSchema>;
 
 export const PLATFORMS = PlatformSchema.options;

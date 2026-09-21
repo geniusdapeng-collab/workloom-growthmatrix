@@ -207,9 +207,10 @@ describe("执行器：失败挂起转人工 / 成功回执落事件", () => {
     const { db, deps, app, gateway } = fixture(makeTask(), AUTO_VERDICT, failing);
     const r = await runPublishTask(app, gateway, scope, "pt-1", deps);
     expect(r.kind).toBe("manual");
-    expect(r.error).toBe("网络超时");
+    // B-25 起统一重试 3 次：错误摘要附带重试次数，原始原因仍保留
+    expect(r.error).toContain("网络超时");
     expect(db.tasks[0]!.status).toBe("manual");
-    expect(db.tasks[0]!.error).toBe("网络超时");
+    expect(String(db.tasks[0]!.error)).toContain("网络超时");
     expect(db.events.some((e) => e.payload.decision.action === "publish.failed")).toBe(true);
   });
 
@@ -249,5 +250,58 @@ describe("执行器：失败挂起转人工 / 成功回执落事件", () => {
     await expect(
       createTiktokAdapter().upload(new FakeDriver(), { videoPath: "/v.mp4", caption: "", tags: [] }),
     ).rejects.toThrow("需真实账号环境联调");
+  });
+});
+
+/* ================= B-25：失败重试与日上限参数化 ================= */
+
+describe("执行器：B-25 失败统一重试", () => {
+  it("前两次失败第三次成功 → succeeded；重试间隔经 driver.wait 注入", async () => {
+    let attempts = 0;
+    const base = createDouyinAdapter();
+    const flaky: PublishAdapter = {
+      ...base,
+      upload: async (driver, input) => {
+        attempts += 1;
+        if (attempts < 3) throw new Error("transient upload failure");
+        return base.upload(driver, input);
+      },
+    };
+    const { app, gateway, deps, db, driver } = fixture(makeTask(), AUTO_VERDICT, flaky);
+    deps.retryDelayMs = 0;
+    const r = await runPublishTask(app, gateway, scope, "pt-1", deps);
+    expect(r.kind).toBe("executed");
+    expect(attempts).toBe(3);
+    expect(db.tasks[0]!.status).toBe("succeeded");
+    expect(driver.calls.filter((c) => c.method === "wait").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("三次全失败 → manual，publish.failed 事件带 attempts=3 与错误摘要", async () => {
+    const failing: PublishAdapter = {
+      ...createDouyinAdapter(),
+      upload: () => Promise.reject(new Error("persistent upload failure")),
+    };
+    const { app, gateway, deps, db } = fixture(makeTask(), AUTO_VERDICT, failing);
+    deps.retryDelayMs = 0;
+    const r = await runPublishTask(app, gateway, scope, "pt-1", deps);
+    expect(r.kind).toBe("manual");
+    expect(String(r.error)).toContain("persistent upload failure");
+    expect(db.tasks[0]!.status).toBe("manual");
+    const ev = db.events.map((e) => e.payload.decision).find((d) => d.action === "publish.failed");
+    expect(ev?.after?.attempts).toBe(3);
+    expect(String(db.tasks[0]!.error)).toContain("重试 3 次");
+  });
+});
+
+describe("执行器：B-25 日上限按平台参数化", () => {
+  it("dailyLimitFor 平台上限 1：已有一条成功即退回 pending，事件带 limit=1", async () => {
+    const { app, gateway, deps, db } = fixture(makeTask());
+    db.tasks.push(makeTask({ id: "pt-0", status: "succeeded", executed_at: NOW.toISOString() }));
+    deps.dailyLimitFor = (platform) => (platform === "douyin" ? 1 : DAILY_LIMIT_DEFAULT);
+    const r = await runPublishTask(app, gateway, scope, "pt-1", deps);
+    expect(r.kind).toBe("held_daily_limit");
+    const ev = db.events.map((e) => e.payload.decision).find((d) => d.action === "publish.daily_limit");
+    expect(ev?.after?.limit).toBe(1);
+    expect(ev?.after?.platform).toBe("douyin");
   });
 });

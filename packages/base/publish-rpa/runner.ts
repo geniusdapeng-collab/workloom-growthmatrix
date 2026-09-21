@@ -27,6 +27,12 @@ export interface RunnerDeps {
   fencePrecheck: (input: JudgeInput) => JudgeVerdict;
   /** 单账号日上限（默认 DAILY_LIMIT_DEFAULT） */
   dailyLimit?: number;
+  /** B-25：按平台取日上限（优先于 dailyLimit；来源=平台规格注册表 cadence.dailyCap） */
+  dailyLimitFor?: (platform: Platform) => number | undefined;
+  /** B-25：失败重试次数（默认 3，含首次；仅上传+回执段重试，登录失败不重试） */
+  retryLimit?: number;
+  /** B-25：重试间隔毫秒（默认 1500；经 driver.wait 注入，测试可置 0） */
+  retryDelayMs?: number;
   now?: Date;
 }
 
@@ -156,8 +162,8 @@ export async function runPublishTask(
     return { kind: "held_fence", taskId, level: verdict.level };
   }
 
-  /* ---- ③ 单账号日上限（默认 5；超限退回 pending 等次日，不算失败） ---- */
-  const limit = deps.dailyLimit ?? DAILY_LIMIT_DEFAULT;
+  /* ---- ③ 单账号日上限（平台规格优先 → 显式参数 → 默认 5；超限退回 pending 等次日） ---- */
+  const limit = deps.dailyLimitFor?.(task.platform) ?? deps.dailyLimit ?? DAILY_LIMIT_DEFAULT;
   {
     const bounds = shanghaiDayBounds(deps.now ?? new Date());
     const client = await app.connect();
@@ -175,8 +181,8 @@ export async function runPublishTask(
       if (Number(r.rows[0]?.c ?? 0) >= limit) {
         await finalize("pending", {
           action: "publish.daily_limit",
-          after: { taskId, accountId: task.account_id, limit, day: bounds.from.slice(0, 10) },
-          basis: [`单账号日上限 ${limit}（风控纪律）：当日已达上限，退回 pending 等次日`],
+          after: { taskId, platform: task.platform, accountId: task.account_id, limit, day: bounds.from.slice(0, 10) },
+          basis: [`单账号日上限 ${limit}（平台规格/风控纪律）：当日已达上限，退回 pending 等次日`],
         });
         return { kind: "held_daily_limit", taskId };
       }
@@ -207,14 +213,40 @@ export async function runPublishTask(
       }, { error: "LOGIN_REQUIRED" });
       return { kind: "manual", taskId, error: "LOGIN_REQUIRED" };
     }
-    const upload = await adapter.upload(deps.driver, {
-      videoPath: task.video_path,
-      coverPath: task.cover_path ?? undefined,
-      caption: task.caption,
-      tags: task.tags,
-      scheduleAt: task.schedule_at ?? undefined,
-    });
-    const receipt = await adapter.receiptProbe(deps.driver, { taskId, upload });
+    // B-25：上传+回执作为一个执行单元，失败统一重试（默认 3 次）；登录失败不重试（须人工）
+    const retryLimit = Math.max(1, deps.retryLimit ?? 3);
+    const retryDelayMs = deps.retryDelayMs ?? 1_500;
+    let upload: Awaited<ReturnType<PublishAdapter["upload"]>> | null = null;
+    let receipt: Awaited<ReturnType<PublishAdapter["receiptProbe"]>> | null = null;
+    let attempts = 0;
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= retryLimit; attempt += 1) {
+      attempts = attempt;
+      try {
+        upload = await adapter.upload(deps.driver, {
+          videoPath: task.video_path,
+          coverPath: task.cover_path ?? undefined,
+          caption: task.caption,
+          tags: task.tags,
+          scheduleAt: task.schedule_at ?? undefined,
+        });
+        receipt = await adapter.receiptProbe(deps.driver, { taskId, upload });
+        lastError = undefined;
+        break;
+      } catch (err) {
+        lastError = err;
+        if (attempt < retryLimit) await deps.driver.wait(retryDelayMs);
+      }
+    }
+    if (!upload || !receipt || lastError) {
+      const message = lastError instanceof Error ? lastError.message : String(lastError ?? "unknown");
+      await finalize("manual", {
+        action: "publish.failed",
+        after: { taskId, platform: task.platform, reason: message, attempts },
+        basis: [`执行异常重试 ${attempts} 次后仍失败：挂起转人工（§7 风控纪律：人工接管点）`],
+      }, { error: `${message}（重试 ${attempts} 次）` });
+      return { kind: "manual", taskId, error: message };
+    }
     await finalize("succeeded", {
       action: "publish.executed",
       after: { taskId, platform: task.platform, platformPostId: receipt.platformPostId ?? null, url: receipt.url ?? null },
