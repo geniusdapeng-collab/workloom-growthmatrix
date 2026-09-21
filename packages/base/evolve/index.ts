@@ -4,6 +4,7 @@
  * M3 偏好注入主链路（preference-inject）· M5 进化积分卡（scorecard）
  */
 export * from "./preference-inject.js";
+export * from "./growth-preference.js";
 export * from "./feedback-enums.js";
 export * from "./memory-miner.js";
 export * from "./memory-lifecycle.js";

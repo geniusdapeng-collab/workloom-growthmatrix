@@ -10,14 +10,14 @@
 
 | 项 | 值 |
 |---|---|
-| 当前批次 | G5 模型、生成与数据（G4 全部工作包已落地，本批次 PR 待并入 main） |
-| 批次状态 | G4 完成：B-18..B-25 / B-51 / B-52 / B-75 / B-81 全部落地；`suite:geo` 81/81、`suite:hotel` 43/43、`pnpm test` 全包绿（base 996 / server 367）、`pnpm suite` 467/467 |
-| 最近更新 | 2026-09-22（会话 6 · G4：五类图文通道、OTA 上传包、四类执行器桥、多执行器路由、桌面 Playwright worker、直播模板、C 端承接四件套、通道声明排除、降级出图） |
-| 分支 | `task/T-2026-0921-0003-g4` |
-| 云端最新提交 | main `b234662`（含 G3 全部）；本批次分支待推送 |
-| 本地 HEAD | 本批次提交（G4） |
+| 当前批次 | G6 协作机制与验收（G5 全部工作包已落地，本批次 PR 待并入 main） |
+| 批次状态 | G5 完成：B-26..B-35 / B-53..B-61 / B-78 / B-79 / B-84 全部落地；`pnpm test` 全包绿（base 1038）、`pnpm suite` 467/467、双域套件 81/81 · 43/43 |
+| 最近更新 | 2026-09-22（会话 7 · G5：AI 标识/模型台账/NATS/四连接器/增长日表/投影/看门狗/成本/三态/保鲜环/幂等键/偏好/夜班/场景审计/压测/供应链/RLS/外部事实） |
+| 分支 | `task/T-2026-0921-0003-g5` |
+| 云端最新提交 | main `d0004bf`（含 G4 全部 + 视频链路修复批次）；本批次分支待推送 |
+| 本地 HEAD | 本批次提交（G5） |
 | 阻塞 | 无 |
-| 下一步 | 推送本批次并开 PR 并入 main；随后进入 G5：B-26 真实模型池 → B-27 生图生视频 → B-28/B-29 AI 标识 → B-30 模型台账 → B-31 NATS → B-32 四类连接器 → B-33 增长日表 → B-34 投影 → B-35 看门狗 → B-53..B-61 / B-78 / B-79 / B-84 |
+| 下一步 | 推送本批次并开 PR 并入 main；随后进入 G6：B-36 五模式执行器 → B-37 契约线程字段 → B-38 agent actor → B-39 冲突仲裁 → B-40 契约闭环 → B-41 验收脚本 → B-44 RLS 静态检查 → B-45 验收矩阵 → B-62..B-77 / B-83 |
 
 ### 会话 2 续 5 记（2026-09-22 00:15）
 
@@ -69,6 +69,19 @@
 - B-75 通道声明排除：`channelReadiness()` 11 通道矩阵 + `scripts/channel-readiness.mts`（--strict）+ `docs/channel-exclusions.md`（TikTok/视频号声明排除与解除条件）。
 - B-81 降级路径：`buildDegradedPoster/planDegradedContent`（HTML/CSS 海报 + 「降级产出」注释/data 标注/可见角标 + manual_hold）+ degrade-bridge 执行器落盘 + visual-designer `poster.degrade.render` 工具。
 - 回归（2026-09-22）：`suite:geo` 81/81；`suite:hotel` 43/43（对象模型 30 类）；`pnpm test` 全包绿（base 996 / server 367 / webc 24 / web 101 / webb 6 / video-studio 22 / audit 64 / contract 40 / runtime 15）；`pnpm suite` 467/467；`test:scripts` 62/62；桌面驱动 node:test 4/4；`acceptance:onboarding`、`scan:fences` 0 缺口、`scan:knowhow` 16/16、`bundle-governance`、`capabilities --check`、`product:verify`、`oss:check`、全仓 typecheck 与三端构建全部通过。
+
+### 会话 7 记（2026-09-22 02:15）
+
+- B-28/B-29：迁移 0042 给 video_assets 加 AI 标识四字段；资产注册对 AI 素材强校验（缺生成模型/清单即 BAD_AI_LABEL）；`ai-label.ts` 产出显式角标 + PNG tEXt + ffmpeg metadata 参数（确定性、可审计）。
+- B-30：`model-router/ledger.ts`（diff/回滚命令/摘要）+ 服务层 `model-ledger.ts`（model.config.changed 事件）+ `scripts/model-ledger.mts`（report/record）。
+- B-31：docker-compose 增 NATS JetStream（4222/8222 + 持久卷）；EVENT_BUS/NATS_URL 配置齐备（工厂三实现已有）。
+- B-32：四类连接器（PMS/OTA 监测/企微/抖音本地生活）注册 + 取数函数 + readiness + fail-closed 用例；`.env.example` 登记。
+- B-33：迁移 0043（account_growth_daily + growth_daily 视图）、seed-geo 写 7 天 × 2 账号、查询脚本与 PG 用例。
+- B-34：C 端投影派生矩阵统计/结构缺口、增长五项与 factTable、AI 标识 schema；`projections:check` 通过。
+- B-35：三类看门狗纯函数 + 服务层事件 + CLI（实跑：23 触发器/6 连接器/0 审批，事件 E-22367）。
+- B-53..B-61：视频成本复算、采集调度接线、三态标识、保鲜环配置、工具幂等契约、增长偏好、夜班候选扩展、场景覆盖审计（26 场景并集 / 52 声明 / 26 缺口）、事件与模型链压测。
+- B-78/B-79/B-84：OSS inventory 刷新后 `test:oss` + `oss:check` 全绿；新增表 RLS 用例并**发现修复 growth_daily 视图 security_invoker 缺失导致的 RLS 绕过（0044）**；外部事实复核脚本 + 报告（23 条规格 / 17 项待复核）。
+- 回归（2026-09-22）：`pnpm test` 全包绿（base 1038 / server 367 / webc 24 / video-studio 32 / web 101 / webb 6 / audit 64 / contract 40 / runtime 15）；`pnpm suite` 467/467；`suite:geo` 81/81；`suite:hotel` 43/43；`test:scripts` 62/62；`acceptance:onboarding`、`scan:fences`、`scan:knowhow`、`bundle-governance`、`capabilities --check`、`product:verify`、`oss:check`、全仓 typecheck 与三端构建全绿。
 | 计划版本 | v1.3：84 个工作包；已整合视频链路修复与基座去审批化，并重定义 B-70/B-72/B-73/B-64 |
 
 ---
@@ -82,7 +95,7 @@
 | G2 | 触发器与指挥链 | 完成 | `4287f21` | 三包 triggers 声明合并装载；指挥链 8 条 / 组合 73 岗；suite:geo 81/81、suite:hotel 43/43；B-06c（video seed）单列待办 |
 | G3 | 岗位与增长线 | 完成 | `f69e2c0` + 本批次 | B-09..B-12 / B-43 / B-46..B-50 / B-80 / B-82 全部落地；双域套件 + 全包测试 + 场景套件全绿 |
 | G4 | 通道与执行器 | 完成 | 本批次 | 五图文通道 + OTA 包 + 四桥 + 多执行器路由 + 桌面 worker + 直播模板 + C 端承接 + 声明排除 + 降级出图；全量回归绿 |
-| G5 | 模型、生成与数据 | 未开始 | — | — |
+| G5 | 模型、生成与数据 | 完成 | 本批次 | AI 标识/模型台账/NATS/四连接器/增长日表/投影/看门狗/成本/三态/保鲜环/幂等/偏好/夜班/审计/压测/供应链/RLS/复核；全量回归绿 |
 | G6 | 协作机制与验收 | 未开始 | — | — |
 | G7 | 真机验收与生产实测 | 未开始 | — | — |
 
@@ -154,28 +167,28 @@
 
 ### G5 模型、生成与数据
 
-- [ ] B-26 真实文本模型池配置
-- [ ] B-27 生图/生视频配置
-- [ ] B-28 资产 AI 标识字段与迁移
-- [ ] B-29 显式与隐式标识产出
-- [ ] B-30 模型版本台账
-- [ ] B-31 NATS 事件总线
-- [ ] B-32 四类真实连接器
-- [ ] B-33 增长日表
-- [ ] B-34 投影扩展
-- [ ] B-35 看门狗
-- [ ] B-53 视频全成本账本（覆盖 ACT-B-08 / WF-07 / ADD-P-12）
-- [ ] B-54 真实采集调度接线（覆盖 TECH-11）
-- [ ] B-55 mock/live/simulated 三态标识统一（覆盖 TECH-16）
-- [ ] B-56 技能保鲜环 registry 与签名配置（覆盖 TECH-23）
-- [ ] B-57 工具调用统一超时/重试/幂等规范（覆盖 TECH-21）
-- [ ] B-58 增长线偏好注入（覆盖 TECH-19）
-- [ ] B-59 夜班候选扩展（覆盖 TECH-26）
-- [ ] B-60 场景覆盖审计表（覆盖 TECH-17）
-- [ ] B-61 事件链与模型链压测（覆盖 TECH-14）
-- [ ] B-78 依赖与供应链门禁（oss:inventory/oss:check/runtime lock）
-- [ ] B-79 新增表与对象的 RLS/租户隔离用例
-- [ ] B-84 外部事实季度复核任务（覆盖 ACT-B-13）
+- [x] B-26 真实文本模型池配置（`scripts/tools/model-pool-check.mts`；mock 9/9，真实模式按 vendor 装配并报告缺位）
+- [x] B-27 生图/生视频配置（`scripts/tools/gen-config-check.mts`；缺项 fail-closed 明确输出）
+- [x] B-28 资产 AI 标识字段与迁移（0042：ai_generated/ai_label/generator_model/label_manifest_uri + 注册校验）
+- [x] B-29 显式与隐式标识产出（ai-label 清单 + `ffmpegLabelArgs` + `pngTextChunkSpec`）
+- [x] B-30 模型版本台账（diff/回滚命令/台账服务 + `scripts/model-ledger.mts`）
+- [x] B-31 NATS 事件总线（docker-compose nats JetStream + EVENT_BUS/NATS_URL 配置；工厂已有三实现）
+- [x] B-32 四类真实连接器（PMS/OTA 监测/企微客资/抖音本地生活；fail-closed + fake fetch 用例）
+- [x] B-33 增长日表（0043 表 + growth_daily 视图 + seed + 查询脚本 + PG 用例）
+- [x] B-34 投影扩展（C 端投影带矩阵条目/结构缺口、增长五项与 factTable、AI 标识 schema；`projections:check` 通过）
+- [x] B-35 看门狗（触发器漏触发/连接器陈旧/审批 SLA + `scripts/tools/watchdog.mts` + 事件留痕）
+- [x] B-53 视频全成本账本（`videoCostBreakdown`：渲染/达人/授权/人工/工具/冲销 + 每分钟成本）
+- [x] B-54 真实采集调度接线（连接器取数 → account_metrics → 阈值；未配置 fail-closed）
+- [x] B-55 三态标识统一（`delivery-mode.ts`：显式三态/缺失断言/统一角标）
+- [x] B-56 技能保鲜环配置（registry/签名密钥/窗口/策略校验）
+- [x] B-57 工具调用契约（超时/重试/稳定幂等键；失败 connector-required）
+- [x] B-58 增长线偏好注入（增长关键词过滤 + 引用块 + 引用留痕）
+- [x] B-59 夜班候选扩展（矩阵缺口/待跑实验/素材缺口三类候选）
+- [x] B-60 场景覆盖审计（26 场景并集 × 3 包 = 78 行，52 条声明；缺口报告落 docs/reports/scenario-coverage.md）
+- [x] B-61 事件链与模型链压测（p50/p95 + 吞吐；报告落 docs/reports/loadtest.md）
+- [x] B-78 依赖与供应链门禁（oss-inventory 刷新；`test:oss` + `oss:check` 全绿）
+- [x] B-79 新增表与对象 RLS 用例（account_growth_daily/growth_daily；**修复视图 security_invoker 绕过 RLS**（0044））
+- [x] B-84 外部事实季度复核（`specsDueForReview` + `scripts/tools/external-facts-review.mts` + 报告）
 
 ### G6 协作机制与验收
 
@@ -264,6 +277,9 @@
 | 2026-09-22 | G4 全量：`pnpm test` / `pnpm suite` / `test:scripts` | 全绿 | base 996 · server 367 · webc 24 · suite 467/467 · scripts 62/62 |
 | 2026-09-22 | `node --test apps/desktop/electron/publish-driver.test.cjs` | 4/4 通过 | Playwright 缺失明确报错 + Toolkit 映射/上传显式检查 |
 | 2026-09-22 | `tsx scripts/channel-readiness.mts` | 通过（2 项声明排除） | TikTok/视频号未就绪豁免单见 docs/channel-exclusions.md |
+| 2026-09-22 | G5：`pnpm test` / `pnpm suite` | 全绿 | base 1038 · server 367 · video-studio 32 · webc 24 · suite 467/467 |
+| 2026-09-22 | `vitest run rls-new-tables.pg.test.ts` | 2/2 通过 | 发现并修复 growth_daily 视图 RLS 绕过（0044 security_invoker） |
+| 2026-09-22 | `tsx scripts/tools/{scenario-coverage,external-facts-review,loadtest,model-pool-check,gen-config-check,watchdog}.mts` | 全部可跑 | 报告落 docs/reports/；model 9/9（mock） |
 | 2026-09-21 | 整合外部批次后的门禁链 | 全部通过 | `bundle-governance --refresh-digests`、`matrix-gap`（0 缺口，72 围栏）、`tsc`（base/contract/web）、`bundles.test.ts` 11/11（DB）、`acceptance:onboarding` 通过 |
 | 2026-09-21 | `cd apps/web && ../../node_modules/.bin/vitest run src/lib/display.test.ts` | 11/11 通过 | web 测试必须在 apps/web 目录用其自身 vitest 配置跑（根配置会因 @workloom/ui 子路径解析误报） |
 | 2026-09-21 | `tsx --env-file=.env scripts/migrate.ts` | 0038_trigger_declared_id.sql 已应用 | triggers 新增 declared_id + 唯一索引 |
@@ -367,3 +383,4 @@ export PATH="/tmp/wl-bin:$PATH"
 | 2026-09-22 | 会话 4：B-11 增长指标技能、B-12 四岗增长工具与围栏、B-43 hotel/ai-video 题库与技能升级晋升门禁落地；全包测试与双域套件全绿 |
 | 2026-09-22 | 会话 5：B-46 账号矩阵 + B-47 授权台账（ip-curator 下沉） + B-48 获客起步方式 + B-49 只读发现进晨报 + B-50 P2 岗指标/编制周报 + B-80 价格确认单 + B-82 UGC 授权流程；G3 全部工作包完成 |
 | 2026-09-22 | 会话 6：G4 全部工作包完成（五图文通道/OTA 包/四类执行器桥/多执行器路由/桌面 Playwright worker/直播模板/C 端承接四件套/通道声明排除/降级出图）；迁移 0041 已应用并验链 |
+| 2026-09-22 | 会话 7：G5 全部工作包完成（AI 标识 0042/模型台账/NATS/四连接器/增长日表 0043+0044/投影/看门狗/成本/三态/保鲜环/工具契约/偏好/夜班/场景审计/压测/供应链/RLS/外部事实复核） |

@@ -4,7 +4,7 @@
 
 > 生成器：`scripts/oss-inventory.mjs`（离线事实）＋ `scripts/oss-watch.sh`（上游最新版本）
 > 仓库：workloom-ai/workloom-growthmatrix ｜ 最近一次上游扫描：2026-09-19T10:10:43.000Z
-> 统计：登记组件 92 个 ｜ npm 直接依赖 163 个 ｜ Python 依赖 1 个 ｜ 容器镜像 2 个
+> 统计：登记组件 92 个 ｜ npm 直接依赖 163 个 ｜ Python 依赖 1 个 ｜ 容器镜像 3 个
 
 ## 0. 维护机制（四件事）
 
@@ -290,10 +290,11 @@
 |---|---|---|---|---|
 | `playwright` | >=1.40.0（下限声明） | >=1.40.0 | packages/base/computer-use/toolkit/requirements.txt | 1.46.0 |
 
-### 2.3 容器镜像（2 个）
+### 2.3 容器镜像（3 个）
 
 | 镜像 | 出现位置 |
 |---|---|
+| `nats:2.11.4` | docker-compose.yml#nats |
 | `node:24.19.0-bookworm` | .cnb.yml |
 | `pgvector/pgvector:pg17` | .cnb.yml、docker-compose.yml#postgres |
 

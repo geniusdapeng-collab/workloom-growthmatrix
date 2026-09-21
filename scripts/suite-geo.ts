@@ -476,6 +476,8 @@ const SYSTEM_TYPES = new Set([
   "review",
   // secretary_reminder = 个人域（织伴「我的」）提醒对象：不属于行业对象模型（2026-09-20 三合一增补）
   "secretary_reminder",
+  // watchdog = 平台巡检报告对象（B-35；触发器/连接器/审批三类发现，不属于行业对象模型）
+  "watchdog",
 ]);
 e("ws-geo 事件 ≥60 条且五元字段完整（容忍门禁活火写入）", async () => {
   const r = await q(`SELECT count(*) n FROM biz_events WHERE workspace_id=$1`, [WS]);
@@ -512,6 +514,8 @@ e("事件 who 全部在编制内（系统/人类豁免）", async () => {
     "render-poller",
     // render-operator = 渲染提交的生成池计量主体（gen.degraded / 提交留痕；2026-09-20 真机测试增补）
     "render-operator",
+    // watchdog = 三类巡检组件（触发器漏触发/连接器陈旧/审批 SLA 报告主体；B-35）
+    "watchdog",
   ]);
   const r = await q(`SELECT DISTINCT payload->'who'->>'id' id FROM biz_events WHERE workspace_id=$1`, [WS]);
   for (const row of r.rows) assert(presetKeys.has(row.id) || SYSTEM_ACTORS.has(row.id) || String(row.id).startsWith("MEM-"), `who=${row.id} 不在编制`);

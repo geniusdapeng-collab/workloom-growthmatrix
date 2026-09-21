@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseBundleManifest } from "../packages/industry-contract/src/index.ts";
 import { isStrictPathWithin } from "./path-containment.mjs";
+import { loadGrowthMatrix, matrixGapReport, matrixStats } from "@workloom/base/bundles";
 
 const root = resolve(import.meta.dirname, "..");
 let repositoryRoot = root;
@@ -118,6 +119,36 @@ if (profile.identityBinding !== (front.identityPolicy !== "disabled")) {
 if ((profile.membership || profile.orders) && !front.adapterId) {
   throw new Error("C端启用权益或订单时，Bundle 必须声明已验证业务适配器");
 }
+/** B-34：投影派生块（矩阵缺口 / 增长周表口径 / AI 标识），缺资产时如实缺省。 */
+function buildDerivedProjection(): Record<string, unknown> {
+  const provides = manifest.workloom.provides;
+  const derived: Record<string, unknown> = {};
+  const matrixRel = typeof provides.matrix === "string" ? provides.matrix : null;
+  if (matrixRel && existsSync(join(bundleDir, matrixRel))) {
+    const matrix = loadGrowthMatrix(join(bundleDir, matrixRel));
+    const stats = matrixStats(matrix);
+    const structuralGaps = matrixGapReport(matrix);
+    derived.matrix = {
+      classes: stats.classes,
+      items: stats.items,
+      structuralGaps: structuralGaps.length,
+      reportUri: "docs/reports/matrix-gap-latest.md",
+    };
+  }
+  const skills = Array.isArray(provides.skills) ? provides.skills : [];
+  const hasGrowthMetrics = skills.some((path) => String(path).includes("growth-metrics"));
+  if (matrixRel || hasGrowthMetrics) {
+    derived.growth = {
+      weeklyMetrics: ["fans_delta", "interaction_rate", "private_adds", "wakeup_conversion", "repurchase_referral"],
+      metricsVersion: "growth-metrics@v1",
+      factTable: "growth_daily",
+      available: hasGrowthMetrics,
+    };
+  }
+  derived.aiLabel = { schema: "workloom.ai-label/v1", explicit: true, implicit: true };
+  return derived;
+}
+
 const projection = {
   ...source,
   projection: {
@@ -127,6 +158,8 @@ const projection = {
     uiVersion,
     manifestDigest: manifest.integrity?.digest ?? "草稿未封装",
   },
+  // B-34：投影带增长/矩阵/AI 标识三块可执行口径（缺资产时不虚构，按实际声明输出）
+  ...buildDerivedProjection(),
 };
 const output = `${JSON.stringify(projection, null, 2)}\n`;
 // 行业内容只能写入 client-foundation 明确放行的扩展目录；根配置是受管加载壳，

@@ -605,6 +605,7 @@ async function main() {
 
   // —— 账号指标时序（近 7 天 × 2 社媒账号） ——
   const metricRows: unknown[][] = [];
+  const growthRows: unknown[][] = [];
   // 真实感曲线（买单人视角）：非整数、有周末波峰、有日际抖动；伪随机种子固定保证复跑一致
   const jitter = (seed: number) => { const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
   for (let d = 7; d >= 1; d--) {
@@ -612,9 +613,32 @@ async function main() {
     const dow = day.getDay();
     const weekend = dow === 0 || dow === 6 ? 1.31 : 1.0;
     const base = Math.round((7980 + (7 - d) * 2137) * weekend * (0.88 + jitter(d * 7 + 1) * 0.27));
-    metricRows.push([WS_ID, "tiktok", "@RuikeLaser", null, day.toISOString(), base, Math.round(base * (0.038 + jitter(d * 7 + 2) * 0.011)), Math.round(base * (0.015 + jitter(d * 7 + 3) * 0.006)), Math.round(base * (0.009 + jitter(d * 7 + 4) * 0.004)), Math.round(1 + (7 - d) * 0.9 + jitter(d * 7 + 5) * 3)]);
+    const tkLikes = Math.round(base * (0.038 + jitter(d * 7 + 2) * 0.011));
+    const tkComments = Math.round(base * (0.015 + jitter(d * 7 + 3) * 0.006));
+    const tkShares = Math.round(base * (0.009 + jitter(d * 7 + 4) * 0.004));
+    const tkConversions = Math.round(1 + (7 - d) * 0.9 + jitter(d * 7 + 5) * 3);
+    metricRows.push([WS_ID, "tiktok", "@RuikeLaser", null, day.toISOString(), base, tkLikes, tkComments, tkShares, tkConversions]);
     const yb = Math.round(base * (0.31 + jitter(d * 7 + 6) * 0.09));
-    metricRows.push([WS_ID, "youtube", "@RuikeLaserOfficial", null, day.toISOString(), yb, Math.round(yb * 0.026), Math.round(yb * 0.008), Math.round(yb * 0.013), Math.round((1 + (7 - d) * 0.5) * (0.8 + jitter(d * 7 + 7) * 0.5))]);
+    const ybLikes = Math.round(yb * 0.026);
+    const ybComments = Math.round(yb * 0.008);
+    const ybShares = Math.round(yb * 0.013);
+    const ybConversions = Math.round((1 + (7 - d) * 0.5) * (0.8 + jitter(d * 7 + 7) * 0.5));
+    metricRows.push([WS_ID, "youtube", "@RuikeLaserOfficial", null, day.toISOString(), yb, ybLikes, ybComments, ybShares, ybConversions]);
+    // B-33 增长日表（五项日聚合；与 account_metrics 同日对齐）
+    const dayKey = day.toISOString().slice(0, 10);
+    const growthOf = (platform: string, account: string, likes: number, comments: number, shares: number, conversions: number, dayIndex: number) => [
+      `agd-${platform}-${account.replace(/[^a-zA-Z0-9]/g, "")}-${dayKey}`,
+      WS_ID, platform, account, dayKey,
+      Math.round(conversions * 12 + jitter(dayIndex * 7 + 9) * 40),
+      likes + comments + shares,
+      Math.round(conversions * 1.6),
+      Math.round(conversions * 0.6),
+      Math.round(conversions * 0.4),
+      Math.round(conversions * 0.25),
+      "mock",
+    ];
+    growthRows.push(growthOf("tiktok", "@RuikeLaser", tkLikes, tkComments, tkShares, tkConversions, d));
+    growthRows.push(growthOf("youtube", "@RuikeLaserOfficial", ybLikes, ybComments, ybShares, ybConversions, d));
   }
   for (const m of metricRows) {
     await q(
@@ -625,6 +649,17 @@ async function main() {
     );
   }
   console.log(`✓ 账号指标时序 ×${metricRows.length}（7 天 × 2 账号）`);
+  for (const g of growthRows) {
+    await q(
+      `INSERT INTO account_growth_daily
+         (id, workspace_id, platform, account_id, day, fans_delta, interactions, private_adds,
+          wakeup_conversions, repurchase_count, referral_count, source)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+       ON CONFLICT (workspace_id, platform, account_id, day) DO NOTHING`,
+      g as never,
+    );
+  }
+  console.log(`✓ 增长日表 ×${growthRows.length}（五项日聚合，growth_daily 视图可查）`);
 
   // —— 评论样本（夸赞自动回/咨询待审/负面告警） ——
   const cmts = [
