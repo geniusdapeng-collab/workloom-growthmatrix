@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { loadPlatformSpecs, resolvePlatform, validatePublishInput } from "./specs.js";
+import { loadPlatformSpecs, resolvePlatform, specsDueForReview, validatePublishInput } from "./specs.js";
 
 const specPath = join(
   import.meta.dirname,
@@ -81,5 +81,23 @@ describe("平台规格注册表", () => {
     const verdict = validatePublishInput(specs, { platform: "不存在的平台" });
     expect(verdict.ok).toBe(false);
     expect(verdict.issues[0]?.code).toBe("unknown-platform");
+  });
+
+  it("B-84 外部事实复核：needs-review 与逾期条目入列，未到期不误报", () => {
+    const now = new Date("2026-09-22T00:00:00Z");
+    const due = specsDueForReview({
+      schemaVersion: specs.schemaVersion,
+      generatedAt: specs.generatedAt,
+      groups: {},
+      platforms: [
+        { ...specs.platforms[0]!, id: "overdue", label: "逾期平台", status: "verified", verifiedAt: "2026-01-01", reviewDue: "2026-06-30" },
+        { ...specs.platforms[0]!, id: "fresh", label: "新核验平台", status: "verified", verifiedAt: "2026-09-01", reviewDue: "2026-12-31" },
+        { ...specs.platforms[0]!, id: "pending", label: "待复核平台", status: "needs-review", verifiedAt: null, reviewDue: null },
+      ],
+    } as never, now);
+    expect(due.map((d) => d.id).sort()).toEqual(["overdue", "pending"]);
+    expect(due.find((d) => d.id === "overdue")!.overdueDays).toBeGreaterThan(80);
+    expect(due.find((d) => d.id === "pending")!.reason).toContain("needs-review");
+    expect(due.find((d) => d.id === "fresh")).toBeUndefined();
   });
 });

@@ -5,6 +5,7 @@
  * B3 范围：组织记忆——三级作用域 + 归因 + pgvector 检索 + 使用记录（F1.4/F6.1）
  */
 export * from "./gateway.js";
+export * from "./delivery-mode.js";
 export * from "./events.js";
 export * from "./event-sequence.js";
 export * from "./pii.js";

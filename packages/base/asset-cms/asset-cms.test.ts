@@ -60,6 +60,8 @@ if (s.includes("append_event_insert")) {
         kind: params[4], version: params[5], parent_id: params[6], source_url: params[7],
         provenance: JSON.parse(params[8]), license_risk: params[9], hero_image_id: params[10],
         sha256: params[11], meta: JSON.parse(params[12]), status: params[13], created_by: params[14],
+        ai_generated: params[15] ?? false, ai_label: params[16] ?? null,
+        generator_model: params[17] ?? null, label_manifest_uri: params[18] ?? null,
         publish_at: null, created_at: new Date().toISOString(),
       };
       this.assets.push(row);
@@ -225,6 +227,40 @@ describe("素材服务（sha256 幂等去重 / 版本链）", () => {
       id: "va-m2", kind: "clip", sourceUrl: "oss://x/2.mp4", sha256: "f".repeat(64),
       parentId: "va-m1", by: "asset-cms",
     })).rejects.toThrow(AssetError);
+  });
+
+  it("B-28 AI 生成素材：缺生成模型/隐式标识清单 → 拒绝入库", async () => {
+    const { app, gateway, db } = fixture();
+    await expect(register(app, gateway, scope, {
+      id: "va-ai-bad", kind: "product_image", sourceUrl: "oss://ai/bad.png", sha256: "1".repeat(64),
+      aiGenerated: true, labelManifestUri: "ai-label://asset/va-ai-bad/manifest.json", by: "asset-cms",
+    })).rejects.toMatchObject({ code: "BAD_AI_LABEL" });
+    await expect(register(app, gateway, scope, {
+      id: "va-ai-bad2", kind: "product_image", sourceUrl: "oss://ai/bad2.png", sha256: "2".repeat(64),
+      aiGenerated: true, generatorModel: "doubao-seedream-4.0", by: "asset-cms",
+    })).rejects.toMatchObject({ code: "BAD_AI_LABEL" });
+    expect(db.assets.length).toBe(0);
+  });
+
+  it("B-28 AI 生成素材：字段齐备 → 落库带默认显式标识与模型编号", async () => {
+    const { app, gateway, db } = fixture();
+    const r = await register(app, gateway, scope, {
+      id: "va-ai-ok", kind: "product_image", sourceUrl: "oss://ai/ok.png", sha256: "3".repeat(64),
+      aiGenerated: true, generatorModel: "doubao-seedream-4.0",
+      labelManifestUri: "ai-label://asset/va-ai-ok/manifest.json", by: "asset-cms",
+    });
+    expect(r.asset).toMatchObject({
+      ai_generated: true, ai_label: "AI 生成",
+      generator_model: "doubao-seedream-4.0",
+      label_manifest_uri: "ai-label://asset/va-ai-ok/manifest.json",
+    });
+    const event = db.events.at(-1)!;
+    expect(event.payload.decision.action).toBe("asset.register");
+    // 非 AI 素材默认不带标识
+    const plain = await register(app, gateway, scope, {
+      id: "va-plain", kind: "product_image", sourceUrl: "oss://plain.png", sha256: "4".repeat(64), by: "asset-cms",
+    });
+    expect(plain.asset).toMatchObject({ ai_generated: false, ai_label: null, generator_model: null });
   });
 });
 

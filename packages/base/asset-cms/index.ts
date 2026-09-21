@@ -7,3 +7,4 @@
 export * from "./assets.js";
 export * from "./render-scripts.js";
 export * from "./cms.js";
+export * from "./ai-label.js";

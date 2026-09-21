@@ -305,3 +305,68 @@ export async function checkBudget(
   }
   return verdict;
 }
+
+/* ================= B-53：视频全成本账本（单条视频可复算） ================= */
+
+export interface VideoCostInput {
+  /** 台账行 id 或幂等键（用于复算对比） */
+  id: string;
+  costKind: CostKind;
+  /** 金额（正=支出；负=冲销） */
+  amount: number;
+  projectId?: string;
+  episode?: string;
+  /** 成片 id（video_assets.id）；缺省回退 episode/project */
+  videoId?: string;
+  /** 成片时长（秒；同成片多行取最大值） */
+  durationSeconds?: number;
+  currency?: string;
+}
+
+export interface VideoCostBreakdown {
+  videoId: string;
+  total: number;
+  currency: string;
+  byKind: Record<CostKind, number>;
+  durationSeconds: number | null;
+  /** 每分钟成本（无时长 → null，不臆造） */
+  costPerMinute: number | null;
+  entries: number;
+}
+
+const emptyByKind = (): Record<CostKind, number> =>
+  Object.fromEntries(COST_KINDS.map((k) => [k, 0])) as Record<CostKind, number>;
+
+/**
+ * 单条视频成本复算：按 videoId（缺省 episode → project → 未归属）分组，
+ * 汇总实拍/剪辑/渲染/达人素材/授权/工具/人工等全部成本类型；负数为冲销。
+ */
+export function videoCostBreakdown(entries: VideoCostInput[]): VideoCostBreakdown[] {
+  const groups = new Map<string, { total: number; currency: string; byKind: Record<CostKind, number>; duration: number | null; entries: number }>();
+  for (const entry of entries) {
+    if (!COST_KINDS.includes(entry.costKind)) throw new CostLedgerError("BAD_COST_KIND", `非法成本类型 ${entry.costKind}`);
+    if (!Number.isFinite(entry.amount)) throw new CostLedgerError("BAD_AMOUNT", `金额非法：${entry.amount}`);
+    const key = entry.videoId ?? entry.episode ?? entry.projectId ?? "(unassigned)";
+    const group = groups.get(key) ?? {
+      total: 0, currency: entry.currency ?? "CNY", byKind: emptyByKind(), duration: null, entries: 0,
+    };
+    group.total += entry.amount;
+    group.byKind[entry.costKind] += entry.amount;
+    group.entries += 1;
+    if (entry.durationSeconds && entry.durationSeconds > 0) {
+      group.duration = Math.max(group.duration ?? 0, entry.durationSeconds);
+    }
+    groups.set(key, group);
+  }
+  return [...groups.entries()]
+    .map(([videoId, group]) => ({
+      videoId,
+      total: Number(group.total.toFixed(2)),
+      currency: group.currency,
+      byKind: group.byKind,
+      durationSeconds: group.duration,
+      costPerMinute: group.duration ? Number((group.total / (group.duration / 60)).toFixed(2)) : null,
+      entries: group.entries,
+    }))
+    .sort((a, b) => a.videoId.localeCompare(b.videoId));
+}

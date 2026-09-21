@@ -253,3 +253,54 @@ export function validatePublishInput(
   }
   return { ok: issues.every((issue) => issue.severity !== "error"), platformId: spec.id, issues };
 }
+
+/* ================= B-84：外部事实季度复核 ================= */
+
+export interface SpecReviewItem {
+  id: string;
+  label: string;
+  status: PlatformSpec["status"];
+  verifiedAt: string | null;
+  reviewDue: string | null;
+  /** 逾期天数（未逾期/无日期为 0） */
+  overdueDays: number;
+  reason: string;
+}
+
+/**
+ * 列出需要复核的平台规格：reviewDue 已过（逾期）或 status=needs-review。
+ * 无 reviewDue 的条目按「默认季度复核」处理：verifiedAt 超过 90 天即列入。
+ */
+export function specsDueForReview(specs: PlatformSpecs, now = new Date(), defaultCycleDays = 90): SpecReviewItem[] {
+  const dayMs = 86_400_000;
+  const items: SpecReviewItem[] = [];
+  for (const spec of specs.platforms) {
+    const due = spec.reviewDue ? new Date(spec.reviewDue) : null;
+    const verified = spec.verifiedAt ? new Date(spec.verifiedAt) : null;
+    let overdueDays = 0;
+    let reason = "";
+    if (due && !Number.isNaN(due.getTime()) && due.getTime() < now.getTime()) {
+      overdueDays = Math.floor((now.getTime() - due.getTime()) / dayMs);
+      reason = `复核到期日 ${spec.reviewDue} 已过 ${overdueDays} 天`;
+    } else if (!due && verified && !Number.isNaN(verified.getTime())) {
+      const age = Math.floor((now.getTime() - verified.getTime()) / dayMs);
+      if (age > defaultCycleDays) {
+        overdueDays = age - defaultCycleDays;
+        reason = `无复核到期日，最近核验 ${spec.verifiedAt} 已 ${age} 天（默认季度复核）`;
+      }
+    }
+    if (spec.status === "needs-review") {
+      items.push({
+        id: spec.id, label: spec.label, status: spec.status,
+        verifiedAt: spec.verifiedAt, reviewDue: spec.reviewDue,
+        overdueDays, reason: reason || "规格状态为 needs-review（未复核前只允许内部预览）",
+      });
+    } else if (overdueDays > 0) {
+      items.push({
+        id: spec.id, label: spec.label, status: spec.status,
+        verifiedAt: spec.verifiedAt, reviewDue: spec.reviewDue, overdueDays, reason,
+      });
+    }
+  }
+  return items.sort((a, b) => b.overdueDays - a.overdueDays || a.id.localeCompare(b.id));
+}
