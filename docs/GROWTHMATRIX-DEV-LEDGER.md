@@ -12,12 +12,12 @@
 |---|---|
 | 当前批次 | G2 触发器与指挥链 |
 | 批次状态 | G1 完成；G2 进行中（声明层纯函数已完成，DB 装载与指挥链待续） |
-| 最近更新 | 2026-09-21（会话 2 · B-02 声明式触发器装配 + suite:geo/suite:hotel 全绿） |
+| 最近更新 | 2026-09-21（会话 2 · 三包声明式触发器 + 经营日历去重 + 双域套件全绿） |
 | 分支 | `task/T-2026-0921-0003` |
 | 云端最新提交 | 本地整合后待推送（含 T-2026-0921-0041 / T-2026-0921-0050） |
 | 本地 HEAD | 整合提交（视频链路修复 + 去审批化 + 计划 v1.3） |
 | 阻塞 | 无 |
-| 下一步 | G2 续：hotel/ai-video 的 triggers.yml（B-05b/B-42b）与 seed 去硬编码（B-06b）→ 指挥权切换（B-07/B-08） |
+| 下一步 | G2 收尾：video seed 去硬编码（B-06c，需对齐装配围栏版本）→ 指挥权切换（B-07/B-08） |
 | 计划版本 | v1.3：84 个工作包；已整合视频链路修复与基座去审批化，并重定义 B-70/B-72/B-73/B-64 |
 
 ---
@@ -59,15 +59,16 @@
 - [x] B-03b 声明式触发器 upsert 写库（实现位置在装配器这一唯一装载路径；`night-shift` 引擎无需改动）
 - [ ] B-05 三包 `triggers.yml` 声明
   - [x] B-05a `bundles/geo-growth/triggers.yml`（14 条）已声明并随包装载
-  - [ ] B-05b hotel / ai-video 两包声明（下一批）
+  - [x] B-05b `bundles/hotel/triggers.yml`（12 条，含 system: night-shift）与 `bundles/ai-video/triggers.yml`（7 条）已声明并随包装载
 - [ ] B-06 seed 脚本去硬编码
   - [x] B-06a `scripts/seed-geo.ts` 移除硬编码触发器，改回显声明装载结果；`suite-geo` 断言改按 `declared_id` 对账（81/81 通过）
-  - [ ] B-06b hotel / ai-video seed 去硬编码（依赖 B-05b）
+  - [x] B-06b `scripts/seed.ts` 移除硬编码触发器并退役旧 seed 触发器；`suite-hotel` 断言改为组合日历对账（43/43 通过）
+  - [ ] B-06c `scripts/seed-video.ts` 去硬编码（video-studio 需先对齐装配围栏版本口径，避免与组合装配互相回滚）
 - [ ] B-07 指挥权归获客口径（hotel company-ceo 更名 hotel-ceo）
 - [ ] B-08 commandChain 记录与组合看板展示
 - [ ] B-42 合并经营日历触发器
   - [x] B-42a geo-growth 14 条经营日历（情报/决策包/指标/评论/能见度/战报/回测/巡检/人效 + 4 CEO 节拍）
-  - [ ] B-42b 三包节拍合并与去重（依赖 B-05b）
+  - [x] B-42b 三包节拍合并与去重：按 beat（CEO 节拍）与 template（如 metrics.collect/comments.ingest）去重，主包优先并留痕；组合日历 23 条（geo 14 + hotel 8 + ai-video 1）
 - [ ] G2 验收：suite:geo / suite:hotel / 触发器断言全绿
 
 ### G3 岗位与增长线
@@ -172,6 +173,7 @@
 | 5 | `c56d0b2` | fix(growth): 同步 growth 视频链路修复批次（T-2026-0921-0041 整合版） | 外部批次 | 保留 G1 bundle 声明 + 重算摘要 + gap 0 |
 | 6 | `01c71fe` | feat(growth): 基座去审批化（T-2026-0921-0050 整合版） | 外部批次 | web 类型检查 + 三文件样例测试通过 |
 | 7 | 本次提交 | feat(growth): G2 声明式触发器装配（geo-growth 14 条）与套件回归 | G2 | 迁移 0038 + suite:geo 81/81 + suite:hotel 43/43 + bundles 16/16 |
+| 8 | 本次提交 | feat(growth): G2 三包触发器声明与经营日历去重 | G2 | DB 17/17 + suite:geo 81/81 + suite:hotel 43/43 + governance 通过 |
 
 ---
 
@@ -198,6 +200,8 @@
 | 2026-09-21 | `tsx --env-file=.env scripts/seed-geo.ts` | 通过（声明式触发器 ×14） | seed 不再硬编码触发器 |
 | 2026-09-21 | `tsx --env-file=.env scripts/suite-geo.ts` | 81/81 通过 | 含 28 条围栏口径修正与声明触发器对账 |
 | 2026-09-21 | `tsx --env-file=.env scripts/suite-hotel.ts`（先重跑 seed.ts 复位夹具） | 43/43 通过 | 见 L-10 夹具污染说明 |
+| 2026-09-21 | `vitest run triggers-assembly + triggers + bundles`（DB） | 17/17 通过 | 组合日历幂等 / 客户自建不覆盖 / 退出仅禁用 |
+| 2026-09-21 | `suite-geo` / `suite-hotel`（三包声明后） | 81/81、43/43 通过 | 日历条数按装配结果动态对账（23 条） |
 
 ---
 
@@ -281,3 +285,4 @@ export PATH="/tmp/wl-bin:$PATH"
 | 2026-09-21 | 计划 v1.2 二轮对账：新增 B-69 至 B-84 共 16 项（引导埋点、人审减负、契约强制、信任账户运行、目标闭环验收、备份回滚、海外通道、Bundle 版本治理、文档同步、供应链门禁、RLS 用例、价格确认单、降级路径、UGC 授权、schema 冻结门禁、外部事实复核），工作包总数 84；补充 DoR/DoD 与 8 个高风险包细则 |
 | 2026-09-21 | 会话 2：拉取并整合 T-2026-0921-0041（视频链路修复）与 T-2026-0921-0050（基座去审批化）；修复 bundle.json 合并回归；计划升级 v1.3 并重定义 4 个工作包口径；全量回归通过 |
 | 2026-09-21 | 会话 2 续：B-02/B-03b 落地（装配器声明式触发器装载：0038 迁移、幂等 upsert、客户主权与退出禁用）；geo-growth 14 条声明上线；seed-geo 去硬编码；suite:geo 81/81、suite:hotel 43/43、DB 集成 16/16 全绿 |
+| 2026-09-21 | 会话 2 续 2：B-05b/B-06b/B-42b 落地（hotel 12 条 + ai-video 7 条声明；system 动作白名单；按 beat/template 去重的组合经营日历 23 条；seed.ts 去硬编码并退役旧触发器）；双域套件与 DB 集成全绿 |

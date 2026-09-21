@@ -214,10 +214,19 @@ c("获客技能绑定正确（lead-concierge 含 R21/R24）", async () => {
   const binds = r.rows[0]?.fence_bindings as string[];
   assert(binds?.includes("R21") && binds?.includes("R24"), `lead-concierge 绑定 ${binds}`);
 });
-c("12 个触发器（含获客 2 个）", async () => {
-  const r = await q(`SELECT count(*) n FROM triggers WHERE workspace_id=$1 AND enabled=true`, [WS]);
-  assert(Number(r.rows[0].n) >= 12, `triggers=${r.rows[0].n}`);
-  const acq = await q(`SELECT id FROM triggers WHERE workspace_id=$1 AND id IN ('tg-intent-radar-0700','tg-lead-follow-30min')`, [WS]);
+c("组合经营日历声明式触发器齐装（含获客 2 个）", async () => {
+  const { loadComposedTriggers } = await import("@workloom/base/bundles");
+  // ws-yunqi 由 seed.ts 以获客主包（geo-growth）做组合装配：日历 = 三包声明合并去重。
+  const expected = loadComposedTriggers("geo-growth").triggers.length;
+  const r = await q(
+    `SELECT count(*) n FROM triggers WHERE workspace_id=$1 AND declared_id IS NOT NULL AND enabled=true`,
+    [WS],
+  );
+  assert(Number(r.rows[0].n) === expected, `declared-triggers=${r.rows[0].n} expected=${expected}`);
+  const acq = await q(
+    `SELECT declared_id FROM triggers WHERE workspace_id=$1 AND declared_id IN ('tg-intent-radar-0700','tg-lead-follow-30min')`,
+    [WS],
+  );
   assert(acq.rowCount === 2, "获客触发器缺失");
 });
 c("获客域剧本事件 30 条全部落库", async () => {

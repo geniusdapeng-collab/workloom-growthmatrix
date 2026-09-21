@@ -1,0 +1,61 @@
+# 酒店行业包 · 声明式自动化触发器（B-05b）
+# 来源：scripts/seed.ts 的硬编码清单迁入；单包工作区（yunqi-hotel）加载 12 条，
+# 组合工作区（geo-growth 主包）按「任务键」与其它包去重（主包优先）。
+version: workloom.triggers/v1
+triggers:
+  - id: tg-inspection-0700
+    name: 每日 07:00 只读巡检
+    schedule: "0 7 * * *"
+    action: { dispatch: inspection-agent, template: inspection.daily }
+    description: 渠道价格/房态/评价只读巡检，异常分级推送
+  - id: tg-night-2200
+    name: 夜班 22:00 战队出征
+    schedule: "0 22 * * *"
+    action: { system: night-shift, template: night.run.start }
+    description: 夜班窗口开启，客户离线时段继续经营
+  - id: tg-review-sla-30min
+    name: 差评 SLA 扫描（每 30 分钟，R19 联动）
+    schedule: "*/30 * * * *"
+    action: { dispatch: review-agent, template: review.sla.scan }
+    description: 差评 24h 未响应自动升级（R19）
+  - id: tg-parity-15min
+    name: 倒挂超售看门狗（每 15 分钟，R17/R18 联动）
+    schedule: "*/15 * * * *"
+    action: { dispatch: competitor-agent, template: channel.parity.scan }
+    description: 跨渠道价格倒挂与超售漏售巡检
+  - id: tg-faq-mine-sun
+    name: FAQ 知识库周萃取（周日 03:00）
+    schedule: "0 3 * * *"
+    action: { dispatch: phone-agent, template: faq.weekly.mine }
+    description: 通话聚类萃取新 FAQ 候选，店长确认入库
+  - id: tg-incident-weekly
+    name: 断点率周报（周一 04:00）
+    schedule: "0 4 * * 1"
+    action: { dispatch: desktop-agent, template: incident.weekly.report }
+    description: 断点率与根因分布周报
+  - id: tg-intent-radar-0700
+    name: 意图雷达四矿源扫描（每日 07:00）
+    schedule: "0 7 * * *"
+    action: { dispatch: channel-watcher, template: intent.radar.scan }
+    description: 竞对评论区/OTA 差评/query 词/本店私信意图萃取
+  - id: tg-lead-follow-30min
+    name: 线索跟进巡检（每 30 分钟，A 级 1h SLA）
+    schedule: "*/30 * * * *"
+    action: { dispatch: ai-receptionist, template: lead.follow.scan }
+    description: A 级线索超时未跟进即告警并补派
+  - id: tg-ceo-brief-0830
+    name: 公司CEO 晨报 08:30
+    schedule: "30 8 * * *"
+    action: { beat: daily }
+  - id: tg-ceo-queue-2h
+    name: 公司CEO 业务关卡巡检 2h
+    schedule: "7 */2 * * *"
+    action: { beat: queue }
+  - id: tg-ceo-deviation
+    name: 公司CEO 目标偏差扫描
+    schedule: "15 */4 * * *"
+    action: { beat: deviation }
+  - id: tg-ceo-breaker
+    name: 公司CEO 自治熔断巡检
+    schedule: "45 23 * * *"
+    action: { beat: breaker }

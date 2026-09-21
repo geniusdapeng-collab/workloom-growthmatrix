@@ -562,6 +562,13 @@ async function main() {
     `SELECT count(*)::int AS n FROM triggers WHERE workspace_id=$1 AND declared_id IS NOT NULL AND enabled=true`,
     [WS_ID],
   );
+  // 退场：历史硬编码触发器（declared_id 为空、seed 创建）统一禁用，避免与声明式触发器双跑。
+  await q(
+    `UPDATE triggers SET enabled=false, updated_at=now()
+      WHERE workspace_id=$1 AND declared_id IS NULL AND enabled=true
+        AND created_by IN ('system:seed','MEM-001')`,
+    [WS_ID],
+  );
   console.log(`✓ 声明式触发器 ×${declaredTriggers.rows[0]?.n ?? 0}（随 geo-growth 包装载）`);
 
   /* ================= 运行态剧本（双域演示运行态） ================= */

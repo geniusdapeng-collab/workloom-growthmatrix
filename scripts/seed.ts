@@ -970,32 +970,23 @@ async function main(): Promise<void> {
   );
   console.log(`✓ 团队技能 ×1（已装）+ 行业共享技能 ×1（已脱敏待装）`);
 
-  // 触发器（F4.7：07:00 巡检 / 22:00 夜班出征）
-  const triggers = [
-    { id: "tg-inspection-0700", name: "每日 07:00 只读巡检", kind: "cron", schedule: "0 7 * * *", action: { dispatch: "inspection-agent", template: "inspection.daily" } },
-    { id: "tg-night-2200", name: "夜班 22:00 战队出征", kind: "cron", schedule: "0 22 * * *", action: { dispatch: "night-shift", template: "night.run.start" } },
-    // v2.1 行业触发器 ×4（差评SLA/倒挂超售/FAQ萃取/断点周报）
-    { id: "tg-review-sla-30min", name: "差评 SLA 扫描（每 30 分钟，R19 联动）", kind: "cron", schedule: "*/30 * * * *", action: { dispatch: "review-agent", template: "review.sla.scan" } },
-    { id: "tg-parity-15min", name: "倒挂超售看门狗（每 15 分钟，R17/R18 联动）", kind: "cron", schedule: "*/15 * * * *", action: { dispatch: "competitor-agent", template: "channel.parity.scan" } },
-    { id: "tg-faq-mine-sun", name: "FAQ 知识库周萃取（周日 03:00）", kind: "cron", schedule: "0 3 * * *", action: { dispatch: "phone-agent", template: "faq.weekly.mine" } },
-    { id: "tg-incident-weekly", name: "断点率周报（周一 04:00）", kind: "cron", schedule: "0 4 * * 1", action: { dispatch: "desktop-agent", template: "incident.weekly.report" } },
-    // v3.3 获客域触发器 ×2
-    { id: "tg-intent-radar-0700", name: "意图雷达四矿源扫描（每日 07:00）", kind: "cron", schedule: "0 7 * * *", action: { dispatch: "channel-watcher", template: "intent.radar.scan" } },
-    { id: "tg-lead-follow-30min", name: "线索跟进巡检（每 30 分钟，A级 1h SLA）", kind: "cron", schedule: "*/30 * * * *", action: { dispatch: "ai-receptionist", template: "lead.follow.scan" } },
-    // 数字CEO 节拍（D21：CEO Loop；调度器消费前经治理守卫校验 charter.mode）
-    { id: "tg-ceo-brief-0830", name: "公司CEO 晨报 08:30", kind: "cron", schedule: "30 8 * * *", action: { beat: "daily" } },
-    { id: "tg-ceo-queue-2h", name: "公司CEO 审批巡检 2h", kind: "cron", schedule: "7 */2 * * *", action: { beat: "queue" } },
-    { id: "tg-ceo-deviation", name: "公司CEO 目标偏差扫描", kind: "cron", schedule: "15 */4 * * *", action: { beat: "deviation" } },
-    { id: "tg-ceo-breaker", name: "公司CEO 自治熔断巡检", kind: "cron", schedule: "45 23 * * *", action: { beat: "breaker" } },
-  ];
-  for (const t of triggers) {
-    await q(
-      `INSERT INTO triggers (id, workspace_id, name, kind, schedule, action, enabled, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,true,'MEM-001') ON CONFLICT (id) DO NOTHING`,
-      [t.id, WS_ID, t.name, t.kind, t.schedule, JSON.stringify(t.action)],
-    );
-  }
-  console.log("✓ 触发器 ×12（巡检/夜班 + 行业 4 + 获客 2 + 公司CEO 节拍 ×4）");
+  /**
+   * 触发器（B-06b）：声明位于 `bundles/hotel/triggers.yml`，由上面的
+   * provisionComposedWorkforce 幂等写入（落库 id = `<declared_id>-<workspace_id>`）。
+   * seed 只回显声明装载结果，不再硬编码。
+   */
+  const declaredTriggers = await q(
+    `SELECT count(*)::int AS n FROM triggers WHERE workspace_id=$1 AND declared_id IS NOT NULL AND enabled=true`,
+    [WS_ID],
+  );
+  // 退场：历史硬编码触发器（declared_id 为空、seed 创建）统一禁用，避免与声明式触发器双跑。
+  await q(
+    `UPDATE triggers SET enabled=false, updated_at=now()
+      WHERE workspace_id=$1 AND declared_id IS NULL AND enabled=true
+        AND created_by IN ('system:seed','MEM-001')`,
+    [WS_ID],
+  );
+  console.log(`✓ 声明式触发器 ×${declaredTriggers.rows[0]?.n ?? 0}（随 hotel 包装载）`);
 
   // 演示线程（P1/P2 有数据可投影）
   const threads = [

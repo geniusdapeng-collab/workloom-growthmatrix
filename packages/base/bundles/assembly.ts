@@ -20,7 +20,13 @@ import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import YAML from "yaml";
-import { gatewayAppend, gatewayAppendOnClient, registerReadActions, registerWriteActions } from "../workdata/gateway.js";
+import {
+  gatewayAppend,
+  gatewayAppendOnClient,
+  registerReadActions,
+  registerWriteActions,
+  SYSTEM_ACTOR_WHITELIST,
+} from "../workdata/gateway.js";
 import { fenceRulesOf } from "../fence-engine/dsl.js";
 import { parseModelPolicy } from "../model-router/policy.js";
 import {
@@ -880,6 +886,7 @@ export async function provisionComposedWorkforce(
   const triggerGaps = triggerGapReport(composedTriggers.triggers, {
     presetKeys: [...composeWorkforce(slug, root).presets.keys()],
     beats: [...CAPTAIN_BEATS],
+    systems: [...SYSTEM_ACTOR_WHITELIST],
   });
   if (triggerGaps.length > 0) {
     throw new BundleError(

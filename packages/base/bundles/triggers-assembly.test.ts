@@ -6,7 +6,7 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import pg from "pg";
-import { provisionComposedWorkforce } from "./assembly.js";
+import { loadComposedTriggers, provisionComposedWorkforce } from "./assembly.js";
 
 const RUN_DB = process.env.RUN_DB_TESTS === "1" && !!process.env.DATABASE_URL;
 
@@ -17,7 +17,7 @@ describe.runIf(RUN_DB)("声明式触发器装配（B-02）", async () => {
   const workspaceId = `ws-tg-${suffix}`;
   const scope = { tenantId, workspaceId };
 
-  it("装载 14 条声明并幂等；客户自建不覆盖；退出声明仅禁用", async () => {
+  it("装载组合经营日历并幂等；客户自建不覆盖；退出声明仅禁用", async () => {
     await app.query(
       `INSERT INTO tenants (id, name, plan) VALUES ($1,$2,'pro') ON CONFLICT (id) DO NOTHING`,
       [tenantId, `触发器装配测试 ${suffix}`],
@@ -28,28 +28,33 @@ describe.runIf(RUN_DB)("声明式触发器装配（B-02）", async () => {
       [workspaceId, tenantId, workspaceId, workspaceId],
     );
     try {
+      const composed = loadComposedTriggers("geo-growth");
       const first = await provisionComposedWorkforce(app, scope, "geo-growth", "MEM-TG");
-      expect(first.triggers).toBe(14);
+      expect(first.triggers).toBe(composed.triggers.length);
+      expect(first.triggers).toBeGreaterThanOrEqual(14);
+      expect(first.triggerShadowed).toBeGreaterThan(0);
       const rows = await app.query<{ id: string; declared_id: string; source_bundle: string; enabled: boolean }>(
         `SELECT id, declared_id, source_bundle, enabled FROM triggers WHERE workspace_id=$1 ORDER BY id`,
         [workspaceId],
       );
-      expect(rows.rows).toHaveLength(14);
+      expect(rows.rows).toHaveLength(composed.triggers.length);
       for (const row of rows.rows) {
         expect(row.declared_id).toBeTruthy();
         expect(row.id.endsWith(`-${workspaceId}`)).toBe(true);
-        expect(row.source_bundle).toBe("geo-growth");
+        expect(composed.bundleIds).toContain(row.source_bundle);
         expect(row.enabled).toBe(true);
       }
+      expect(rows.rows.some((row) => row.source_bundle === "geo-growth")).toBe(true);
+      expect(rows.rows.some((row) => row.source_bundle === "hotel")).toBe(true);
 
       // 幂等：重复装配不新增、不改变 id
       const before = rows.rows.map((row) => row.id).join(",");
       const second = await provisionComposedWorkforce(app, scope, "geo-growth", "MEM-TG");
-      expect(second.triggers).toBe(14);
+      expect(second.triggers).toBe(composed.triggers.length);
       const rows2 = await app.query<{ id: string }>(
         `SELECT id FROM triggers WHERE workspace_id=$1 ORDER BY id`, [workspaceId],
       );
-      expect(rows2.rows).toHaveLength(14);
+      expect(rows2.rows).toHaveLength(composed.triggers.length);
       expect(rows2.rows.map((row) => row.id).join(",")).toBe(before);
 
       // 客户自建（declared_id 命中但 source_bundle 为空）不被装配覆盖

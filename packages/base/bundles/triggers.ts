@@ -20,13 +20,15 @@ export const TriggerDeclarationSchema = z.object({
   action: z.object({
     /** 派遣岗位（preset_key）——与组合编制对账 */
     dispatch: z.string().regex(/^[a-z][a-z0-9-]{1,79}$/).optional(),
+    /** 系统组件（night-shift / captain / trigger-engine 等）——与系统白名单对账 */
+    system: z.string().regex(/^[a-z][a-z0-9-]{1,60}$/).optional(),
     /** 数字 CEO 节拍名（daily/queue/deviation/breaker/outcome/hr/board/org） */
     beat: z.string().min(1).max(40).optional(),
     /** 派遣模板标识（由运行时解释，如 intel.collect） */
     template: z.string().min(1).max(80).optional(),
   }).strict().refine(
-    (action) => Boolean(action.dispatch || action.beat || action.template),
-    { message: "action 至少声明 dispatch / beat / template 之一" },
+    (action) => Boolean(action.dispatch || action.system || action.beat || action.template),
+    { message: "action 至少声明 dispatch / system / beat / template 之一" },
   ),
   enabled: z.boolean().default(true),
   description: z.string().max(200).optional(),
@@ -114,6 +116,23 @@ export interface ComposedTrigger {
   shadowedBundleIds: string[];
 }
 
+/**
+ * 任务键（语义去重口径）：同一件"活儿"只能有一份权威声明，避免三包节拍合并后
+ * 同一件事被重复执行（例如两个包各自声明 metrics 采集、四个 CEO 节拍各来一份）。
+ *  - beat：数字 CEO 节拍按节拍名去重；
+ *  - 其余：按执行主体（dispatch/system）+ 模板去重；
+ *  - 无主体无模板的声明退化为按 id（解析阶段已保证 action 非空）。
+ */
+export function triggerJobKey(declaration: TriggerDeclaration): string {
+  if (declaration.action.beat) return `beat:${declaration.action.beat}`;
+  // 模板优先：同一模板（如 metrics.collect / comments.ingest）在组合日历里只保留一份权威声明，
+  // 避免两个包各自派出不同岗位重复执行同一件事。
+  if (declaration.action.template) return `tpl:${declaration.action.template}`;
+  const actor = declaration.action.dispatch ?? declaration.action.system;
+  if (actor) return `actor:${actor}`;
+  return `id:${declaration.id}`;
+}
+
 export interface TriggerGap {
   triggerId: string;
   sourceBundleId: string;
@@ -128,13 +147,14 @@ export function mergeTriggerDeclarations(sources: readonly TriggerDeclarationSou
   const merged = new Map<string, ComposedTrigger>();
   for (const source of sources) {
     for (const declaration of source.file.triggers) {
-      const current = merged.get(declaration.id);
+      const jobKey = triggerJobKey(declaration);
+      const current = merged.get(jobKey);
       if (!current) {
-        merged.set(declaration.id, { declaration, sourceBundleId: source.bundleId, shadowedBundleIds: [] });
+        merged.set(jobKey, { declaration, sourceBundleId: source.bundleId, shadowedBundleIds: [] });
         continue;
       }
       current.shadowedBundleIds.push(current.sourceBundleId);
-      merged.set(declaration.id, { declaration, sourceBundleId: source.bundleId, shadowedBundleIds: current.shadowedBundleIds });
+      merged.set(jobKey, { declaration, sourceBundleId: source.bundleId, shadowedBundleIds: current.shadowedBundleIds });
     }
   }
   return [...merged.values()].sort((a, b) => a.declaration.id.localeCompare(b.declaration.id));
@@ -146,15 +166,19 @@ export function mergeTriggerDeclarations(sources: readonly TriggerDeclarationSou
  */
 export function triggerGapReport(
   composed: readonly ComposedTrigger[],
-  refs: { presetKeys: readonly string[]; beats: readonly string[] },
+  refs: { presetKeys: readonly string[]; beats: readonly string[]; systems?: readonly string[] },
 ): TriggerGap[] {
   const presetKeys = new Set(refs.presetKeys);
   const beats = new Set(refs.beats);
+  const systems = refs.systems ? new Set(refs.systems) : null;
   const gaps: TriggerGap[] = [];
   for (const item of composed) {
     const action = item.declaration.action;
     if (action.dispatch && !presetKeys.has(action.dispatch)) {
       gaps.push({ triggerId: item.declaration.id, sourceBundleId: item.sourceBundleId, detail: `派遣岗位未在编：${action.dispatch}` });
+    }
+    if (systems && action.system && !systems.has(action.system)) {
+      gaps.push({ triggerId: item.declaration.id, sourceBundleId: item.sourceBundleId, detail: `系统组件不在白名单：${action.system}` });
     }
     if (action.beat && !beats.has(action.beat)) {
       gaps.push({ triggerId: item.declaration.id, sourceBundleId: item.sourceBundleId, detail: `未知 CEO 节拍：${action.beat}` });

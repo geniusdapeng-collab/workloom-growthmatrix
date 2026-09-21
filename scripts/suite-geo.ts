@@ -340,9 +340,14 @@ c("29 个 GEO 技能已安装（双域 6 + 视觉 14 + 获客用增 9）", async
   const r = await q(`SELECT count(*) n FROM skill_installs si JOIN skills s ON s.id=si.skill_id WHERE si.workspace_id=$1 AND s.bundle='geo-growth'`, [WS]);
   assert(Number(r.rows[0].n) === 29, `skills=${r.rows[0].n}`);
 });
-c("14 个触发器 enable", async () => {
-  const r = await q(`SELECT count(*) n FROM triggers WHERE workspace_id=$1 AND enabled=true`, [WS]);
-  assert(Number(r.rows[0].n) === 14, `triggers=${r.rows[0].n}`);
+c("组合经营日历触发器全部 enable（数量=三包声明合并去重结果）", async () => {
+  const { loadComposedTriggers } = await import("@workloom/base/bundles");
+  const expected = loadComposedTriggers("geo-growth").triggers.length;
+  const r = await q(
+    `SELECT count(*) n FROM triggers WHERE workspace_id=$1 AND declared_id IS NOT NULL AND enabled=true`,
+    [WS],
+  );
+  assert(Number(r.rows[0].n) === expected, `declared=${r.rows[0].n} expected=${expected}`);
 });
 c("一客一档 v2 七模块齐全", async () => {
   const r = await q(`SELECT archive FROM profiles WHERE workspace_id=$1`, [WS]);
