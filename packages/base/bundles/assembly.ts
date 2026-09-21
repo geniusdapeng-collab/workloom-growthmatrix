@@ -1580,8 +1580,18 @@ async function computeAssemblyScoped(
       )).rows
     : [];
   const probeFails: string[] = [];
+  // 同名多行（历史退场行 + 在岗行）只保留权威实例：优先 ready，其次任意一行。
+  const canonicalAgentRows = (() => {
+    const byKey = new Map<string, (typeof agentRows)[number]>();
+    for (const row of agentRows) {
+      const existing = byKey.get(row.preset_key);
+      if (!existing || (existing.status !== "ready" && row.status === "ready")) byKey.set(row.preset_key, row);
+    }
+    return [...byKey.values()];
+  })();
   for (const p of presets) {
-    const a = agentRows.find((r) => r.preset_key === p.preset_key);
+    // 同名去重会保留历史行（disabled）供审计：探针只认权威实例（优先 ready）。
+    const a = canonicalAgentRows.find((r) => r.preset_key === p.preset_key);
     if (!a) probeFails.push(`「${p.name ?? p.preset_key}」未注册实例`);
     else if (a.status !== "ready") probeFails.push(`「${a.name} ${a.version}」状态 ${a.status}（invalid/disabled 不可装配 L3.7）`);
   }
@@ -1612,7 +1622,7 @@ async function computeAssemblyScoped(
     : [];
   const activeRules = new Set(fenceRuleRows);
   const fenceFails: string[] = [];
-  const agentsOut: BundleAgentRow[] = agentRows.map((a) => {
+  const agentsOut: BundleAgentRow[] = canonicalAgentRows.map((a) => {
     let fenceOk = true;
     if (!a.readonly) {
       if (!a.fence_bindings || a.fence_bindings.length === 0) {

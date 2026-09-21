@@ -7,7 +7,7 @@
  * 用法：pnpm db:seed（读取 .env；幂等，可重复执行）
  *
  * 内容：demo 租户 / 云栖酒店工作区 / 3 人类成员 / 16 个基础 Agent preset 实例 +
- *      组合编制 73 岗（hotel 16 + ai-video 30 + geo-growth 27，同名遮蔽 3 处按主包裁决，
+ *      组合编制 73 岗（hotel 16 + ai-video 29 + geo-growth 28，同名遮蔽 4 处按主包裁决，
  *      见 provisionComposedWorkforce；口径事实源为装配器运行结果，不在此手工维护）/
  *      一店一档（含 forbidden 硬约束 + 布草/断点/FAQ 字段组）/ 基线围栏 R1–R26（hotel-baseline/v4）装载 / 53 个组合官方技能 /
  *      2 触发器 / 昨夜夜班班次 / 100 条五元事件（哈希链）/ 审批样例 / 组织记忆
@@ -834,6 +834,9 @@ async function main(): Promise<void> {
     `✓ 组合编制上岗：${composed.bundleIds.join(" + ")} 共 ${composed.rosterSize} 岗`
     + `（围栏并集 ${composed.fenceRules} 条 · 同名遮蔽 ${composed.shadowed.length} 处按主包裁决）`,
   );
+  // 组合装配会把 workspaces.industry 写成主包（geo-growth）；ws-yunqi 是酒店试点工作区，
+  // 入职后显式归位为 hotel（组合编制与围栏并集保持不变，仅 profile 标识归位）。
+  await owner.query(`UPDATE workspaces SET industry='hotel' WHERE id=$1`, [WS_ID]);
 
   // 一店一档（槽①；forbidden 双写：archive 内 + 独立列，L1.6）
   // dataMode=simulated：落地向导（D24）横幅事实源——种子库即「全模拟运行态」，向导启用真实模式后翻转

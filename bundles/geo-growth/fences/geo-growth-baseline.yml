@@ -305,3 +305,24 @@ rules:
       actions: [render.submit, render.script.gen, render.poll, video.generate, generate_video]
     when: "context.render_auto == true"
     note: 素材制作全自动；超预算与投放/改价/公网发布仍由 G11/G12/G9 拦住
+
+  # ---- 达人合作合规（B-09：广告标识与素材授权双红线）----
+  - rule_id: G-AD1
+    name: 达人内容广告标识缺失必审
+    level: review
+    is_baseline: true
+    match:
+      object_types: [creator_collab, publish_task, content]
+      actions: [collab.track, publish.execute, content.submit]
+    when: "params.is_ad == true and context.ad_label_present != true"
+    note: 商业合作内容必须显著标明广告属性；缺标识即挂起人审，不得自动外发（《互联网广告管理办法》可识别性口径）
+
+  - rule_id: G-AD2
+    name: 达人素材授权缺失禁止外发
+    level: block
+    is_baseline: true
+    match:
+      object_types: [content, creator_collab, visual_asset, publish_task]
+      actions: [publish.execute, content.submit, visualwrite.compose]
+    when: "params.has_third_party_asset == true and context.license_ok != true"
+    note: 达人返图/联名素材/字体音乐等第三方素材无授权凭证一律阻断；授权范围必须覆盖本次用途、平台与期限
