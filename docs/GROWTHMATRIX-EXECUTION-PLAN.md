@@ -11,7 +11,7 @@
 
 **总目标**：把四批方案落成可运行的系统调整——两个主场景（图片/图文、视频）日更自动化；获客与增长双线闭环；数字员工与自动化工作流在无人值守下继续运转；关键动作可度量、可审计、可回滚。
 
-**范围**：第四批施工图的 45 个改造点（B-01 至 B-45）+ 对前三批交付物的覆盖补齐 23 项（B-46 至 B-68），合计 68 项；12 项 Agent 参数调整、10 项技术组件替换；显式排除项见第 8 节「声明式排除」。
+**范围**：第四批施工图的 45 个改造点（B-01 至 B-45）+ 对前三批交付物的覆盖补齐 39 项（B-46 至 B-84），合计 84 项；12 项 Agent 参数调整、10 项技术组件替换；显式排除项见第 8 节「声明式排除」。
 
 **硬约束**：
 
@@ -55,21 +55,38 @@
 
 ## 4. 验收命令清单（跨批复用）
 
+环境前置（本机已固化，见账本第 7 节）：Node 走 Codex 运行时路径；PostgreSQL 17 + pgvector 以 Postgres.app DMG 挂载启动；`pnpm <script>` 因 pnpm 11 的 ignored-builds 安装检查会失败，统一改用 `node_modules/.bin/*` 直跑。
+
 ```bash
-export PATH="/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH"
-pnpm typecheck
-pnpm test
-pnpm test:scripts
-pnpm suite:geo
-pnpm suite:hotel
-pnpm acceptance:onboarding
-pnpm acceptance:scale-s8
-pnpm acceptance:matrix
-pnpm projections:check
-pnpm db:verify-chain          # 改事件/号源/迁移后必跑
-pnpm release:gate             # 发布前必跑
-pnpm connectors:check         # 改连接器后必跑
-node scripts/acceptance/live.mjs   # P 域生产实测（真实模型 + 配额）
+# 静态与单测
+./node_modules/.bin/tsc -p packages/base/tsconfig.json --noEmit
+./node_modules/.bin/tsc -p packages/industry-contract/tsconfig.build.json --noEmit
+./node_modules/.bin/vitest run <目标测试文件或目录>
+./node_modules/.bin/tsx scripts/tools/matrix-gap.mts            # 矩阵覆盖缺口（0 = 通过）
+./node_modules/.bin/tsx scripts/bundle-governance.mts --refresh-digests
+./node_modules/.bin/tsx scripts/bundle-governance.mts           # 完整性/契约门禁
+
+# 数据库链路（需 PG 就绪 + RUN_DB_TESTS=1）
+./node_modules/.bin/tsx --env-file=.env scripts/migrate.ts
+./node_modules/.bin/tsx --env-file=.env scripts/seed.ts
+./node_modules/.bin/tsx --env-file=.env scripts/seed-geo.ts
+./node_modules/.bin/tsx --env-file=.env scripts/verify-chain.ts          # 事件哈希链
+./node_modules/.bin/vitest run packages/base/bundles/bundles.test.ts     # DB 集成
+./node_modules/.bin/tsx --env-file=.env scripts/acceptance/onboarding.mts
+./node_modules/.bin/tsx --env-file=.env scripts/acceptance/scale-s8.mts
+./node_modules/.bin/tsx --env-file=.env scripts/acceptance/matrix.mts
+./node_modules/.bin/tsx --env-file=.env scripts/suite-geo.ts             # 域套件（重）
+./node_modules/.bin/tsx --env-file=.env scripts/suite-hotel.ts
+./node_modules/.bin/tsx --env-file=.env scripts/suite.ts                 # 主套件（重）
+
+# UI / 能力 / 发布 / 供应链（G4 起按需）
+node scripts/generate-capabilities.mjs --check
+node scripts/generate-client-projections.mts
+node scripts/e2e-service-c.mjs
+node scripts/acceptance/ui-probe.mjs
+node scripts/acceptance/live.mjs            # P 域真实模型 + 配额硬闸
+bash scripts/oss-watch.sh --inventory && bash scripts/oss-watch.sh --check
+./node_modules/.bin/tsx scripts/scan/fences.mts 2>/dev/null || ./node_modules/.bin/tsx scripts/tools/fence-alias-scan.mts
 ```
 
 ---
@@ -130,9 +147,9 @@ DEC-18 首个试点客户：1 家低星单体或民宿共创。
 
 | 来源 | 条目总量 | 已纳入批次 | 本版补齐 | 声明式排除 |
 |---|---:|---:|---:|---:|
-| 第一批 业务层（ACT-B-01 至 14、AC-B-01 至 10） | 24 | 18 | 4（B-46、B-47、B-51、B-53） | 2（ACT-B-12 行业复制、ACT-B-14 精品内容线） |
-| 第二批 产品层（KEEP 15 / DROP 7 / ADD 14 / REF 10 / SCALE 8 / WF 8 / UX 5） | 67 | 47 | 17 | 3（DROP 的叙事类调整随 G3 一并处理） |
-| 第三批 技术层（TECH-01 至 26） | 26 | 19 | 7（B-54 至 B-61 中的技术项） | 0 |
+| 第一批 业务层（ACT-B-01 至 14、AC-B-01 至 10） | 24 | 22 | 4（B-46、B-47、B-51、B-53）+ B-84（外部事实季度复核） | 2（ACT-B-12 行业复制、ACT-B-14 精品内容线） |
+| 第二批 产品层（KEEP 15 / DROP 7 / ADD 14 / REF 10 / SCALE 8 / WF 8 / UX 5） | 67 | 47 | 20（B-46 至 B-50、B-62 至 B-64、B-66、B-68 至 B-70、B-72、B-77、B-82、B-83） | 0（叙事类调整随 B-68 一并处理） |
+| 第三批 技术层（TECH-01 至 26） | 26 | 17 | 9（B-54 至 B-61、B-65、B-67） | 0 |
 | 第四批 施工点（B-01 至 B-45、参数 12、组件 10） | 67 | 67 | 0 | 0 |
 
 ### 8.2 补齐工作包（B-46 至 B-68）
@@ -162,6 +179,22 @@ DEC-18 首个试点客户：1 家低星单体或民宿共创。
 | B-66 | G6 | DROP-P-05 | 统计口径脚本化（README/能力地图/围栏头注释由脚本生成） | `capabilities:check` + 漂移门禁 |
 | B-67 | G6 | TECH-03 | `sync/` 基座同步机制引入或书面声明不参与（依 DEC-17） | 计划文档 + 同步演练或豁免说明 |
 | B-68 | G6 | DROP-P-01 至 07 | 默认装载裁剪：分账管线/电影级技能库/酒店演示主入口/P2 岗默认不出场/商单默认节拍 | 默认装配清单断言 |
+| B-69 | G6 | UX-02 | 引导漏斗埋点接入真实渠道（questline.* 事件化 + 周报栏位） | 埋点事件与周报可查 |
+| B-70 | G6 | 第三批 §9.6 / H1 负载 | 人审减负机制：决策包聚合、批量手势、低风险抽检、H1 负载仪表 | H1 ≤7 件/日、≤30 秒/件 |
+| B-71 | G6 | 第三批 §9.2 协作纪律 | 契约强制规则：跨岗交付无契约禁止排产（G-COL1）+ 黑板单主写者围栏 | 无契约排产被拒用例 |
+| B-72 | G6 | 第三批 §2.3 / P4 | 信任账户接入运行：升降档建议进决策包、降档自动收紧、补考闭环 | 升/降档用例 + 决策包留痕 |
+| B-73 | G6 | 第四批 §2 闭环 | 目标→执行闭环贯通验收：goal→五环→thread→contract→receipt→report 端到端 | `acceptance:goal-loop`（新增） |
+| B-74 | G6 | 第四批 §6.4 | 备份与回滚演练：PG 备份恢复、bundle 回滚、围栏回滚、模型切换回滚、执行器回滚 | 演练报告 + RTO/RPO 记录 |
+| B-75 | G4 | 第三批 §6.2 | 海外与视频号通道联调（TikTok/视频号真实账号；未就绪则转声明排除） | 真机回执或豁免单 |
+| B-76 | G1/G6 | 第四批施工图治理 | Bundle 版本与发布治理：版本递增（geo-growth 1.1.0）、CHANGELOG、签名密钥规划、稳定态切换 | `bundle:governance --release` 通过 |
+| B-77 | G6 | DROP-P-05 / B-66 延伸 | 文档与演示资产同步：README、capabilities 自动生成、官网与演示页、教学文档 | `capabilities:check` + 官网构建 |
+| B-78 | G5 | 供应链纪律 | 依赖与供应链门禁：`oss:inventory`/`oss:check`、新增依赖登记、runtime lock | `pnpm test:oss` + `oss:check` 全绿 |
+| B-79 | G5/G6 | 新增表治理 | 新增表与对象的 RLS/租户隔离用例（contracts/threads/growth 明细等） | RLS 越权零行用例 |
+| B-80 | G3 | 第一批 §8.4 合规 | 价格与权益确认单工具 + 预售券/退改合规模板（在线旅游与价格法规口径） | 确认单留痕 + 退改模板用例 |
+| B-81 | G4 | 第一批 §6.5 降级 | 内容生产降级路径：无工位/无桥时 HTML/CSS 出图与人工发布挂起，产物标「降级产出」 | 降级用例 + 标注断言 |
+| B-82 | G3 | 第一批 §6.3 UGC | UGC 征集与授权流程：授权回收、去个人信息、广告标识 | UGC 授权用例 |
+| B-83 | G1/G5 | 附录 E 冻结纪律 | 事件 schema 冻结与对象枚举扩展门禁：新增对象不改顶层字段 + hardcode scan | `pnpm scan:fences` + 事件 schema 测试 |
+| B-84 | G5 | ACT-B-13 | 外部事实季度复核任务：平台规格/OTA 规范/平台规则变更清单与影响评估 | 复核任务卡 + 变更影响清单 |
 
 ### 8.3 声明式排除（不在本计划范围内，需另行开卡）
 
@@ -171,9 +204,42 @@ DEC-18 首个试点客户：1 家低星单体或民宿共创。
 | ACT-B-14 精品内容线（品牌片/达人联名） | 第一批 P2 | 与日更主线争产能 | G6 完成后按客户需求开卡 |
 | 跨行业第二条行业包 | 总体目标后段 | 当前聚焦酒店垂直 | G7 Go 决策后 |
 
-## 9. 变更记录
+## 9. 工作包细则规范（Definition of Ready / Definition of Done）
+
+### 9.1 每个工作包开工前必须补齐六项（缺一不得开跑，写入账本）
+
+1. **改动面**：涉及的精确文件/目录清单（新建/修改/迁移分开列）。
+2. **接口与数据**：新增/变更的函数、事件动作、对象类型、表字段、bundle 槽位；是否触碰五个信任要素（租户边界/围栏/审批/事件/回执）。
+3. **前置依赖**：迁移编号、其他工作包、外部凭据、决策项（DEC-*）。
+4. **验证证据**：至少一条可复跑命令 + 期望输出；DB 变更必须含 `db:verify-chain`；UI 变更必须含真机截图或 ui-probe；bundle 变更必须含 `bundle:governance`。
+5. **回滚路径**：明确“回滚动作 + 影响数据 + 是否需要人审”，默认优先开关/版本回退，禁止不可逆删除。
+6. **证据等级声明**：结论中标注 A/B/C/D，未验证项不得写成已验证。
+
+### 9.2 DoD（每个工作包完成的判定）
+
+1. 代码/资产入库且摘要/投影/文档等派生值同步刷新；
+2. 类型检查 + 目标单测通过；涉及 DB/事件/围栏/审批的包另跑对应集成门禁；
+3. 账本勾选并写入提交 SHA 与验证输出摘要；
+4. 分支与 main 云端同步（分支推送 + main 快进或 PR 合并）；
+5. 回滚路径经过一次演练或至少一次 dry-run 验证。
+
+### 9.3 重点高风险工作包细则（先行写全，其余包开工时按 9.1 补齐）
+
+| 工作包 | 改动面（文件） | 接口/数据 | 前置 | 测试与证据 | 回滚 |
+|---|---|---|---|---|---|
+| B-02 装配合并触发器 | `packages/base/bundles/assembly.ts`、`packages/base/bundles/triggers.ts`（已建）、`packages/base/bundles/bundles.test.ts` | `loadComposedTriggers(slug)`；写入 `triggers` 表（含 `source_bundle`/`declared_version`）；激活事件 `composition.triggers` | B-01/B-04（已完成） | `vitest run packages/base/bundles/bundles.test.ts`（新增触发器断言）+ `matrix-gap` 同构的 `triggers-gap` | 删除 `source_bundle` 命中的触发器行或 `enabled=false`；客户自建触发器不受影响 |
+| B-07 指挥权切换 | `bundles/hotel/presets/company-ceo.yml` → `hotel-ceo.yml`、`bundles/hotel/bundle.json`、`bundles/geo-growth/bundle.json#composition`、`packages/base/bundles/bundles.test.ts`、`scripts/seed*.ts`、`scripts/suite-hotel.ts` | preset_key 改名；`presetOwners` 去除 `company-ceo`；组合编制 72→73（+B-09 后 74）；激活事件 `shadowed` 从 4 处变 3 处 | 无 | `RUN_DB_TESTS=1 vitest run packages/base/bundles/bundles.test.ts` + `acceptance:onboarding`（72→73 断言同步） | `git revert` 该包提交 + 重新装配；DB 中旧 `company-ceo` 行保留只增，按需 disable |
+| B-13/B-14 矩阵 | `bundles/geo-growth/matrix/content-platform-matrix.yml`、`packages/base/bundles/matrix.ts`、`scripts/tools/matrix-gap.mts`（已完成） | `GrowthMatrixSchema`；缺口四类（岗位/围栏/平台/目标+账号位） | 无 | `tsx scripts/tools/matrix-gap.mts`（0 缺口）+ `vitest matrix.test.ts` | 移除 `provides.matrix` 声明并刷新摘要；文件保留不删 |
+| B-21/B-22 执行器组合 | `apps/server/src/runtime/tool-executor.ts`、`bundles/geo-growth/connectors/{publish,source,ota}-bridge/server-adapter.mts`、`.env.example`、`scripts/doctor.sh` | `WORKLOOM_TOOL_EXECUTOR_MODULES`（逗号列表）+ 按工具前缀路由；单模块失败 fail-closed 不影响其他模块 | B-18/B-19/B-20 | `vitest run packages/base/publish-rpa` + 视觉桥 runtime-smoke + 发布回执链路演练 | 删除环境变量即回退到“未核实”语义；桥代码保留 |
+| B-36/B-40 协作执行器 | `packages/base/collaboration/dispatch.ts`、`schema.ts`、`packages/db/migrations/0040_contract_thread.sql`、`apps/server/src/service/collaboration.ts`、`apps/server/src/trpc/collaboration-router.ts`、`packages/runtime/src/loop.ts` | 契约新增 `thread_id/bundle_scope/matrix_refs`；agent actor（presetKey+fenceBindings）；deliver 自动触发 verifier；settle 写 `budget_ledger` | B-37 迁移、B-38 actor | `tsx scripts/acceptance/collab-loop.mts` + 五模式用例 + RLS 越权零行 | 关闭 agent 派发开关（配置）并停用 dispatch；表字段只增，无需回滚迁移 |
+| B-42 经营日历 | `bundles/{geo-growth,hotel,ai-video}/triggers.yml`、`bundles/geo-growth/bundle.json`、`scripts/seed-geo.ts` | 触发器 id 前缀 `tg-*`；三包合并主包优先；覆盖 07:00/07:30/08:30/09:00/2h/30min/19-23/夜班/周/月全时点 | B-02/B-03b | `tsx scripts/tools/triggers-gap.mts`（新增）+ `suite:geo` 触发器断言 + 幂等重跑 | 按 `source_bundle` 禁用声明行；触发账本 `trigger_fires` 只增 |
+| B-68 默认装载裁剪 | `bundles/*/segment-defaults.yml`、`scripts/seed*.ts`、`bundles/*/bundle.json`（标签/描述）、README 叙事段 | 默认不装 `settlement-recon`、电影级技能库；演示主入口固定 ws-geo；P2 岗默认不出场；商单默认不排触发器 | 无 | 默认装配清单断言 + `acceptance:onboarding` | 恢复默认清单开关（保留技能市场安装入口） |
+| B-76 Bundle 版本治理 | `bundles/geo-growth/{bundle.json,CHANGELOG.md}`、`scripts/bundle-governance.mts`、签名密钥配置 | 版本 1.0.0 → 1.1.0；`release --refresh-digests`；稳定态签名（密钥托管，不落库） | B-01、B-17 | `tsx scripts/bundle-governance.mts --refresh-digests`；`--release` 需密钥环境；`product:verify` | 版本回退 + 摘要随回滚版本重算；签名密钥可吊销 |
+
+## 10. 变更记录
 
 | 日期 | 版本 | 变更 |
 |---|---|---|
 | 2026-09-21 | v1.0 | 首版：G0–G7 批次划分、执行流程、验收命令、决策默认值、风险与接力协议 |
 | 2026-09-21 | v1.1 | 对账四批方案，新增 B-46 至 B-68 共 23 项补齐工作包与覆盖矩阵；声明三项排除 |
+| 2026-09-21 | v1.2 | 二轮对账：新增 B-69 至 B-84 共 16 项（引导埋点、人审减负、契约强制、信任账户运行、目标闭环验收、备份回滚、海外通道、Bundle 版本治理、文档同步、供应链门禁、RLS 用例、价格确认单、降级路径、UGC 授权、schema 冻结门禁、外部事实复核）；补充工作包 DoR/DoD 与 8 个高风险包细则；命令清单扩展 |
