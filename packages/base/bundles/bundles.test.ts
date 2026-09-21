@@ -168,10 +168,11 @@ describe.runIf(RUN_DB)("行业装配 PG 集成（F2.10 铁律）", async () => {
       const provision = await provisionComposedWorkforce(app, scope2, "geo-growth", "MEM-FUSION");
       expect(provision.bundleIds).toEqual(["hotel", "ai-video", "geo-growth"]);
       expect(provision.rosterSize).toBe(74);
-      // 每个 preset_key 只由一个包提供（同名按主包裁决）：hotel 16 / ai-video 30 / geo-growth 28
+      // 每个 preset_key 只由一个包提供（同名按主包裁决）：hotel 16 / ai-video 29 / geo-growth 29
       // （B-07 后 company-ceo 归 geo-growth，hotel 版更名 hotel-ceo，遮蔽从 4 处减到 3 处）
-      expect(provision.perBundle).toEqual({ hotel: 16, "ai-video": 30, "geo-growth": 28 });
-      expect(provision.shadowed.length).toBe(4);
+      // B-09/B-47 下沉 creator-partner 与 ip-curator 后遮蔽回到 5 处，角色总数仍为 74
+      expect(provision.perBundle).toEqual({ hotel: 16, "ai-video": 29, "geo-growth": 29 });
+      expect(provision.shadowed.length).toBe(5);
       expect(provision.fenceRules).toBeGreaterThanOrEqual(68);
 
       const profile = await computeAssembly(app, scope2, "geo-growth");

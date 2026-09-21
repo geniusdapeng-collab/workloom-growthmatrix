@@ -81,8 +81,8 @@ a("bundle.json 声明的全部资产路径存在", () => {
     for (const p of paths) assert(existsSync(join(BUNDLE, p)), `缺失资产 ${p}`);
   }
 });
-a("28 个 preset（双域 16 + 视觉栈 2 + 获客用增 10，含 2 个 P2 条件岗）且 preset_key 唯一", () => {
-  assert(presets.length === 28, `期望 28，实际 ${presets.length}`);
+a("29 个 preset（双域 16 + 视觉栈 2 + 获客用增 10 + 下沉版权管理员 1，含 2 个 P2 条件岗）且 preset_key 唯一", () => {
+  assert(presets.length === 29, `期望 29，实际 ${presets.length}`);
   assert(presetKeys.size === presets.length, `preset_key 重复（${presets.length} 个文件仅 ${presetKeys.size} 个唯一 key）`);
 });
 a("preset 必填字段完整（含 prompt 三要素）", () => {

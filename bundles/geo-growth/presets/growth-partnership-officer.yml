@@ -34,3 +34,13 @@ write_back:
   - partner.outreach.write
   - matrix.plan.write
   - partnership.report.write
+# B-50：P2 条件岗运营指标与退场条件（激活走 L4；指标每周进编制周报）
+activation_gate: G-GROW8
+review_cadence: weekly
+ops_metrics:
+  - { key: active_partnerships, label: 在营合作渠道数, target: 3, direction: gte, window_weeks: 4 }
+  - { key: referral_rate, label: 合作转介率, target: 0.05, direction: gte, window_weeks: 4 }
+  - { key: partnership_roi, label: 合作 ROI, target: 1.5, direction: gte, window_weeks: 12 }
+exit_conditions:
+  - { metric: partnership_roi, consecutive_below: 4, action: 退场提案（停用岗位并复盘合作组合） }
+  - { metric: active_partnerships, consecutive_below: 4, action: 退场提案（停用岗位并复盘合作组合） }

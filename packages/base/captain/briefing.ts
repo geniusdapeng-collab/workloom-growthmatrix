@@ -13,6 +13,8 @@ export interface BriefFacts {
   actionsTop: Array<{ action: string; n: number }>;
   pendingByTier: Record<string, number>;
   incidents: number;
+  /** B-49：只读岗位（巡检/竞对/驾驶舱）近窗发现——固定进晨报「只读岗位发现」栏 */
+  readonlyFindings?: Array<{ agent: string; label: string; action: string; n: number }>;
   goalDeviation?: string;
   /** v3.0 路由质量（最近一次 model.router_review；进晨报风险栏） */
   routerReview?: { overallRate: number; raiseTierScenes: string[]; totalGenerations: number };
@@ -76,6 +78,27 @@ export async function gatherBriefFacts(app: pg.Pool, scope: Scope, sinceHours = 
       }
     : undefined;
   const overlayHealth = await gatherOverlayHealth(app, scope);
+  // B-49：只读岗位产出（按 agents.meta.coverage 的事件前缀聚合；无 coverage 的只读岗不虚报）
+  const readonlyRows = await q<{ agent: string; label: string | null; action: string; n: string }>(
+    app, scope,
+    `SELECT a.name AS agent,
+            COALESCE(a.meta->'coverage'->0->>'label', a.meta->>'name', a.preset_key) AS label,
+            e.payload->'decision'->>'action' AS action, count(*)::text AS n
+       FROM agents a
+       JOIN biz_events e
+         ON e.workspace_id = a.workspace_id
+        AND e.payload->'who'->>'id' = a.preset_key
+        AND e.created_at > now() - ($2 || ' hours')::interval
+      WHERE a.workspace_id=$1 AND a.status='ready' AND a.readonly=true
+      GROUP BY 1,2,3 ORDER BY 4 DESC LIMIT 8`,
+    [scope.workspaceId, String(sinceHours)],
+  );
+  const readonlyFindings = readonlyRows.map((r) => ({
+    agent: r.agent,
+    label: r.label ?? "只读发现",
+    action: r.action,
+    n: Number(r.n),
+  }));
   return {
     kpi: { 事件库规模: `${total[0]?.n ?? 0} 条（哈希链可验）` },
     actionsTop: events.map((e) => ({ action: e.action, n: Number(e.n) })),
@@ -83,6 +106,7 @@ export async function gatherBriefFacts(app: pg.Pool, scope: Scope, sinceHours = 
     incidents: Number(incidents[0]?.n ?? 0),
     routerReview,
     overlayHealth,
+    ...(readonlyFindings.length > 0 ? { readonlyFindings } : {}),
   };
 }
 
@@ -121,16 +145,22 @@ const KIND_LABEL: Record<BriefingKind, string> = {
 };
 
 export function composeBriefing(kind: BriefingKind, f: BriefFacts, name: string): string {
+  const readonlyLine = f.readonlyFindings && f.readonlyFindings.length > 0
+    ? `五、只读岗位发现（巡检/竞对/驾驶舱）：${f.readonlyFindings
+        .map((x) => `${x.label}｜${x.agent}：${x.action} ×${x.n}`).join(" · ")}`
+    : null;
+  const overlayNo = readonlyLine ? "六" : "五";
   const lines = [
     `【${KIND_LABEL[kind]} · ${name}】`,
     `一、经营概况：${Object.entries(f.kpi).map(([k, v]) => `${k} ${v}`).join("；") || "—"}`,
     `二、系统动态（近窗）：${f.actionsTop.map((a) => `${a.action} ×${a.n}`).join(" · ") || "静默"}`,
     `三、请示与裁决：L2 待我裁决 ${f.pendingByTier.l2_captain ?? 0} 件 · L3 待集团 ${f.pendingByTier.l3_fleet ?? 0} 件 · **L4 请示董事长 ${f.pendingByTier.l4_chairman ?? 0} 件**`,
     `四、风险：近 7 天断点 ${f.incidents} 起${f.goalDeviation ? `；目标偏差：${f.goalDeviation}` : ""}${f.routerReview ? `；模型路由升级率 ${(f.routerReview.overallRate * 100).toFixed(1)}%（${f.routerReview.totalGenerations} 次生成）${f.routerReview.raiseTierScenes.length > 0 ? `，建议上调默认档：${f.routerReview.raiseTierScenes.join("、")}` : "，各场景健康"}` : ""}`,
+    readonlyLine,
     f.overlayHealth && (f.overlayHealth.staleDrafts > 0 || f.overlayHealth.staleCanaries > 0)
-      ? `五、定制中心：⚠️ 定制草稿 ${f.overlayHealth.drafts} 份待流转（超 3 天 ${f.overlayHealth.staleDrafts} 份）· 灰度超 7 天 ${f.overlayHealth.staleCanaries} 项——请速到「定制中心 /p26」处置`
+      ? `${overlayNo}、定制中心：⚠️ 定制草稿 ${f.overlayHealth.drafts} 份待流转（超 3 天 ${f.overlayHealth.staleDrafts} 份）· 灰度超 7 天 ${f.overlayHealth.staleCanaries} 项——请速到「定制中心 /p26」处置`
       : f.overlayHealth
-        ? `五、定制中心：运转正常（在途草稿 ${f.overlayHealth.drafts} 份，无滞留）`
+        ? `${overlayNo}、定制中心：运转正常（在途草稿 ${f.overlayHealth.drafts} 份，无滞留）`
         : null,
     `以上数字均来自事件库实时取数，可下钻溯源。`,
   ];

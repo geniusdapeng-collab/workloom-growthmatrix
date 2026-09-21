@@ -15,7 +15,7 @@ import {
 import { decideForCaptain, priceContextFromSnapshot, type QueueItem, type CeoVerdict } from "./router.js";
 import { classifyDecision, runDeepAnalysis, judgeOutcome, type ExpectedOutcome } from "./decision.js";
 import { buildAgentScorecards, designReplacement } from "./hr.js";
-import { composeBoardPack, scanOrgHealth, proposeHiring } from "./board.js";
+import { composeBoardPack, gatherStaffingWeekly, scanOrgHealth, proposeHiring } from "./board.js";
 import { generateBriefing, buildMemo, type BriefingKind } from "./briefing.js";
 
 export interface Scope { tenantId: string; workspaceId: string }
@@ -139,10 +139,14 @@ export async function runBriefingBeat(
   if (charter.mode === "disabled") return { eventId: "", via: "rule", skipped: "disabled：未授权，全静默（§12 默认关闭）" };
   const dryRun = isShadow(charter.mode);
   const b = await generateBriefing(app, scope, kind, { name: charter.identity.name, llmCall: opts.llmCall });
+  // B-50：周会附「编制周报」——覆盖缺口/积压/过载的扩编提案 + P2 条件岗运营指标与退场提案
+  const text = kind === "weekly"
+    ? `${b.text}\n\n${(await gatherStaffingWeekly(app, scope)).text}`
+    : b.text;
   const eventId = await inTx(app, scope, (c) =>
     emitCeoEvent(c, scope, "ceo.briefing", {
       params: { kind, via: b.via, mode: charter.mode },
-      after: { text: b.text },
+      after: { text },
       basis: [`事实取数：${b.facts.actionsTop.length} 类动作/待审分层/断点统计`, `合成通道：${b.via}`],
     }, { dryRun }));
   return { eventId, via: b.via };
