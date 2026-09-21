@@ -10,14 +10,14 @@
 
 | 项 | 值 |
 |---|---|
-| 当前批次 | G3 岗位与增长线（B-09/B-10 已并入 main；B-11/B-12/B-43 本批次完成，待 PR 并入） |
-| 批次状态 | G2 完成；G3 进行中：B-09/B-10 已并入 main（`119fb98`）；B-11 增长指标技能、B-12 四岗增长工具/围栏、B-43 双包题库+晋升门禁已实现；`suite:geo` 81/81、`suite:hotel` 43/43、`pnpm test` 全包绿（base 920）、`pnpm suite` 467/467 |
-| 最近更新 | 2026-09-22（会话 4 · B-11/B-12/B-43；顺带完成调色批次 T-0042/T-0043 的 rebase 与合入） |
-| 分支 | `task/T-2026-0921-0003-g3b` |
-| 云端最新提交 | main `a8d5450`（含 G3 B-09/B-10 + 调色批次）；本批次分支待推送 |
-| 本地 HEAD | 本批次提交（B-11/B-12/B-43） |
+| 当前批次 | G4 通道与执行器（G3 全部工作包已完成，本批次 PR 待并入 main） |
+| 批次状态 | G3 完成：B-09..B-12 / B-43 / B-46..B-50 / B-80 / B-82 全部落地；`suite:geo` 81/81、`suite:hotel` 43/43、`pnpm test` 全包绿（base 967）、`pnpm suite` 467/467 |
+| 最近更新 | 2026-09-22（会话 5 · G3 收尾：账号矩阵/授权台账/客群装配/只读进晨报/P2 岗指标/价格确认单/UGC 授权） |
+| 分支 | `task/T-2026-0921-0003-g3c` |
+| 云端最新提交 | main `f69e2c0`（含 G3 前两批）；本批次分支待推送 |
+| 本地 HEAD | 本批次提交（B-46..B-50 / B-80 / B-82） |
 | 阻塞 | 无 |
-| 下一步 | 推送本批次并开 PR；随后 B-46 账号矩阵编排 → B-47 授权台账 → B-48 主包客群装配 → B-49 只读产出进战报 → B-50 P2 岗指标 → B-80 价格确认单 → B-82 UGC 授权 |
+| 下一步 | 推送本批次并开 PR 并入 main；随后进入 G4：B-18 五类国内通道适配器 → B-19 OTA 上传包 → B-20 私域执行器 → B-21/B-22 执行器组合与适配器 → B-23 桌面浏览器驱动 → B-24 环境变量与 doctor → B-25 发布重试与日上限 → B-51 直播模板 → B-52 C 端承接化 → B-75 海外/视频号 → B-81 降级路径 |
 
 ### 会话 2 续 5 记（2026-09-22 00:15）
 
@@ -44,6 +44,17 @@
 - B-43：`bundles/hotel/eval/questions.json`（22 题）与 `bundles/ai-video/eval/questions.json`（24 题）落盘并在清单声明；新增 `packages/base/bundles/eval-questions.test.ts` 装载门禁（题量/红线题/题号唯一）。技能分发接入晋升门禁：`eval_settings.promotion_gate` 开启时，**已装技能升级**必须先有一次通过的 on-change 考试（24h 内、无红线），未过考零写入、入 staging 待考并记 `skill.dist.exam_required`；tRPC 映射为 `PRECONDITION_FAILED`。
 - 回归（2026-09-22）：`suite:geo` 81/81；`suite:hotel` 43/43（先 `pnpm db:seed` 归位夹具）；`pnpm test` 全包绿（base 920 / server 354 / web 101 / webb 6 / webc 21 / video-studio 22 / audit 64 / contract 40 / runtime 15）；`pnpm suite` 467/467；`test:scripts` 57/57；`acceptance:onboarding`、`scan:fences`（0 缺口）、`scan:knowhow`（16 技能）、`bundle-governance`、`capabilities --check`、`product:verify`、`oss:check`、三端生产构建全部通过。
 - 已知边界（未修，留档）：考试院通用管线的 `fence_verdict` 断言通道没有产生方（`runQuestion` 不返回 fenceVerdict），因此 hotel/ai-video 新题库一律使用可判定的硬断言（拒绝/升级、PII、事实词）；围栏题的正判通道列入 B-45 验收矩阵后续项。
+
+### 会话 5 记（2026-09-22 01:25）
+
+- B-46 账号矩阵：`library/account-matrix.yml`（L1–L8 分层 / 9 账号 / 设备组与网络组 / 日上限 / 发布窗口）+ `packages/base/bundles/account-matrix.ts`（装载校验 + 确定性排期：未知账号、窗口、日上限、G16 同设备/同网络同小时防关联）；`account_matrix` 对象入模型。
+- B-47 授权台账：`ip-curator` 下沉主包（权威归属 geo-growth，遮蔽 4→5 处，角色总数仍 74）；`ip_asset` 对象入模型；`ip-ledger.ts` 四维范围校验（用途/平台/地域/期限）+ 30/7/1 天到期预警 + 到期下架清单；新增 `tg-geo-ip-expiry` 日巡触发器（组合触发器 22→23）。
+- B-48 客群装配：`bundles/geo-growth/segment-defaults.yml` 四个「起步方式」（双域日更 / 门店矩阵 / B 端 GEO / 预算敏感），引用零断链、解析幂等、P2 条件岗默认不出场。
+- B-49 只读产出进晨报：hotel 三个只读岗补 `coverage`（巡检/竞对/驾驶舱）；`briefing.ts` 新增「只读岗位发现」固定栏位（按 agents.meta.coverage 聚合，缺 coverage 不虚报），`composeBriefing` 编号连续。
+- B-50 P2 条件岗：两个 P2 preset 透传 `ops_metrics`/`exit_conditions`/`activation_gate`；`p2-ops.ts` 周度评估（keep/watch/exit_proposal/no_data，缺数中断连续计数）；`board.ts#composeStaffingWeekly` 编制周报（覆盖缺口/积压/过载扩编提案 + P2 指标/退场），周会简报自动附上。
+- B-80 价格与权益：hotel 三份模板（价格与权益确认单 / 预售券条款 / 退改说明）+ `price_confirmation` 对象；定价岗新增 `price.confirmation.issue`（绑 R25/R2），团购岗新增 `coupon.terms.render`（绑 R22/R26/R25）。
+- B-82 UGC：`ugc_submission` 对象；私域承接岗新增 UGC 四工具（征集/授权登记/去个人信息/二次发布申请）并绑 G-AD1/G-AD2/G-GROW6；`ugc-flow.ts` 四线审查（授权+凭证+肖像同意、去个人信息、署名、广告标识）与脱敏函数；geo 题库补 2 道 UGC 题。
+- 回归（2026-09-22）：`suite:geo` 81/81；`suite:hotel` 43/43；`pnpm test` 全包绿（base 967 / server 354 / web 101 / webb 6 / webc 21 / video-studio 22 / audit 64 / contract 40 / runtime 15）；`pnpm suite` 467/467；`test:scripts` 57/57；新增模块用例 85/85；`acceptance:onboarding`、`scan:fences` 0 缺口、`scan:knowhow` 16/16、`bundle-governance`、`capabilities --check`、`product:verify`、`oss:check`、全仓 typecheck 与三端构建全部通过。
 | 计划版本 | v1.3：84 个工作包；已整合视频链路修复与基座去审批化，并重定义 B-70/B-72/B-73/B-64 |
 
 ---
@@ -55,7 +66,7 @@
 | G0 | 计划与账本 | 完成 | `4cf8205` | 文档已推送云端 |
 | G1 | 契约与矩阵地基 | 完成 | `ec29c2e` | vitest 38/38；tsc（base+contract）通过；bundle governance 通过；矩阵缺口 0 |
 | G2 | 触发器与指挥链 | 完成 | `4287f21` | 三包 triggers 声明合并装载；指挥链 8 条 / 组合 73 岗；suite:geo 81/81、suite:hotel 43/43；B-06c（video seed）单列待办 |
-| G3 | 岗位与增长线 | 进行中 | `49ae735` | B-09/B-10 落地；geo/hotel 双套件 + DB 集成 + onboarding + 矩阵缺口全绿 |
+| G3 | 岗位与增长线 | 完成 | `f69e2c0` + 本批次 | B-09..B-12 / B-43 / B-46..B-50 / B-80 / B-82 全部落地；双域套件 + 全包测试 + 场景套件全绿 |
 | G4 | 通道与执行器 | 未开始 | — | — |
 | G5 | 模型、生成与数据 | 未开始 | — | — |
 | G6 | 协作机制与验收 | 未开始 | — | — |
@@ -104,13 +115,13 @@
 - [x] B-11 增长指标技能（`skills/growth-metrics/SKILL.md`；五项周表分子分母冻结 + LTV/CAC；16 技能五维评估全绿；geo 题库补 2 题）
 - [x] B-12 四个岗位参数与工具调整（review-analyst / data-board-officer / live-producer / hotel ai-receptionist；工具白名单与围栏绑定过治理门禁）
 - [x] B-43 hotel 与 ai-video 补考题（各 22 / 24 题 + 清单声明 + 装载门禁；技能升级接入晋升门禁：promotion_gate 开启时先过 on-change 考试）
-- [ ] B-46 账号矩阵编排对象与协同排期（覆盖 ACT-B-07 / ADD-P-11）
-- [ ] B-47 授权台账下沉主包（ip-curator + ip_asset + 到期预警，覆盖 ACT-B-10）
-- [ ] B-48 获客主包 segment-defaults 客群装配（覆盖 ADD-P-14 / UX-03）
-- [ ] B-49 只读岗位产出进晨报与闭环台账（覆盖 REF-P-08 / SCALE-05）
-- [ ] B-50 P2 条件岗运营指标、退场条件与编制周报（覆盖 SCALE-07/08）
-- [ ] B-80 价格与权益确认单工具 + 预售券/退改合规模板（覆盖第一批合规条目）
-- [ ] B-82 UGC 征集与授权流程（授权回收/去个人信息/广告标识）
+- [x] B-46 账号矩阵编排对象与协同排期（L1–L8 分层 + 排期器 G16 防关联 + 日上限/窗口；7 用例）
+- [x] B-47 授权台账下沉主包（ip-curator 权威归主包 + ip_asset + 四维范围校验 + 30/7/1 天预警 + 日巡触发器）
+- [x] B-48 获客主包 segment-defaults 客群装配（4 个起步方式，引用零断链/幂等/P2 默认不出场）
+- [x] B-49 只读岗位产出进晨报与闭环台账（三个只读岗补 coverage + 晨报固定第六栏，编号连续）
+- [x] B-50 P2 条件岗运营指标、退场条件与编制周报（ops_metrics/exit_conditions + 周度评估 + 编制周报）
+- [x] B-80 价格与权益确认单工具 + 预售券/退改合规模板（3 模板 + price_confirmation 对象 + 2 岗工具）
+- [x] B-82 UGC 征集与授权流程（四线审查 + 脱敏 + 岗位四工具 + 2 道考题）
 
 ### G4 通道与执行器
 
@@ -233,6 +244,9 @@
 | 2026-09-22 | `vitest run eval-questions + skill-ops + bundles + acquisition-loop` | 60/60 通过 | 含 B-43 题库装载门禁与晋升门禁用例 |
 | 2026-09-22 | `pnpm scan:knowhow` | 16/16 通过 | growth-metrics 五维齐全且评测覆盖 |
 | 2026-09-22 | `node scripts/generate-capabilities.mjs --check` | 同步 ✓ | B-11 技能数刷新 |
+| 2026-09-22 | `pnpm test`（G3 收尾批次） | 通过 | base 967 / server 354 / web 101 / webb 6 / webc 21 / video-studio 22 / audit 64 / contract 40 / runtime 15 |
+| 2026-09-22 | 新增模块用例（account-matrix/ip-ledger/geo-segments/p2-ops/price-confirmation/ugc-flow/briefing-readonly/staffing-weekly/eval-questions/skill-ops） | 85/85 通过 | 含 G16 防关联、授权到期、P2 退场、UGC 四线 |
+| 2026-09-22 | `pnpm suite:geo` / `pnpm suite:hotel` | 81/81 · 43/43 通过 | 对象模型 65 类（geo）/29 类（hotel）；组合 74 岗 / 5 处遮蔽 |
 | 2026-09-21 | 整合外部批次后的门禁链 | 全部通过 | `bundle-governance --refresh-digests`、`matrix-gap`（0 缺口，72 围栏）、`tsc`（base/contract/web）、`bundles.test.ts` 11/11（DB）、`acceptance:onboarding` 通过 |
 | 2026-09-21 | `cd apps/web && ../../node_modules/.bin/vitest run src/lib/display.test.ts` | 11/11 通过 | web 测试必须在 apps/web 目录用其自身 vitest 配置跑（根配置会因 @workloom/ui 子路径解析误报） |
 | 2026-09-21 | `tsx --env-file=.env scripts/migrate.ts` | 0038_trigger_declared_id.sql 已应用 | triggers 新增 declared_id + 唯一索引 |
@@ -334,3 +348,4 @@ export PATH="/tmp/wl-bin:$PATH"
 | 2026-09-21 | 会话 2 续 4：B-09/B-10 实现（creator-partner 下沉主包并成为组合权威，遮蔽 4 处、组合仍 73 岗；新增 creator_collab/growth_asset/account_growth_metric/matrix_entry 四类对象；G-AD1/G-AD2 达人合规围栏）；suite-geo 口径已改（28 preset / 30 围栏）；遗留 `bundles.test` H-15 工具探针失败，未并入 main |
 | 2026-09-22 | 会话 3 收尾：PR #7 全门禁绿并合入 main（`119fb98`）；调色批次 T-0042/T-0043 rebase 后依次合入（`2c66df9`/`a8d5450`），main = 74 岗 / 72 技能 / 79 条组合围栏 |
 | 2026-09-22 | 会话 4：B-11 增长指标技能、B-12 四岗增长工具与围栏、B-43 hotel/ai-video 题库与技能升级晋升门禁落地；全包测试与双域套件全绿 |
+| 2026-09-22 | 会话 5：B-46 账号矩阵 + B-47 授权台账（ip-curator 下沉） + B-48 获客起步方式 + B-49 只读发现进晨报 + B-50 P2 岗指标/编制周报 + B-80 价格确认单 + B-82 UGC 授权流程；G3 全部工作包完成 |
