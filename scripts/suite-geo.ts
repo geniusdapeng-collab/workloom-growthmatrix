@@ -82,8 +82,8 @@ a("bundle.json 声明的全部资产路径存在", () => {
   }
 });
 a("28 个 preset（双域 16 + 视觉栈 2 + 获客用增 10，含 2 个 P2 条件岗）且 preset_key 唯一", () => {
-  assert(presets.length === 28, `期望 27，实际 ${presets.length}`);
-  assert(presetKeys.size === 27, "preset_key 重复");
+  assert(presets.length === 28, `期望 28，实际 ${presets.length}`);
+  assert(presetKeys.size === presets.length, `preset_key 重复（${presets.length} 个文件仅 ${presetKeys.size} 个唯一 key）`);
 });
 a("preset 必填字段完整（含 prompt 三要素）", () => {
   for (const p of presets) {
@@ -389,8 +389,20 @@ c("待批请示 tier 分层正确（G-GEO1→L2 / G12、G20→L4）", async () =
   assert(m["G-GEO1"] === "l2_captain" && m["G12"] === "l4_chairman" && m["G20"] === "l4_chairman", JSON.stringify(m));
 });
 c("账号指标时序 7 天 × 2 账号", async () => {
-  const r = await q(`SELECT count(*) n FROM account_metrics WHERE workspace_id=$1`, [WS]);
-  assert(Number(r.rows[0].n) === 14, `metrics=${r.rows[0].n}`);
+  // account_metrics 是只增时序表：种子按「近 7 天」滚动写入，历史行保留是预期行为，
+  // 因此按当前 7 天窗口断言（两账号各 7 天），而不是全表行数 14（后者会随运行天数自然增长）。
+  const r = await q(
+    `SELECT account_id, count(DISTINCT captured_at::date) days
+       FROM account_metrics
+      WHERE workspace_id=$1 AND video_id IS NULL
+        AND account_id IN ('@RuikeLaser','@RuikeLaserOfficial')
+        AND captured_at >= CURRENT_DATE - INTERVAL '7 days'
+        AND captured_at < CURRENT_DATE + INTERVAL '1 day'
+      GROUP BY account_id ORDER BY account_id`,
+    [WS],
+  );
+  const m = Object.fromEntries(r.rows.map((x) => [x.account_id, Number(x.days)]));
+  assert(Object.keys(m).length === 2 && Object.values(m).every((n) => n === 7), `7 天窗口不完整：${JSON.stringify(m)}`);
 });
 c("种子幂等：复跑后事件数不膨胀", async () => {
   const before = await q(`SELECT count(*) n FROM biz_events WHERE workspace_id=$1`, [WS]);
