@@ -82,6 +82,16 @@
 - B-53..B-61：视频成本复算、采集调度接线、三态标识、保鲜环配置、工具幂等契约、增长偏好、夜班候选扩展、场景覆盖审计（26 场景并集 / 52 声明 / 26 缺口）、事件与模型链压测。
 - B-78/B-79/B-84：OSS inventory 刷新后 `test:oss` + `oss:check` 全绿；新增表 RLS 用例并**发现修复 growth_daily 视图 security_invoker 缺失导致的 RLS 绕过（0044）**；外部事实复核脚本 + 报告（23 条规格 / 17 项待复核）。
 - 回归（2026-09-22）：`pnpm test` 全包绿（base 1038 / server 367 / webc 24 / video-studio 32 / web 101 / webb 6 / audit 64 / contract 40 / runtime 15）；`pnpm suite` 467/467；`suite:geo` 81/81；`suite:hotel` 43/43；`test:scripts` 62/62；`acceptance:onboarding`、`scan:fences`、`scan:knowhow`、`bundle-governance`、`capabilities --check`、`product:verify`、`oss:check`、全仓 typecheck 与三端构建全绿。
+
+### 会话 8 记（2026-09-22 02:30 · G6 部分）
+
+- B-36 五模式执行器：`collaboration/dispatch.ts`（m1 单人 / m2 串行管线 / m3 黑板单主写者 / m4 契约三段 / m5 战役编组；人数与阶段硬约束，fail-closed）。
+- B-37 契约持久化：迁移 0045 `task_contracts`（thread_id/bundle_scope/matrix_refs，RLS，app 无 DELETE）+ `collaboration/store.ts`（状态机纯函数推进 + `contract.*` 事件同事务）；PG 用例 4/4。
+- B-40（部分）：accept 自动建线程；deliver 事件点名 verifier；settle 事件带结算金额；验收脚本落预算账本并验证幂等去重。
+- B-41 验收脚本：`pnpm acceptance:collab` 全链通过（E-24253 起，契约 ct-accept-*）。
+- B-44 静态检查：`pnpm scan:rls`（新增写路径双 GUC + 委托助手识别 + `rls-exempt:` 豁免），self-test + 全绿。
+- B-67/B-68/B-83：同步声明文档；默认装载裁剪断言 3/3；事件冻结门禁（118 类对象、顶层五元冻结）。
+- G6 剩余（未完成，见待办）：B-38 tRPC 侧 agent 写路径、B-39 冲突仲裁对象化、B-40 审批/结算全链、B-45 验收矩阵扩展、B-62..B-66、B-69..B-77、G7 RDAS。
 | 计划版本 | v1.3：84 个工作包；已整合视频链路修复与基座去审批化，并重定义 B-70/B-72/B-73/B-64 |
 
 ---
@@ -192,8 +202,14 @@
 
 ### G6 协作机制与验收
 
-- [ ] B-36 五模式执行器
-- [ ] B-37 契约线程字段与迁移
+- [x] B-36 五模式执行器（`collaboration/dispatch.ts`：编排/人数约束/黑板单主写者；6 用例）
+- [x] B-37 契约线程字段与迁移（0045 `task_contracts`：thread_id/bundle_scope/matrix_refs + RLS + 只增不改；4 项 PG 用例）
+- [~] B-38 agent actor 与写路径（契约 store 支持 actor type=agent/system；tRPC 侧接线待后续）
+- [ ] B-39 冲突仲裁对象化
+- [~] B-40 契约↔线程↔审批↔结算（accept 自动建线程、deliver 点名 verifier、settle 落预算账本幂等；审批联动待后续）
+- [x] B-41 协作闭环验收脚本（`pnpm acceptance:collab` 全链通过：offer→settle + 账本）
+- [x] B-44 RLS/GUC 静态检查（`pnpm scan:rls`：新增写路径双 GUC 门禁 + self-test）
+- [ ] B-45 验收矩阵扩展
 - [ ] B-38 agent actor 与写路径
 - [ ] B-39 冲突仲裁对象化
 - [ ] B-40 契约↔线程↔审批↔结算
@@ -205,8 +221,8 @@
 - [ ] B-64 首登行动卡（覆盖 UX-04）
 - [ ] B-65 执行器沙箱与动态加载权限治理（覆盖 TECH-15）
 - [ ] B-66 统计口径脚本化（覆盖 DROP-P-05）
-- [ ] B-67 sync/ 基座同步机制引入或声明不参与（覆盖 TECH-03，依 DEC-17）
-- [ ] B-68 默认装载裁剪（覆盖 DROP-P-01 至 07）
+- [x] B-67 sync/ 基座同步机制：书面声明不参与（`docs/BASE-SYNC-DECLARATION.md`，覆盖 TECH-03/DEC-17）
+- [x] B-68 默认装载裁剪（P2 岗/商单分账触发器/电影级技能默认不出场；`default-trimming.test.ts` 3 用例）
 - [ ] B-69 引导漏斗埋点接入真实渠道（覆盖 UX-02）
 - [ ] B-70 人审减负机制（决策包聚合/批量手势/低风险抽检/H1 仪表）
 - [ ] B-71 契约强制规则 G-COL1 + 黑板单主写者围栏
@@ -215,7 +231,7 @@
 - [ ] B-74 备份与回滚演练（PG/bundle/围栏/模型/执行器）
 - [ ] B-76 Bundle 版本与发布治理（geo-growth 1.1.0 + CHANGELOG + 签名规划）
 - [ ] B-77 文档与演示资产同步（README/capabilities/官网/演示页）
-- [ ] B-83 事件 schema 冻结与对象枚举扩展门禁
+- [x] B-83 事件 schema 冻结与对象枚举扩展门禁（`pnpm scan:event-freeze`：118 类对象冻结 + 顶层五元冻结；2 用例）
 
 ### G7 真机验收
 
