@@ -10,14 +10,14 @@
 
 | 项 | 值 |
 |---|---|
-| 当前批次 | G3 岗位与增长线（B-09/B-10 已完成并回归全绿，待 PR 并入 main；下一步 B-11/B-12） |
-| 批次状态 | G2 完成；G3 进行中：B-09 达人岗下沉 + B-10 四类对象 + G-AD1/G-AD2 已实现；`suite:geo` 81/81、`suite:hotel` 43/43、`bundles.test` 11/11、`acceptance:onboarding` 通过、矩阵缺口 0 |
-| 最近更新 | 2026-09-22（会话 3 · G3 分支回归修复：preset 唯一性断言、7 天时序窗口口径、pnpm 11 构建许可） |
-| 分支 | `task/T-2026-0921-0003` |
-| 云端最新提交 | 本地整合后待推送（含 T-2026-0921-0041 / T-2026-0921-0050） |
-| 本地 HEAD | `49ae735`（G3 回归修复；分支含 `1a9ab29`/`2025d7f`） |
+| 当前批次 | G3 岗位与增长线（B-09/B-10 已并入 main；B-11/B-12/B-43 本批次完成，待 PR 并入） |
+| 批次状态 | G2 完成；G3 进行中：B-09/B-10 已并入 main（`119fb98`）；B-11 增长指标技能、B-12 四岗增长工具/围栏、B-43 双包题库+晋升门禁已实现；`suite:geo` 81/81、`suite:hotel` 43/43、`pnpm test` 全包绿（base 920）、`pnpm suite` 467/467 |
+| 最近更新 | 2026-09-22（会话 4 · B-11/B-12/B-43；顺带完成调色批次 T-0042/T-0043 的 rebase 与合入） |
+| 分支 | `task/T-2026-0921-0003-g3b` |
+| 云端最新提交 | main `a8d5450`（含 G3 B-09/B-10 + 调色批次）；本批次分支待推送 |
+| 本地 HEAD | 本批次提交（B-11/B-12/B-43） |
 | 阻塞 | 无 |
-| 下一步 | 推送分支并开 PR 并入 main；随后 B-11 增长指标技能 → B-12 岗位参数 → B-43 补考题 → B-46..B-50 / B-80 / B-82 |
+| 下一步 | 推送本批次并开 PR；随后 B-46 账号矩阵编排 → B-47 授权台账 → B-48 主包客群装配 → B-49 只读产出进战报 → B-50 P2 岗指标 → B-80 价格确认单 → B-82 UGC 授权 |
 
 ### 会话 2 续 5 记（2026-09-22 00:15）
 
@@ -35,6 +35,15 @@
 - 修复提交：`f3e4fb6`（pnpm 11 构建许可）、`49ae735`（suite:geo 断言口径）。
 - CI test-gate 复现与修复（2026-09-22 00:45）：test-gate 的 P0 门禁 stage（`acceptance:onboarding` + `scan:fences` + `scan:knowhow`）中 `scan:fences` 报「G-AD2 动作 content.submit 缺别名对象 content」；根因是 `2025d7f` 精简 G-AD2 对象枚举时移除了 `content`，而组合对象模型（geo-growth/hotel 均声明 `content`）按工具前缀派生该视图。修复：G-AD2 `object_types` 补回 `content`，刷新 geo-growth 摘要；本地 `scan:fences` 0 缺口、`scan:knowhow` 15/15、`suite:geo` 81/81、`bundles.test` 11/11 全绿。
 - 队列处置（协议 §4 先到先得）：PR #5/#6（调色批次，基于 `22af93c` 且与 main 冲突）与 PR #7 改同一批文件，锁门禁判定 #7 排队。处置：先在本会话注释并临时关闭 #5/#6（分支与提交保留），#7 合并后立即把调色分支 rebase 到最新 main（本地已完成一版：补登 colorist/围栏/技能/LUT 清单 + 74 岗计数）后重开并跑门禁。
+
+### 会话 4 记（2026-09-22 01:10）
+
+- 队列清空：PR #7（G3 B-09/B-10）→ PR #5（T-0042 调色移植，rebase 后重开）→ PR #6（T-0043 配方驱动择优）全部门禁全绿并 squash 合并；main 现为 `a8d5450`（74 岗 / 72 技能 / 79 条组合围栏）。调色分支 rebase 的两个硬问题一并处置：`gradients` 默认随机相位导致的择优用例偶发红灯（改用确定性 `color+geq` 低对比夹具）、调色三套用例接入 `test:scripts`。
+- B-11：新增 `bundles/geo-growth/skills/growth-metrics/SKILL.md`（五项周表分子分母冻结口径 + LTV/CAC，六原则/四打法/四步 SOP/六指标/六失败模式），评估器扩容为 16 技能，geo 题库补 2 道 growth-metrics 题（口径与 G-GROW6 数据边界）。
+- B-12：`review-analyst` 增增长五栏与 `growth.metrics.read`（绑 G-GROW6）；`data-board-officer` 增 `growth.metrics.collect` 时序采集；`live-producer` 增 `clip.trigger.declare` 切片触发器声明（发布仍走 G9/G12）；`hotel/ai-receptionist` 增 `lead.source.track` 留资埋点（只写来源链不写明文客资）。
+- B-43：`bundles/hotel/eval/questions.json`（22 题）与 `bundles/ai-video/eval/questions.json`（24 题）落盘并在清单声明；新增 `packages/base/bundles/eval-questions.test.ts` 装载门禁（题量/红线题/题号唯一）。技能分发接入晋升门禁：`eval_settings.promotion_gate` 开启时，**已装技能升级**必须先有一次通过的 on-change 考试（24h 内、无红线），未过考零写入、入 staging 待考并记 `skill.dist.exam_required`；tRPC 映射为 `PRECONDITION_FAILED`。
+- 回归（2026-09-22）：`suite:geo` 81/81；`suite:hotel` 43/43（先 `pnpm db:seed` 归位夹具）；`pnpm test` 全包绿（base 920 / server 354 / web 101 / webb 6 / webc 21 / video-studio 22 / audit 64 / contract 40 / runtime 15）；`pnpm suite` 467/467；`test:scripts` 57/57；`acceptance:onboarding`、`scan:fences`（0 缺口）、`scan:knowhow`（16 技能）、`bundle-governance`、`capabilities --check`、`product:verify`、`oss:check`、三端生产构建全部通过。
+- 已知边界（未修，留档）：考试院通用管线的 `fence_verdict` 断言通道没有产生方（`runQuestion` 不返回 fenceVerdict），因此 hotel/ai-video 新题库一律使用可判定的硬断言（拒绝/升级、PII、事实词）；围栏题的正判通道列入 B-45 验收矩阵后续项。
 | 计划版本 | v1.3：84 个工作包；已整合视频链路修复与基座去审批化，并重定义 B-70/B-72/B-73/B-64 |
 
 ---
@@ -92,9 +101,9 @@
 
 - [x] B-09 creator-partner 下沉主包（`bundles/geo-growth/presets/creator-partner.yml`；G-AD1/G-AD2 两条达人合规围栏随包）
 - [x] B-10 四类新对象（creator_collab / growth_asset / account_growth_metric / matrix_entry；`bundles/geo-growth/schemas/objects.json`）
-- [ ] B-11 增长指标技能
-- [ ] B-12 四个岗位参数与工具调整
-- [ ] B-43 hotel 与 ai-video 补考题
+- [x] B-11 增长指标技能（`skills/growth-metrics/SKILL.md`；五项周表分子分母冻结 + LTV/CAC；16 技能五维评估全绿；geo 题库补 2 题）
+- [x] B-12 四个岗位参数与工具调整（review-analyst / data-board-officer / live-producer / hotel ai-receptionist；工具白名单与围栏绑定过治理门禁）
+- [x] B-43 hotel 与 ai-video 补考题（各 22 / 24 题 + 清单声明 + 装载门禁；技能升级接入晋升门禁：promotion_gate 开启时先过 on-change 考试）
 - [ ] B-46 账号矩阵编排对象与协同排期（覆盖 ACT-B-07 / ADD-P-11）
 - [ ] B-47 授权台账下沉主包（ip-curator + ip_asset + 到期预警，覆盖 ACT-B-10）
 - [ ] B-48 获客主包 segment-defaults 客群装配（覆盖 ADD-P-14 / UX-03）
@@ -218,6 +227,12 @@
 | 2026-09-22 | `pnpm acceptance:onboarding` | 通过 | 影子→试用→账本只增 |
 | 2026-09-22 | `tsx scripts/tools/matrix-gap.mts` | 缺口 0 | 73 岗 / 74 围栏 / 87 平台引用 / 123 条目 |
 | 2026-09-22 | `tsc -p packages/base/tsconfig.json --noEmit` + contract build | 通过 | — |
+| 2026-09-22 | `pnpm test`（全包） | 通过 | base 920 / server 354 / web 101 / webb 6 / webc 21 / video-studio 22 / audit 64 / contract 40 / runtime 15 |
+| 2026-09-22 | `pnpm suite` | 467/467 通过 | HTTP E2E 51/51 |
+| 2026-09-22 | `pnpm test:scripts` | 57/57 通过 | 含调色 core/executor/luts（B-43 后） |
+| 2026-09-22 | `vitest run eval-questions + skill-ops + bundles + acquisition-loop` | 60/60 通过 | 含 B-43 题库装载门禁与晋升门禁用例 |
+| 2026-09-22 | `pnpm scan:knowhow` | 16/16 通过 | growth-metrics 五维齐全且评测覆盖 |
+| 2026-09-22 | `node scripts/generate-capabilities.mjs --check` | 同步 ✓ | B-11 技能数刷新 |
 | 2026-09-21 | 整合外部批次后的门禁链 | 全部通过 | `bundle-governance --refresh-digests`、`matrix-gap`（0 缺口，72 围栏）、`tsc`（base/contract/web）、`bundles.test.ts` 11/11（DB）、`acceptance:onboarding` 通过 |
 | 2026-09-21 | `cd apps/web && ../../node_modules/.bin/vitest run src/lib/display.test.ts` | 11/11 通过 | web 测试必须在 apps/web 目录用其自身 vitest 配置跑（根配置会因 @workloom/ui 子路径解析误报） |
 | 2026-09-21 | `tsx --env-file=.env scripts/migrate.ts` | 0038_trigger_declared_id.sql 已应用 | triggers 新增 declared_id + 唯一索引 |
@@ -317,3 +332,5 @@ export PATH="/tmp/wl-bin:$PATH"
 | 2026-09-21 | 会话 2 续 2：B-05b/B-06b/B-42b 落地（hotel 12 条 + ai-video 7 条声明；system 动作白名单；按 beat/template 去重的组合经营日历 23 条；seed.ts 去硬编码并退役旧触发器）；双域套件与 DB 集成全绿 |
 | 2026-09-21 | 会话 2 续 3：B-07/B-08 落地（指挥权归获客口径，hotel-ceo 独立在编；commandChain 8 条并校验；岗位退场与同名去重只停用不删除）；文档与套件口径同步 73 岗；全量回归通过 |
 | 2026-09-21 | 会话 2 续 4：B-09/B-10 实现（creator-partner 下沉主包并成为组合权威，遮蔽 4 处、组合仍 73 岗；新增 creator_collab/growth_asset/account_growth_metric/matrix_entry 四类对象；G-AD1/G-AD2 达人合规围栏）；suite-geo 口径已改（28 preset / 30 围栏）；遗留 `bundles.test` H-15 工具探针失败，未并入 main |
+| 2026-09-22 | 会话 3 收尾：PR #7 全门禁绿并合入 main（`119fb98`）；调色批次 T-0042/T-0043 rebase 后依次合入（`2c66df9`/`a8d5450`），main = 74 岗 / 72 技能 / 79 条组合围栏 |
+| 2026-09-22 | 会话 4：B-11 增长指标技能、B-12 四岗增长工具与围栏、B-43 hotel/ai-video 题库与技能升级晋升门禁落地；全包测试与双域套件全绿 |

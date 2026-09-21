@@ -136,7 +136,7 @@ a("围栏 match 引用的对象类型均在对象模型内（别名放行面由 
 });
 a("技能 frontmatter 完整且与 bundle.json 对齐", () => {
   const dirs = readdirSync(join(BUNDLE, "skills"));
-  assert(dirs.length === 29, `技能数 ${dirs.length}`);
+  assert(dirs.length === 30, `技能数 ${dirs.length}`);
   for (const d of dirs) {
     const raw = readFileSync(join(BUNDLE, "skills", d, "SKILL.md"), "utf-8");
     const m = raw.match(/^---\n([\s\S]*?)\n---\n/);
@@ -336,9 +336,9 @@ c("30 条围栏 active 装载（与基线文件口径一致）", async () => {
   const r = await q(`SELECT count(*) n FROM fence_rules WHERE workspace_id=$1 AND status='active' AND version='geo-growth-baseline/v1'`, [WS]);
   assert(Number(r.rows[0].n) === 30, `fences=${r.rows[0].n}`);
 });
-c("29 个 GEO 技能已安装（双域 6 + 视觉 14 + 获客用增 9）", async () => {
+c("30 个 GEO 技能已安装（双域 6 + 视觉 14 + 获客用增 10）", async () => {
   const r = await q(`SELECT count(*) n FROM skill_installs si JOIN skills s ON s.id=si.skill_id WHERE si.workspace_id=$1 AND s.bundle='geo-growth'`, [WS]);
-  assert(Number(r.rows[0].n) === 29, `skills=${r.rows[0].n}`);
+  assert(Number(r.rows[0].n) === 30, `skills=${r.rows[0].n}`);
 });
 c("组合经营日历触发器全部 enable（数量=三包声明合并去重结果）", async () => {
   const { loadComposedTriggers } = await import("@workloom/base/bundles");

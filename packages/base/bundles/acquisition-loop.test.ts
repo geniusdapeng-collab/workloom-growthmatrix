@@ -246,7 +246,8 @@ describe("多领域融合：组合岗位编制裁决", () => {
     const companyCeo = VIEWS.find((b) => b.id === "geo-growth")!.presets.get("company-ceo")!.doc.fence_bindings!;
     expect(companyCeo).toEqual(["G17", "G18"]);
     const geoReview = VIEWS.find((b) => b.id === "geo-growth")!.presets.get("review-analyst")!.doc.fence_bindings!;
-    expect(geoReview).toEqual(["G18"]);
+    // B-12：增长五栏进战报后，复盘分析师显式绑定 G-GROW6（增长数据只出脱敏聚合、明细不出域）
+    expect(geoReview).toEqual(["G18", "G-GROW6"]);
   });
 
   it("组合编制覆盖三条管线的全部岗位（跨领域闭环不断岗）", () => {

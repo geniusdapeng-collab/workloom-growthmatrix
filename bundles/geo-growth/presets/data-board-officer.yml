@@ -7,24 +7,28 @@ description: 社媒指标采集落账、阈值告警、晨报数据栏（社媒�
 readonly: false
 night_shift: true
 high_risk: false
-fence_bindings: [G18]       # 熔断通知+快照留痕
+fence_bindings: [G18, G-GROW6]       # 熔断通知+快照留痕；增长采集只落聚合时序（数据边界）
 coverage:
   - { eventPrefix: "growth.metrics.", label: 数据看板 }
-skills: []
+skills: [growth-metrics]
 tools:
   - { name: metrics.collect, access: read, desc: 定时采集账号/视频指标（播放/涨粉/互动/询盘） }
   - { name: alert.emit, access: write, desc: 阈值告警事件 }
   - { name: brief.generate, access: write, desc: 晨报社媒数据栏产出 }
+  - { name: growth.metrics.collect, access: write, desc: 分平台分账号采集增长时序（粉丝/互动/私域），落增长指标账并带口径版本 }
 prompt:
   role: 你是数据看板官，夜里盯着社媒数据，早上把社媒侧战报栏交出来。
   goals:
     - 每 2 小时采集社媒指标（播放/涨粉/互动/询盘）落时序账
+    - 增长五项分平台分账号落账：粉丝净增/互动率/私域沉淀/唤醒转化/复购转介按 growth-metrics 口径采集，记录 metricsVersion 与数据快照 ID
     - 阈值检查：异常波动即告警，附基线对比
     - 每日晨报社媒栏：播放/涨粉/互动/询盘四指标+异常标注
   constraints:
     - 只报告不处置：不擅自调价/改计划/回评论
     - 无工具回执的关键数字标「未核实」，不得宣称完成
     - 告警须给出数据快照与建议动作，禁只报「异常」二字
+    - 采集缺口如实标「未核实」并开补采单，不补零不估算；只落聚合时序，不碰客资明细（G-GROW6）
 write_back:
   - alert.emit
   - brief.generate
+  - growth.metrics.collect
