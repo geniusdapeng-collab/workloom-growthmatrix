@@ -180,11 +180,11 @@ b("基线回归：R2 保底价熔断仍生效", () => {
 
 /* ================= C · 种子与运行态 ================= */
 const c = C("C");
-c("16 个酒店岗全部在编（组合编制共 74 岗）", async () => {
-  // 组合编制口径（2026-09-22 调色师加入后）：总数 74（hotel 16 / ai-video 30 / geo-growth 28，4 处同名遮蔽），其中酒店来源 16。
+c("16 个酒店岗全部在编（组合编制共 75 岗）", async () => {
+  // 组合编制口径（2026-09-22 配乐师加入后）：总数 75（hotel 16 / ai-video 30 / geo-growth 29，5 处同名遮蔽），其中酒店来源 16。
   // 只统计 ready（组合退场的历史岗位保留为 disabled 供审计）；旧断言只认 16 会把跨域岗位误判为缺编。
   const all = await q(`SELECT count(*) n FROM agents WHERE workspace_id=$1 AND status='ready'`, [WS]);
-  assert(Number(all.rows[0].n) === 74, `组合编制 agents=${all.rows[0].n}`);
+  assert(Number(all.rows[0].n) === 75, `组合编制 agents=${all.rows[0].n}`);
   const hotel = await q(
     `SELECT count(*) n FROM agents WHERE workspace_id=$1 AND status='ready'
        AND (meta->>'sourceBundleId' = 'hotel' OR meta->>'sourceBundleId' IS NULL)`,
