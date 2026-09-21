@@ -102,8 +102,11 @@ a("夜班编制覆盖跨时区值守（≥5 员 night_shift）", () => {
   for (const k of ["visibility-watcher", "entity-inspector", "data-board-officer", "company-ceo"])
     assert(n.includes(k), `${k} 应为夜班（跨时区/凌晨巡检纪律）`);
 });
-a("围栏 25 条（双域 17 + 获客用增 8）全部 is_baseline（只可加严）", () => {
-  assert(fenceRules.length === 25, `期望 25，实际 ${fenceRules.length}`);
+a("围栏基线 28 条（双域 17 + 获客用增 8 + 人审边界 2 + 素材制作放行 1）全部 is_baseline（只可加严）", () => {
+  // 口径以 bundles/geo-growth/fences/geo-growth-baseline.yml 实物为准：
+  // 2026-09-21 基线为 27 条（17 双域 + 8 获客用增 + G-C01/G-C02 内部协作放行面），
+  // 视频链路批次新增 G-C04（素材制作渲染放行）后为 28 条。
+  assert(fenceRules.length === 28, `期望 28，实际 ${fenceRules.length}`);
   assert(fenceRules.every(r => r.is_baseline), "存在非基线规则");
 });
 a("GEO 三闸到位：G-GEO1 review / G-GEO2 block / G-GEO3 block", () => {
@@ -119,9 +122,17 @@ a("阶段机：六阶段 + 三层客户 + 三条交付线", () => {
   assert(stagesJson.account_stages.length === 6, "六阶段机缺环");
   assert(stagesJson.customer_tiers.length === 3 && stagesJson.delivery_lines.length === 3, "客户分层/交付线缺失");
 });
-a("围栏 match 引用的对象类型均在对象模型内", () => {
-  for (const r of fenceRules) for (const t of r.objectTypes)
-    assert(objectTypes.has(t) || ["fence_rule", "circuit_breaker"].includes(t), `${r.rule_id} 引用未声明对象 ${t}`);
+a("围栏 match 引用的对象类型均在对象模型内（别名放行面由 scan:fences 门禁覆盖）", () => {
+  // G-C01/G-C02 是「工具前缀派生对象视图」的别名并集放行面（S9）：其对象名由规划器
+  // 自造动作派生，允许超出静态对象枚举，但必须通过 `pnpm scan:fences`（fence-alias-scan）
+  // 门禁校验别名覆盖，不得在此静默放宽其它规则的枚举约束。
+  // G-C04 同为素材制作的工具前缀派生视图（render_script/render_job/video 等）。
+  const aliasViewRules = new Set(["G-C01", "G-C02", "G-C04"]);
+  for (const r of fenceRules) {
+    if (aliasViewRules.has(r.rule_id)) continue;
+    for (const t of r.objectTypes)
+      assert(objectTypes.has(t) || ["fence_rule", "circuit_breaker"].includes(t), `${r.rule_id} 引用未声明对象 ${t}`);
+  }
 });
 a("技能 frontmatter 完整且与 bundle.json 对齐", () => {
   const dirs = readdirSync(join(BUNDLE, "skills"));
@@ -298,10 +309,10 @@ c("工作区存在且行业为 geo-growth", async () => {
   const r = await q(`SELECT industry, stage FROM workspaces WHERE id=$1`, [WS]);
   assert(r.rows[0]?.industry === "geo-growth", `industry=${r.rows[0]?.industry}`);
 });
-c("组合编制全部 ready 落库（本包 27 岗 ⊆ 组合 72 岗，无缺岗）", async () => {
+c("组合编制全部 ready 落库（本包 27 岗 ⊆ 组合 73 岗，无缺岗）", async () => {
   /**
    * 2026-09-20 真机验收修复：花名册权威 = 装配器组合编制（geo-growth + hotel + ai-video，
-   * 同名遮蔽按主包裁决），与基座 seed.ts（ws-yunqi 72 岗）同口径；seed-geo 已按组合编制上岗。
+   * 同名遮蔽按主包裁决），与基座 seed.ts（ws-yunqi 73 岗）同口径；seed-geo 已按组合编制上岗。
    * 旧断言写死 27（只数本包），组合上岗后必然假失败。
    */
   const r = await q(`SELECT count(*) n, count(distinct preset_key) d FROM agents WHERE workspace_id=$1 AND status='ready'`, [WS]);
@@ -321,17 +332,22 @@ c("员工 fence_bindings 原样落库（F2.10）", async () => {
   const fb = r.rows[0]?.fence_bindings as string[];
   assert(Array.isArray(fb) && fb.includes("G-GEO1") && fb.includes("G-GEO2"), "绑定丢失");
 });
-c("25 条围栏 active 装载", async () => {
+c("28 条围栏 active 装载（与基线文件口径一致）", async () => {
   const r = await q(`SELECT count(*) n FROM fence_rules WHERE workspace_id=$1 AND status='active' AND version='geo-growth-baseline/v1'`, [WS]);
-  assert(Number(r.rows[0].n) === 25, `fences=${r.rows[0].n}`);
+  assert(Number(r.rows[0].n) === 28, `fences=${r.rows[0].n}`);
 });
 c("29 个 GEO 技能已安装（双域 6 + 视觉 14 + 获客用增 9）", async () => {
   const r = await q(`SELECT count(*) n FROM skill_installs si JOIN skills s ON s.id=si.skill_id WHERE si.workspace_id=$1 AND s.bundle='geo-growth'`, [WS]);
   assert(Number(r.rows[0].n) === 29, `skills=${r.rows[0].n}`);
 });
-c("14 个触发器 enable", async () => {
-  const r = await q(`SELECT count(*) n FROM triggers WHERE workspace_id=$1 AND enabled=true`, [WS]);
-  assert(Number(r.rows[0].n) === 14, `triggers=${r.rows[0].n}`);
+c("组合经营日历触发器全部 enable（数量=三包声明合并去重结果）", async () => {
+  const { loadComposedTriggers } = await import("@workloom/base/bundles");
+  const expected = loadComposedTriggers("geo-growth").triggers.length;
+  const r = await q(
+    `SELECT count(*) n FROM triggers WHERE workspace_id=$1 AND declared_id IS NOT NULL AND enabled=true`,
+    [WS],
+  );
+  assert(Number(r.rows[0].n) === expected, `declared=${r.rows[0].n} expected=${expected}`);
 });
 c("一客一档 v2 七模块齐全", async () => {
   const r = await q(`SELECT archive FROM profiles WHERE workspace_id=$1`, [WS]);
@@ -415,21 +431,21 @@ d("管线 outputs 对象类型在对象模型内", () => {
 d("能见度日频 cron 与种子触发器一致（0 21）", async () => {
   const vp = pipelines.find(p => p.doc.quest === "visibility-watch");
   const cron = vp?.doc.steps.find((s: { step_key: string }) => s.step_key === "brand-daily")?.cron;
-  const r = await q(`SELECT schedule FROM triggers WHERE id='tg-geo-visibility-brand'`);
+  const r = await q(`SELECT schedule FROM triggers WHERE workspace_id=$1 AND declared_id='tg-geo-visibility-brand'`, [WS]);
   assert(cron === r.rows[0]?.schedule, `管线 ${cron} vs 触发器 ${r.rows[0]?.schedule}`);
 });
 d("全量周频 cron 与种子触发器一致（周一 09:00）", async () => {
   const vp = pipelines.find(p => p.doc.quest === "visibility-watch");
   const cron = vp?.doc.steps.find((s: { step_key: string }) => s.step_key === "full-weekly")?.cron;
-  const r = await q(`SELECT schedule FROM triggers WHERE id='tg-geo-visibility-full'`);
+  const r = await q(`SELECT schedule FROM triggers WHERE workspace_id=$1 AND declared_id='tg-geo-visibility-full'`, [WS]);
   assert(cron === r.rows[0]?.schedule, `${cron} vs ${r.rows[0]?.schedule}`);
 });
 d("清晨决策包 08:30 与晨报节拍一致", async () => {
-  const r = await q(`SELECT schedule FROM triggers WHERE id='tg-geo-morning-0830'`);
+  const r = await q(`SELECT schedule FROM triggers WHERE workspace_id=$1 AND declared_id='tg-geo-morning-0830'`, [WS]);
   assert(r.rows[0]?.schedule === "30 8 * * *", `${r.rows[0]?.schedule}`);
 });
 d("月度回测节拍存在（每月 1 日）", async () => {
-  const r = await q(`SELECT schedule FROM triggers WHERE id='tg-geo-backtest-monthly'`);
+  const r = await q(`SELECT schedule FROM triggers WHERE workspace_id=$1 AND declared_id='tg-geo-backtest-monthly'`, [WS]);
   assert(r.rows[0]?.schedule?.startsWith("0 10 1"), `${r.rows[0]?.schedule}`);
 });
 

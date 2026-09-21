@@ -180,13 +180,14 @@ b("基线回归：R2 保底价熔断仍生效", () => {
 
 /* ================= C · 种子与运行态 ================= */
 const c = C("C");
-c("16 个酒店岗全部在编（组合编制共 72 岗）", async () => {
-  // 组合编制口径（获客主包 27 岗含视觉栈 2 + 酒店包 + 视频包）：总数 72（hotel 16 / ai-video 30 / geo-growth 26），其中酒店来源 16。
-  // 旧断言只认 16 会把组合编制的跨域岗位误判为缺编。
-  const all = await q(`SELECT count(*) n FROM agents WHERE workspace_id=$1`, [WS]);
-  assert(Number(all.rows[0].n) === 72, `组合编制 agents=${all.rows[0].n}`);
+c("16 个酒店岗全部在编（组合编制共 73 岗）", async () => {
+  // 组合编制口径（B-07 后）：总数 73（hotel 16 / ai-video 30 / geo-growth 27，3 处同名遮蔽），其中酒店来源 16。
+  // 只统计 ready（组合退场的历史岗位保留为 disabled 供审计）；旧断言只认 16 会把跨域岗位误判为缺编。
+  const all = await q(`SELECT count(*) n FROM agents WHERE workspace_id=$1 AND status='ready'`, [WS]);
+  assert(Number(all.rows[0].n) === 73, `组合编制 agents=${all.rows[0].n}`);
   const hotel = await q(
-    `SELECT count(*) n FROM agents WHERE workspace_id=$1 AND (meta->>'sourceBundleId' = 'hotel' OR meta->>'sourceBundleId' IS NULL)`,
+    `SELECT count(*) n FROM agents WHERE workspace_id=$1 AND status='ready'
+       AND (meta->>'sourceBundleId' = 'hotel' OR meta->>'sourceBundleId' IS NULL)`,
     [WS],
   );
   assert(Number(hotel.rows[0].n) === 16, `酒店岗=${hotel.rows[0].n}`);
@@ -214,10 +215,19 @@ c("获客技能绑定正确（lead-concierge 含 R21/R24）", async () => {
   const binds = r.rows[0]?.fence_bindings as string[];
   assert(binds?.includes("R21") && binds?.includes("R24"), `lead-concierge 绑定 ${binds}`);
 });
-c("12 个触发器（含获客 2 个）", async () => {
-  const r = await q(`SELECT count(*) n FROM triggers WHERE workspace_id=$1 AND enabled=true`, [WS]);
-  assert(Number(r.rows[0].n) >= 12, `triggers=${r.rows[0].n}`);
-  const acq = await q(`SELECT id FROM triggers WHERE workspace_id=$1 AND id IN ('tg-intent-radar-0700','tg-lead-follow-30min')`, [WS]);
+c("组合经营日历声明式触发器齐装（含获客 2 个）", async () => {
+  const { loadComposedTriggers } = await import("@workloom/base/bundles");
+  // ws-yunqi 由 seed.ts 以获客主包（geo-growth）做组合装配：日历 = 三包声明合并去重。
+  const expected = loadComposedTriggers("geo-growth").triggers.length;
+  const r = await q(
+    `SELECT count(*) n FROM triggers WHERE workspace_id=$1 AND declared_id IS NOT NULL AND enabled=true`,
+    [WS],
+  );
+  assert(Number(r.rows[0].n) === expected, `declared-triggers=${r.rows[0].n} expected=${expected}`);
+  const acq = await q(
+    `SELECT declared_id FROM triggers WHERE workspace_id=$1 AND declared_id IN ('tg-intent-radar-0700','tg-lead-follow-30min')`,
+    [WS],
+  );
   assert(acq.rowCount === 2, "获客触发器缺失");
 });
 c("获客域剧本事件 30 条全部落库", async () => {
@@ -289,7 +299,11 @@ e("获客事件对象类型全部在对象模型内", async () => {
 });
 e("获客事件 who 全部在编", async () => {
   const r = await q(`SELECT DISTINCT payload->'who'->>'id' id FROM biz_events WHERE workspace_id=$1 AND event_id >= 'E-SEED-8901' AND event_id <= 'E-SEED-8930'`, [WS]);
-  for (const row of r.rows) assert(presetKeys.has(row.id), `who=${row.id} 不在编`);
+  // 「在编」以工作区真实花名册为准：组合装配下既有 hotel 包岗位（hotel-ceo/ai-receptionist），
+  // 也有获客主包岗位（company-ceo 等），不能用单包 presetKeys 判定。
+  const roster = await q(`SELECT DISTINCT preset_key FROM agents WHERE workspace_id=$1 AND status='ready'`, [WS]);
+  const rosterKeys = new Set(roster.rows.map((row) => String(row.preset_key)));
+  for (const row of r.rows) assert(rosterKeys.has(row.id), `who=${row.id} 不在编`);
 });
 e("获客事件五元字段完整", async () => {
   const r = await q(`SELECT count(*) n FROM biz_events WHERE workspace_id=$1 AND event_id >= 'E-SEED-8901' AND event_id <= 'E-SEED-8930' AND (payload->>'who' IS NULL OR payload->>'object' IS NULL OR payload->>'decision' IS NULL OR payload->>'receipt' IS NULL OR payload->>'model_trace' IS NULL)`, [WS]);

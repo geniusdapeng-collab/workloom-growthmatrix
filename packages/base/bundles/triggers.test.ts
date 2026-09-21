@@ -66,4 +66,30 @@ describe("声明式触发器", () => {
     const gaps = triggerGapReport(composed, { presetKeys: ["company-ceo"], beats: ["daily"] });
     expect(gaps.map((gap) => gap.triggerId).sort()).toEqual(["tg-a", "tg-b"]);
   });
+
+  it("组合日历按模板与节拍去重：同一件事只保留主包权威声明", () => {
+    const geo = parseTriggerDeclarations(JSON.stringify(file([
+      { id: "tg-geo-metrics-2h", name: "主包指标采集", schedule: "7 */2 * * *", action: { dispatch: "data-board-officer", template: "metrics.collect" } },
+      { id: "tg-geo-comments-30m", name: "主包评论分流", schedule: "*/30 * * * *", action: { dispatch: "private-domain-operator", template: "comments.ingest" } },
+      { id: "tg-geo-ceo-brief-0830", name: "主包晨报", schedule: "30 8 * * *", action: { beat: "daily" } },
+    ])), "geo");
+    const aiVideo = parseTriggerDeclarations(JSON.stringify(file([
+      { id: "tg-metrics-2h", name: "视频包指标采集", schedule: "7 */2 * * *", action: { dispatch: "metrics-watcher", template: "metrics.collect" } },
+      { id: "tg-comments-30m", name: "视频包评论分流", schedule: "*/30 * * * *", action: { dispatch: "comment-operator", template: "comments.ingest" } },
+      { id: "tg-morning-0800", name: "视频包早报", schedule: "0 8 * * *", action: { dispatch: "metrics-watcher", template: "report.morning" } },
+      { id: "tg-ceo-brief-0830", name: "视频包晨报", schedule: "30 8 * * *", action: { beat: "daily" } },
+    ])), "video");
+    const merged = mergeTriggerDeclarations([
+      { bundleId: "ai-video", file: aiVideo },
+      { bundleId: "geo-growth", file: geo },
+    ]);
+    expect(merged.map((item) => item.declaration.id).sort()).toEqual([
+      "tg-geo-ceo-brief-0830",
+      "tg-geo-comments-30m",
+      "tg-geo-metrics-2h",
+      "tg-morning-0800",
+    ]);
+    const metrics = merged.find((item) => item.declaration.id === "tg-geo-metrics-2h")!;
+    expect(metrics.shadowedBundleIds).toEqual(["ai-video"]);
+  });
 });

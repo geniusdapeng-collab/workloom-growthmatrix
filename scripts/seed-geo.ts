@@ -420,8 +420,8 @@ async function main() {
   /**
    * 组合编制上岗（2026-09-20 真机验收修复）：
    * geo-growth 的 bundle.json 声明 composition（hotel + ai-video 依赖，presetOwners 含 company-ceo 等），
-   * 权威花名册 = 装配器 composeWorkforce 的运行结果（72 岗，含同名遮蔽裁决）。此前 seed 只落本包 27 岗，
-   * 与基座 seed.ts（ws-yunqi 已按组合编制上岗 72 岗）口径不一致——RDAS L1 矩阵因此判 0/72。
+   * 权威花名册 = 装配器 composeWorkforce 的运行结果（73 岗，含同名遮蔽裁决）。此前 seed 只落本包 27 岗，
+   * 与基座 seed.ts（ws-yunqi 已按组合编制上岗 73 岗）口径不一致——RDAS L1 矩阵因此判 0/73。
    * 这里与基座同口径补齐；围栏按组合并集落库（只紧不松，不滚动客户已收紧的规则）。
    */
   const { provisionComposedWorkforce } = await import("@workloom/base/bundles");
@@ -552,32 +552,24 @@ async function main() {
   );
   console.log("✓ 装配台账登记（bundle_installs）");
 
-  // 自动化触发器（4 条主干管线节拍 + CEO Loop）
-  const triggers = [
-    { id: "tg-geo-intel-0700", name: "情报站每日 07:00 刷新", kind: "cron", schedule: "0 7 * * *", action: { dispatch: "geo-researcher", template: "intel.collect" } },
-    { id: "tg-geo-morning-0830", name: "清晨决策包 08:30", kind: "cron", schedule: "30 8 * * *", action: { dispatch: "company-ceo", template: "decision.pack" } },
-    { id: "tg-geo-metrics-2h", name: "社媒指标每 2 小时采集", kind: "cron", schedule: "7 */2 * * *", action: { dispatch: "data-board-officer", template: "metrics.collect" } },
-    { id: "tg-geo-comments-30m", name: "评论私信每 30 分钟分流", kind: "cron", schedule: "*/30 * * * *", action: { dispatch: "private-domain-operator", template: "comments.ingest" } },
-    { id: "tg-geo-visibility-brand", name: "能见度品牌词日频采集", kind: "cron", schedule: "0 21 * * *", action: { dispatch: "visibility-watcher", template: "visibility.collect.brand" } },
-    { id: "tg-geo-visibility-full", name: "能见度全量 query 集周频采集", kind: "cron", schedule: "0 9 * * 1", action: { dispatch: "visibility-watcher", template: "visibility.collect.full" } },
-    { id: "tg-geo-battle-report", name: "周一全网存在感战报", kind: "cron", schedule: "0 9 * * 1", action: { dispatch: "review-analyst", template: "report.weekly" } },
-    { id: "tg-geo-backtest-monthly", name: "月度决策回测", kind: "cron", schedule: "0 10 1 * *", action: { dispatch: "review-analyst", template: "backtest.run" } },
-    { id: "tg-geo-entity-patrol", name: "实体一致性夜班巡检", kind: "cron", schedule: "0 2 * * *", action: { dispatch: "entity-inspector", template: "entity.scan" } },
-    { id: "tg-geo-fleet-weekly", name: "集团CEO 交付人效看板", kind: "cron", schedule: "0 18 * * 5", action: { dispatch: "group-ceo", template: "fleet.scoreboard" } },
-    // 数字CEO 节拍（D21：CEO Loop；调度器消费前经治理守卫校验 charter.mode）
-    { id: "tg-geo-ceo-brief-0830", name: "公司CEO 晨报 08:30", kind: "cron", schedule: "30 8 * * *", action: { beat: "daily" } },
-    { id: "tg-geo-ceo-queue-2h", name: "公司CEO 裁决巡检 2h", kind: "cron", schedule: "7 */2 * * *", action: { beat: "queue" } },
-    { id: "tg-geo-ceo-deviation", name: "公司CEO 目标偏差扫描", kind: "cron", schedule: "15 */4 * * *", action: { beat: "deviation" } },
-    { id: "tg-geo-ceo-breaker", name: "公司CEO 自治熔断巡检", kind: "cron", schedule: "45 23 * * *", action: { beat: "breaker" } },
-  ];
-  for (const t of triggers) {
-    await q(
-      `INSERT INTO triggers (id, workspace_id, name, kind, schedule, action, enabled, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,true,'system:seed') ON CONFLICT (id) DO NOTHING`,
-      [t.id, WS_ID, t.name, t.kind, t.schedule, JSON.stringify(t.action)],
-    );
-  }
-  console.log(`✓ 自动化触发器 ×${triggers.length}（4 条主干管线节拍 + CEO Loop）`);
+  /**
+   * 自动化触发器（B-06 起声明式装载，不在 seed 硬编码）：
+   * 14 条声明位于 `bundles/geo-growth/triggers.yml`，由上面的
+   * provisionComposedWorkforce 幂等写入（落库 id = `<declared_id>-<workspace_id>`）。
+   * seed 只做校验与回显，保证种子工作区与声明不漂移。
+   */
+  const declaredTriggers = await q(
+    `SELECT count(*)::int AS n FROM triggers WHERE workspace_id=$1 AND declared_id IS NOT NULL AND enabled=true`,
+    [WS_ID],
+  );
+  // 退场：历史硬编码触发器（declared_id 为空、seed 创建）统一禁用，避免与声明式触发器双跑。
+  await q(
+    `UPDATE triggers SET enabled=false, updated_at=now()
+      WHERE workspace_id=$1 AND declared_id IS NULL AND enabled=true
+        AND created_by IN ('system:seed','MEM-001')`,
+    [WS_ID],
+  );
+  console.log(`✓ 声明式触发器 ×${declaredTriggers.rows[0]?.n ?? 0}（随 geo-growth 包装载）`);
 
   /* ================= 运行态剧本（双域演示运行态） ================= */
 

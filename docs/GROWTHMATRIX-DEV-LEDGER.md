@@ -10,15 +10,15 @@
 
 | 项 | 值 |
 |---|---|
-| 当前批次 | G2 触发器与指挥链 |
-| 批次状态 | G1 完成；G2 进行中（声明层纯函数已完成，DB 装载与指挥链待续） |
-| 最近更新 | 2026-09-21（会话 1 · PG 环境就绪 + G1 全量回归） |
+| 当前批次 | G3 岗位与增长线 |
+| 批次状态 | G2 完成（仅余 B-06c video seed，依赖围栏版本口径对齐）；G3 待开工 |
+| 最近更新 | 2026-09-21（会话 2 · B-07/B-08 指挥权归位 + 汇报关系；组合编制 73 岗，双域套件全绿） |
 | 分支 | `task/T-2026-0921-0003` |
-| 云端最新提交 | 以 `git fetch origin main` 为准（G1 代码已在 main） |
-| 本地 HEAD | G2 进行中提交 |
+| 云端最新提交 | 本地整合后待推送（含 T-2026-0921-0041 / T-2026-0921-0050） |
+| 本地 HEAD | 整合提交（视频链路修复 + 去审批化 + 计划 v1.3） |
 | 阻塞 | 无 |
-| 下一步 | G2：装配器合并 triggers（B-02）→ 三包 triggers.yml（B-05/B-42）→ seed 去硬编码（B-06）→ 指挥权切换（B-07/B-08） |
-| 计划版本 | v1.2：84 个工作包（B-01 至 B-84），覆盖四批方案并含 DoR/DoD 与高风险包细则 |
+| 下一步 | G3 首项：B-09 creator-partner 下沉主包 → B-10 四类新对象 → B-11/B-12 增长指标与岗位参数 → B-46..B-50 |
+| 计划版本 | v1.3：84 个工作包；已整合视频链路修复与基座去审批化，并重定义 B-70/B-72/B-73/B-64 |
 
 ---
 
@@ -55,13 +55,20 @@
 ### G2 触发器与指挥链
 
 - [x] B-03a `packages/base/bundles/triggers.ts`：声明解析 / cron 校验 / 跨包合并 / 编制对账 + 单测
-- [ ] B-02 装配器合并 triggers 并幂等写库
-- [ ] B-03b 声明式触发器 upsert 写库（夜间触发器引擎接线）
+- [x] B-02 装配器合并 triggers 并幂等写库（assembly.ts `loadComposedTriggers` + `provisionComposedWorkforce` upsert；工作区后缀 id、客户自建不覆盖、退出声明仅禁用）
+- [x] B-03b 声明式触发器 upsert 写库（实现位置在装配器这一唯一装载路径；`night-shift` 引擎无需改动）
 - [ ] B-05 三包 `triggers.yml` 声明
+  - [x] B-05a `bundles/geo-growth/triggers.yml`（14 条）已声明并随包装载
+  - [x] B-05b `bundles/hotel/triggers.yml`（12 条，含 system: night-shift）与 `bundles/ai-video/triggers.yml`（7 条）已声明并随包装载
 - [ ] B-06 seed 脚本去硬编码
-- [ ] B-07 指挥权归获客口径（hotel company-ceo 更名 hotel-ceo）
-- [ ] B-08 commandChain 记录与组合看板展示
+  - [x] B-06a `scripts/seed-geo.ts` 移除硬编码触发器，改回显声明装载结果；`suite-geo` 断言改按 `declared_id` 对账（81/81 通过）
+  - [x] B-06b `scripts/seed.ts` 移除硬编码触发器并退役旧 seed 触发器；`suite-hotel` 断言改为组合日历对账（43/43 通过）
+  - [ ] B-06c `scripts/seed-video.ts` 去硬编码（video-studio 需先对齐装配围栏版本口径，避免与组合装配互相回滚）
+- [x] B-07 指挥权归获客口径：hotel `company-ceo` 更名 `hotel-ceo`，geo-growth `company-ceo` 成为组合权威；遮蔽 4→3 处，组合编制 72→73 岗；酒店获客管线 owner 同步改名
+- [x] B-08 `commandChain` 声明与校验：8 条汇报关系（growth-lead→company-ceo、五组→growth-lead、director/hotel-ceo→growth-lead/company-ceo）；两端必须在编，未命中拒绝装配；激活事件带 `commandChain` 计数；岗位退场/同名去重（只停用不删除）已实现
 - [ ] B-42 合并经营日历触发器
+  - [x] B-42a geo-growth 14 条经营日历（情报/决策包/指标/评论/能见度/战报/回测/巡检/人效 + 4 CEO 节拍）
+  - [x] B-42b 三包节拍合并与去重：按 beat（CEO 节拍）与 template（如 metrics.collect/comments.ingest）去重，主包优先并留痕；组合日历 23 条（geo 14 + hotel 8 + ai-video 1）
 - [ ] G2 验收：suite:geo / suite:hotel / 触发器断言全绿
 
 ### G3 岗位与增长线
@@ -163,6 +170,11 @@
 | 2 | `ec29c2e` | feat(growth): G1 契约槽位/矩阵/平台规格/发布预检 [T-2026-0921-0003] | G1 | vitest 38/38 + tsc + governance + gap 0 |
 | 3 | `24a4dcb` | docs(growth): 账本更新 G1 完成并交接 G2 [T-2026-0921-0003] | G1 | 账本已推送 main |
 | 4 | 待回填 | feat(growth): G2 触发器声明层与装配回归 [T-2026-0921-0003] | G2 | 见第 5 节 |
+| 5 | `c56d0b2` | fix(growth): 同步 growth 视频链路修复批次（T-2026-0921-0041 整合版） | 外部批次 | 保留 G1 bundle 声明 + 重算摘要 + gap 0 |
+| 6 | `01c71fe` | feat(growth): 基座去审批化（T-2026-0921-0050 整合版） | 外部批次 | web 类型检查 + 三文件样例测试通过 |
+| 7 | 本次提交 | feat(growth): G2 声明式触发器装配（geo-growth 14 条）与套件回归 | G2 | 迁移 0038 + suite:geo 81/81 + suite:hotel 43/43 + bundles 16/16 |
+| 8 | 本次提交 | feat(growth): G2 三包触发器声明与经营日历去重 | G2 | DB 17/17 + suite:geo 81/81 + suite:hotel 43/43 + governance 通过 |
+| 9 | 本次提交 | feat(growth): G2 指挥权归位与汇报关系（73 岗） | G2 | acquisition-loop 11/11 + suite:geo 81/81 + suite:hotel 43/43 + acceptance:onboarding 通过 |
 
 ---
 
@@ -182,6 +194,16 @@
 | 2026-09-21 | `RUN_DB_TESTS=1 vitest run packages/base/bundles/bundles.test.ts` | 11/11 通过 | 组合装配 72 岗 + 遮蔽 + 摘要门禁 |
 | 2026-09-21 | `tsx --env-file=.env scripts/acceptance/onboarding.mts` | 通过（72/72 岗、71 条围栏、影子→试用、账本只增） | — |
 | 2026-09-21 | `vitest run packages/base/bundles/triggers.test.ts` | 4/4 通过 | 声明层纯函数 |
+| 2026-09-21 | 整合外部批次后的门禁链 | 全部通过 | `bundle-governance --refresh-digests`、`matrix-gap`（0 缺口，72 围栏）、`tsc`（base/contract/web）、`bundles.test.ts` 11/11（DB）、`acceptance:onboarding` 通过 |
+| 2026-09-21 | `cd apps/web && ../../node_modules/.bin/vitest run src/lib/display.test.ts` | 11/11 通过 | web 测试必须在 apps/web 目录用其自身 vitest 配置跑（根配置会因 @workloom/ui 子路径解析误报） |
+| 2026-09-21 | `tsx --env-file=.env scripts/migrate.ts` | 0038_trigger_declared_id.sql 已应用 | triggers 新增 declared_id + 唯一索引 |
+| 2026-09-21 | `vitest run packages/base/bundles/triggers-assembly.test.ts`（DB） | 1/1 通过 | 14 条幂等装载 / 客户自建不覆盖 / 退出仅禁用 |
+| 2026-09-21 | `tsx --env-file=.env scripts/seed-geo.ts` | 通过（声明式触发器 ×14） | seed 不再硬编码触发器 |
+| 2026-09-21 | `tsx --env-file=.env scripts/suite-geo.ts` | 81/81 通过 | 含 28 条围栏口径修正与声明触发器对账 |
+| 2026-09-21 | `tsx --env-file=.env scripts/suite-hotel.ts`（先重跑 seed.ts 复位夹具） | 43/43 通过 | 见 L-10 夹具污染说明 |
+| 2026-09-21 | `vitest run triggers-assembly + triggers + bundles`（DB） | 17/17 通过 | 组合日历幂等 / 客户自建不覆盖 / 退出仅禁用 |
+| 2026-09-21 | `suite-geo` / `suite-hotel`（三包声明后） | 81/81、43/43 通过 | 日历条数按装配结果动态对账（23 条） |
+| 2026-09-21 | B-07/B-08 后全量回归 | suite:geo 81/81、suite:hotel 43/43、acquisition-loop 11/11、bundles 11/11、triggers-assembly 1/1、acceptance:onboarding 通过 | 组合编制 73 岗、遮蔽 3 处、汇报关系 8 条 |
 
 ---
 
@@ -196,6 +218,10 @@
 | L-05 | 矩阵平台引用 87 个名称（含分组与别名），注册表 23 条平台规格 | 口径易混 | 分组别名表已覆盖；缺口脚本作为唯一对账口径 | 已缓解 |
 | L-06 | `PII_SALT` 未配置（工具运行告警） | 生产脱敏 | 生产部署必须注入；开发态允许占位盐 | 待部署 |
 | L-07 | 本机无 Docker/Homebrew，DB 依赖 Postgres.app DMG 挂载 | 会话重启需重新挂载 | 第 7 节已固化启动命令；DMG 缓存于 `/tmp/Postgres-2.9.6-17.dmg`（sha256 与 release-assets 一致） | 已缓解 |
+| L-08 | 外部批次可能携带过期 bundle.json（本次视频批次会删除 G1 的 matrix/platformSpecs 声明） | 静默丢失资产声明 | 合并后强制顺序：`bundle-governance --refresh-digests` → `matrix-gap` → DB `bundles.test` → `acceptance:onboarding`；已在计划 §9.3 固化 | 已缓解 |
+| L-09 | 产品所有者决策「基座去审批化」（T-2026-0921-0050） | 与 B-70/B-72/B-73/B-64 原口径冲突 | 已重定义为「业务关卡放行」口径；后端 approvals/围栏/业务门保留 | 已对齐 |
+| L-10 | 测试夹具污染：acceptance/bundles 测试会以组合装配重写 ws-yunqi 的围栏版本，导致 suite-hotel C-03 期望 `hotel-baseline/v4` 为 0 | 套件假失败 | 跑 suite-hotel 前先 `tsx --env-file=.env scripts/seed.ts` 复位夹具 | 已缓解 |
+| L-11 | pnpm 11 的 `verify-deps-before-run` 会拦截所有脚本 | 套件内 `pnpm db:seed:*` / `pnpm db:verify-chain` 失败 | 本机已建 shim `/tmp/wl-bin/pnpm`（注入 `--config.verify-deps-before-run=false`）；跑套件时把 /tmp/wl-bin 放 PATH 首位 | 已缓解 |
 
 ---
 
@@ -228,6 +254,12 @@ export RUN_DB_TESTS=1
 export DATABASE_URL='postgres://postgres:workloom@localhost:5432/workloom'
 export DATABASE_APP_URL='postgres://workloom_app:workloom_dev_app@localhost:5432/workloom'
 export DATABASE_GATEWAY_URL='postgres://workloom_gateway:workloom_dev_gateway@localhost:5432/workloom'
+
+# ⑤ pnpm 脚本 shim（套件内部会 spawn pnpm；pnpm 11 需绕过 deps status 检查）
+mkdir -p /tmp/wl-bin && printf '%s\n' '#!/bin/sh' \
+  'exec /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm --config.verify-deps-before-run=false "$@"' \
+  > /tmp/wl-bin/pnpm && chmod +x /tmp/wl-bin/pnpm
+export PATH="/tmp/wl-bin:$PATH"
 ```
 
 停止数据库：`"$PGBIN/pg_ctl" -D /tmp/workloom-pgdata stop`；卸载 DMG：`hdiutil detach /Volumes/Postgres-2.9.6-17`。
@@ -253,3 +285,7 @@ export DATABASE_GATEWAY_URL='postgres://workloom_gateway:workloom_dev_gateway@lo
 | 2026-09-21 | 本地 PG 17 + pgvector 就绪；39 迁移 + 种子；bundles 11/11 与 acceptance:onboarding 通过；G2 声明层纯函数（triggers.ts + 4 单测）落地 |
 | 2026-09-21 | 计划 v1.1：对账四批方案，补齐 B-46 至 B-68 共 23 项（账号矩阵、授权台账、主包客群、只读产出、P2 岗指标、直播模板、C 端承接、视频成本、采集调度、三态标识、保鲜环、工具幂等、增长偏好、夜班候选、场景审计、压测、协作模板、五关服务端化、首登行动卡、执行器沙箱、统计脚本化、sync、装载裁剪） |
 | 2026-09-21 | 计划 v1.2 二轮对账：新增 B-69 至 B-84 共 16 项（引导埋点、人审减负、契约强制、信任账户运行、目标闭环验收、备份回滚、海外通道、Bundle 版本治理、文档同步、供应链门禁、RLS 用例、价格确认单、降级路径、UGC 授权、schema 冻结门禁、外部事实复核），工作包总数 84；补充 DoR/DoD 与 8 个高风险包细则 |
+| 2026-09-21 | 会话 2：拉取并整合 T-2026-0921-0041（视频链路修复）与 T-2026-0921-0050（基座去审批化）；修复 bundle.json 合并回归；计划升级 v1.3 并重定义 4 个工作包口径；全量回归通过 |
+| 2026-09-21 | 会话 2 续：B-02/B-03b 落地（装配器声明式触发器装载：0038 迁移、幂等 upsert、客户主权与退出禁用）；geo-growth 14 条声明上线；seed-geo 去硬编码；suite:geo 81/81、suite:hotel 43/43、DB 集成 16/16 全绿 |
+| 2026-09-21 | 会话 2 续 2：B-05b/B-06b/B-42b 落地（hotel 12 条 + ai-video 7 条声明；system 动作白名单；按 beat/template 去重的组合经营日历 23 条；seed.ts 去硬编码并退役旧触发器）；双域套件与 DB 集成全绿 |
+| 2026-09-21 | 会话 2 续 3：B-07/B-08 落地（指挥权归获客口径，hotel-ceo 独立在编；commandChain 8 条并校验；岗位退场与同名去重只停用不删除）；文档与套件口径同步 73 岗；全量回归通过 |

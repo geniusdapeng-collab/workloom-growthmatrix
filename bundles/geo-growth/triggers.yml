@@ -1,0 +1,75 @@
+# 获客用增主包 · 声明式自动化触发器（B-05 / B-42）
+#
+# 来源：从 scripts/seed-geo.ts 的硬编码清单迁入（B-06 完成后 seed 不再写触发器）。
+# 纪律：
+#  - 触发器随包声明，由装配器合并（依赖包在前、主包在后；同名主包优先并留痕）；
+#  - action.dispatch 必须指向组合编制内的岗位；action.beat 必须是已知 CEO 节拍；
+#  - 落库 id = `<id>-<workspace_id>`，客户自建触发器不受装配覆盖。
+version: workloom.triggers/v1
+triggers:
+  - id: tg-geo-intel-0700
+    name: 情报站每日 07:00 刷新
+    schedule: "0 7 * * *"
+    action: { dispatch: geo-researcher, template: intel.collect }
+    description: 热榜/竞品/评论语义/query 四路情报刷新，产出统一情报卡
+  - id: tg-geo-morning-0830
+    name: 清晨决策包 08:30
+    schedule: "30 8 * * *"
+    action: { dispatch: company-ceo, template: decision.pack }
+    description: 昨日数据 + 夜间完成 + 待放行事项，10 分钟三件套处理
+  - id: tg-geo-metrics-2h
+    name: 社媒指标每 2 小时采集
+    schedule: "7 */2 * * *"
+    action: { dispatch: data-board-officer, template: metrics.collect }
+    description: 播放/涨粉/互动/询盘落时序账，越限告警
+  - id: tg-geo-comments-30m
+    name: 评论私信每 30 分钟分流
+    schedule: "*/30 * * * *"
+    action: { dispatch: private-domain-operator, template: comments.ingest }
+    description: 四档分流（夸赞自动/咨询放行/负面告警/敏感阻断）
+  - id: tg-geo-visibility-brand
+    name: 能见度品牌词日频采集
+    schedule: "0 21 * * *"
+    action: { dispatch: visibility-watcher, template: visibility.collect.brand }
+    description: 品牌词多平台采集 + 截图存证
+  - id: tg-geo-visibility-full
+    name: 能见度全量 query 集周频采集
+    schedule: "0 9 * * 1"
+    action: { dispatch: visibility-watcher, template: visibility.collect.full }
+    description: 品类/场景/竞对词全量采集，输出五维账本
+  - id: tg-geo-battle-report
+    name: 周一全网存在感战报
+    schedule: "0 9 * * 1"
+    action: { dispatch: review-analyst, template: report.weekly }
+    description: 社媒/GEO/交叉三栏战报 + 增长栏位
+  - id: tg-geo-backtest-monthly
+    name: 月度决策回测
+    schedule: "0 10 1 * *"
+    action: { dispatch: review-analyst, template: backtest.run }
+    description: expected vs 实际命中率，未命中如实披露
+  - id: tg-geo-entity-patrol
+    name: 实体一致性夜班巡检
+    schedule: "0 2 * * *"
+    action: { dispatch: entity-inspector, template: entity.scan }
+    description: 官网/百科/新闻稿/社媒口径逐字比对
+  - id: tg-geo-fleet-weekly
+    name: 集团CEO 交付人效看板
+    schedule: "0 18 * * 5"
+    action: { dispatch: group-ceo, template: fleet.scoreboard }
+    description: 单运营服务客户数/交付及时率/回测命中率
+  - id: tg-geo-ceo-brief-0830
+    name: 公司CEO 晨报 08:30
+    schedule: "30 8 * * *"
+    action: { beat: daily }
+  - id: tg-geo-ceo-queue-2h
+    name: 公司CEO 裁决巡检 2 小时
+    schedule: "7 */2 * * *"
+    action: { beat: queue }
+  - id: tg-geo-ceo-deviation
+    name: 公司CEO 目标偏差扫描
+    schedule: "15 */4 * * *"
+    action: { beat: deviation }
+  - id: tg-geo-ceo-breaker
+    name: 公司CEO 自治熔断巡检
+    schedule: "45 23 * * *"
+    action: { beat: breaker }
