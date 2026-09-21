@@ -834,6 +834,9 @@ async function main(): Promise<void> {
     `✓ 组合编制上岗：${composed.bundleIds.join(" + ")} 共 ${composed.rosterSize} 岗`
     + `（围栏并集 ${composed.fenceRules} 条 · 同名遮蔽 ${composed.shadowed.length} 处按主包裁决）`,
   );
+  // 组合装配会把 workspaces.industry 写成主包（geo-growth）；ws-yunqi 是酒店试点工作区，
+  // 入职后显式归位为 hotel（组合编制与围栏并集保持不变，仅 profile 标识归位）。
+  await owner.query(`UPDATE workspaces SET industry='hotel' WHERE id=$1`, [WS_ID]);
 
   // 一店一档（槽①；forbidden 双写：archive 内 + 独立列，L1.6）
   // dataMode=simulated：落地向导（D24）横幅事实源——种子库即「全模拟运行态」，向导启用真实模式后翻转

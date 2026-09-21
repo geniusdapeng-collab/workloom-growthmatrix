@@ -322,7 +322,7 @@ rules:
     level: block
     is_baseline: true
     match:
-      object_types: [creator_collab, content_asset, visual_asset, publish_task]
+      object_types: [creator_collab, visual_asset, publish_task]
       actions: [publish.execute, content.submit, visualwrite.compose]
     when: "params.has_third_party_asset == true and context.license_ok != true"
     note: 达人返图/联名素材/字体音乐等第三方素材无授权凭证一律阻断；授权范围必须覆盖本次用途、平台与期限

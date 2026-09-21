@@ -18,6 +18,12 @@
 | 本地 HEAD | 整合提交（视频链路修复 + 去审批化 + 计划 v1.3） |
 | 阻塞 | 无 |
 | 下一步 | 修复 `bundles.test` H-15「工具探针健康」（copycat 复制 hotel 资产后工具探针失败；疑似与 hotel-ceo 改名或新增 triggers.yml 相关）→ 复跑 suite:geo/suite:hotel → 并入 main；随后 B-11/B-12 与 B-46..B-50 |
+
+### 会话 2 续 5 记（2026-09-22 00:15）
+
+- 已修复：H-15 工具探针失败（同名退场行导致 probe 取到 disabled 实例）→ 探针与名册改为「优先 ready 的权威实例」；`seed.ts` 组合装配后把 ws-yunqi 的 industry 归位为 hotel；`bundles.test` + `triggers-assembly.test` 串行 12/12 通过；suite-hotel 43/43；`acceptance:onboarding` 通过；`matrix-gap` 0 缺口。
+- 仍红（仅 suite:geo，阻断并入 main）：① A-02「preset_key 重复」（geo-growth bundle.json provides 28 条路径无重复、presets 目录 28 个 key 无重复，需进一步定位套件加载口径）；② A-10 已把 G-AD2 的 `content_asset` 改为已声明对象，待复跑确认；③ C-15 账号指标 16 条 ≠ 期望 14 条（seed 幂等漂移，待查 account_metrics 插入键）。
+- 纪律：main 保持绿色点 `4287f21`；以上改动只在任务分支 `task/T-2026-0921-0003`。
 | 计划版本 | v1.3：84 个工作包；已整合视频链路修复与基座去审批化，并重定义 B-70/B-72/B-73/B-64 |
 
 ---
