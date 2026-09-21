@@ -1,5 +1,16 @@
 # Changelog
 
+## [experiment-0.1.0] - 2026-09-21 · 分叉为 growth-matrix 实验仓并更名「骇客帝国」
+
+> 本仓 `workloom-ai/workloom-growthmatrix` 由 `workloom-ai/WorkLoom-growth@a6dc89a` 完整复制而来（含 git 历史），作为**激进改造实验车道**独立演进；「黑客帝国」与「骇客帝国」指同一个项目。
+
+- 产品更名 **骇客帝国**：README 标题与正文、`product.manifest.json#displayName`、桌面 `productName` / `shortcutName`、acceptance profile、系统概览 / 演示剧本 / 视觉工位手册 / GEO 融合方案 / 门店店长使用指南 / C 端演示页等文档与演示页文案统一更新；
+- 产品身份修正：`repository` → `workloom-ai/workloom-growthmatrix`（`product.manifest.json`、`acceptance/profile.json`、`.workloom-runtime-deps/metadata.json`、`oss-components.json`、`docs/OPEN_SOURCE_COMPONENTS.md`）；`release.artifactPrefix` 与 `displayName` 对齐（`scripts/unsigned-desktop-release.test.mjs` 断言 `artifactPrefix === displayName`）；
+- 仓库链接修正：官网演示页（`apps/site/index.html` / `en.html`）的 GitHub 死链改为本仓 CNB 地址；
+- 生成物刷新：`docs/capabilities.auto.*` 与 README 能力区块随 `package.json#description` 重新生成，`.workloom-runtime-deps/metadata.json` 输入摘要随身份变更重算；
+- 机器身份保持不变：`productId=workloom-ai-growth`、`packageName=workloom-ai-acquisition`、`appId=com.geniusdapeng.workloomgrowth`、`portOffset=420`、`demoWorkspaceSlug=geo-growth`（等舰队纳管时统一确认）；
+- 实验纪律：实验语义不下发、不覆盖、不回流；验证成功的通用能力必须先走提案任务卡（L2→L1→L0）才进基座。
+
 ## [base-sync-1.12.0] - 2026-09-02 · 基座同步：技能保鲜环 P1（自动同步 + 上行回流 + 官方运营台）
 
 > 自 workloom-im@1.12.0 同步（vendored 基座公共段一致）：skill-ops P1 完全体（autosync/reflux/console）+ 迁移 0019/0020 + SkillDistBanner 通栏 + skillOps.reflux/console 路由 + 官方端点 + suite Y 域 P1 用例与 R-26 加固 + L2 审批 tier 红线修复（l4_chairman）。
