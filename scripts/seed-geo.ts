@@ -146,7 +146,7 @@ function loadSkills(): SkillDoc[] {
 /**
  * 组合技能并集（2026-09-20 真机验收修复）：
  * 组合编制（hotel + ai-video + geo-growth）里的酒店/视频岗位引用各自包的 official 技能；
- * 只装本包 29 条技能时，那些岗位被判「技能已声明未装备」（ui 探针 skillsOk=false）。
+ * 只装本包 30 条技能时，那些岗位被判「技能已声明未装备」（ui 探针 skillsOk=false）。
  * 这里按各包 bundle.json 的 provides.skills 逐条落 skills 行 + ws-geo 安装行，
  * 与基座 seed.ts 的组合技能安装同口径（安装快照取 skills 表当前值）。
  */

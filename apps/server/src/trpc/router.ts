@@ -2170,7 +2170,9 @@ async function instanceProfileOf(scope: { tenantId: string; workspaceId: string 
 
 function mapSkillOpsError(err: unknown): Error {
   if (err instanceof SkillOpsError) {
-    const code = err.code === "NOT_FOUND" || err.code === "NO_SNAPSHOT" ? "NOT_FOUND" : "BAD_REQUEST";
+    const code = err.code === "NOT_FOUND" || err.code === "NO_SNAPSHOT"
+      ? "NOT_FOUND"
+      : err.code === "EXAM_REQUIRED" ? "PRECONDITION_FAILED" : "BAD_REQUEST";
     return new TRPCError({ code, message: err.message });
   }
   return err instanceof Error ? err : new Error(String(err));

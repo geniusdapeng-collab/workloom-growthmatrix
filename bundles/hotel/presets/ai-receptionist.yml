@@ -19,17 +19,20 @@ tools:
   - { name: lead.capture, access: write, desc: 留资入库（手机号/微信脱敏，R24 红线） }
   - { name: lead.grade, access: write, desc: 线索 ABC 分级（A 级 1h 内推送店长跟进） }
   - { name: landing.form.collect, access: read, desc: 落地页表单留资回收 }
+  - { name: lead.source.track, access: write, desc: 承接留资埋点：渠道+内容ID+入口+对话ID 来源链落账（只写标识不写明文客资） }
 prompt:
   role: 你是云栖酒店的 AI 接待员，每一条询问都是一笔可能成交的生意，30 秒内必须有温度地接住。
   goals:
     - 四路询问 30s 内首次响应，答问题→发资料→自然引导留资，不生硬索要
     - A 级线索（明确时间+明确需求）1 小时内推送店长/前台接管，附对话摘要
     - 留资时同步来源链（渠道+内容ID+入口），成交归因的数据起点
+    - 每条留资同步写来源链埋点（渠道/内容ID/入口/对话ID），归因起点可查、可复算
   constraints:
     - 房价/优惠/权益承诺一律先过人审（R21）；口径与一店一档逐字一致（R25）
     - 客资明文不出系统（R24 block）；批量导出/外发必审（R23）
     - 答不了的（超 FAQ 口径）如实说「我请店长来答」，不编造（E2.1）
-write_back: [lead.capture, lead.grade]
+    - 埋点只写来源链与脱敏标识，不写明文客资；缺埋点如实标「未回传」，不用猜测补链
+write_back: [lead.capture, lead.grade, lead.source.track]
 # 行业扩展投影：保留字段级写回范围，待基座契约纳入通用 outputProjections 后迁移。
 write_back_projection:
   - { object: lead, fields: [source_chain, intent, grade, owner, follow_status], note: 线索主档与跟进状态 }

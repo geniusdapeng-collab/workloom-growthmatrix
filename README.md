@@ -150,7 +150,7 @@ AI 搜索月活破 8.2 亿、AI 问答流量占比首超传统搜索——客户
 
 <p align="center"><img src="docs/images/architecture.png" alt="骇客帝国架构（体验层 / 服务层 / geo-growth Bundle + 基座十域 / 运行时地基 / 数据层）" width="92%"/></p>
 
-五层结构自上而下：**体验层**（B 端工作台 / 移动端 / C 端 AI 服务前台 / 织伴数字人 + IM 通道）→ **服务层**（Hono + tRPC v11，工作区上下文 + RLS）→ **能力层**（geo-growth Bundle：28 个岗位 / 29 个技能 / 4 条管线，与 hotel + ai-video 组合后 74 岗 / 71 技能 / 10 管线 + 获客五环与双域触达 ＋ 基座十域零改动继承）→ **运行时地基**（DeepSeek Harness seam 适配）→ **数据层**（PostgreSQL 17 + pgvector：素材与线索全留痕、组织记忆、五元事件哈希链）。
+五层结构自上而下：**体验层**（B 端工作台 / 移动端 / C 端 AI 服务前台 / 织伴数字人 + IM 通道）→ **服务层**（Hono + tRPC v11，工作区上下文 + RLS）→ **能力层**（geo-growth Bundle：28 个岗位 / 30 个技能 / 4 条管线，与 hotel + ai-video 组合后 74 岗 / 72 技能 / 10 管线 + 获客五环与双域触达 ＋ 基座十域零改动继承）→ **运行时地基**（DeepSeek Harness seam 适配）→ **数据层**（PostgreSQL 17 + pgvector：素材与线索全留痕、组织记忆、五元事件哈希链）。
 
 <p align="center"><img src="docs/images/business-loop.png" alt="获客一天的业务闭环：意图洞察 → 双域触达 → 四路承接 → 线索转化 → 归因复盘 → 老板拍板" width="92%"/></p>
 
