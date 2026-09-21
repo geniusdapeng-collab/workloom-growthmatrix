@@ -15,13 +15,16 @@ tools:
   - { name: content.draft, access: write,  desc: 生成内容草稿 }
   - { name: content.publish, access: write, desc: 发布内容 }
   - { name: asset.read, access: read,      desc: 读取素材库 }
+  - { name: ota.asset.upload, access: write, desc: OTA 素材上传（房型图/相册/视频 → 携程/美团/飞猪；回执含审核状态） }
 prompt:
   role: 你是云栖酒店的文书，出品符合品牌规范。
   goals:
     - 内容发布前必读「档案+阶段+目标」三要素（L3.7）
+    - OTA 素材上传：按通道预检（类型/体积/相册序位）→ 上传 → 回执回写审核状态；未配置通道不伪造回执
   constraints:
     - 新渠道首次发布挂起待审（R3）
     - 不使用档案 forbidden 清单内的表达
 write_back:
   - content.draft
+  - ota.asset.upload
   - content.publish

@@ -10,14 +10,14 @@
 
 | 项 | 值 |
 |---|---|
-| 当前批次 | G4 通道与执行器（G3 全部工作包已完成，本批次 PR 待并入 main） |
-| 批次状态 | G3 完成：B-09..B-12 / B-43 / B-46..B-50 / B-80 / B-82 全部落地；`suite:geo` 81/81、`suite:hotel` 43/43、`pnpm test` 全包绿（base 967）、`pnpm suite` 467/467 |
-| 最近更新 | 2026-09-22（会话 5 · G3 收尾：账号矩阵/授权台账/客群装配/只读进晨报/P2 岗指标/价格确认单/UGC 授权） |
-| 分支 | `task/T-2026-0921-0003-g3c` |
-| 云端最新提交 | main `f69e2c0`（含 G3 前两批）；本批次分支待推送 |
-| 本地 HEAD | 本批次提交（B-46..B-50 / B-80 / B-82） |
+| 当前批次 | G5 模型、生成与数据（G4 全部工作包已落地，本批次 PR 待并入 main） |
+| 批次状态 | G4 完成：B-18..B-25 / B-51 / B-52 / B-75 / B-81 全部落地；`suite:geo` 81/81、`suite:hotel` 43/43、`pnpm test` 全包绿（base 996 / server 367）、`pnpm suite` 467/467 |
+| 最近更新 | 2026-09-22（会话 6 · G4：五类图文通道、OTA 上传包、四类执行器桥、多执行器路由、桌面 Playwright worker、直播模板、C 端承接四件套、通道声明排除、降级出图） |
+| 分支 | `task/T-2026-0921-0003-g4` |
+| 云端最新提交 | main `b234662`（含 G3 全部）；本批次分支待推送 |
+| 本地 HEAD | 本批次提交（G4） |
 | 阻塞 | 无 |
-| 下一步 | 推送本批次并开 PR 并入 main；随后进入 G4：B-18 五类国内通道适配器 → B-19 OTA 上传包 → B-20 私域执行器 → B-21/B-22 执行器组合与适配器 → B-23 桌面浏览器驱动 → B-24 环境变量与 doctor → B-25 发布重试与日上限 → B-51 直播模板 → B-52 C 端承接化 → B-75 海外/视频号 → B-81 降级路径 |
+| 下一步 | 推送本批次并开 PR 并入 main；随后进入 G5：B-26 真实模型池 → B-27 生图生视频 → B-28/B-29 AI 标识 → B-30 模型台账 → B-31 NATS → B-32 四类连接器 → B-33 增长日表 → B-34 投影 → B-35 看门狗 → B-53..B-61 / B-78 / B-79 / B-84 |
 
 ### 会话 2 续 5 记（2026-09-22 00:15）
 
@@ -55,6 +55,20 @@
 - B-80 价格与权益：hotel 三份模板（价格与权益确认单 / 预售券条款 / 退改说明）+ `price_confirmation` 对象；定价岗新增 `price.confirmation.issue`（绑 R25/R2），团购岗新增 `coupon.terms.render`（绑 R22/R26/R25）。
 - B-82 UGC：`ugc_submission` 对象；私域承接岗新增 UGC 四工具（征集/授权登记/去个人信息/二次发布申请）并绑 G-AD1/G-AD2/G-GROW6；`ugc-flow.ts` 四线审查（授权+凭证+肖像同意、去个人信息、署名、广告标识）与脱敏函数；geo 题库补 2 道 UGC 题。
 - 回归（2026-09-22）：`suite:geo` 81/81；`suite:hotel` 43/43；`pnpm test` 全包绿（base 967 / server 354 / web 101 / webb 6 / webc 21 / video-studio 22 / audit 64 / contract 40 / runtime 15）；`pnpm suite` 467/467；`test:scripts` 57/57；新增模块用例 85/85；`acceptance:onboarding`、`scan:fences` 0 缺口、`scan:knowhow` 16/16、`bundle-governance`、`capabilities --check`、`product:verify`、`oss:check`、全仓 typecheck 与三端构建全部通过。
+
+### 会话 6 记（2026-09-22 01:50）
+
+- B-18 五类国内通道：`weixin-mp`（公众号，rpa 骨架）/`weibo`（rpa 骨架）/`zhihu`/`toutiao`/`baijia`（占位）适配器 + 图文上传骨架 + 图文文案硬校验；`PlatformSchema` 扩到 11 平台；迁移 `0041_publish_text_channels.sql` 扩 `publish_tasks.platform` CHECK（已应用并验链）。
+- B-19 OTA 上传包：`packages/base/ota-publisher` 三通道（携程/美团/飞猪）+ 三类素材（房型图/相册/视频）+ 预检（类型/体积/相册序位）+ 上传与审核状态回写；未配置凭据 fail-closed；`ota_asset` 对象与 content-agent `ota.asset.upload` 工具接线。
+- B-20/B-22 执行器桥：`bridge-client`（POST /tools/execute，超时+一次重试，回执形状校验，失败 connector-required）+ publish/source/private-domain 三桥 server-adapter + ota-bridge 直连 ota-publisher；`.env.example`/doctor/connectors-check 全量登记。
+- B-21 多执行器组合：`WORKLOOM_TOOL_EXECUTOR_MODULES`（逗号列表 + `前缀=路径` 最长匹配 + 兜底路由），单模块加载/执行失败只影响自身路由，统一返回 connector-required；旧单模块变量兼容；纯函数下沉 `publish-rpa/routing.ts` 供脚本复用。
+- B-23 桌面浏览器驱动：`apps/desktop/electron/publish-driver.cjs`（Playwright 持久化上下文 + setInputFiles；Toolkit 驱动映射与 CDP 上传显式检查）+ `scripts/tools/publish-worker.mts`（CLI/executePublish，登录态本机 profile，无回执不报成功）+ node:test/vitest 双侧用例。
+- B-24/B-25：doctor 增「工具执行器与事件总线」段（缺路径即 ❌）；connectors-check 增执行器路由/OTA/桥就绪三表；runner 失败统一重试 3 次（上传+回执为执行单元）与平台日上限注入（dailyLimitFor）。
+- B-51 直播下沉：`live-script-template.md` + `live-battle-report.md` + `live-clip-reuse.yml` 切片管线（G14/G9 门禁、post-editor/compliance/publish/distribution/review 在编）+ `tg-live-clip-reuse` 触发器。
+- B-52 C 端承接化：`/c/actions` 四类动作（领券/留资/预约/咨询）→ 承接工单 + 来源链 + 联系方式脱敏 + captured 回执 + 幂等重放；webc 服务大厅「快速承接」四卡 + 表单 + 授权硬前置；e2e 4 例 + 前端契约 3 例。
+- B-75 通道声明排除：`channelReadiness()` 11 通道矩阵 + `scripts/channel-readiness.mts`（--strict）+ `docs/channel-exclusions.md`（TikTok/视频号声明排除与解除条件）。
+- B-81 降级路径：`buildDegradedPoster/planDegradedContent`（HTML/CSS 海报 + 「降级产出」注释/data 标注/可见角标 + manual_hold）+ degrade-bridge 执行器落盘 + visual-designer `poster.degrade.render` 工具。
+- 回归（2026-09-22）：`suite:geo` 81/81；`suite:hotel` 43/43（对象模型 30 类）；`pnpm test` 全包绿（base 996 / server 367 / webc 24 / web 101 / webb 6 / video-studio 22 / audit 64 / contract 40 / runtime 15）；`pnpm suite` 467/467；`test:scripts` 62/62；桌面驱动 node:test 4/4；`acceptance:onboarding`、`scan:fences` 0 缺口、`scan:knowhow` 16/16、`bundle-governance`、`capabilities --check`、`product:verify`、`oss:check`、全仓 typecheck 与三端构建全部通过。
 | 计划版本 | v1.3：84 个工作包；已整合视频链路修复与基座去审批化，并重定义 B-70/B-72/B-73/B-64 |
 
 ---
@@ -67,7 +81,7 @@
 | G1 | 契约与矩阵地基 | 完成 | `ec29c2e` | vitest 38/38；tsc（base+contract）通过；bundle governance 通过；矩阵缺口 0 |
 | G2 | 触发器与指挥链 | 完成 | `4287f21` | 三包 triggers 声明合并装载；指挥链 8 条 / 组合 73 岗；suite:geo 81/81、suite:hotel 43/43；B-06c（video seed）单列待办 |
 | G3 | 岗位与增长线 | 完成 | `f69e2c0` + 本批次 | B-09..B-12 / B-43 / B-46..B-50 / B-80 / B-82 全部落地；双域套件 + 全包测试 + 场景套件全绿 |
-| G4 | 通道与执行器 | 未开始 | — | — |
+| G4 | 通道与执行器 | 完成 | 本批次 | 五图文通道 + OTA 包 + 四桥 + 多执行器路由 + 桌面 worker + 直播模板 + C 端承接 + 声明排除 + 降级出图；全量回归绿 |
 | G5 | 模型、生成与数据 | 未开始 | — | — |
 | G6 | 协作机制与验收 | 未开始 | — | — |
 | G7 | 真机验收与生产实测 | 未开始 | — | — |
@@ -125,18 +139,18 @@
 
 ### G4 通道与执行器
 
-- [ ] B-18 五类国内通道适配器
-- [ ] B-19 OTA 上传包
-- [ ] B-20 私域执行器
-- [ ] B-21 多执行器组合
-- [ ] B-22 发布/信源/OTA 执行器适配器
-- [ ] B-23 桌面浏览器驱动
-- [ ] B-24 环境变量与 doctor/connectors-check
-- [ ] B-25 发布重试与日上限参数化
-- [ ] B-51 直播通用模板与切片管线下沉（覆盖 ACT-B-09）
-- [ ] B-52 C 端前台承接化四组件（覆盖 REF-P-10 / UX-05）
-- [ ] B-75 海外与视频号通道联调（TikTok/视频号；未就绪转声明排除）
-- [ ] B-81 内容生产降级路径（无工位/无桥时的降级出图与人工发布挂起）
+- [x] B-18 五类国内通道适配器（weixin-mp/weibo 骨架 + zhihu/toutiao/baijia 占位；迁移 0041 扩 11 平台）
+- [x] B-19 OTA 上传包（携程/美团/飞猪 + 房型图/相册/视频 + 审核状态回写 + fail-closed）
+- [x] B-20 私域执行器（private-domain-bridge：企微 API/桌面 RPA 由桥侧承载，回执形状校验）
+- [x] B-21 多执行器组合（`WORKLOOM_TOOL_EXECUTOR_MODULES` 前缀路由 + 单模块失败隔离）
+- [x] B-22 发布/信源/OTA 执行器适配器（publish/source/ota 三桥 + bridge-client）
+- [x] B-23 桌面浏览器驱动（Playwright 驱动 + publish-worker + Toolkit 映射；登录态本机 profile）
+- [x] B-24 环境变量与 doctor/connectors-check（执行器路由/OTA/桥/事件总线四段自检）
+- [x] B-25 发布重试与日上限参数化（统一重试 3 次 + `dailyLimitFor(platform)`）
+- [x] B-51 直播通用模板与切片管线下沉（脚本/战报模板 + live-clip-reuse 管线 + 触发器）
+- [x] B-52 C 端前台承接化四组件（/c/actions 四动作 + 来源链/脱敏/幂等回执 + webc 快速承接）
+- [x] B-75 海外与视频号通道联调（真机未就绪 → 声明排除 + readiness 矩阵 + 解除条件）
+- [x] B-81 内容生产降级路径（HTML/CSS 降级出图 + 「降级产出」标注 + 人工发布挂起）
 
 ### G5 模型、生成与数据
 
@@ -247,6 +261,9 @@
 | 2026-09-22 | `pnpm test`（G3 收尾批次） | 通过 | base 967 / server 354 / web 101 / webb 6 / webc 21 / video-studio 22 / audit 64 / contract 40 / runtime 15 |
 | 2026-09-22 | 新增模块用例（account-matrix/ip-ledger/geo-segments/p2-ops/price-confirmation/ugc-flow/briefing-readonly/staffing-weekly/eval-questions/skill-ops） | 85/85 通过 | 含 G16 防关联、授权到期、P2 退场、UGC 四线 |
 | 2026-09-22 | `pnpm suite:geo` / `pnpm suite:hotel` | 81/81 · 43/43 通过 | 对象模型 65 类（geo）/29 类（hotel）；组合 74 岗 / 5 处遮蔽 |
+| 2026-09-22 | G4 全量：`pnpm test` / `pnpm suite` / `test:scripts` | 全绿 | base 996 · server 367 · webc 24 · suite 467/467 · scripts 62/62 |
+| 2026-09-22 | `node --test apps/desktop/electron/publish-driver.test.cjs` | 4/4 通过 | Playwright 缺失明确报错 + Toolkit 映射/上传显式检查 |
+| 2026-09-22 | `tsx scripts/channel-readiness.mts` | 通过（2 项声明排除） | TikTok/视频号未就绪豁免单见 docs/channel-exclusions.md |
 | 2026-09-21 | 整合外部批次后的门禁链 | 全部通过 | `bundle-governance --refresh-digests`、`matrix-gap`（0 缺口，72 围栏）、`tsc`（base/contract/web）、`bundles.test.ts` 11/11（DB）、`acceptance:onboarding` 通过 |
 | 2026-09-21 | `cd apps/web && ../../node_modules/.bin/vitest run src/lib/display.test.ts` | 11/11 通过 | web 测试必须在 apps/web 目录用其自身 vitest 配置跑（根配置会因 @workloom/ui 子路径解析误报） |
 | 2026-09-21 | `tsx --env-file=.env scripts/migrate.ts` | 0038_trigger_declared_id.sql 已应用 | triggers 新增 declared_id + 唯一索引 |
@@ -349,3 +366,4 @@ export PATH="/tmp/wl-bin:$PATH"
 | 2026-09-22 | 会话 3 收尾：PR #7 全门禁绿并合入 main（`119fb98`）；调色批次 T-0042/T-0043 rebase 后依次合入（`2c66df9`/`a8d5450`），main = 74 岗 / 72 技能 / 79 条组合围栏 |
 | 2026-09-22 | 会话 4：B-11 增长指标技能、B-12 四岗增长工具与围栏、B-43 hotel/ai-video 题库与技能升级晋升门禁落地；全包测试与双域套件全绿 |
 | 2026-09-22 | 会话 5：B-46 账号矩阵 + B-47 授权台账（ip-curator 下沉） + B-48 获客起步方式 + B-49 只读发现进晨报 + B-50 P2 岗指标/编制周报 + B-80 价格确认单 + B-82 UGC 授权流程；G3 全部工作包完成 |
+| 2026-09-22 | 会话 6：G4 全部工作包完成（五图文通道/OTA 包/四类执行器桥/多执行器路由/桌面 Playwright worker/直播模板/C 端承接四件套/通道声明排除/降级出图）；迁移 0041 已应用并验链 |

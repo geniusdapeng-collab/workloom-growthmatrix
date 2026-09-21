@@ -114,6 +114,36 @@ sec "原生模块"
 PTY=$(find node_modules/.pnpm -maxdepth 6 -name "pty.node" 2>/dev/null | head -1)
 if [ -n "$PTY" ]; then ok "node-pty 已构建（${PTY}）"; else warn "node-pty 未构建（dsh web/headless 需要）→ pnpm rebuild node-pty"; fi
 
+# ---------- 工具执行器与事件总线（B-21/B-24） ----------
+sec "工具执行器与事件总线"
+if [ -f .env ]; then
+  MODULES=$(grep -E '^WORKLOOM_TOOL_EXECUTOR_MODULES=' .env | cut -d= -f2- || true)
+  SINGLE=$(grep -E '^WORKLOOM_TOOL_EXECUTOR_MODULE=' .env | cut -d= -f2- || true)
+  ROUTES=${MODULES:-$SINGLE}
+  if [ -z "$ROUTES" ]; then
+    warn "未配置执行器模块（真实连接器不可用；mock/simulated 数据态仍可跑，fail-closed）"
+  else
+    IFS=',' read -ra ENTRIES <<< "$ROUTES"
+    for entry in "${ENTRIES[@]}"; do
+      entry=$(printf '%s' "$entry" | xargs)
+      [ -z "$entry" ] && continue
+      module_path="${entry#*=}"
+      prefix="${entry%%=*}"
+      [ "$prefix" = "$entry" ] && prefix="(兜底)"
+      if [ -f "$module_path" ]; then ok "执行器 $prefix → $module_path"; else bad "执行器模块路径不存在：$module_path"; fi
+    done
+  fi
+  EB=$(grep -E '^EVENT_BUS=' .env | cut -d= -f2- || true)
+  EB=${EB:-memory}
+  if [ "$EB" = "memory" ]; then
+    ok "EVENT_BUS=memory（内嵌，零外部依赖）"
+  else
+    warn "EVENT_BUS=$EB（需外部服务；启动前确认 NATS_URL/REDIS_URL 可达）"
+  fi
+else
+  warn "无 .env：执行器与事件总线按缺省处理"
+fi
+
 # ---------- 端口占用 ----------
 sec "端口"
 if command -v lsof >/dev/null 2>&1; then

@@ -18,6 +18,11 @@ triggers:
     schedule: "*/30 * * * *"
     action: { dispatch: comment-operator, template: comments.ingest }
     description: 评论采集 → 意图分类 → 四档分流
+  - id: tg-live-clip-reuse
+    name: 直播切片复用扫描
+    schedule: "30 22 * * *"
+    action: { dispatch: post-editor, template: clip.reuse.scan }
+    description: 当日直播回放识别高表现片段 → 切片剪辑 → 次日送审/发布审批（G14/G9/G12）
   - id: tg-ceo-brief-0830
     name: 公司CEO 晨报 08:30
     schedule: "30 8 * * *"
