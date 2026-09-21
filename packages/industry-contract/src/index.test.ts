@@ -87,11 +87,18 @@ describe("行业包契约", () => {
     const valid = structuredClone(manifest) as Record<string, any>;
     Object.assign(valid.workloom.provides, {
       pipelines: ["pipelines/经营闭环.yml"],
+      triggers: ["triggers.yml"],
+      matrix: "matrix/content-platform-matrix.yml",
+      platformSpecs: "templates/platform-specs.json",
       library: ["library/行业方法.md"],
       segmentDefaults: ["segment-defaults.yml"],
       connectors: ["connectors/connectors.json"],
     });
     expect(parseBundleManifest(valid).workloom.provides).toMatchObject(valid.workloom.provides);
+
+    const badTrigger = structuredClone(valid) as Record<string, any>;
+    badTrigger.workloom.provides.triggers = ["../triggers.yml"];
+    expect(() => parseBundleManifest(badTrigger)).toThrow();
 
     const directory = structuredClone(valid) as Record<string, any>;
     directory.workloom.provides.library = ["library/"];
@@ -100,6 +107,23 @@ describe("行业包契约", () => {
     const traversal = structuredClone(valid) as Record<string, any>;
     traversal.workloom.provides.connectors = ["../connectors.json"];
     expect(() => parseBundleManifest(traversal)).toThrow();
+  });
+
+  it("组合汇报关系显式声明 preset → 汇报对象，且拒绝非法标识", () => {
+    const valid = structuredClone(manifest) as Record<string, any>;
+    valid.workloom.composition = {
+      presetOwners: { "company-ceo": "example" },
+      commandChain: [
+        { preset: "growth-lead", reportsTo: "company-ceo", role: "获客负责人" },
+        { preset: "publish-operator", reportsTo: "growth-lead" },
+      ],
+    };
+    const parsed = parseBundleManifest(valid);
+    expect(parsed.workloom.composition?.commandChain).toHaveLength(2);
+
+    const invalid = structuredClone(valid) as Record<string, any>;
+    invalid.workloom.composition.commandChain = [{ preset: "Growth-Lead", reportsTo: "company-ceo" }];
+    expect(() => parseBundleManifest(invalid)).toThrow();
   });
 
   it("行业导航不能占用公共路由或借用其他包的能力与权限", () => {

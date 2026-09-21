@@ -13,4 +13,5 @@ export * from "./adapters/bilibili.js";
 export * from "./adapters/youtube.js";
 export * from "./adapters/tiktok.js";
 export * from "./adapters/shipinhao.js";
+export * from "./specs.js";
 export * from "./runner.js";
