@@ -309,10 +309,10 @@ c("工作区存在且行业为 geo-growth", async () => {
   const r = await q(`SELECT industry, stage FROM workspaces WHERE id=$1`, [WS]);
   assert(r.rows[0]?.industry === "geo-growth", `industry=${r.rows[0]?.industry}`);
 });
-c("组合编制全部 ready 落库（本包 27 岗 ⊆ 组合 72 岗，无缺岗）", async () => {
+c("组合编制全部 ready 落库（本包 27 岗 ⊆ 组合 73 岗，无缺岗）", async () => {
   /**
    * 2026-09-20 真机验收修复：花名册权威 = 装配器组合编制（geo-growth + hotel + ai-video，
-   * 同名遮蔽按主包裁决），与基座 seed.ts（ws-yunqi 72 岗）同口径；seed-geo 已按组合编制上岗。
+   * 同名遮蔽按主包裁决），与基座 seed.ts（ws-yunqi 73 岗）同口径；seed-geo 已按组合编制上岗。
    * 旧断言写死 27（只数本包），组合上岗后必然假失败。
    */
   const r = await q(`SELECT count(*) n, count(distinct preset_key) d FROM agents WHERE workspace_id=$1 AND status='ready'`, [WS]);

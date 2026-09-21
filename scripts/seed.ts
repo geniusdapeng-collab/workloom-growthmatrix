@@ -7,7 +7,7 @@
  * 用法：pnpm db:seed（读取 .env；幂等，可重复执行）
  *
  * 内容：demo 租户 / 云栖酒店工作区 / 3 人类成员 / 16 个基础 Agent preset 实例 +
- *      组合编制 72 岗（hotel 16 + ai-video 30 + geo-growth 26，同名遮蔽 4 处按主包裁决，
+ *      组合编制 73 岗（hotel 16 + ai-video 30 + geo-growth 27，同名遮蔽 3 处按主包裁决，
  *      见 provisionComposedWorkforce；口径事实源为装配器运行结果，不在此手工维护）/
  *      一店一档（含 forbidden 硬约束 + 布草/断点/FAQ 字段组）/ 基线围栏 R1–R26（hotel-baseline/v4）装载 / 53 个组合官方技能 /
  *      2 触发器 / 昨夜夜班班次 / 100 条五元事件（哈希链）/ 审批样例 / 组织记忆
@@ -1203,7 +1203,7 @@ async function main(): Promise<void> {
       } as SeedEvent,
       // ⑭ 周策略备忘（公司CEO 定调）
       {
-        event_id: "E-SEED-8914", who: acqWho("company-ceo"), context: acqCtx(acqAt(1400)),
+        event_id: "E-SEED-8914", who: acqWho("hotel-ceo"), context: acqCtx(acqAt(1400)),
         object: { type: "campaign", id: "strategy-w35", label: "W35 获客策略备忘" },
         decision: { action: "strategy.memo", after: {
           theme: "开学季亲子收口 + 国庆错峰抢订",
@@ -1338,7 +1338,7 @@ async function main(): Promise<void> {
       } as SeedEvent,
       // ㉚ 六级漏斗周报复盘反哺
       {
-        event_id: "E-SEED-8930", who: acqWho("company-ceo"), context: acqCtx(acqAt(120)),
+        event_id: "E-SEED-8930", who: acqWho("hotel-ceo"), context: acqCtx(acqAt(120)),
         object: { type: "alert", id: "funnel-w35", label: "六级漏斗周报 W35" },
         decision: { action: "funnel.weekly", after: {
           funnel: { exposure: 6200000, engage: 312000, inquiry: 1842, lead: 486, deal: 152, repurchase: 47 },

@@ -28,9 +28,50 @@
       "presetOwners": {
         "ads-optimizer": "geo-growth",
         "publish-operator": "geo-growth",
-        "review-analyst": "geo-growth",
-        "company-ceo": "hotel"
-      }
+        "review-analyst": "geo-growth"
+      },
+      "commandChain": [
+        {
+          "preset": "growth-lead",
+          "reportsTo": "company-ceo",
+          "role": "获客回路负责人"
+        },
+        {
+          "preset": "geo-researcher",
+          "reportsTo": "growth-lead",
+          "role": "情报与策略组"
+        },
+        {
+          "preset": "geo-content-planner",
+          "reportsTo": "growth-lead",
+          "role": "内容生产组"
+        },
+        {
+          "preset": "publish-operator",
+          "reportsTo": "growth-lead",
+          "role": "分发与触达组"
+        },
+        {
+          "preset": "private-domain-operator",
+          "reportsTo": "growth-lead",
+          "role": "承接转化组"
+        },
+        {
+          "preset": "review-analyst",
+          "reportsTo": "growth-lead",
+          "role": "数据复盘组"
+        },
+        {
+          "preset": "director",
+          "reportsTo": "growth-lead",
+          "role": "内容生产服务线（契约调用）"
+        },
+        {
+          "preset": "hotel-ceo",
+          "reportsTo": "company-ceo",
+          "role": "酒店试点经营（对获客回路供数）"
+        }
+      ]
     },
     "provides": {
       "presets": [
@@ -229,7 +270,7 @@
   },
   "integrity": {
     "algorithm": "sha256",
-    "digest": "490951eb0e995dc8d4548cc6d8173c1343adb1a680abe6264e9121b01c959cf1",
+    "digest": "181ba5a2bd3abec05f88378d367e34d4c759a74c9f24e2abb0c2d46407e46a0f",
     "assets": {
       "eval/questions.json": "49e7b69803ac4c398b812e93758d136332c9312041d894ca7b74a8a1623e7993",
       "fences/geo-growth-baseline.yml": "97e4eee3807ef53af465277b7973527e38247b0d5f3e2f182a24fc79bee4cf2f",

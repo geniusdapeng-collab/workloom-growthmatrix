@@ -2,7 +2,7 @@
 /**
  * acceptance-matrix.mts · 员工/技能验收矩阵生成器（A 契约层 + B 运行层）
  *
- * 为什么需要它：README/看板上的「72 岗 / 67 技能」是**派生统计**，人肉核对必然漂移。
+ * 为什么需要它：README/看板上的「73 岗 / 67 技能」是**派生统计**，人肉核对必然漂移。
  * 本脚本把三份事实源拉到一起逐条对账，产出可复核的矩阵（JSON + CSV + 摘要）：
  *   ① 组合编制事实源：composeWorkforce / loadComposedAssets（bundle 清单 + preset 文件）
  *   ② 运行态事实源：workspace 的 agents / fence_rules / skills / skill_installs（RLS 视角）

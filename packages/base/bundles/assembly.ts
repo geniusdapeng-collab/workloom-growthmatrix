@@ -830,6 +830,10 @@ export interface ComposedProvision {
   triggersRetired: number;
   triggersSkippedCustomer: number;
   triggerShadowed: number;
+  /** 汇报关系声明数量（B-08；0 表示未声明，按平级处理） */
+  commandChain: number;
+  /** 因退出组合编制而停用的历史岗位数（只增不改：停用不删除） */
+  agentsRetired: number;
 }
 
 /**
@@ -881,6 +885,22 @@ export async function provisionComposedWorkforce(
   }
   const mergedRules = mergeComposedFenceRules(composed.fencePacks);
   const composedTriggers = loadComposedTriggers(slug, root);
+  /**
+   * 汇报关系（B-08）：主包声明 preset → reportsTo，两端都必须在本组合编制内；
+   * 未声明不阻断（平级），声明了写错即拒绝装配（避免组织图悬空）。
+   */
+  const primaryManifest = loadVerifiedBundleManifest(slug, root);
+  const commandChain = primaryManifest.workloom.composition?.commandChain ?? [];
+  const rosterKeys = new Set(composeWorkforce(slug, root).presets.keys());
+  const chainGaps = commandChain.filter(
+    (link) => !rosterKeys.has(link.preset) || !rosterKeys.has(link.reportsTo),
+  );
+  if (chainGaps.length > 0) {
+    throw new BundleError(
+      "ASSEMBLY_CHECK_FAILED",
+      `汇报关系引用未在编岗位：${chainGaps.map((link) => `${link.preset}→${link.reportsTo}`).join("；")}`,
+    );
+  }
   // 声明必须与编制对账：派遣岗位必须已在组合编制内、beat 必须是已知 CEO 节拍。
   // 未命中即拒绝装载（fail-closed），不允许"声明了但永远不触发"的幽灵触发器进库。
   const triggerGaps = triggerGapReport(composedTriggers.triggers, {
@@ -896,6 +916,7 @@ export async function provisionComposedWorkforce(
   }
   let triggersRetired = 0;
   let triggersSkippedCustomer = 0;
+  let agentsRetired = 0;
 
   const manageTransaction = options.manageTransaction ?? typeof (app as pg.Pool).connect === "function";
   const client = manageTransaction
@@ -1039,6 +1060,39 @@ export async function provisionComposedWorkforce(
       [scope.workspaceId, declaredIds],
     );
     triggersRetired = retired.rowCount ?? 0;
+    /**
+     * 编制退场（B-07）：组合装配写入的岗位若已退出权威编制（例如 company-ceo 更名
+     * hotel-ceo 后遗留的旧键），只停用不删除；客户自建岗位（meta 无 composedFrom）不动。
+     */
+    const rosterKeysArr = [...composeWorkforce(slug, root).presets.keys()];
+    const retiredAgents = await client.query(
+      `UPDATE agents SET status='disabled'
+        WHERE workspace_id=$1 AND status='ready'
+          AND meta->'composedFrom'->>'primary'=$2
+          AND NOT (preset_key = ANY($3::text[]))`,
+      [scope.workspaceId, slug, rosterKeysArr],
+    );
+    agentsRetired = retiredAgents.rowCount ?? 0;
+    /**
+     * 同名去重（B-07 暴露的历史缺陷）：seed 脚本历史上用裸 id（agt-<key>）建岗，
+     * 装配器用带工作区后缀的 id，两种创建顺序交错时同一 preset_key 会出现两行。
+     * 处理：同一 (workspace_id, preset_key) 只保留最早的一条组合装配岗（仍在编制内），
+     * 其余组合装配行停用；客户自建（meta 无 composedFrom）不在此列。
+     */
+    const deduped = await client.query(
+      `UPDATE agents a SET status='disabled'
+        WHERE a.workspace_id=$1 AND a.status='ready'
+          AND a.meta->'composedFrom' IS NOT NULL
+          AND a.preset_key = ANY($2::text[])
+          AND EXISTS (
+            SELECT 1 FROM agents b
+            WHERE b.workspace_id=a.workspace_id AND b.preset_key=a.preset_key
+              AND b.status='ready' AND b.meta->'composedFrom' IS NOT NULL
+              AND (b.created_at, b.id) < (a.created_at, a.id)
+          )`,
+      [scope.workspaceId, rosterKeysArr],
+    );
+    agentsRetired += deduped.rowCount ?? 0;
     if (manageTransaction) await client.query("COMMIT");
   } catch (err) {
     if (manageTransaction) await client.query("ROLLBACK").catch(() => undefined);
@@ -1057,6 +1111,8 @@ export async function provisionComposedWorkforce(
     triggersRetired,
     triggersSkippedCustomer,
     triggerShadowed: composedTriggers.shadowed,
+    commandChain: commandChain.length,
+    agentsRetired,
   };
 }
 
@@ -1720,6 +1776,7 @@ export async function activateBundle(
             triggers: composition.triggers,
             triggersRetired: composition.triggersRetired,
             triggersSkippedCustomer: composition.triggersSkippedCustomer,
+            commandChain: composition.commandChain,
           },
         },
         basis: [

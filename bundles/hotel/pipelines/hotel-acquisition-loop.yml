@@ -48,6 +48,6 @@ steps:
     outputs: [member]                 # 入住前确认/住中关怀/好评引导/复购唤醒/转介绍
   - step_key: funnel-review
     name: 六级漏斗复盘反哺
-    owner: company-ceo
+    owner: hotel-ceo
     cron: "30 8 * * 1"                # 周一晨会并入经营节拍
     outputs: [alert]                  # 曝光→互动→询盘→留资→成交→复购；漏环告警+选题反哺
