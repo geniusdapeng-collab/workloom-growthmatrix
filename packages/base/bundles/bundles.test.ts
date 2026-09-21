@@ -167,28 +167,29 @@ describe.runIf(RUN_DB)("行业装配 PG 集成（F2.10 铁律）", async () => {
       const scope2 = { tenantId, workspaceId: wsId };
       const provision = await provisionComposedWorkforce(app, scope2, "geo-growth", "MEM-FUSION");
       expect(provision.bundleIds).toEqual(["hotel", "ai-video", "geo-growth"]);
-      expect(provision.rosterSize).toBe(74);
-      // 每个 preset_key 只由一个包提供（同名按主包裁决）：hotel 16 / ai-video 29 / geo-growth 29
+      expect(provision.rosterSize).toBe(75);
+      // 每个 preset_key 只由一个包提供（同名按主包裁决）：hotel 16 / ai-video 30 / geo-growth 29
       // （B-07 后 company-ceo 归 geo-growth，hotel 版更名 hotel-ceo，遮蔽从 4 处减到 3 处）
-      // B-09/B-47 下沉 creator-partner 与 ip-curator 后遮蔽回到 5 处，角色总数仍为 74
-      expect(provision.perBundle).toEqual({ hotel: 16, "ai-video": 29, "geo-growth": 29 });
+      // B-09/B-47 下沉 creator-partner 与 ip-curator 后遮蔽回到 5 处；
+      // 2026-09-22 新增 ai-video「BGM 配乐师」→ 角色总数 74→75
+      expect(provision.perBundle).toEqual({ hotel: 16, "ai-video": 30, "geo-growth": 29 });
       expect(provision.shadowed.length).toBe(5);
       expect(provision.fenceRules).toBeGreaterThanOrEqual(68);
 
       const profile = await computeAssembly(app, scope2, "geo-growth");
       expect(profile.checks.map((c) => c.ok)).toEqual([true, true, true, true, true, true]);
       expect(profile.canActivate).toBe(true);
-      expect(profile.agents.length).toBe(74);
+      expect(profile.agents.length).toBe(75);
 
       const activated = await activateBundle(app, gw, scope2, "geo-growth", "MEM-FUSION");
-      expect(activated.composition.rosterSize).toBe(74);
+      expect(activated.composition.rosterSize).toBe(75);
       const ev = await qScope<{ payload: { decision: { after: { composition?: { bundles?: string[]; rosterSize?: number } } } } }>(
         `SELECT payload FROM biz_events WHERE workspace_id=$1 AND payload->'decision'->>'action'='bundle.activate'
           ORDER BY seq DESC LIMIT 1`,
         [wsId],
       );
       expect(ev.rows[0]!.payload.decision.after.composition?.bundles).toEqual(["hotel", "ai-video", "geo-growth"]);
-      expect(ev.rows[0]!.payload.decision.after.composition?.rosterSize).toBe(74);
+      expect(ev.rows[0]!.payload.decision.after.composition?.rosterSize).toBe(75);
     } finally {
       await qScope(`DELETE FROM agents WHERE workspace_id=$1`, [wsId]).catch(() => undefined);
       await qScope(`DELETE FROM fence_rules WHERE workspace_id=$1`, [wsId]).catch(() => undefined);
