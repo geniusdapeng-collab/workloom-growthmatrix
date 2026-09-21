@@ -26,6 +26,14 @@ export const TaskContractSchema = z.object({
 });
 export type TaskContract = z.infer<typeof TaskContractSchema>;
 
+/** B-37：契约与线程/组合范围/矩阵引用的串联字段（持久化层扩展，不影响事件 schema）。 */
+export const TaskContractLinksSchema = z.object({
+  threadId: z.string().min(1).max(120).nullable().default(null),
+  bundleScope: z.array(z.string().min(1).max(80)).max(20).default([]),
+  matrixRefs: z.array(z.string().min(1).max(120)).max(100).default([]),
+});
+export type TaskContractLinks = z.infer<typeof TaskContractLinksSchema>;
+
 export const HandoffReceiptSchema = z.object({
   id: z.string().min(1).max(120),
   contractId: z.string().min(1).max(120),

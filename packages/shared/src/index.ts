@@ -7,3 +7,4 @@ export * from "./enums.js";
 export * from "./constants.js";
 export * from "./ids.js";
 export * from "./client-access.js";
+export * from "./event-freeze.js";
