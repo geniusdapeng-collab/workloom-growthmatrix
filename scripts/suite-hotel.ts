@@ -109,8 +109,8 @@ a("30 个技能目录且 frontmatter 合法", () => {
     assert(fm.name && fm.description, `${d} frontmatter 缺 name/description`);
   }
 });
-a("对象模型 29 类（含 7 类获客对象 + content + 价格确认单 B-80）", () => {
-  assert(objectTypes.size === 29, `期望 29，实际 ${objectTypes.size}`);
+a("对象模型 30 类（含 7 类获客对象 + content + 价格确认单 B-80 + OTA 素材 B-19）", () => {
+  assert(objectTypes.size === 30, `期望 30，实际 ${objectTypes.size}`);
   for (const t of ["intent_signal", "lead", "coupon_sku", "booking_order", "poi_store", "conversion", "live_campaign"])
     assert(objectTypes.has(t), `获客对象缺失 ${t}`);
 });
