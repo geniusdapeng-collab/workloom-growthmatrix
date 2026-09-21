@@ -12,13 +12,13 @@
 |---|---|
 | 当前批次 | G2 触发器与指挥链 |
 | 批次状态 | G1 完成；G2 进行中（声明层纯函数已完成，DB 装载与指挥链待续） |
-| 最近更新 | 2026-09-21（会话 1 · PG 环境就绪 + G1 全量回归） |
+| 最近更新 | 2026-09-21（会话 2 · 整合外部两批 + 全量回归） |
 | 分支 | `task/T-2026-0921-0003` |
-| 云端最新提交 | 以 `git fetch origin main` 为准（G1 代码已在 main） |
-| 本地 HEAD | G2 进行中提交 |
+| 云端最新提交 | 本地整合后待推送（含 T-2026-0921-0041 / T-2026-0921-0050） |
+| 本地 HEAD | 整合提交（视频链路修复 + 去审批化 + 计划 v1.3） |
 | 阻塞 | 无 |
 | 下一步 | G2：装配器合并 triggers（B-02）→ 三包 triggers.yml（B-05/B-42）→ seed 去硬编码（B-06）→ 指挥权切换（B-07/B-08） |
-| 计划版本 | v1.2：84 个工作包（B-01 至 B-84），覆盖四批方案并含 DoR/DoD 与高风险包细则 |
+| 计划版本 | v1.3：84 个工作包；已整合视频链路修复与基座去审批化，并重定义 B-70/B-72/B-73/B-64 |
 
 ---
 
@@ -163,6 +163,8 @@
 | 2 | `ec29c2e` | feat(growth): G1 契约槽位/矩阵/平台规格/发布预检 [T-2026-0921-0003] | G1 | vitest 38/38 + tsc + governance + gap 0 |
 | 3 | `24a4dcb` | docs(growth): 账本更新 G1 完成并交接 G2 [T-2026-0921-0003] | G1 | 账本已推送 main |
 | 4 | 待回填 | feat(growth): G2 触发器声明层与装配回归 [T-2026-0921-0003] | G2 | 见第 5 节 |
+| 5 | `c56d0b2` | fix(growth): 同步 growth 视频链路修复批次（T-2026-0921-0041 整合版） | 外部批次 | 保留 G1 bundle 声明 + 重算摘要 + gap 0 |
+| 6 | `01c71fe` | feat(growth): 基座去审批化（T-2026-0921-0050 整合版） | 外部批次 | web 类型检查 + 三文件样例测试通过 |
 
 ---
 
@@ -182,6 +184,8 @@
 | 2026-09-21 | `RUN_DB_TESTS=1 vitest run packages/base/bundles/bundles.test.ts` | 11/11 通过 | 组合装配 72 岗 + 遮蔽 + 摘要门禁 |
 | 2026-09-21 | `tsx --env-file=.env scripts/acceptance/onboarding.mts` | 通过（72/72 岗、71 条围栏、影子→试用、账本只增） | — |
 | 2026-09-21 | `vitest run packages/base/bundles/triggers.test.ts` | 4/4 通过 | 声明层纯函数 |
+| 2026-09-21 | 整合外部批次后的门禁链 | 全部通过 | `bundle-governance --refresh-digests`、`matrix-gap`（0 缺口，72 围栏）、`tsc`（base/contract/web）、`bundles.test.ts` 11/11（DB）、`acceptance:onboarding` 通过 |
+| 2026-09-21 | `cd apps/web && ../../node_modules/.bin/vitest run src/lib/display.test.ts` | 11/11 通过 | web 测试必须在 apps/web 目录用其自身 vitest 配置跑（根配置会因 @workloom/ui 子路径解析误报） |
 
 ---
 
@@ -196,6 +200,8 @@
 | L-05 | 矩阵平台引用 87 个名称（含分组与别名），注册表 23 条平台规格 | 口径易混 | 分组别名表已覆盖；缺口脚本作为唯一对账口径 | 已缓解 |
 | L-06 | `PII_SALT` 未配置（工具运行告警） | 生产脱敏 | 生产部署必须注入；开发态允许占位盐 | 待部署 |
 | L-07 | 本机无 Docker/Homebrew，DB 依赖 Postgres.app DMG 挂载 | 会话重启需重新挂载 | 第 7 节已固化启动命令；DMG 缓存于 `/tmp/Postgres-2.9.6-17.dmg`（sha256 与 release-assets 一致） | 已缓解 |
+| L-08 | 外部批次可能携带过期 bundle.json（本次视频批次会删除 G1 的 matrix/platformSpecs 声明） | 静默丢失资产声明 | 合并后强制顺序：`bundle-governance --refresh-digests` → `matrix-gap` → DB `bundles.test` → `acceptance:onboarding`；已在计划 §9.3 固化 | 已缓解 |
+| L-09 | 产品所有者决策「基座去审批化」（T-2026-0921-0050） | 与 B-70/B-72/B-73/B-64 原口径冲突 | 已重定义为「业务关卡放行」口径；后端 approvals/围栏/业务门保留 | 已对齐 |
 
 ---
 
@@ -253,3 +259,4 @@ export DATABASE_GATEWAY_URL='postgres://workloom_gateway:workloom_dev_gateway@lo
 | 2026-09-21 | 本地 PG 17 + pgvector 就绪；39 迁移 + 种子；bundles 11/11 与 acceptance:onboarding 通过；G2 声明层纯函数（triggers.ts + 4 单测）落地 |
 | 2026-09-21 | 计划 v1.1：对账四批方案，补齐 B-46 至 B-68 共 23 项（账号矩阵、授权台账、主包客群、只读产出、P2 岗指标、直播模板、C 端承接、视频成本、采集调度、三态标识、保鲜环、工具幂等、增长偏好、夜班候选、场景审计、压测、协作模板、五关服务端化、首登行动卡、执行器沙箱、统计脚本化、sync、装载裁剪） |
 | 2026-09-21 | 计划 v1.2 二轮对账：新增 B-69 至 B-84 共 16 项（引导埋点、人审减负、契约强制、信任账户运行、目标闭环验收、备份回滚、海外通道、Bundle 版本治理、文档同步、供应链门禁、RLS 用例、价格确认单、降级路径、UGC 授权、schema 冻结门禁、外部事实复核），工作包总数 84；补充 DoR/DoD 与 8 个高风险包细则 |
+| 2026-09-21 | 会话 2：拉取并整合 T-2026-0921-0041（视频链路修复）与 T-2026-0921-0050（基座去审批化）；修复 bundle.json 合并回归；计划升级 v1.3 并重定义 4 个工作包口径；全量回归通过 |
