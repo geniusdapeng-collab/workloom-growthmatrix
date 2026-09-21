@@ -44,6 +44,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 /** 仓库 bundles/ 根（packages/base/bundles → 上三级）；测试可用 BUNDLES_ROOT 指到临时目录 */
 export const DEFAULT_BUNDLES_ROOT = join(__dirname, "..", "..", "..", "bundles");
 import { maybeApplyOverlay } from "../overlay/assembly-hook.js";
+import {
+  mergeTriggerDeclarations,
+  parseTriggerDeclarations,
+  triggerGapReport,
+  type ComposedTrigger,
+  type TriggerDeclarationSource,
+} from "./triggers.js";
 
 /**
  * 打包载荷布局（2026-09-20 客户端首启实证）：
@@ -626,6 +633,47 @@ export interface ComposedAssets {
   shadowed: ComposedWorkforce["shadowed"];
 }
 
+/** 组合声明式触发器：合并结果 + 来源版本（供声明的幂等版本落账） */
+export interface ComposedTriggerSet {
+  triggers: ComposedTrigger[];
+  bundleIds: string[];
+  versions: Record<string, string>;
+  /** 被遮蔽（非权威）的同名声明数量 */
+  shadowed: number;
+}
+
+/** 已知数字 CEO 节拍（声明 action.beat 的白名单，与 captain/loop.ts 的节拍集对齐） */
+export const CAPTAIN_BEATS = [
+  "daily", "queue", "deviation", "breaker", "outcome", "hr", "board", "org", "fleet",
+] as const;
+
+/**
+ * 组合声明式触发器（主包 + 依赖包）：
+ * 依赖包在前、主包在后（与 loadComposedAssets 同序），同名 id 主包优先并留痕。
+ * 只读取经完整性门禁的清单与资产；解析失败即抛，不静默丢声明。
+ */
+export function loadComposedTriggers(slug: string, root = bundlesRoot()): ComposedTriggerSet {
+  const sources = loadProjectionSources(slug, root);
+  const declarations: TriggerDeclarationSource[] = [];
+  const versions: Record<string, string> = {};
+  for (const { manifest } of sources) {
+    const bundleId = manifest.workloom.industry;
+    versions[bundleId] = manifest.version;
+    for (const assetPath of manifest.workloom.provides.triggers) {
+      const file = verifiedAssetPath(bundleId, assetPath, root);
+      const parsed = parseTriggerDeclarations(readFileSync(file, "utf-8"), `${bundleId}/${assetPath}`);
+      declarations.push({ bundleId, file: parsed });
+    }
+  }
+  const triggers = mergeTriggerDeclarations(declarations);
+  return {
+    triggers,
+    bundleIds: sources.map((source) => source.manifest.workloom.industry),
+    versions,
+    shadowed: triggers.reduce((count, item) => count + item.shadowedBundleIds.length, 0),
+  };
+}
+
 /** 读取某行业包声明的档案 schema（未声明/不可读 → null；内容摘要仍按 provides 校验） */
 function readDeclaredArchiveSchema(bundleId: string, root: string): Record<string, unknown> | null {
   try {
@@ -771,6 +819,11 @@ export interface ComposedProvision {
   perBundle: Record<string, number>;
   fenceRules: number;
   shadowed: ComposedWorkforce["shadowed"];
+  /** 声明式触发器装载统计（B-02） */
+  triggers: number;
+  triggersRetired: number;
+  triggersSkippedCustomer: number;
+  triggerShadowed: number;
 }
 
 /**
@@ -821,6 +874,21 @@ export async function provisionComposedWorkforce(
     void key;
   }
   const mergedRules = mergeComposedFenceRules(composed.fencePacks);
+  const composedTriggers = loadComposedTriggers(slug, root);
+  // 声明必须与编制对账：派遣岗位必须已在组合编制内、beat 必须是已知 CEO 节拍。
+  // 未命中即拒绝装载（fail-closed），不允许"声明了但永远不触发"的幽灵触发器进库。
+  const triggerGaps = triggerGapReport(composedTriggers.triggers, {
+    presetKeys: [...composeWorkforce(slug, root).presets.keys()],
+    beats: [...CAPTAIN_BEATS],
+  });
+  if (triggerGaps.length > 0) {
+    throw new BundleError(
+      "ASSEMBLY_CHECK_FAILED",
+      `声明式触发器不可装载：${triggerGaps.map((gap) => `${gap.triggerId}（${gap.detail}）`).join("；")}`,
+    );
+  }
+  let triggersRetired = 0;
+  let triggersSkippedCustomer = 0;
 
   const manageTransaction = options.manageTransaction ?? typeof (app as pg.Pool).connect === "function";
   const client = manageTransaction
@@ -920,6 +988,50 @@ export async function provisionComposedWorkforce(
         );
       }
     }
+    /**
+     * 声明式触发器装载（B-02）：按 (workspace_id, declared_id) 幂等 upsert。
+     * 纪律：
+     *  - 落库 id = `<declared_id>-<workspace_id>`（工作区后缀，避免全局主键撞车）；
+     *  - 客户自建（declared_id 为空）永不覆盖：名称冲突时跳过并计数；
+     *  - 退出声明（上一版有、本版无）只禁用不删除，保留审计轨迹。
+     */
+    const declaredIds: string[] = [];
+    for (const item of composedTriggers.triggers) {
+      const declaration = item.declaration;
+      declaredIds.push(declaration.id);
+      const existing = await client.query<{ id: string; source_bundle: string | null }>(
+        `SELECT id, source_bundle FROM triggers WHERE workspace_id=$1 AND declared_id=$2`,
+        [scope.workspaceId, declaration.id],
+      );
+      if (existing.rows[0] && existing.rows[0].source_bundle === null) {
+        triggersSkippedCustomer += 1;
+        continue;
+      }
+      const effectiveId = existing.rows[0]?.id ?? `${declaration.id}-${scope.workspaceId}`;
+      const declaredVersion = `${item.sourceBundleId}@${composedTriggers.versions[item.sourceBundleId] ?? "unknown"}`;
+      await client.query(
+        `INSERT INTO triggers
+           (id, workspace_id, name, kind, schedule, action, enabled, created_by, source_bundle, declared_version, declared_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+         ON CONFLICT (id) DO UPDATE SET
+           name = EXCLUDED.name, kind = EXCLUDED.kind, schedule = EXCLUDED.schedule,
+           action = EXCLUDED.action, enabled = EXCLUDED.enabled, updated_at = now(),
+           source_bundle = EXCLUDED.source_bundle, declared_version = EXCLUDED.declared_version,
+           declared_id = EXCLUDED.declared_id`,
+        [
+          effectiveId, scope.workspaceId, declaration.name, declaration.kind, declaration.schedule,
+          JSON.stringify(declaration.action), declaration.enabled, `system:compose:${by}`,
+          item.sourceBundleId, declaredVersion, declaration.id,
+        ],
+      );
+    }
+    const retired = await client.query(
+      `UPDATE triggers SET enabled=false, updated_at=now()
+        WHERE workspace_id=$1 AND declared_id IS NOT NULL AND source_bundle IS NOT NULL
+          AND enabled=true AND NOT (declared_id = ANY($2::text[]))`,
+      [scope.workspaceId, declaredIds],
+    );
+    triggersRetired = retired.rowCount ?? 0;
     if (manageTransaction) await client.query("COMMIT");
   } catch (err) {
     if (manageTransaction) await client.query("ROLLBACK").catch(() => undefined);
@@ -934,6 +1046,10 @@ export async function provisionComposedWorkforce(
     perBundle,
     fenceRules: mergedRules.length,
     shadowed: composed.shadowed,
+    triggers: composedTriggers.triggers.length,
+    triggersRetired,
+    triggersSkippedCustomer,
+    triggerShadowed: composedTriggers.shadowed,
   };
 }
 
@@ -1594,6 +1710,9 @@ export async function activateBundle(
             perBundle: composition.perBundle,
             fenceRules: composition.fenceRules,
             shadowed: composition.shadowed,
+            triggers: composition.triggers,
+            triggersRetired: composition.triggersRetired,
+            triggersSkippedCustomer: composition.triggersSkippedCustomer,
           },
         },
         basis: [
