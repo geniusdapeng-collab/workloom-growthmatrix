@@ -9,7 +9,7 @@ import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { canonicalBundleArtifactPayload } from "@workloom/industry-contract";
+import { canonicalBundleArtifactPayload, parseBundleManifest } from "@workloom/industry-contract";
 import {
   BundleError, REGISTERED_PAGES, computeAssembly, listProfileSlugs, scaffoldDraft, removeDraft,
 } from "./assembly.js";
@@ -222,8 +222,10 @@ describe.runIf(RUN_DB)("行业装配 PG 集成（F2.10 铁律）", async () => {
     bj.name = "@workloom/copycat"; bj.workloom.industry = "copycat"; bj.workloom.status = "draft";
     // 手改清单后必须重算完整性摘要：改了内容却不更新摘要 = 平台应当拒绝的篡改
     // （真实路径由 createBundleDraft/bundle:governance --refresh-digests 生成摘要）
+    // 摘要必须与装载端同口径：先经契约解析（补齐默认值）再算规范形，
+    // 否则新增的契约默认字段会让"手改后重算的摘要"与装载端不一致。
     bj.integrity.digest = createHash("sha256")
-      .update(canonicalBundleArtifactPayload(bj, bj.integrity.assets ?? {}))
+      .update(canonicalBundleArtifactPayload(parseBundleManifest(bj)))
       .digest("hex");
     writeFileSync(bjPath, `${JSON.stringify(bj, null, 2)}\n`, "utf-8");
 

@@ -6,3 +6,4 @@ export * from "./assembly.js";
 export * from "./eval-questions.js";
 export * from "./matrix.js";
 export * from "./segment.js";
+export * from "./triggers.js";
