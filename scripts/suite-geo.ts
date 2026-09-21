@@ -81,8 +81,8 @@ a("bundle.json 声明的全部资产路径存在", () => {
     for (const p of paths) assert(existsSync(join(BUNDLE, p)), `缺失资产 ${p}`);
   }
 });
-a("27 个 preset（双域 16 + 视觉栈 2 + 获客用增 9，含 2 个 P2 条件岗）且 preset_key 唯一", () => {
-  assert(presets.length === 27, `期望 27，实际 ${presets.length}`);
+a("28 个 preset（双域 16 + 视觉栈 2 + 获客用增 10，含 2 个 P2 条件岗）且 preset_key 唯一", () => {
+  assert(presets.length === 28, `期望 27，实际 ${presets.length}`);
   assert(presetKeys.size === 27, "preset_key 重复");
 });
 a("preset 必填字段完整（含 prompt 三要素）", () => {
@@ -102,11 +102,11 @@ a("夜班编制覆盖跨时区值守（≥5 员 night_shift）", () => {
   for (const k of ["visibility-watcher", "entity-inspector", "data-board-officer", "company-ceo"])
     assert(n.includes(k), `${k} 应为夜班（跨时区/凌晨巡检纪律）`);
 });
-a("围栏基线 28 条（双域 17 + 获客用增 8 + 人审边界 2 + 素材制作放行 1）全部 is_baseline（只可加严）", () => {
+a("围栏基线 30 条（双域 17 + 获客用增 8 + 人审边界 2 + 素材制作放行 1 + 达人合规 2）全部 is_baseline（只可加严）", () => {
   // 口径以 bundles/geo-growth/fences/geo-growth-baseline.yml 实物为准：
   // 2026-09-21 基线为 27 条（17 双域 + 8 获客用增 + G-C01/G-C02 内部协作放行面），
-  // 视频链路批次新增 G-C04（素材制作渲染放行）后为 28 条。
-  assert(fenceRules.length === 28, `期望 28，实际 ${fenceRules.length}`);
+  // 视频链路批次新增 G-C04（素材制作渲染放行）后为 30 条（G-AD1/G-AD2 达人合规）。
+  assert(fenceRules.length === 30, `期望 30，实际 ${fenceRules.length}`);
   assert(fenceRules.every(r => r.is_baseline), "存在非基线规则");
 });
 a("GEO 三闸到位：G-GEO1 review / G-GEO2 block / G-GEO3 block", () => {
@@ -309,7 +309,7 @@ c("工作区存在且行业为 geo-growth", async () => {
   const r = await q(`SELECT industry, stage FROM workspaces WHERE id=$1`, [WS]);
   assert(r.rows[0]?.industry === "geo-growth", `industry=${r.rows[0]?.industry}`);
 });
-c("组合编制全部 ready 落库（本包 27 岗 ⊆ 组合 73 岗，无缺岗）", async () => {
+c("组合编制全部 ready 落库（本包 28 岗 ⊆ 组合 73 岗，无缺岗）", async () => {
   /**
    * 2026-09-20 真机验收修复：花名册权威 = 装配器组合编制（geo-growth + hotel + ai-video，
    * 同名遮蔽按主包裁决），与基座 seed.ts（ws-yunqi 73 岗）同口径；seed-geo 已按组合编制上岗。
@@ -332,9 +332,9 @@ c("员工 fence_bindings 原样落库（F2.10）", async () => {
   const fb = r.rows[0]?.fence_bindings as string[];
   assert(Array.isArray(fb) && fb.includes("G-GEO1") && fb.includes("G-GEO2"), "绑定丢失");
 });
-c("28 条围栏 active 装载（与基线文件口径一致）", async () => {
+c("30 条围栏 active 装载（与基线文件口径一致）", async () => {
   const r = await q(`SELECT count(*) n FROM fence_rules WHERE workspace_id=$1 AND status='active' AND version='geo-growth-baseline/v1'`, [WS]);
-  assert(Number(r.rows[0].n) === 28, `fences=${r.rows[0].n}`);
+  assert(Number(r.rows[0].n) === 30, `fences=${r.rows[0].n}`);
 });
 c("29 个 GEO 技能已安装（双域 6 + 视觉 14 + 获客用增 9）", async () => {
   const r = await q(`SELECT count(*) n FROM skill_installs si JOIN skills s ON s.id=si.skill_id WHERE si.workspace_id=$1 AND s.bundle='geo-growth'`, [WS]);

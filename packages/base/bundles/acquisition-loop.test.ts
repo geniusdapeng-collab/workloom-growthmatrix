@@ -204,7 +204,7 @@ describe("多领域融合：组合岗位编制裁决", () => {
     const declared = VIEWS.reduce((sum, bundle) => sum + bundle.presets.size, 0);
     const shadowed = composed.shadowed.length;
     expect(keys.length).toBe(declared - shadowed);
-    expect(shadowed).toBe(3);
+    expect(shadowed).toBe(4);
     expect(keys.length).toBe(73);
   });
 
@@ -222,6 +222,7 @@ describe("多领域融合：组合岗位编制裁决", () => {
     const shadows = composed.shadowed.map((s) => `${s.bundleId}:${s.presetKey}→${s.winnerBundleId}`).sort();
     expect(shadows).toEqual([
       "ai-video:ads-optimizer→geo-growth",
+      "ai-video:creator-partner→geo-growth",
       "ai-video:publish-operator→geo-growth",
       "ai-video:review-analyst→geo-growth",
     ]);
