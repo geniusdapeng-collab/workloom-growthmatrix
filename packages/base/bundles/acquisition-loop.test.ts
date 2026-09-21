@@ -199,12 +199,14 @@ describe("多领域融合：组合岗位编制裁决", () => {
     /**
      * 先校验不变式：组合编制 = 各包编制之和 − 被遮蔽的同名定义数（每个 preset_key 只留一个权威定义）。
      * 再校验该不变式算出的数量与对外口径（README/装配测试的 74 岗）一致——口径漂移时同时暴露两侧。
-     * 数量本身随各包编制演化（曾从 61 长到 70、72、73，再到 74（2026-09-21 ai-video 新增「调色师」）），所以断言读的是算出来的值，而不是让维护者去猜。
+     * 数量本身随各包编制演化（曾从 61 长到 70、72、73 到 74（2026-09-21 ai-video 新增「调色师」）；
+     * 2026-09-22 B-47 版权管理员下沉主包后权威归属迁移、遮蔽 4→5 处，角色总数仍为 74），
+     * 所以断言读的是算出来的值，而不是让维护者去猜。
      */
     const declared = VIEWS.reduce((sum, bundle) => sum + bundle.presets.size, 0);
     const shadowed = composed.shadowed.length;
     expect(keys.length).toBe(declared - shadowed);
-    expect(shadowed).toBe(4);
+    expect(shadowed).toBe(5);
     expect(keys.length).toBe(74);
   });
 
@@ -216,6 +218,8 @@ describe("多领域融合：组合岗位编制裁决", () => {
     // B-07：组合产品的公司 CEO 归获客口径主包（geo-growth）；酒店版更名 hotel-ceo 留在 hotel 包
     expect(ownerOf("company-ceo")).toBe("geo-growth");
     expect(ownerOf("hotel-ceo")).toBe("hotel");
+    // B-47：版权管理员下沉主包后，组合权威归 geo-growth（ai-video 同名定义被遮蔽）
+    expect(ownerOf("ip-curator")).toBe("geo-growth");
   });
 
   it("被遮蔽的岗位定义逐条留痕（不静默丢弃）", () => {
@@ -223,6 +227,7 @@ describe("多领域融合：组合岗位编制裁决", () => {
     expect(shadows).toEqual([
       "ai-video:ads-optimizer→geo-growth",
       "ai-video:creator-partner→geo-growth",
+      "ai-video:ip-curator→geo-growth",
       "ai-video:publish-operator→geo-growth",
       "ai-video:review-analyst→geo-growth",
     ]);

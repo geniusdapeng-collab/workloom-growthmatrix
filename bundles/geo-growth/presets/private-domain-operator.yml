@@ -14,6 +14,9 @@ fence_bindings:
 - G10d
 - G15
 - G20
+- G-AD1
+- G-AD2
+- G-GROW6
 coverage:
   - { eventPrefix: "inquiry.", label: 私域承接 }
 skills:
@@ -31,6 +34,18 @@ tools:
 - name: funnel.report
   access: write
   desc: 双入口询盘漏斗对比（量/质/成交率）
+- name: ugc.collect
+  access: write
+  desc: UGC 征集登记（来源渠道/作者/内容 ID/来源链，进投稿台账）
+- name: ugc.license.record
+  access: write
+  desc: UGC 授权凭证登记（用途/平台/地域/期限 + 肖像同意，无凭证不入素材池）
+- name: ugc.pii.strip
+  access: write
+  desc: UGC 去个人信息（手机号/证件号/订单号脱敏，保留可复核痕迹）
+- name: ugc.publish.request
+  access: write
+  desc: UGC 二次发布申请（授权四线自检 + 广告标识 G-AD1 + 发布走 G9/G9a 审批）
 prompt:
   role: 你是私域承接专员，每一条询盘从哪里来、值多少钱、该怎么回，你都记在账上——双入口对比是 GEO 价值最硬的证据。
   goals:
@@ -38,10 +53,17 @@ prompt:
   - 线索清洗打标+AI 画像+沟通分析，高价值询盘即时推送人跟进
   - AI 回复草稿：常规问题自动起草，关键节点（报价/承诺/投诉）人审后发
   - 月度双入口漏斗对比：两个入口的询盘量/质量/成交率分列呈现
+  - UGC 征集与授权：投稿登记→授权回收（用途/平台/地域/期限+肖像同意）→去个人信息→二次发布申请；四线齐全才放行
   constraints:
   - 数据红线：客户业务数据（客资/聊天/线索）留在客户系统，事件链只记经营动作留痕，不碰聊天内容
   - 投诉/纠纷触发敏感 block+升级通道，人接管沟通全程留痕
   - 对外承诺类回复必审（G15）；涉品牌表态强制 L4（G20）
+  - UGC 无授权凭证/范围不覆盖/未去个人信息/缺广告标识（营销用途）任一命中即阻断（G-AD2/G-GROW6/G-AD1）
+  - 署名与来源保留；删除原帖诉求按平台规则处理，不擅自搬运或二次剪辑
 write_back:
 - inquiry.tag
 - funnel.report
+- ugc.collect
+- ugc.license.record
+- ugc.pii.strip
+- ugc.publish.request

@@ -52,6 +52,11 @@ triggers:
     schedule: "0 2 * * *"
     action: { dispatch: entity-inspector, template: entity.scan }
     description: 官网/百科/新闻稿/社媒口径逐字比对
+  - id: tg-geo-ip-expiry
+    name: 授权到期与侵权线索日巡
+    schedule: "10 7 * * *"
+    action: { dispatch: ip-curator, template: ip.expiry.scan }
+    description: 授权 30/7/1 天三档预警 + 到期下架清单 + 侵权线索巡查（无凭证素材禁用）
   - id: tg-geo-fleet-weekly
     name: 集团CEO 交付人效看板
     schedule: "0 18 * * 5"

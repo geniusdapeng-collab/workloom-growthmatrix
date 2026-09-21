@@ -36,3 +36,13 @@ write_back:
   - lifecycle.touch.write
   - referral.program.write
   - ltv.report.write
+# B-50：P2 条件岗运营指标与退场条件（激活走 L4；指标每周进编制周报）
+activation_gate: G-GROW7
+review_cadence: weekly
+ops_metrics:
+  - { key: wakeup_conversion_rate, label: 唤醒转化率, target: 0.08, direction: gte, window_weeks: 4 }
+  - { key: repurchase_rate, label: 复购率, target: 0.15, direction: gte, window_weeks: 4 }
+  - { key: ltv_cac, label: LTV/CAC, target: 3, direction: gte, window_weeks: 12 }
+exit_conditions:
+  - { metric: wakeup_conversion_rate, consecutive_below: 4, action: 退场提案（停用岗位并复盘激活条件） }
+  - { metric: repurchase_rate, consecutive_below: 4, action: 退场提案（停用岗位并复盘激活条件） }
