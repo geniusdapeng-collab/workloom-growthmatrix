@@ -287,8 +287,10 @@ describe.runIf(hasFfmpeg)("真实 ffmpeg 端到端", () => {
     const flat = path.join(dir, "flat.mp4");
     execFileSync(bins.ffmpeg, [
       "-hide_banner", "-v", "error", "-y",
-      // 低对比、无彩的灰阶渐变：模拟"未调色的相机原片"
-      "-f", "lavfi", "-i", "gradients=size=320x240:c0=0x303030:c1=0x707070:duration=3:rate=15",
+      // 低对比、无彩的灰阶渐变：模拟"未调色的相机原片"。
+      // seed/speed 固定：gradients 默认 seed=-1（随机相位）且 speed=0.01（旋转动画），
+      // 会让同一用例偶发被判「无需调色」——固定种子并压到最小转速，保证可复现。
+      "-f", "lavfi", "-i", "gradients=size=320x240:c0=0x303030:c1=0x707070:duration=3:rate=15:type=linear:seed=1:speed=0.00001",
       "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", flat,
     ]);
     const out = path.join(dir, "flat-best.mp4");
