@@ -33,6 +33,8 @@
   3. C-16/C-17：`pnpm-workspace.yaml` 的 `allowBuilds` 仍是 pnpm 11 生成的占位字符串，导致 pnpm 11 在运行脚本前的依赖检查触发 `pnpm install` 失败；执行 `pnpm approve-builds --all` 将其归一为布尔值并落库，本机 pnpm 11 可直接运行 `pnpm db:seed:geo` / `db:verify-chain`。
 - 回归结果（2026-09-22）：`suite:geo` 81/81；`suite:hotel` 43/43（先复跑 `pnpm db:seed` 归位组合装配）；`bundles.test` 11/11（RUN_DB_TESTS=1）；`triggers-assembly.test` 4/4；`acceptance:onboarding` 通过；`matrix-gap` 0；base/contract typecheck 通过。
 - 修复提交：`f3e4fb6`（pnpm 11 构建许可）、`49ae735`（suite:geo 断言口径）。
+- CI test-gate 复现与修复（2026-09-22 00:45）：test-gate 的 P0 门禁 stage（`acceptance:onboarding` + `scan:fences` + `scan:knowhow`）中 `scan:fences` 报「G-AD2 动作 content.submit 缺别名对象 content」；根因是 `2025d7f` 精简 G-AD2 对象枚举时移除了 `content`，而组合对象模型（geo-growth/hotel 均声明 `content`）按工具前缀派生该视图。修复：G-AD2 `object_types` 补回 `content`，刷新 geo-growth 摘要；本地 `scan:fences` 0 缺口、`scan:knowhow` 15/15、`suite:geo` 81/81、`bundles.test` 11/11 全绿。
+- 队列处置（协议 §4 先到先得）：PR #5/#6（调色批次，基于 `22af93c` 且与 main 冲突）与 PR #7 改同一批文件，锁门禁判定 #7 排队。处置：先在本会话注释并临时关闭 #5/#6（分支与提交保留），#7 合并后立即把调色分支 rebase 到最新 main（本地已完成一版：补登 colorist/围栏/技能/LUT 清单 + 74 岗计数）后重开并跑门禁。
 | 计划版本 | v1.3：84 个工作包；已整合视频链路修复与基座去审批化，并重定义 B-70/B-72/B-73/B-64 |
 
 ---
