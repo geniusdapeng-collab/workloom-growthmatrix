@@ -53,12 +53,16 @@ export const COMPOSED_SKILL_BINDINGS: Record<"ai-video" | "geo-growth", Record<s
     "render-ops": ["G8"],
     "shot-prompt-craft": ["G6"],
     // 后期 BGM 配乐师五件套（2026-09-22）：安装即绑定成片配乐门 G-BGM0..G-BGM5，卸载即撤销。
-    // 注：同批的调色师四件套（color-*）未登记在本表（历史遗留，见 docs/bgm-composer-role-design.md §13），
-    // 其围栏目前只经 colorist preset 的 fence_bindings 生效；补登记会把色桥技能并集一次性放宽，故留作独立任务卡。
+    // 调色师四件套（color-*）：SKILL.md 显式声明 G-COL0/G-COL4（正文另提 G-COL1..3），
+    // RDAS matrix SA3_fences 要求「显式声明 ⊆ 绑定」；统一按成片调色门 G-COL0..4 登记。
+    "color-grade": ["G-COL0", "G-COL1", "G-COL2", "G-COL3", "G-COL4"],
+    "color-look-design": ["G-COL0", "G-COL1", "G-COL2", "G-COL3", "G-COL4"],
+    "color-shot-matching": ["G-COL0", "G-COL1", "G-COL2", "G-COL3", "G-COL4"],
+    "color-delivery-spec": ["G-COL0", "G-COL1", "G-COL2", "G-COL3", "G-COL4"],
     "bgm-score-design": ["G-BGM0", "G-BGM1", "G-BGM3", "G-BGM5"],
-    "bgm-audio-layering": ["G-BGM0", "G-BGM2", "G-BGM3", "G-BGM4"],
-    "bgm-vocal-separation": ["G-BGM0", "G-BGM3"],
-    "bgm-library-license": ["G-BGM1", "G-BGM5"],
+    "bgm-audio-layering": ["G-BGM0", "G-BGM2", "G-BGM3", "G-BGM4", "G-BGM5"],
+    "bgm-vocal-separation": ["G-BGM0", "G-BGM3", "G-BGM5"],
+    "bgm-library-license": ["G-BGM0", "G-BGM1", "G-BGM5"],
     "bgm-delivery-spec": ["G-BGM0", "G-BGM1", "G-BGM2", "G-BGM3", "G-BGM4", "G-BGM5"],
   },
   "geo-growth": {
@@ -68,6 +72,8 @@ export const COMPOSED_SKILL_BINDINGS: Record<"ai-video" | "geo-growth", Record<s
     "experiment-design": ["G-GROW3", "G-GROW4"],
     "budget-portfolio": ["G-GROW1"],
     "lead-scoring": ["G-GROW6"],
+    // 增长指标技能：数据边界 G-GROW6（脱敏/不出域），B-11 声明。
+    "growth-metrics": ["G-GROW6"],
     "cro-playbook": ["G-GROW2"],
     "live-commerce": ["G-GROW2", "G-GROW4"],
     "growth-review": [],

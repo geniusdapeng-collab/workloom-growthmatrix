@@ -92,6 +92,14 @@
 - B-44 静态检查：`pnpm scan:rls`（新增写路径双 GUC + 委托助手识别 + `rls-exempt:` 豁免），self-test + 全绿。
 - B-67/B-68/B-83：同步声明文档；默认装载裁剪断言 3/3；事件冻结门禁（118 类对象、顶层五元冻结）。
 - G6 剩余（未完成，见待办）：B-38 tRPC 侧 agent 写路径、B-39 冲突仲裁对象化、B-40 审批/结算全链、B-45 验收矩阵扩展、B-62..B-66、B-69..B-77、G7 RDAS。
+
+### 会话 9 记（2026-09-22 09:00 · G6 增补 + G7 首轮生产实测）
+
+- B-45：`pnpm acceptance:growth-assets`（growth_daily 真库 7 天 × 2 账号、AI 标识四字段、矩阵 123 条、通道 11 类+声明排除）全绿；B-73：`pnpm acceptance:goal-loop`（goal→契约→线程→六段事件→结算账本）全绿。
+- 修复 RDAS matrix SA3_fences 8 项红点：调色四件套与 growth-metrics 未登记技能围栏绑定、BGM 三技能缺 G-BGM5/G-BGM0 → `scripts/skill-bindings.mts` 补登记并复位种子；复跑 `matrix --fail-on-error` 0 红点。
+- G7 首轮生产实测（RDAS v3.1，`outputs/acceptance/REPORT.md`）：结论 **条件通过**（L/U/O=未验证，P=不通过）；红线 0；覆盖率 276 项（pass 21 / evidence-present 19 / not-run 62 / manual-missing 170 / fail 4）。
+  - P 域实测：`LLM-G1 ok`；`LLM-R1/T1 blocked`（dsh 可执行文件缺失）；`LLM-M1 blocked`（playwright 未安装）；`IMG-01/IMG-02/VID-01 failed`（**Ark 账户欠费 403 AccountOverdueError**）；`PROD-01 blocked`（目标 server 9207 不可达）。未用 selftest 替身数据充当证据。
+  - 下一轮解除条件：充值/更换 Ark 账户 → 安装 dsh 与 playwright → 配置 client-runtime 目标 9207 → 重跑 `node scripts/acceptance/live.mjs --env client-runtime` 与 `report-v3`。
 | 计划版本 | v1.3：84 个工作包；已整合视频链路修复与基座去审批化，并重定义 B-70/B-72/B-73/B-64 |
 
 ---
@@ -209,13 +217,7 @@
 - [~] B-40 契约↔线程↔审批↔结算（accept 自动建线程、deliver 点名 verifier、settle 落预算账本幂等；审批联动待后续）
 - [x] B-41 协作闭环验收脚本（`pnpm acceptance:collab` 全链通过：offer→settle + 账本）
 - [x] B-44 RLS/GUC 静态检查（`pnpm scan:rls`：新增写路径双 GUC 门禁 + self-test）
-- [ ] B-45 验收矩阵扩展
-- [ ] B-38 agent actor 与写路径
-- [ ] B-39 冲突仲裁对象化
-- [ ] B-40 契约↔线程↔审批↔结算
-- [ ] B-41 协作闭环验收脚本
-- [ ] B-44 RLS/GUC 静态检查
-- [ ] B-45 验收矩阵扩展
+- [x] B-45 验收矩阵扩展（`pnpm acceptance:growth-assets` 四类新资产全绿；修复 8 项 SA3_fences 绑定缺口后 matrix 0 红点）
 - [ ] B-62 「内部协作 auto / 对外动作 review」通用规则模板（覆盖 REF-P-06）
 - [ ] B-63 首日五关服务端化 + 内容包进 bundle（覆盖 REF-P-09 / UX-01）
 - [ ] B-64 首登行动卡（覆盖 UX-04）
