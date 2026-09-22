@@ -198,7 +198,7 @@ describe("多领域融合：组合岗位编制裁决", () => {
     expect(new Set(keys).size).toBe(keys.length);
     /**
      * 先校验不变式：组合编制 = 各包编制之和 − 被遮蔽的同名定义数（每个 preset_key 只留一个权威定义）。
-     * 再校验该不变式算出的数量与对外口径（README/装配测试的 74 岗）一致——口径漂移时同时暴露两侧。
+     * 再校验该不变式算出的数量与对外口径（README/装配测试的 76 岗）一致——口径漂移时同时暴露两侧。
      * 数量本身随各包编制演化（曾从 61 长到 70、72、73、74 —— 2026-09-21 ai-video 新增「调色师」、
      * 2026-09-22 B-47 版权管理员下沉后遮蔽 4→5 处；2026-09-22 再新增 ai-video「BGM 配乐师」，总数 75），
      * 所以断言读的是算出来的值，而不是让维护者去猜。
@@ -207,7 +207,7 @@ describe("多领域融合：组合岗位编制裁决", () => {
     const shadowed = composed.shadowed.length;
     expect(keys.length).toBe(declared - shadowed);
     expect(shadowed).toBe(5);
-    expect(keys.length).toBe(75);
+    expect(keys.length).toBe(76);
   });
 
   it("同名岗位按主包声明落到权威归属包", () => {
