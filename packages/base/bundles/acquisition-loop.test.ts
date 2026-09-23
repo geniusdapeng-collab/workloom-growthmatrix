@@ -207,7 +207,7 @@ describe("多领域融合：组合岗位编制裁决", () => {
     const shadowed = composed.shadowed.length;
     expect(keys.length).toBe(declared - shadowed);
     expect(shadowed).toBe(5);
-    expect(keys.length).toBe(77);
+    expect(keys.length).toBe(78);
   });
 
   it("同名岗位按主包声明落到权威归属包", () => {
