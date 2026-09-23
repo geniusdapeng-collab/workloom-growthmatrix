@@ -1,5 +1,9 @@
 # GrowthMatrix 开发进度账本（跨会话唯一状态源）
 
+> **会话 11 收尾（2026-09-24）**：PR #41 已按协议 squash 合入 main = **`d676de82`**；CNB 流水线
+> （分支 PR 运行 `cnb-6n2-1k37pj2g0` / 合并后 main 运行 `cnb-vj1-1k37pjnan`）**三档 stage 全通过**（static-gate / db-gate / test-gate）。
+> G7 偏离声明已落受版本管理文档：`docs/acceptance/G7-DEVIATIONS.md`（同内容副本在 `outputs/acceptance/DEVIATIONS.md`）。
+
 > **会话 11（2026-09-24）接力入口**：G6 全部 15 个工作包落地并推送（分支 `task/T-2026-0921-0003-g6c`，
 > 提交 `29dc200` → `6c91f60` → `f95382a` → `37f56b8`）；G7 首轮 RDAS v3.1 已跑完（报告 `outputs/acceptance/REPORT.md`）。
 > 下一步：合并本分支到 main（PR 门禁）→ 解除 P 域四个环境阻塞后复跑 `acceptance:live --env client-runtime` → 出 Go/No-Go 终版。
@@ -17,9 +21,9 @@
 | 当前批次 | **G6 完成 + G7 首轮完成**（分支待合并 main） |
 | 批次状态 | G6：B-38/39/40/62/63/64/65/66/69/70/71/72/74/76/77 全部落地（会话 11）；G7：RDAS v3.1 首轮完成——机器结论「不通过（1 红线 = DEV-01 去审批化声明式偏离）」，`release:gate` 11/11，P 域环境阻塞（未验证） |
 | 最近更新 | 2026-09-24（会话 11 · G6 余项 15 包 + G7 首轮 RDAS） |
-| 分支 | `task/T-2026-0921-0003-g6c`（HEAD `37f56b8`，已推送；main 待并入） |
-| 云端最新提交 | 分支 `task/T-2026-0921-0003-g6c`@`37f56b8`；main 仍为 `b0c9771`（本批次未并入） |
-| 本地 HEAD | `37f56b8`（G6 完成 + G7 验收产物） |
+| 分支 | `task/T-2026-0921-0003-g6c`（已合并入 main）；后续文档更新走 `docs/g7-acceptance-ledger` |
+| 云端最新提交 | main `d676de82`（PR #41 squash 合入；CNB 三档 stage 通过）；任务分支保留 `9a85d9b` |
+| 本地 HEAD | G6 分支 `37f56b8` / main `d676de82` |
 | 阻塞 | P 域生产实测四项环境阻塞：Ark 账户欠费（403 AccountOverdueError）/ dsh 未安装 / 9207 桌面客户端运行时不可达 / 无真实模型凭据（详见 `outputs/acceptance/DEVIATIONS.md` §3） |
 | 下一步 | ① 开 PR 并入 main（本分支 4 个提交）；② 解除 P 域阻塞后复跑 `acceptance:live --env client-runtime`；③ 与产品所有者确认 DEV-01（业务关卡替代审批中心）的验收口径 |
 
