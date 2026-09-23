@@ -3,6 +3,8 @@
 > **会话 11 收尾（2026-09-24）**：PR #41 已按协议 squash 合入 main = **`d676de82`**；CNB 流水线
 > （分支 PR 运行 `cnb-6n2-1k37pj2g0` / 合并后 main 运行 `cnb-vj1-1k37pjnan`）**三档 stage 全通过**（static-gate / db-gate / test-gate）。
 > G7 偏离声明已落受版本管理文档：`docs/acceptance/G7-DEVIATIONS.md`（同内容副本在 `outputs/acceptance/DEVIATIONS.md`）。
+> 证据等级说明：CNB 页面三档 stage 状态为「通过」，但 test-gate 内部步骤耗时显示 0s（缓存/跳过无法从页面区分）——
+> 因此 CI 只作 **B 级证据**；同等门禁已在本地逐项复跑（typecheck/全包测试/双域套件/验链/扫描/验收脚本），本地结果为 A 级。
 
 > **会话 11（2026-09-24）接力入口**：G6 全部 15 个工作包落地并推送（分支 `task/T-2026-0921-0003-g6c`，
 > 提交 `29dc200` → `6c91f60` → `f95382a` → `37f56b8`）；G7 首轮 RDAS v3.1 已跑完（报告 `outputs/acceptance/REPORT.md`）。
