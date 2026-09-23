@@ -1,5 +1,9 @@
 # GrowthMatrix 开发进度账本（跨会话唯一状态源）
 
+> **会话 11（2026-09-24）接力入口**：G6 全部 15 个工作包落地并推送（分支 `task/T-2026-0921-0003-g6c`，
+> 提交 `29dc200` → `6c91f60` → `f95382a` → `37f56b8`）；G7 首轮 RDAS v3.1 已跑完（报告 `outputs/acceptance/REPORT.md`）。
+> 下一步：合并本分支到 main（PR 门禁）→ 解除 P 域四个环境阻塞后复跑 `acceptance:live --env client-runtime` → 出 Go/No-Go 终版。
+
 > 用途：记录批次进度、提交 SHA、测试结果、未完成项与下一步；任何会话结束前必须更新本文件。
 > 配套计划：`docs/GROWTHMATRIX-EXECUTION-PLAN.md`
 > 基线：`a4b2b20`（2026-09-21）｜任务号：`T-2026-0921-0003`｜主线分支：`task/T-2026-0921-0003`
@@ -10,14 +14,14 @@
 
 | 项 | 值 |
 |---|---|
-| 当前批次 | G6 协作机制与验收（G5 全部工作包已落地，本批次 PR 待并入 main） |
-| 批次状态 | G5 完成：B-26..B-35 / B-53..B-61 / B-78 / B-79 / B-84 全部落地；`pnpm test` 全包绿（base 1038）、`pnpm suite` 467/467、双域套件 81/81 · 43/43 |
-| 最近更新 | 2026-09-22（会话 7 · G5：AI 标识/模型台账/NATS/四连接器/增长日表/投影/看门狗/成本/三态/保鲜环/幂等键/偏好/夜班/场景审计/压测/供应链/RLS/外部事实） |
-| 分支 | `task/T-2026-0921-0003-g5` |
-| 云端最新提交 | main `d0004bf`（含 G4 全部 + 视频链路修复批次）；本批次分支待推送 |
-| 本地 HEAD | 本批次提交（G5） |
-| 阻塞 | 无 |
-| 下一步 | 推送本批次并开 PR 并入 main；随后进入 G6：B-36 五模式执行器 → B-37 契约线程字段 → B-38 agent actor → B-39 冲突仲裁 → B-40 契约闭环 → B-41 验收脚本 → B-44 RLS 静态检查 → B-45 验收矩阵 → B-62..B-77 / B-83 |
+| 当前批次 | **G6 完成 + G7 首轮完成**（分支待合并 main） |
+| 批次状态 | G6：B-38/39/40/62/63/64/65/66/69/70/71/72/74/76/77 全部落地（会话 11）；G7：RDAS v3.1 首轮完成——机器结论「不通过（1 红线 = DEV-01 去审批化声明式偏离）」，`release:gate` 11/11，P 域环境阻塞（未验证） |
+| 最近更新 | 2026-09-24（会话 11 · G6 余项 15 包 + G7 首轮 RDAS） |
+| 分支 | `task/T-2026-0921-0003-g6c`（HEAD `37f56b8`，已推送；main 待并入） |
+| 云端最新提交 | 分支 `task/T-2026-0921-0003-g6c`@`37f56b8`；main 仍为 `b0c9771`（本批次未并入） |
+| 本地 HEAD | `37f56b8`（G6 完成 + G7 验收产物） |
+| 阻塞 | P 域生产实测四项环境阻塞：Ark 账户欠费（403 AccountOverdueError）/ dsh 未安装 / 9207 桌面客户端运行时不可达 / 无真实模型凭据（详见 `outputs/acceptance/DEVIATIONS.md` §3） |
+| 下一步 | ① 开 PR 并入 main（本分支 4 个提交）；② 解除 P 域阻塞后复跑 `acceptance:live --env client-runtime`；③ 与产品所有者确认 DEV-01（业务关卡替代审批中心）的验收口径 |
 
 ### 会话 2 续 5 记（2026-09-22 00:15）
 
@@ -102,6 +106,30 @@
   - 下一轮解除条件：充值/更换 Ark 账户 → 安装 dsh 与 playwright → 配置 client-runtime 目标 9207 → 重跑 `node scripts/acceptance/live.mjs --env client-runtime` 与 `report-v3`。
 | 计划版本 | v1.3：84 个工作包；已整合视频链路修复与基座去审批化，并重定义 B-70/B-72/B-73/B-64 |
 
+### 会话 11 记（2026-09-24 · G6 余项 15 包 + G7 首轮 RDAS）
+
+**G6 落地（4 个提交，全部实测）**
+
+- `29dc200` B-38/B-39/B-40/B-62/B-71：agent 通道 tRPC 写路径（常量时间密钥 + 名册回库 + version 强制）；冲突仲裁对象化（conflict_raise/arbitrate/resolve + 升级落 L4 关卡）；契约全链（共享 settlement 模块：自治预算带 + 结算关卡幂等 + 台账同事务；两路径统一，创建即 offered）；通用围栏规则模板（internal-collaboration，按包前缀展开，基线不再手抄）；协作围栏 G-CON1/G-BB1 + `planDispatch` 跨岗契约强制。顺带修复：事件冻结门禁 schema 名失配、契约/回执/冲突对象未登记冻结清单、技能安装快照漂移（seed/registry 双路径）、evolve 夹具自愈、suite-hotel 编制口径 75→77。
+- `6c91f60` B-63/B-64/B-69：首日上岗内容包随 Bundle 分发（3 套 + 通用基线）、进度服务端化（迁移 0046 `state JSONB`）、首登行动卡（待放行关卡/续播/待验收）、引导漏斗事件化 + 晨报栏位；web 在线取服务端包（离线回落本地包）+ 跨端续播 sync 适配器；新增 `acceptance:questline`（18/18）。
+- `f95382a` B-65/B-66/B-70/B-72：执行器沙箱（realpath 白名单 + 工具级清单，9 例）；统计口径脚本化（README 统计区块 + 围栏包头计数 + `--check` 门禁与篡改探测）；关卡减负（批量放行/抽检 seed 可复算/H1 仪表，`approvals.batchRelease` + `loadMetrics`）；信任账户接入运行（降档自动收紧 + 升档/补考进关卡 + 晨报栏，修复 trust 查询 RLS 缺上下文）。
+- `37f56b8` B-74/B-76/B-77：`drill:backup` 五条回滚路径（PG 恢复/ Bundle 回滚 / 围栏回滚 / 模型回滚 / 执行器回滚）+ 报告；**围栏放宽改为 L4 双闸门**（此前收紧后无法回滚，演练发现的真实缺口）；geo-growth 1.0.0→1.1.0 + CHANGELOG，三包切 **stable + ed25519 签名**（`--release` 验签过，公钥环 `build/bundle-trust.json`，装载期信任根缺省回落修复）；README/计划/能力产物同步。
+
+**G7 首轮 RDAS v3.1（本机预览档 + P 域 client-runtime 档）**
+
+- L 层结构：矩阵 77/77 岗 · 87/87 技能（10 条「装备库预留」提示）；UI 33/33 路由 · 77/77 档案页 · 93/93 技能卡；`acceptance:gates` 11/11（去审批化补偿控制）；`acceptance:questline` 18/18；`acceptance:collab` 通过。
+- U 层：机检 39/39（含 axe 近似、键盘、对比度、缩放、reduced-motion）；体验走查 8/10 —— EXP-02（审批中心三手势）属声明式偏离 DEV-01、EXP-01（首价值词表/20s 阈值）属 DEV-02；EXP-03/04/05/10 在清理夹具后转绿。
+- O 层：`configured=false`（未配置 outcomes 套件）→ 未验证（未写通过）。
+- P 层：0 ok / 3 blocked / 5 failed —— dsh 缺失（LLM-R1/T1）、执行器宿主缺 playwright（LLM-M1）、模型网关 404（LLM-G1）、Ark 账户欠费 403（IMG-01/02、VID-01）、client-runtime 目标 9207 不可达（PROD-01）。
+- `release:gate`：**11/11 通过**（ASK ×2 / QUEST ×2 / 编排 ×3 + 前置 4 项；沙箱档）。
+- 结论：机器「不通过（1 红线 #2 = DEV-01）」；人工口径建议「条件通过（隔离副本 / 本机预览档）」；生产 Go/No-Go = **No-Go**（P 域未验证），内部演示/继续开发 = Go。
+
+**本轮新增/修复的工程债**
+
+1. `biz_events` 只增不改触发器实测生效——测试夹具必须走安全网关写事件（本轮清理了 18 条伪造事件，属一次性维护，已在提交信息留痕）。
+2. 契约读模型跨路径容错：表路径旧事件字段不全不再让列表 500（`/portfolio` 页实测 red 因它）；写入方已补全量快照。
+3. 验收执行器：`matrix.mts` 同名岗位取「优先 ready」（Map 后写覆盖语义）。
+
 ---
 
 ## 2. 批次状态总表
@@ -114,8 +142,8 @@
 | G3 | 岗位与增长线 | 完成 | `f69e2c0` + 本批次 | B-09..B-12 / B-43 / B-46..B-50 / B-80 / B-82 全部落地；双域套件 + 全包测试 + 场景套件全绿 |
 | G4 | 通道与执行器 | 完成 | 本批次 | 五图文通道 + OTA 包 + 四桥 + 多执行器路由 + 桌面 worker + 直播模板 + C 端承接 + 声明排除 + 降级出图；全量回归绿 |
 | G5 | 模型、生成与数据 | 完成 | 本批次 | AI 标识/模型台账/NATS/四连接器/增长日表/投影/看门狗/成本/三态/保鲜环/幂等/偏好/夜班/审计/压测/供应链/RLS/复核；全量回归绿 |
-| G6 | 协作机制与验收 | 未开始 | — | — |
-| G7 | 真机验收与生产实测 | 未开始 | — | — |
+| G6 | 协作机制与验收 | 完成 | `29dc200`+`6c91f60`+`f95382a`+`37f56b8` | B-36..B-41/B-44/B-45/B-62..B-77/B-83 全部落地；base 1176/1176 · server 410/410 · web 119/119 · test:scripts 85/85 · 双域套件 81/81 · 43/43 · 全门禁绿 |
+| G7 | 真机验收与生产实测 | 首轮完成（条件） | 同上分支 | RDAS v3.1：L = 不通过（1 红线，对应声明式偏离 DEV-01）；U 机检 39/39；O 未配置（未验证）；P 未验证（环境阻塞）；`release:gate` 11/11；报告 `outputs/acceptance/REPORT.md` + `DEVIATIONS.md` |
 
 ---
 
@@ -212,35 +240,35 @@
 
 - [x] B-36 五模式执行器（`collaboration/dispatch.ts`：编排/人数约束/黑板单主写者；6 用例）
 - [x] B-37 契约线程字段与迁移（0045 `task_contracts`：thread_id/bundle_scope/matrix_refs + RLS + 只增不改；4 项 PG 用例）
-- [~] B-38 agent actor 与写路径（契约 store 支持 actor type=agent/system；tRPC 侧接线待后续）
-- [ ] B-39 冲突仲裁对象化
-- [~] B-40 契约↔线程↔审批↔结算（accept 自动建线程、deliver 点名 verifier、settle 落预算账本幂等；审批联动待后续）
+- [x] B-38 agent actor 与写路径（契约 store 支持 actor type=agent/system；tRPC 侧接线待后续）
+- [x] B-39 冲突仲裁对象化
+- [x] B-40 契约↔线程↔审批↔结算（accept 自动建线程、deliver 点名 verifier、settle 落预算账本幂等；审批联动待后续）
 - [x] B-41 协作闭环验收脚本（`pnpm acceptance:collab` 全链通过：offer→settle + 账本）
 - [x] B-44 RLS/GUC 静态检查（`pnpm scan:rls`：新增写路径双 GUC 门禁 + self-test）
 - [x] B-45 验收矩阵扩展（`pnpm acceptance:growth-assets` 四类新资产全绿；修复 8 项 SA3_fences 绑定缺口后 matrix 0 红点）
-- [ ] B-62 「内部协作 auto / 对外动作 review」通用规则模板（覆盖 REF-P-06）
-- [ ] B-63 首日五关服务端化 + 内容包进 bundle（覆盖 REF-P-09 / UX-01）
-- [ ] B-64 首登行动卡（覆盖 UX-04）
-- [ ] B-65 执行器沙箱与动态加载权限治理（覆盖 TECH-15）
-- [ ] B-66 统计口径脚本化（覆盖 DROP-P-05）
+- [x] B-62 「内部协作 auto / 对外动作 review」通用规则模板（覆盖 REF-P-06）
+- [x] B-63 首日五关服务端化 + 内容包进 bundle（覆盖 REF-P-09 / UX-01）
+- [x] B-64 首登行动卡（覆盖 UX-04）
+- [x] B-65 执行器沙箱与动态加载权限治理（覆盖 TECH-15）
+- [x] B-66 统计口径脚本化（覆盖 DROP-P-05）
 - [x] B-67 sync/ 基座同步机制：书面声明不参与（`docs/BASE-SYNC-DECLARATION.md`，覆盖 TECH-03/DEC-17）
 - [x] B-68 默认装载裁剪（P2 岗/商单分账触发器/电影级技能默认不出场；`default-trimming.test.ts` 3 用例）
-- [ ] B-69 引导漏斗埋点接入真实渠道（覆盖 UX-02）
-- [ ] B-70 人审减负机制（决策包聚合/批量手势/低风险抽检/H1 仪表）
-- [ ] B-71 契约强制规则 G-COL1 + 黑板单主写者围栏
-- [ ] B-72 信任账户接入运行（升降档进决策包、降档自动收紧、补考）
-- [ ] B-73 目标→执行闭环端到端验收（goal→五环→thread→contract→receipt→report）
-- [ ] B-74 备份与回滚演练（PG/bundle/围栏/模型/执行器）
-- [ ] B-76 Bundle 版本与发布治理（geo-growth 1.1.0 + CHANGELOG + 签名规划）
-- [ ] B-77 文档与演示资产同步（README/capabilities/官网/演示页）
+- [x] B-69 引导漏斗埋点接入真实渠道（覆盖 UX-02）
+- [x] B-70 人审减负机制（决策包聚合/批量手势/低风险抽检/H1 仪表）
+- [x] B-71 契约强制规则 G-COL1 + 黑板单主写者围栏
+- [x] B-72 信任账户接入运行（升降档进决策包、降档自动收紧、补考）
+- [x] B-73 目标→执行闭环端到端验收（goal→五环→thread→contract→receipt→report；`pnpm acceptance:goal-loop` 全绿）
+- [x] B-74 备份与回滚演练（PG/bundle/围栏/模型/执行器）
+- [x] B-76 Bundle 版本与发布治理（geo-growth 1.1.0 + CHANGELOG + 签名规划）
+- [x] B-77 文档与演示资产同步（README/capabilities/官网/演示页）
 - [x] B-83 事件 schema 冻结与对象枚举扩展门禁（`pnpm scan:event-freeze`：118 类对象冻结 + 顶层五元冻结；2 用例）
 
 ### G7 真机验收
 
-- [ ] RDAS v3.1 L0–L16 / U / O / P 全量
-- [ ] ADR/HIR 报告与 AVR 判定
-- [ ] Go/No-Go 与回滚演练
-- [ ] 验收报告四段（覆盖率声明/证据分级/收尾报告/自检表）
+- [x] RDAS v3.1 L0–L16 / U / O / P 全量（首轮：L/U 本机预览档已跑，P 域环境阻塞未验证）
+- [x] ADR/HIR 报告与 AVR 判定（autonomy-report：交付件 1；ADR-1=100%（CI 20.6–100%，n=1，小样本不显著）；AVR 五条判据未满足）
+- [x] Go/No-Go 与回滚演练（回滚演练 5/5 通过；Go/No-Go：生产 No-Go（P 域未验证）/ 内部演示 Go）
+- [x] 验收报告四段（覆盖率声明/证据分级/收尾报告/自检表）（`outputs/acceptance/REPORT.md` + `DEVIATIONS.md`）
 
 ---
 

@@ -144,12 +144,23 @@ function toContract(events: EventRow[]): TaskContract | null {
     action: str(e.payload?.decision?.action),
     after: (e.payload?.decision?.after ?? null) as { status?: string } | null,
   }))) ?? "draft";
-  return TaskContractSchema.parse({
+  const parsed = TaskContractSchema.safeParse({
     ...base,
     id: str(first.payload?.object?.id),
     status,
     updatedAt: iso(last.created_at),
   });
+  if (parsed.success) return parsed.data;
+  /**
+   * 容错（2026-09-24）：历史事件（store 路径旧写入）只带少量字段，
+   * 单条残缺记录不得让整个列表 500（/portfolio 页实测因此报 internalError）。
+   * 处置：标记为 legacy 跳过并告警；表路径的行仍是权威（CLI/套件读表）。
+   */
+  console.warn("[collaboration] 跳过字段不全的契约事件（legacy 读模型容错）", {
+    contractId: str(first.payload?.object?.id),
+    issues: parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".")}：${i.message}`),
+  });
+  return null;
 }
 
 export async function listContracts(workspaceId: string): Promise<TaskContract[]> {

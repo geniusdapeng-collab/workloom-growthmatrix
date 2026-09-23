@@ -9,6 +9,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import pg from "pg";
 import { advanceContract, createContract, getContract } from "./collaboration.js";
 import { contractGateId } from "@workloom/base/collaboration";
+import { createContract as storeCreateContract } from "@workloom/base/collaboration";
+import { getAppPool } from "@workloom/db";
 
 process.env.DATABASE_URL ??= "postgres://postgres:workloom@localhost:5432/workloom";
 process.env.DATABASE_APP_URL ??= "postgres://workloom_app:workloom_dev_app@localhost:5432/workloom";
@@ -116,5 +118,30 @@ describe.runIf(RUN_DB)("B-40 契约全链（事件溯源路径）", () => {
     expect(ledger.rows[0]?.meta).toMatchObject({ approvalId: gateId });
     const final = await getContract(workspaceId, created.id);
     expect(final?.status).toBe("settled");
+  });
+
+  it("跨路径读模型：表路径建出的契约在事件溯源列表里可见且字段完整（首条事件全量快照）", async () => {
+    const storeId = `ct-store-${suffix}`;
+    await storeCreateContract(getAppPool(), { tenantId, workspaceId }, {
+      id: storeId, title: "表路径契约（跨路径读模型）", goal: "验证 offer 事件带全量快照",
+      requester: "growth-lead", assigneePreset: "geo-content-planner", verifierPreset: "review-analyst",
+      successCriteria: ["列表可见", "字段完整"], budgetAmount: 45, mode: "m4_contract",
+    }, { id: "MEM-001", type: "human" });
+
+    const { listContracts } = await import("./collaboration.js");
+    const listed = await listContracts(workspaceId);
+    const found = listed.find((c) => c.id === storeId);
+    expect(found).toBeTruthy();
+    expect(found?.title).toBe("表路径契约（跨路径读模型）");
+    expect(found?.successCriteria).toEqual(["列表可见", "字段完整"]);
+    // 事件里确实落了全量快照（offer 是首条事件）
+    const first = await owner.query<{ action: string; after: Record<string, unknown> }>(
+      `SELECT payload->'decision'->>'action' AS action, payload->'decision'->'after' AS after
+         FROM biz_events WHERE workspace_id=$1 AND payload->'object'->>'id'=$2 ORDER BY seq ASC LIMIT 1`,
+      [workspaceId, storeId],
+    );
+    expect(first.rows[0]?.action).toBe("contract.offer");
+    expect(first.rows[0]?.after).toMatchObject({ title: "表路径契约（跨路径读模型）", id: storeId });
+    await owner.query(`DELETE FROM task_contracts WHERE id=$1`, [storeId]).catch(() => undefined);
   });
 });

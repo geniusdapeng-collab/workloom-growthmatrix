@@ -134,8 +134,14 @@ export async function createContract(
        input.threadId ?? null, JSON.stringify(input.bundleScope ?? []), JSON.stringify(input.matrixRefs ?? []), actor.id],
     );
     const eventId = await emitContractEvent(client, scope, actor, input.id, "offer", {
-      status: advance.status, assigneePreset: input.assigneePreset, verifierPreset: input.verifierPreset,
-      budgetAmount: input.budgetAmount ?? 0, mode: input.mode,
+      /**
+       * 全量快照（2026-09-24 修复）：offer 是契约的**首条**事件，而事件溯源读模型
+       * （apps/server/src/service/collaboration.ts）以首条事件的 after 还原契约。
+       * 此前只写 5 个字段，导致 store 路径建出的契约在 tRPC 列表里 zod 校验失败
+       * （/portfolio 页 500："title: expected string, received undefined"）。
+       * 现在与事件溯源路径同口径：after = 行内全量契约快照。
+       */
+      ...toContract(inserted.rows[0]!),
     });
     return { contract: toContract(inserted.rows[0]!), eventId };
   });
