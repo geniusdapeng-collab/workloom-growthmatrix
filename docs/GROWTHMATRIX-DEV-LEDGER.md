@@ -1,7 +1,12 @@
 # GrowthMatrix 开发进度账本（跨会话唯一状态源）
 
-> **会话 11 收尾（2026-09-24）**：PR #41 已按协议 squash 合入 main = **`d676de82`**；CNB 流水线
+> **会话 11 收尾（2026-09-24）**：PR #41 → main `d676de82`；**合并回归修复 PR #44 → main `1b53cb5`**（当前 HEAD）；
+> 另有 PR #42（偏离声明）/ #43（CI 证据等级）两笔文档改动。CNB 流水线
 > （分支 PR 运行 `cnb-6n2-1k37pj2g0` / 合并后 main 运行 `cnb-vj1-1k37pjnan`）**三档 stage 全通过**（static-gate / db-gate / test-gate）。
+> ⚠️ 合并回归（已修）：分支基线早于主线视频批次 `95125e8`，squash 后 ai-video 资产变更而摘要/签名未重算 →
+> `bundle:governance --release` 报「ai-video 验签失败」、`capabilities --check` 漂移；PR #44 重算摘要+重签并同步
+> 78 岗/88 技能口径（`suite-hotel`/`bundles.test`/`acquisition-loop`/`stats-sync` 断言同步），修后主线全绿。
+> 纪律沉淀：**任何 squash 合并后必须复跑** `bundle-governance --release` → `capabilities --check` → `matrix-gap` → 双域套件（L-08 升级版）。
 > G7 偏离声明已落受版本管理文档：`docs/acceptance/G7-DEVIATIONS.md`（同内容副本在 `outputs/acceptance/DEVIATIONS.md`）。
 > 证据等级说明：CNB 页面三档 stage 状态为「通过」，但 test-gate 内部步骤耗时显示 0s（缓存/跳过无法从页面区分）——
 > 因此 CI 只作 **B 级证据**；同等门禁已在本地逐项复跑（typecheck/全包测试/双域套件/验链/扫描/验收脚本），本地结果为 A 级。
@@ -24,7 +29,7 @@
 | 批次状态 | G6：B-38/39/40/62/63/64/65/66/69/70/71/72/74/76/77 全部落地（会话 11）；G7：RDAS v3.1 首轮完成——机器结论「不通过（1 红线 = DEV-01 去审批化声明式偏离）」，`release:gate` 11/11，P 域环境阻塞（未验证） |
 | 最近更新 | 2026-09-24（会话 11 · G6 余项 15 包 + G7 首轮 RDAS） |
 | 分支 | `task/T-2026-0921-0003-g6c`（已合并入 main）；后续文档更新走 `docs/g7-acceptance-ledger` |
-| 云端最新提交 | main `d676de82`（PR #41 squash 合入；CNB 三档 stage 通过）；任务分支保留 `9a85d9b` |
+| 云端最新提交 | main `1b53cb5`（PR #44 合并回归修复；含 PR #41/#42/#43）；任务分支保留 `9a85d9b` |
 | 本地 HEAD | G6 分支 `37f56b8` / main `d676de82` |
 | 阻塞 | P 域生产实测四项环境阻塞：Ark 账户欠费（403 AccountOverdueError）/ dsh 未安装 / 9207 桌面客户端运行时不可达 / 无真实模型凭据（详见 `outputs/acceptance/DEVIATIONS.md` §3） |
 | 下一步 | ① 开 PR 并入 main（本分支 4 个提交）；② 解除 P 域阻塞后复跑 `acceptance:live --env client-runtime`；③ 与产品所有者确认 DEV-01（业务关卡替代审批中心）的验收口径 |
