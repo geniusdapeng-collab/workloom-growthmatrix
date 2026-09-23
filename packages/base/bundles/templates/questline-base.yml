@@ -1,0 +1,93 @@
+# 首日上岗（Day-1 Questline）内容包 · 机制与通用件（四关文案/成就/价值口径/出口）
+# 本文件由 work/extract-questline.mjs 从 apps/web/src/onboarding/questline.config.ts 机械迁移（B-63），
+# 之后**以本文件为唯一事实源**：web 端改为经服务端读取本包，不再在客户端硬编码行业内容。
+# 纪律：岗位/围栏/驳回枚举逐条对照行业包实物；示例数字必须 sampleIsDemo: true。
+version: workloom.questline-base/v1
+journeyName: 首日上岗
+mateName: 织伴
+mateRole: 首席增长官
+ownerTitle: 董事长
+mateVoice:
+  pitch: 1.28
+  rate: 1.04
+  female: true
+stages:
+  - id: meet
+    badge: 认人
+    title: 第 1 关 · 认识您的增长班组
+    objective: 知道谁在替您找人群、做内容、接询盘、算成交——以及他们什么时候必须来问您。
+    primaryLabel: 都认识了
+    script:
+      enter: 董事长，还是我织伴——在这个系统里我的岗位是首席增长官。三句话汇报：班组已上岗，获客五环今天就能转，但您得先认识几位当家人。
+      hint: 点一下卡片就算认识了。也可以换一批，或者先跳过。
+      success: 认全了。以后要人群、要内容、要询盘，直接找他们。
+  - id: goal
+    badge: 定方向
+    title: 第 2 关 · 今天最想解决的一件事
+    objective: 给团队一个方向：要更多人看见、更多询盘，还是更快成交——谁负责、几步做完、什么时候来问您，我都写清楚。
+    primaryLabel: 就按这个来
+    script:
+      enter: 您只做两件事：定方向、收钱。先从定方向开始——选一个，或者直接跟我说一句。
+      hint: 三个选项都来自本行业包的真实管线，不是我编的；也可以直接说您自己的目标。
+      success: 收到。我把它拆成任务，派给该负责的岗位。
+  - id: dispatch
+    badge: 派活
+    title: 第 3 关 · 把第一件活交出去
+    objective: 亲手派一单，看着它跑起来：拆解、执行、产出都走真实业务通道。
+    primaryLabel: 派给他
+    script:
+      enter: 光看不算数，得派一单试试。看中哪张卡，拖到人身上也行。
+      hint: 每张卡都写清了：谁做、几步、多久、产出什么；涉钱与外发动作由对应业务页面把关。
+      success: 活已经派出去了，进度我帮您盯着。
+  - id: review
+    badge: 验收
+    title: 第 4 关 · 看看今天赚了什么
+    objective: 验收产出、看归因结果，再决定下一步往哪走。
+    primaryLabel: 我看到了
+    script:
+      enter: 活干完了。您花了几分钟，团队替您跑了这些事——归因链我念给您听。
+      hint: 没有回执的事我不会说「已完成」，这几项都是账本里查得到的。
+      success: 首日上岗完成。今晚夜班接着跑，明早 8:30 给您战报。
+achievements:
+  - id: aboard
+    title: 首航就绪
+    hint: 完成首次欢迎仪式
+    icon: rocket
+    stage: meet
+  - id: three-keepers
+    title: 三位当家人
+    hint: 认识获客班组的三位当家人
+    icon: team
+    stage: meet
+  - id: first-dispatch
+    title: 第一次派活
+    hint: 把第一件活交给数字员工
+    icon: tasks
+    stage: dispatch
+  - id: first-close
+    title: 首次闭环
+    hint: 首单产出被验收
+    icon: celebrate
+    stage: review
+values:
+  - id: auto-work
+    label: 已自主完成
+    unit: 项作业
+    source: 工作区事件账本（真实计数）
+  - id: on-duty
+    label: 团队在岗
+    unit: 人
+    source: 当前 Bundle 编制（真实计数）
+nextSteps:
+  - id: night_shift
+    title: 开启夜班
+    desc: 您睡觉的时候，他们接着干；明早 8:30 给您战报。
+    to: /executive
+  - id: real_data
+    title: 接入真实数据与大模型
+    desc: 把演示数据换成您自己的经营数据与内容资产。
+    to: /onboarding
+  - id: customize
+    title: 定制我的行业版
+    desc: 隔离编制 + 上岗考，换一批适合您业态的人。
+    to: /onboarding?mode=customize

@@ -19,6 +19,8 @@ const systemTypes = [
   "review", "secretary_reminder", "watchdog", "fence_rule", "circuit_breaker", "model_config", "budget_ledger",
   // 协作底座对象（B-37/B-39/B-40）：写 biz_events 的对象类型必须在冻结清单内，否则冻结门禁名不副实
   "task_contract", "handoff_receipt", "conflict_arbitration",
+  // 首日上岗引导对象（B-63/B-69）：进度账本事件的载体，属平台面对象（非行业对象模型）
+  "onboarding_questline",
 ];
 
 function collectObjectTypes(): string[] {

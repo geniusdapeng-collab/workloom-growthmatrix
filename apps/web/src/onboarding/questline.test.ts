@@ -12,7 +12,9 @@ import {
   factsFromRecentActions,
   levelOf,
   lightCard,
+  mergeServerProgress,
   parseQuestState,
+  toServerAdvance,
   progressSummary,
   serializeQuestState,
   skipStage,
@@ -21,6 +23,8 @@ import {
   unlockAchievements,
   withThreadId,
   type QuestFacts,
+  type QuestState,
+  type ServerQuestProgress,
 } from "./questline";
 import {
   QUESTLINE,
@@ -356,4 +360,52 @@ describe("内容包完整性（行业可替换的硬约束）", () => {
       }
     });
   }
+});
+
+/* ================= B-63 跨端续播（服务端进度合并） ================= */
+
+describe("B-63 服务端进度合并（跨设备断点续播）", () => {
+  const serverProgress = (over: Partial<ServerQuestProgress> = {}): ServerQuestProgress => ({
+    persisted: true,
+    status: "in_progress",
+    stage: "dispatch",
+    stageDone: ["meet", "goal"],
+    skipped: [],
+    achievements: ["aboard"],
+    litCards: ["content", "ads"],
+    lastThreadId: "T-1",
+    startedAt: "2026-09-24T01:00:00.000Z",
+    completedAt: null,
+    updatedAt: "2026-09-24T01:30:00.000Z",
+    replayCount: 0,
+    ...over,
+  });
+
+  it("服务端更靠前 → 采用服务端进度（本地 XP 不回退）", () => {
+    const local: QuestState = { ...createQuestState(), status: "running", stageDone: ["meet"] };
+    const merged = mergeServerProgress({ ...local, xp: { decided: 3, dispatched: 1, settled: 0 } }, serverProgress());
+    expect(merged.source).toBe("server");
+    expect(merged.state.stage).toBe("dispatch");
+    expect(merged.state.stageDone).toEqual(["meet", "goal"]);
+    expect(merged.state.lastThreadId).toBe("T-1");
+    expect(merged.state.xp).toEqual({ decided: 3, dispatched: 1, settled: 0 });
+  });
+
+  it("本地更靠前或服务端未开始 → 保留本地（离线优先不被空进度覆盖）", () => {
+    const local: QuestState = { ...createQuestState(), status: "running", stageDone: ["meet", "goal", "dispatch"] };
+    expect(mergeServerProgress(local, serverProgress()).source).toBe("local");
+    expect(mergeServerProgress(local, serverProgress({ persisted: false, status: "not_started" })).source).toBe("none");
+    expect(mergeServerProgress(local, null).state).toEqual(local);
+  });
+
+  it("服务端已完成 → 本地也置完成；推进入参只带本关的上报事实", () => {
+    const local = createQuestState();
+    const merged = mergeServerProgress(local, serverProgress({
+      status: "completed", stage: "review", stageDone: ["meet", "goal", "dispatch", "review"], completedAt: "2026-09-24T02:00:00.000Z",
+    }));
+    expect(merged.state.status).toBe("completed");
+    expect(merged.state.completedAt).toBe(Date.parse("2026-09-24T02:00:00.000Z"));
+    const advance = toServerAdvance({ ...createQuestState(), litCards: ["content"], lastThreadId: "T-9", achievements: ["aboard"] }, "meet", "done");
+    expect(advance).toEqual({ stage: "meet", outcome: "done", litCards: ["content"], lastThreadId: "T-9", achievements: ["aboard"] });
+  });
 });

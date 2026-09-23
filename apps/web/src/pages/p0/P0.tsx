@@ -28,6 +28,7 @@ import { QuestlineOverlay } from "../../components/mate-guide/QuestlineOverlay";
 import { useQuestline } from "../../onboarding/useQuestline";
 import { EMPTY_FACTS, factsFromRecentActions, type QuestFacts } from "../../onboarding/questline";
 import { questlineForBundle } from "../../onboarding/questline.config";
+import { questlineConfigFromPack, type ServerQuestlinePack } from "../../onboarding/questline-from-server";
 import { QuestlineContentProvider } from "../../onboarding/QuestlineContent";
 import { useTheaterDiff } from "../../lib/theaterDiff";
 import { displayNameOf, hydrateAliases, reportTitleOf, selectReporters } from "../../lib/naming";
@@ -263,11 +264,49 @@ export default function P0() {
   const questlineReady = Boolean(!showWelcome && welcome && welcome.status === "completed");
   // 内容包随当前活动 Bundle 切换（酒店/GEO/短视频各一套）；解析不到就不显示引导，
   // 宁可不引导，也不能把别的行业的岗位与人设塞给客户。
-  const questlineContent = useMemo(() => questlineForBundle(bundleId), [bundleId]);
+  /** B-63：在线时内容以 Bundle 为准（服务端下发）；服务端不可达则回落本地包（离线兜底） */
+  const [serverPack, setServerPack] = useState<ServerQuestlinePack | null>(null);
+  useEffect(() => {
+    let stopped = false;
+    void (async () => {
+      try {
+        await ensureDemoLogin();
+        const r = await trpc.onboarding.questline.query() as { pack?: ServerQuestlinePack | null };
+        if (!stopped) setServerPack(r?.pack ?? null);
+      } catch {
+        /* 离线/未登录：保留本地兜底内容包 */
+      }
+    })();
+    return () => { stopped = true; };
+  }, [bundleId]);
+  const questlineContent = useMemo(
+    () => questlineConfigFromPack(serverPack) ?? questlineForBundle(bundleId),
+    [serverPack, bundleId],
+  );
+  /**
+   * B-63 跨端续播：进度落服务端（账号维度）。离线或未登录时 load 返回 null，
+   * 本地 localStorage 照常游玩；一旦联网，服务端更靠前的进度会被采用。
+   */
+  const questlineSync = useMemo(() => ({
+    load: async () => {
+      try {
+        await ensureDemoLogin();
+        const r = await trpc.onboarding.questline.query() as { progress?: import("../../onboarding/questline").ServerQuestProgress };
+        return r?.progress ?? null;
+      } catch {
+        return null;
+      }
+    },
+    advance: async (input: { stage: import("../../onboarding/questline").QuestStageId; outcome: "done" | "skip"; litCards: string[]; lastThreadId: string | null; achievements: string[] }) => {
+      await ensureDemoLogin();
+      await trpc.onboarding.questlineAdvance.mutate(input);
+    },
+  }), []);
   const questline = useQuestline({
     ready: questlineReady && questlineContent !== null,
     facts: questlineFacts,
     ...(questlineContent ? { content: questlineContent } : {}),
+    sync: questlineSync,
   });
   // M1：等级/XP 以团队页同源（roster 30 天事件投影）为准，避免同一屏出现两个"董事长等级"
   useEffect(() => {

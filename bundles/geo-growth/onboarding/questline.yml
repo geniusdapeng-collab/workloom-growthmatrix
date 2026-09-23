@@ -1,0 +1,135 @@
+# 首日上岗（Day-1 Questline）内容包 · geo-growth 行业内容
+# 本文件由 work/extract-questline.mjs 从 apps/web/src/onboarding/questline.config.ts 机械迁移（B-63），
+# 之后**以本文件为唯一事实源**：web 端改为经服务端读取本包，不再在客户端硬编码行业内容。
+# 纪律：岗位/围栏/驳回枚举逐条对照行业包实物；示例数字必须 sampleIsDemo: true。
+version: workloom.questline-geo-growth/v1
+extends: workloom.questline-base/v1
+employees:
+  - id: content
+    presetKey: geo-content-planner
+    title: GEO 内容策划
+    duty: 把选题写成 AI 搜索与短视频都能用的内容；对外发布一律先过审。
+    fences:
+      - G-GEO1 · 内容外发必审
+      - G-GEO2 · 事实红线一票否决
+    tasks:
+      - 生成本周双域内容
+      - 整理引用源清单
+      - 改写短视频脚本
+    sample: 本周 5 条选题的双域版本 + 每条引用的来源链
+    sampleIsDemo: true
+  - id: ads
+    presetKey: ads-optimizer
+    title: 投放优化师
+    duty: 盯投放成本与转化，给出加投/停投建议；加投必须您点头才执行。
+    fences:
+      - G12 · 投放加投必审
+      - G9b · 单账号日发布超限熔断
+    tasks:
+      - 复核今日加投建议
+      - 核对投放成本
+      - 排查停投异常
+    sample: 两个渠道的加投建议 + ROI 与成本依据
+    sampleIsDemo: true
+  - id: attribution
+    presetKey: review-analyst
+    title: 复盘分析师
+    duty: 把曝光、询盘、成交和内容对上账，回答哪条内容真的带来了生意。
+    fences:
+      - 只读复盘，不改任何渠道数据
+    tasks:
+      - 生成本周归因复盘
+      - 核对归因链
+      - 查转化异常波动
+    sample: 上周归因成交额 + 三条高转化内容的来源链
+    sampleIsDemo: true
+  - id: visibility
+    presetKey: visibility-watcher
+    title: AI 能见度监测官
+    duty: 盯品牌词在 AI 搜索里的引用与排名变化，掉榜先告警不猜测原因。
+    fences:
+      - 只读监测，异常只推送与派单
+    tasks:
+      - 查看今日能见度
+      - 核对引用源变化
+      - 派单处理掉榜
+    sample: 今晨品牌词引用数变化 + 新增/丢失的引用源
+    sampleIsDemo: true
+  - id: intake
+    presetKey: private-domain-operator
+    title: 私域承接专员
+    duty: 接住评论、私信与落地页的询盘，30 秒首响；报价与承诺必过人审。
+    fences:
+      - G10b · 咨询/售后回复必审
+      - G-GEO1 · 对外内容外发必审
+    tasks:
+      - 处理今日询盘
+      - 核对首响时长
+      - 整理待拍板方案
+    sample: 今日 6 条询盘的处置记录 + 1 条待拍板的报价方案
+    sampleIsDemo: true
+goals:
+  - id: geo-visible
+    title: AI 搜索里找得到
+    metric: 品牌词被 AI 回答引用的次数周环比上升
+    ownerPresetKey: geo-content-planner
+    ownerTitle: GEO 内容策划
+    artifact: 能见度周报（含引用源清单）
+    steps: 4
+    approvals: 1
+  - id: ads-safe
+    title: 投放不失控
+    metric: 加投全部经审，单账号日发布不超限
+    ownerPresetKey: ads-optimizer
+    ownerTitle: 投放优化师
+    artifact: 加投审批清单（含 ROI 依据）
+    steps: 3
+    approvals: 1
+  - id: lead-fast
+    title: 询盘不过夜
+    metric: 私域询盘 30 秒首响率 100%
+    ownerPresetKey: private-domain-operator
+    ownerTitle: 私域承接专员
+    artifact: 询盘处置记录
+    steps: 3
+    approvals: 1
+tasks:
+  - id: geo-content
+    title: 把本周选题做成双域内容
+    ownerPresetKey: geo-content-planner
+    ownerTitle: GEO 内容策划
+    steps: 4
+    eta: 约 4 分钟
+    artifact: 短视频脚本 + GEO 图文 + 引用源清单
+    approvals: 1
+    credits: 24
+    dispatchTitle: 生成本周双域内容（短视频脚本与 GEO 图文），整理引用源清单，发布前提请审批
+  - id: ads-review
+    title: 复核今天的投放加投建议
+    ownerPresetKey: ads-optimizer
+    ownerTitle: 投放优化师
+    steps: 3
+    eta: 约 3 分钟
+    artifact: 加投建议 + ROI 依据（加投部分提请审批）
+    approvals: 1
+    credits: 18
+    dispatchTitle: 复核今天的投放数据，整理加投建议与 ROI 依据，加投部分提请审批
+  - id: intake-clear
+    title: 处理今天的询盘与评论
+    ownerPresetKey: private-domain-operator
+    ownerTitle: 私域承接专员
+    steps: 3
+    eta: 约 3 分钟
+    artifact: 询盘处置记录 + 需要拍板的话术方案
+    approvals: 1
+    credits: 12
+    dispatchTitle: 处理今天各渠道的询盘与评论，输出处置记录与需要拍板的话术方案
+rejectReasons:
+  - code: fact.risk
+    label: 事实红线风险
+  - code: geo.citation_missing
+    label: 引用源缺失或不可核验
+  - code: data.stale
+    label: 数据陈旧/依据不足
+  - code: other
+    label: 其他（我补一句）

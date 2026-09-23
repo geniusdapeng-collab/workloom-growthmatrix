@@ -4,6 +4,7 @@
  */
 export * from "./assembly.js";
 export * from "./internal-collaboration.js";
+export * from "./onboarding.js";
 export * from "./eval-questions.js";
 export * from "./matrix.js";
 export * from "./account-matrix.js";

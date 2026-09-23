@@ -10,3 +10,4 @@ export * from "./decision.js";
 export * from "./hr.js";
 export * from "./board.js";
 export * from "./floor.js";
+export * from "./action-card.js";

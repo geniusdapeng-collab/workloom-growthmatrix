@@ -470,7 +470,10 @@
         "connectors/subtitle-bridge/kit/selftest.sh"
       ],
       "modelPolicy": "model-policy.yml",
-      "evalQuestions": "eval/questions.json"
+      "evalQuestions": "eval/questions.json",
+      "onboarding": [
+        "onboarding/questline.yml"
+      ]
     },
     "ui": {
       "schemaVersion": "workloom.bundle.ui/v1",
@@ -600,7 +603,7 @@
   },
   "integrity": {
     "algorithm": "sha256",
-    "digest": "9bf50ada8c28fc66258560a8aab60c7a03cc92055b8a59ad8e3b5c59dff19e33",
+    "digest": "fd35f08b25293e9b2e58faac0a4f28649ae8a03897555e8a3c6fb0e7f50a005f",
     "assets": {
       "connectors/bgm-bridge/cli.mjs": "4a750118f5bbc7a6c6238be241ee1f3a4cbb695fd3b40066e4c71072179993ed",
       "connectors/bgm-bridge/core.mjs": "1f1a39da1a1460c19ac6e15c7ddbc7817a84acf027dc9c400c61c7c70a9232ec",
@@ -966,6 +969,7 @@
       "library/templates/shot-card-v4-template.md": "46cd261292b95725f59576069131b9a772ef8b5c7a2cdf55bbbaf2117b0bad87",
       "library/typography-recipes/recipes.json": "08009f8e2b1884c2d7c04b65e724c08ab45cbdd9c2576a135966065690953601",
       "model-policy.yml": "15e2069bf71388b0c23f910fd2f1b16d37dd44a8e47b9a1a5709b6e2056325e8",
+      "onboarding/questline.yml": "96aad8de5bbad4e80906c4d8d5130f8932cb028820688605dee6f50d2aa66ca2",
       "pipelines/account-ops.yml": "455383c019ac1d0523db48c6088c7bfce4aa9e8e1eef8d7d71399aa69e107264",
       "pipelines/ads-creative-factory.yml": "90e475e5482ecf15541aa2d6eca5499aa1c9bea8d9928e2122975ae77df869c5",
       "pipelines/live-clip-reuse.yml": "3519f1175f88df6720db9e5badd3948ed9d35a7c3f11568919e975e19eb30dcd",

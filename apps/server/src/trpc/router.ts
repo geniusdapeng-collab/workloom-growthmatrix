@@ -157,6 +157,7 @@ import {
   welcomeProgress,
   WELCOME_STEPS,
 } from "../service/onboarding-continuity.js";
+import { advanceQuestline, firstActionCard, questlineFunnel, questlineState, replayQuestline } from "../service/questline.js";
 import { bundledServiceFrontAvailable, resolveServiceFrontPublication } from "../service/service-front-publication.js";
 import { resolveWorkspaceInspectionAdapter } from "../service/inspection-adapter.js";
 import {
@@ -321,6 +322,44 @@ const onboardingRouter = router({
     memberNo: ctx.identity.memberNo,
     role: ctx.identity.role,
   })),
+
+  /* ---------------- B-63/B-64/B-69 首日上岗（服务端事实源 + 跨端续播 + 行动卡 + 漏斗） ---------------- */
+  /** 首日上岗：内容随包（按活动 Bundle）+ 服务端进度（账号维度跨设备续播） */
+  questline: protectedProcedure.query(async ({ ctx }) => questlineState(ctx.identity.workspaceId, {
+    memberId: ctx.identity.memberId,
+    memberNo: ctx.identity.memberNo,
+    role: ctx.identity.role,
+  })),
+  /** 推进一步：只允许当前关；done/skip 分别落 stageDone/skipped，账本写 questline.* 事件 */
+  questlineAdvance: writeProcedure
+    .input(z.object({
+      stage: z.enum(["meet", "goal", "dispatch", "review"]),
+      outcome: z.enum(["done", "skip"]),
+      litCards: z.array(z.string().trim().min(1).max(80)).max(20).optional(),
+      lastThreadId: z.string().trim().min(1).max(120).nullable().optional(),
+      achievements: z.array(z.string().trim().min(1).max(80)).max(20).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => advanceQuestline(ctx.identity.workspaceId, {
+      memberId: ctx.identity.memberId,
+      memberNo: ctx.identity.memberNo,
+      role: ctx.identity.role,
+    }, input)),
+  /** 重播首日上岗（清进度 + 计数 +1，账本留痕） */
+  replayQuestline: writeProcedure.mutation(async ({ ctx }) => replayQuestline(ctx.identity.workspaceId, {
+    memberId: ctx.identity.memberId,
+    memberNo: ctx.identity.memberNo,
+    role: ctx.identity.role,
+  })),
+  /** B-64 首登行动卡：今天的三件事（待放行关卡 + 续播 + 待验收交付） */
+  actionCard: protectedProcedure.query(async ({ ctx }) => firstActionCard(ctx.identity.workspaceId, {
+    memberId: ctx.identity.memberId,
+    memberNo: ctx.identity.memberNo,
+    role: ctx.identity.role,
+  })),
+  /** B-69 引导漏斗（近窗）：开始/完成/跳过与各关完成数 */
+  questlineFunnel: protectedProcedure
+    .input(z.object({ windowDays: z.number().int().min(1).max(365).optional() }).optional())
+    .query(async ({ ctx, input }) => questlineFunnel(ctx.identity.workspaceId, input?.windowDays ?? 30)),
 
   /** 运行态总览（P0 横幅/落地向导同一事实源）：数据模式 + LLM 装配 + 工作区规模 */
   status: protectedProcedure.query(async ({ ctx }) => {

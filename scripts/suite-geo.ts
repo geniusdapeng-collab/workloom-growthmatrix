@@ -501,6 +501,8 @@ const SYSTEM_TYPES = new Set([
   // 协作底座对象（B-37/B-39/B-40）：契约/交接回执/冲突仲裁由 service 层落账，属平台面对象
   // （与 thread/task/approval 同类）；其"已执行"事实由契约状态机与结算台账互证，不强制 receipt/model_trace
   "task_contract", "handoff_receipt", "conflict_arbitration",
+  // 首日上岗引导（B-63/B-69）：questline.* 事件的对象载体，平台面对象
+  "onboarding_questline",
 ]);
 /**
  * 平台记账类动作（B-40）：其"回执"就是 budget_ledger 行本身（ref_event_id 双向互证），

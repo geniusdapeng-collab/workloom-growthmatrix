@@ -1,0 +1,139 @@
+# 首日上岗（Day-1 Questline）内容包 · hotel 行业内容
+# 本文件由 work/extract-questline.mjs 从 apps/web/src/onboarding/questline.config.ts 机械迁移（B-63），
+# 之后**以本文件为唯一事实源**：web 端改为经服务端读取本包，不再在客户端硬编码行业内容。
+# 纪律：岗位/围栏/驳回枚举逐条对照行业包实物；示例数字必须 sampleIsDemo: true。
+version: workloom.questline-hotel/v1
+extends: workloom.questline-base/v1
+employees:
+  - id: intake
+    presetKey: ai-receptionist
+    title: AI 接待员
+    duty: 四路承接（评论 / 私信 / 落地页 / AI 搜索锚点）7×24 首响，问清需求留下线索；报价承诺一定先问您。
+    fences:
+      - R21 · AI 接待报价承诺必审
+      - R24 · 客资隐私红线（明文不出系统）
+    tasks:
+      - 处理今日询盘
+      - 核对首响时长
+      - 整理待拍板方案
+    sample: 今天 6 条询盘的处置记录 + 1 条待您拍板的报价方案
+    sampleIsDemo: true
+  - id: content
+    presetKey: content-agent
+    title: 内容主笔官
+    duty: 把选题写成短视频脚本与 GEO 图文，一个选题两处变现；对外发布前先过口径校验。
+    fences:
+      - R25 · 获客内容口径校验
+      - R3 · 新渠道首次发布必审
+    tasks:
+      - 生成本周双域内容
+      - 改写短视频脚本
+      - 核对口径与引用源
+    sample: 本周 5 条选题的双域版本 + 引用源清单
+    sampleIsDemo: true
+  - id: intel
+    presetKey: channel-watcher
+    title: 渠道哨兵官
+    duty: 盯竞对评论区、OTA 差评与搜索词：先有人群意图，再有内容排期。
+    fences:
+      - 只读巡检，不改任何渠道数据
+      - 异常只推送与派单
+    tasks:
+      - 扫描今日意图信号
+      - 查竞对价格与动作
+      - 派单给内容/接待
+    sample: 今晨 12 条意图信号 + 3 个值得跟的选题
+    sampleIsDemo: true
+  - id: coupon
+    presetKey: coupon-operator
+    title: 团购运营官
+    duty: 把询盘变成券与订单：库存与定价红线自己守住，成交回写到每条内容的来源链上。
+    fences:
+      - R22 · 券库存熔断
+      - R26 · 券定价红线
+    tasks:
+      - 复核券转化数据
+      - 生成归因复盘
+      - 查异常订单
+    sample: 上周归因成交额 + 三条高转化内容的来源链
+    sampleIsDemo: true
+  - id: retention
+    presetKey: guest-success
+    title: 住客满意官
+    duty: 成交之后的复购与口碑：差评先起草回复，对外外发前请您过目。
+    fences:
+      - R6 · 差评必审
+      - R23 · 线索数据出域必审
+    tasks:
+      - 回复差评草稿
+      - 维护老客复购
+      - 复盘口碑走势
+    sample: 今天 2 条差评的回复草稿 + 复购跟进清单
+    sampleIsDemo: true
+goals:
+  - id: lead-24h
+    title: 询盘不过夜
+    metric: 私域询盘 30 秒首响率 100%
+    ownerPresetKey: ai-receptionist
+    ownerTitle: AI 接待员
+    artifact: 询盘处置记录（含待拍板方案）
+    steps: 3
+    approvals: 1
+  - id: dual-publish
+    title: 内容双域齐发
+    metric: 短视频与 GEO 图文同源发布，口径零违规
+    ownerPresetKey: content-agent
+    ownerTitle: 内容主笔官
+    artifact: 双域内容排期 + 口径校验记录
+    steps: 4
+    approvals: 1
+  - id: attribution
+    title: 归因到钱
+    metric: 每条线索带来源链，成交可回写到内容
+    ownerPresetKey: coupon-operator
+    ownerTitle: 团购运营官
+    artifact: 归因成交清单（含来源链）
+    steps: 3
+    approvals: 1
+tasks:
+  - id: intake-clear
+    title: 处理今天的询盘与评论
+    ownerPresetKey: ai-receptionist
+    ownerTitle: AI 接待员
+    steps: 3
+    eta: 约 3 分钟
+    artifact: 询盘处置记录 + 需要您拍板的报价方案
+    approvals: 1
+    credits: 12
+    dispatchTitle: 处理今天各渠道的询盘与评论，输出处置记录与需要拍板的报价方案
+  - id: dual-content
+    title: 把本周选题做成双域内容
+    ownerPresetKey: content-agent
+    ownerTitle: 内容主笔官
+    steps: 4
+    eta: 约 4 分钟
+    artifact: 短视频脚本 + GEO 图文 + 引用源清单
+    approvals: 1
+    credits: 24
+    dispatchTitle: 生成本周双域内容（短视频脚本与 GEO 图文），整理引用源与口径校验清单，发布前提请审批
+  - id: attribution-review
+    title: 复核本周归因复盘
+    ownerPresetKey: coupon-operator
+    ownerTitle: 团购运营官
+    steps: 3
+    eta: 约 3 分钟
+    artifact: 归因成交清单 + 券转化数据
+    approvals: 1
+    credits: 18
+    dispatchTitle: 复核本周券转化与归因数据，输出归因成交清单与下一步建议，异常部分提请审批
+rejectReasons:
+  - code: reply.tone
+    label: 回复语气不符
+  - code: reply.fact_wrong
+    label: 事实性错误（房态/政策/订单）
+  - code: amount.too_high
+    label: 金额过高
+  - code: data.stale
+    label: 数据陈旧/依据不足
+  - code: other
+    label: 其他（我补一句）
