@@ -49,7 +49,7 @@ describe("B-66 统计口径脚本化", () => {
     const templateRules = (YAML.parse(readFileSync(join(ROOT, "packages/base/bundles/templates/internal-collaboration.yml"), "utf-8")) as { rules?: unknown[] }).rules?.length ?? 0;
     expect(block).toContain(`围栏规则 | ${rules + templateRules} 条`);
     expect(block).toContain("数字员工岗位定义");
-    expect(block).toContain("组合去重后 77 岗");
+    expect(block).toContain("组合去重后 78 岗");
     for (const bundleId of ["hotel", "geo-growth", "ai-video"]) {
       const fencesDir = join(ROOT, "bundles", bundleId, "fences");
       const files = readdirSync(fencesDir).filter((f) => f.endsWith(".yml") && !f.includes("patch"));

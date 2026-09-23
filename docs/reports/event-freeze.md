@@ -1,6 +1,6 @@
 # 事件冻结门禁报告（B-83）
 
-> 生成时间：2026-09-23T18:13:55.652Z
+> 生成时间：2026-09-23T18:54:18.950Z
 
 ## 顶层字段
 - 冻结：event_id / who / context / object / decision / rule_impact（可选：receipt / model_trace / links / hash / ts）
