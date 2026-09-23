@@ -306,6 +306,9 @@ d("PG 集成 · 自我进化飞轮（种子库）", async () => {
     expect(reactivated.calibrateEventId).toMatch(/^E-\d+$/);
     expect((await searchMemories(app, scope, { limit: 50 })).some((h) => h.memory_id === `mem-inj-pref-${RUN}`)).toBe(true);
     // 来源人清算：本用例 MEM-TEST-<RUN> 的手势沉淀（提炼器强化的 mem-reject-price.too_high 含其来源事件）
+    // 先跑一轮提炼器：把本次运行刚造的手势并进记忆来源（此前依赖"上一个用例跑过提炼器"的隐式顺序，
+    // 在整包全量跑时因窗口内来源被历史夹具挤满而偶发红灯——自愈式显式刷新，顺序无关）
+    await runMemoryMinerBeat(app, gateway, scope);
     const recall = await recallMemoriesByMember(app, gateway, scope, { memberNo: "MEM-001" }, `MEM-TEST-${RUN}`);
     expect(recall.recalled.length).toBeGreaterThanOrEqual(1);
     expect(recall.calibrateEventIds.length).toBe(recall.recalled.length);

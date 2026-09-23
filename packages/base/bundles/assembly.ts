@@ -230,8 +230,16 @@ function mergeTrustRing(target: BundleTrustRing, source: BundleTrustRing): void 
 function loadBundleTrustRing(bundleRoot: string): BundleTrustRing {
   const merged: BundleTrustRing = { keys: {}, revoked: new Set() };
   const configuredPath = process.env.BUNDLE_TRUST_PATH?.trim();
-  if (configuredPath) {
-    const trustFile = resolve(configuredPath);
+  /**
+   * 信任根定位（2026-09-24 B-76）：显式 `BUNDLE_TRUST_PATH` 优先；未配置时回落到仓库缺省位置
+   * `build/bundle-trust.json`（发布脚本 `--release` 的默认输出）。回落路径仍强制"锚定在 bundles/ 之外"，
+   * 因此不会把可替换的制品目录当信任根——只是省掉每个环境都要记得注入环境变量的坑
+   * （稳定态包在装载期强制验签，缺信任根会整体拒绝装载；此前缺省环境下三包切稳定即全仓测试红）。
+   */
+  const defaultTrustPath = join(dirname(resolve(bundleRoot)), "build", "bundle-trust.json");
+  const trustPath = configuredPath ? resolve(configuredPath) : (existsSync(defaultTrustPath) ? defaultTrustPath : null);
+  if (trustPath) {
+    const trustFile = trustPath;
     const normalizedBundleRoot = resolve(bundleRoot);
     const rel = relative(normalizedBundleRoot, trustFile);
     if (!rel || (!rel.startsWith("..") && !isAbsolute(rel))) {
