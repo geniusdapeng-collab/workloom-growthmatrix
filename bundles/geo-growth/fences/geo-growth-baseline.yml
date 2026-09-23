@@ -4,6 +4,9 @@
 #   命中 → 按 level 判定；block 优先于 review 优先于 auto（deny 优先并集求值）；
 #   写类动作无任何规则命中 → 按 default_level 处理；求值异常 → 按 block（宁可错杀）
 # 三大纪律：① GEO 灰帽零容忍（G-GEO3 熔断）；② 事实红线一票否决（G-GEO2）；③ 涉人设/品牌表态强制 L4（G20）
+# workloom:stats:begin（由 scripts/generate-capabilities.mjs 生成，勿手改）
+# 本包 28 条规则（基线 28 条） · 模板派生 3 条 · 覆盖对象 36 类 / 动作 42 个
+# workloom:stats:end
 version: geo-growth-baseline/v1
 default_level: review
 # 协作纪律（内部协作 auto / 花钱与付费生成 review）不再手写在基线里，改为按包分发模板

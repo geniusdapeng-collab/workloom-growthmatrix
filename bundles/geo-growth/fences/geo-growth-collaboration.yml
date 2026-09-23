@@ -9,6 +9,9 @@
 #   G-CON1（契约强制）与 G-BB1（黑板单主写者），语义与施工图一致。
 # DSL 求值语义同其余基线包：match 命中后求值 when；block > review > auto（deny 优先并集）；
 #   路径缺失 → undefined，故本包统一采用 "显式声明才放行" 的 fail-closed 写法。
+# workloom:stats:begin（由 scripts/generate-capabilities.mjs 生成，勿手改）
+# 本包 2 条规则（基线 2 条） · 覆盖对象 5 类 / 动作 5 个
+# workloom:stats:end
 version: geo-growth-collaboration/v1
 default_level: review
 rules:

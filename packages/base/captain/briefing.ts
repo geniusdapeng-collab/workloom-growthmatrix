@@ -31,6 +31,16 @@ export interface BriefFacts {
     skipped: number;
     skipRate: number | null;
   };
+  /**
+   * B-72：信任账户复核快照（最近一次 trust.reviewed）——升/降档建议进晨报：
+   * 降档已在运行时自动收紧自治项；升档与补考以业务关卡形式排队（晨报给摘要，处置去关卡队列）。
+   */
+  trust?: {
+    reviewed: number;
+    down: Array<{ domain: string; reason: string }>;
+    up: Array<{ domain: string; hitRate: number | null; approveRate: number | null }>;
+    retake: string[];
+  };
 }
 
 export type BriefingKind = "daily" | "weekly" | "monthly" | "fleet_daily";
@@ -90,6 +100,7 @@ export async function gatherBriefFacts(app: pg.Pool, scope: Scope, sinceHours = 
     : undefined;
   const overlayHealth = await gatherOverlayHealth(app, scope);
   const questlineFunnel = await gatherQuestlineFunnel(app, scope, sinceHours);
+  const trust = await gatherTrustSnapshot(app, scope);
   // B-49：只读岗位产出（按 agents.meta.coverage 的事件前缀聚合；无 coverage 的只读岗不虚报）
   const readonlyRows = await q<{ agent: string; label: string | null; action: string; n: string }>(
     app, scope,
@@ -119,8 +130,29 @@ export async function gatherBriefFacts(app: pg.Pool, scope: Scope, sinceHours = 
     routerReview,
     overlayHealth,
     ...(questlineFunnel ? { questlineFunnel } : {}),
+    ...(trust ? { trust } : {}),
     ...(readonlyFindings.length > 0 ? { readonlyFindings } : {}),
   };
+}
+
+/** B-72：最近一次信任复核快照（无快照 → undefined，不显示空栏） */
+async function gatherTrustSnapshot(app: pg.Pool, scope: Scope): Promise<BriefFacts["trust"]> {
+  const rows = await q<{ after: Record<string, unknown> | null }>(
+    app, scope,
+    `SELECT payload->'decision'->'after' AS after FROM biz_events
+      WHERE workspace_id=$1 AND payload->'decision'->>'action'='trust.reviewed'
+      ORDER BY seq DESC LIMIT 1`,
+    [scope.workspaceId],
+  );
+  const reviewed = (rows[0]?.after?.reviewed ?? []) as Array<{
+    domain: string; level: string; reason: string; retakeRequired?: boolean;
+    hitRate?: number | null; approveRate?: number | null;
+  }>;
+  if (reviewed.length === 0) return undefined;
+  const down = reviewed.filter((r) => r.level === "down").map((r) => ({ domain: r.domain, reason: r.reason }));
+  const up = reviewed.filter((r) => r.level === "up").map((r) => ({ domain: r.domain, hitRate: r.hitRate ?? null, approveRate: r.approveRate ?? null }));
+  const retake = reviewed.filter((r) => r.retakeRequired).map((r) => r.domain);
+  return { reviewed: reviewed.length, down, up, retake };
 }
 
 /**
@@ -212,6 +244,9 @@ export function composeBriefing(kind: BriefingKind, f: BriefFacts, name: string)
         : null,
     f.questlineFunnel
       ? `首日上岗漏斗（近窗）：开始 ${f.questlineFunnel.started} 人 · 完成 ${f.questlineFunnel.completed} 人 · 跳过 ${f.questlineFunnel.skipped} 次${f.questlineFunnel.skipRate !== null ? `（跳过率 ${(f.questlineFunnel.skipRate * 100).toFixed(0)}%）` : ""}`
+      : null,
+    f.trust
+      ? `信任账户（${f.trust.reviewed} 域复核）：${f.trust.down.length > 0 ? `降档 ${f.trust.down.map((d) => d.domain).join("、")}（自治项已自动收紧）` : "无降档"}${f.trust.up.length > 0 ? `；升档建议待您放行：${f.trust.up.map((u) => u.domain).join("、")}` : ""}${f.trust.retake.length > 0 ? `；补考待安排：${f.trust.retake.join("、")}` : ""}`
       : null,
   ];
   const numerals = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];

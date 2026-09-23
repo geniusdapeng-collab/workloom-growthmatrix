@@ -4,6 +4,9 @@
 #   命中 → 按 level 判定；block 优先于 review 优先于 auto（deny 优先并集求值 E2.2）；
 #   写类动作无任何规则命中 → 按 default_level 处理；求值异常 → 按 block（宁可错杀 E2.1）
 # 审批点矩阵 G1-G16（fusion-design §3 / 拆解台账 §2；G11-G16 为经营扩展 v2）
+# workloom:stats:begin（由 scripts/generate-capabilities.mjs 生成，勿手改）
+# 本包 21 条规则（基线 21 条） · 覆盖对象 18 类 / 动作 16 个
+# workloom:stats:end
 version: ai-video-baseline/v2
 default_level: review
 rules:

@@ -21,6 +21,8 @@ const systemTypes = [
   "task_contract", "handoff_receipt", "conflict_arbitration",
   // 首日上岗引导对象（B-63/B-69）：进度账本事件的载体，属平台面对象（非行业对象模型）
   "onboarding_questline",
+  // 业务关卡批量放行汇总（B-70）：一次批量一条事件，平台面对象
+  "approval_batch",
 ];
 
 function collectObjectTypes(): string[] {

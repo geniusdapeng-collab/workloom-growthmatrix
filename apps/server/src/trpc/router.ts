@@ -158,6 +158,8 @@ import {
   WELCOME_STEPS,
 } from "../service/onboarding-continuity.js";
 import { advanceQuestline, firstActionCard, questlineFunnel, questlineState, replayQuestline } from "../service/questline.js";
+import { gateLoadMetrics, releaseGatesBatch } from "../service/gate-batch.js";
+import { latestTrustSnapshot, runTrustReview } from "../service/trust-runtime.js";
 import { bundledServiceFrontAvailable, resolveServiceFrontPublication } from "../service/service-front-publication.js";
 import { resolveWorkspaceInspectionAdapter } from "../service/inspection-adapter.js";
 import {
@@ -1791,6 +1793,31 @@ const approvalsRouter = router({
   sweep: writeProcedure.mutation(async ({ ctx }) => {
     return expireSweep(getAppPool(), getGatewayPool(), scopeOf(ctx.identity));
   }),
+
+  /**
+   * B-70 业务关卡批量放行：低风险 + 配额内 + 未被抽检的关卡一次放行；
+   * L4/high_risk 一律留待逐条（planBatchRelease 硬约束），整批进账本（gate.batch_release）。
+   */
+  batchRelease: writeProcedure
+    .input(z.object({
+      quota: z.number().int().min(1).max(50).optional(),
+      sampleRate: z.number().min(0).max(1).optional(),
+      seed: z.number().int().nonnegative().optional(),
+    }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const scope = scopeOf(ctx.identity);
+      const result = await releaseGatesBatch(scope.workspaceId, {
+        memberNo: ctx.identity.memberNo, role: ctx.identity.role, id: ctx.identity.memberId,
+      }, input ?? {});
+      // 围栏激活接线（与单条/旧批量同口径：通过项触发激活）
+      for (const id of result.released) await activateFenceRuleAfterApproval(scope, id);
+      return result;
+    }),
+
+  /** B-70 H1 负载仪表：今日裁决量 / 均时长 / 排队与超龄（≤7 件/日、≤30 秒/件的口径来自常量） */
+  loadMetrics: protectedProcedure
+    .input(z.object({ windowDays: z.number().int().min(1).max(90).optional() }).optional())
+    .query(async ({ ctx, input }) => gateLoadMetrics(scopeOf(ctx.identity).workspaceId, input?.windowDays ?? 7)),
 });
 
 /** inspection router（B10/M9：巡检状态条 / 手动巡检 / 一键派单 / 回链） */
@@ -3225,6 +3252,19 @@ function withCharterLock<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 const captainRouter = router({
+  /**
+   * B-72 信任账户复核：跑一轮（降档自动收紧自治项、升档建议与补考单进关卡、写快照事件）。
+   * dryRun=true 只算不写（验收/演练）。
+   */
+  trustReview: writeProcedure
+    .input(z.object({ dryRun: z.boolean().optional() }).optional())
+    .mutation(async ({ ctx, input }) => runTrustReview(
+      scopeOf(ctx.identity).workspaceId,
+      { id: ctx.identity.memberNo, type: "human" },
+      { dryRun: input?.dryRun === true },
+    )),
+  /** 最近一次信任快照（晨报同口径） */
+  trustLevels: protectedProcedure.query(async ({ ctx }) => latestTrustSnapshot(scopeOf(ctx.identity).workspaceId)),
   /** 治理状态：宪章 + 模式 + 授权信息 + 待审分层 */
   state: protectedProcedure.query(async ({ ctx }) => {
     const scope = scopeOf(ctx.identity);

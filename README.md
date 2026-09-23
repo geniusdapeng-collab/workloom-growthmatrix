@@ -70,6 +70,26 @@
 > 📖 完整能力导览（含截图与体验路径）：[docs/capabilities.auto.md](docs/capabilities.auto.md) ｜ 🤖 AI Agent 入口：[AGENTS.md](AGENTS.md) ｜ 🎯 首启必跑：`pnpm preview:all`
 <!-- CAPABILITIES:END -->
 
+<!-- STATS:BEGIN -->
+<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（2026-09-23），请勿手改；重跑 pnpm capabilities 更新 -->
+
+## 📊 编制与资产统计（自动生成 · 与代码同步）
+
+| 口径 | 数值 | 事实源 |
+|---|---:|---|
+| 行业包 | 3 个 | bundles/ 目录 |
+| 数字员工岗位定义 | 82 个（组合去重后 77 岗 · 同名遮蔽 5 处） | bundles/*/presets/*.yml |
+| 随包技能 | 87 个 | bundles/*/skills/ |
+| 围栏规则 | 114 条（含模板派生 3 条 · 基线 111 条） | bundles/*/fences/*.yml + packages/base/bundles/templates/ |
+| 对象类型 | 134 类（去重后 118 类） | bundles/*/schemas/objects.json |
+| 管线 | 11 条 | bundles/*/pipelines/*.yml |
+| 触发器声明 | 35 条 | bundles/*/triggers.yml |
+| 首日上岗内容包 | 3 套（随包分发） | bundles/*/onboarding/questline.yml |
+| 获客矩阵条目 | 123 条（12 大类） | bundles/geo-growth/matrix/content-platform-matrix.yml |
+
+> 本表由脚本从代码事实计算，`pnpm capabilities --check` 在同一门禁里校验漂移。
+<!-- STATS:END -->
+
 ---
 
 ## 核心能力

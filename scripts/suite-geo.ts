@@ -503,6 +503,8 @@ const SYSTEM_TYPES = new Set([
   "task_contract", "handoff_receipt", "conflict_arbitration",
   // 首日上岗引导（B-63/B-69）：questline.* 事件的对象载体，平台面对象
   "onboarding_questline",
+  // 业务关卡批量放行汇总（B-70）：平台面对象
+  "approval_batch",
 ]);
 /**
  * 平台记账类动作（B-40）：其"回执"就是 budget_ledger 行本身（ref_event_id 双向互证），
