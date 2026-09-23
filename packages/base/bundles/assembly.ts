@@ -28,6 +28,7 @@ import {
   SYSTEM_ACTOR_WHITELIST,
 } from "../workdata/gateway.js";
 import { fenceRulesOf } from "../fence-engine/dsl.js";
+import { applyDeclaredFenceTemplates } from "./internal-collaboration.js";
 import { parseModelPolicy } from "../model-router/policy.js";
 import {
   loadFeedbackEnumsFromBundle,
@@ -714,7 +715,10 @@ export function loadComposedAssets(slug: string, root = bundlesRoot()): Composed
        * 客群补丁由落地向导按所选客群单独应用；组合上岗只做单调守卫（更严的补丁保留）。
        */
       if (assetPath.includes("/patches/")) continue;
-      const pack = YAML.parse(readFileSync(verifiedAssetPath(bundleId, assetPath, root), "utf-8")) as FenceYml;
+      // B-62：围栏包可声明通用规则模板（内部协作 auto / 对外动作 review），装配期按包前缀展开
+      const pack = applyDeclaredFenceTemplates(
+        YAML.parse(readFileSync(verifiedAssetPath(bundleId, assetPath, root), "utf-8")) as FenceYml,
+      );
       if (pack?.version) fencePacks.push({ bundleId, pack });
     }
   }
@@ -1378,6 +1382,11 @@ interface FenceYml {
   rules?: FenceRuleYml[];
   /** HP-02：出厂包存在两种顶层键——hotel/本仓各行业包用 `rules:`，ai-pm/platform 用 `fences:` */
   fences?: FenceRuleYml[];
+  /**
+   * B-62：通用规则模板声明（装配期按前缀展开为包内规则 id）。
+   * 目前支持 `internal-collaboration`（内部协作 auto / 花钱 review / 对外动作 review）。
+   */
+  templates?: Array<{ name: string; prefix: string }>;
 }
 
 interface UiCasesJson {
@@ -1433,7 +1442,9 @@ function loadBundleDiskAssets(dir: string, slug: string): BundleDiskAssets {
     ? readJson<T>(verifiedAssetPath(slug, assetPath, bundleRoot))
     : null;
   const fenceAssets = provides.fences.map((assetPath) => {
-    const value = YAML.parse(readFileSync(verifiedAssetPath(slug, assetPath, bundleRoot), "utf-8")) as FenceYml;
+    const value = applyDeclaredFenceTemplates(
+      YAML.parse(readFileSync(verifiedAssetPath(slug, assetPath, bundleRoot), "utf-8")) as FenceYml,
+    );
     // HP-02：装配层统一把 `fences:` 形态归一为 `rules:`，后续消费方（覆盖层视图/rebase/计数）只看 rules
     return { assetPath, value: { ...value, rules: fenceRulesOf(value) as FenceYml["rules"] } };
   });

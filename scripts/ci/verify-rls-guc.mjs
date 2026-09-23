@@ -30,8 +30,12 @@ const isTest = (p) => /\.test\.(ts|mts)$|\.pg\.test\.ts$/.test(p);
 const WRITE_RE = /\b(INSERT\s+INTO|UPDATE\s+[a-z_]+\s+SET|DELETE\s+FROM)\b/i;
 const WS_RE = /app\.workspace_id/;
 const TENANT_RE = /app\.tenant_id/;
-/** 委托型上下文助手：这些入口在事务内设置双 GUC，文件内无需重复出现字符串。 */
-const DELEGATE_RE = /(serviceTx\(|withTx\(|gatewayAppendOnClient\(|svcQuery\(|rlsContext|set_config\()/;
+/**
+ * 委托型上下文助手：这些入口在事务内设置双 GUC，文件内无需重复出现字符串。
+ * `recordCostInTx`（B-40 契约结算）同样是"调用方持有事务"的 API：它只接受已设 GUC 的
+ * client，自身不开事务——因此按委托型放行，由调用方（serviceTx/withTx）承担双 GUC 责任。
+ */
+const DELEGATE_RE = /(serviceTx\(|withTx\(|gatewayAppendOnClient\(|svcQuery\(|recordCostInTx\(|rlsContext|set_config\()/;
 
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {

@@ -31,15 +31,20 @@ async function emitInTx(
   objectId: string,
   decision: Record<string, unknown>,
 ): Promise<string> {
+  const now = new Date().toISOString();
   const r = await gatewayAppendOnClient(client, {
     tenantId: scope.tenantId, workspaceId: scope.workspaceId,
     actor: { id: "cost-ledger", type: "system" },
   }, {
     who: { type: "system", id: "cost-ledger" },
-    context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString(), channel: "inapp" },
+    context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: now, channel: "inapp" },
     object: { type: "budget_ledger", id: objectId },
     decision: decision as never,
     rule_impact: [],
+    // 回执位（L3.6/E3.7）：台账行本身即计量回执，snapshot_uri 指向该行（ref_event_id 互证）；
+    // 计量位记 0 credits：成本台账是系统记账，不消耗模型额度
+    receipt: { synced: true, snapshot_uri: `ledger://${scope.workspaceId}/${objectId}`, verified_at: now },
+    model_trace: { model_id: "system:cost-ledger", tier: "standard", credits: 0 },
   });
   return r.eventId;
 }
@@ -77,12 +82,12 @@ export interface BudgetLedgerRow {
 }
 
 /**
- * 计量落账：INSERT budget_ledger + 同事务 budget.cost_recorded 事件（D16）。
+ * 事务内计量落账（B-40 复用点）：调用方持有事务与 RLS 上下文，台账行 + 计量事件 + 互证
+ * 与调用方业务写同一 COMMIT。契约结算等"业务状态迁移必须与结算同生共死"的场景用本函数。
  * 幂等：同 (workspace_id, idempotency_key) 已存在 → 返回已有行 deduped=true，不写行不写事件。
  */
-export async function recordCost(
-  app: pg.Pool,
-  gateway: pg.Pool,
+export async function recordCostInTx(
+  client: pg.PoolClient,
   scope: Scope,
   entry: CostEntry,
 ): Promise<{ row: BudgetLedgerRow; deduped: boolean; eventId: string | null }> {
@@ -92,51 +97,62 @@ export async function recordCost(
   if (!Number.isFinite(entry.amount)) {
     throw new CostLedgerError("BAD_AMOUNT", "金额必须为有限数");
   }
+  // 幂等去重（L1.4 同源）
+  const dup = await client.query<BudgetLedgerRow>(
+    `SELECT * FROM budget_ledger WHERE workspace_id=$1 AND idempotency_key=$2`,
+    [scope.workspaceId, entry.idempotencyKey],
+  );
+  if (dup.rows[0]) return { row: dup.rows[0], deduped: true, eventId: null };
+
+  const ins = await client.query<BudgetLedgerRow>(
+    `INSERT INTO budget_ledger
+       (workspace_id, project_id, episode, shot_id, cost_kind, amount, currency, idempotency_key, meta, occurred_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::timestamptz)
+     RETURNING *`,
+    [
+      scope.workspaceId, entry.projectId ?? null, entry.episode ?? null, entry.shotId ?? null,
+      entry.costKind, entry.amount, entry.currency ?? "CNY", entry.idempotencyKey,
+      JSON.stringify(entry.meta ?? {}), entry.occurredAt ?? new Date().toISOString(),
+    ],
+  );
+  const row = ins.rows[0]!;
+  // D16（#1/A）：台账行与计量事件同一事务同一 COMMIT；ref_event_id 互证
+  const eventId = await emitInTx(client, scope, String(row.id), {
+    action: "budget.cost_recorded",
+    after: {
+      ledgerId: row.id, projectId: entry.projectId ?? null, episode: entry.episode ?? null,
+      shotId: entry.shotId ?? null, costKind: entry.costKind, amount: entry.amount,
+      currency: entry.currency ?? "CNY", idempotencyKey: entry.idempotencyKey,
+    },
+    basis: ["成本逐事件计量落账（U7；UNIQUE(workspace_id,idempotency_key) 幂等）"],
+  });
+  await client.query(
+    `UPDATE budget_ledger SET ref_event_id=$3 WHERE workspace_id=$1 AND id=$2`,
+    [scope.workspaceId, row.id, eventId],
+  );
+  return { row: { ...row, ref_event_id: eventId }, deduped: false, eventId };
+}
+
+/**
+ * 计量落账（自带事务入口）：INSERT budget_ledger + 同事务 budget.cost_recorded 事件（D16）。
+ * 幂等：同 (workspace_id, idempotency_key) 已存在 → 返回已有行 deduped=true，不写行不写事件。
+ */
+export async function recordCost(
+  app: pg.Pool,
+  gateway: pg.Pool,
+  scope: Scope,
+  entry: CostEntry,
+): Promise<{ row: BudgetLedgerRow; deduped: boolean; eventId: string | null }> {
+  void gateway; // 兼容旧签名（网关写入已在下方事务内经 gatewayAppendOnClient 完成）
   const client = await app.connect();
   try {
     // 事务级 RLS 上下文必须在显式事务内设置：autocommit 下 set_config(...,true) 语句结束即失效
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
     await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]); // D16：append_event_insert 双 GUC 校验要求
-
-    // 幂等去重（L1.4 同源）
-    const dup = await client.query<BudgetLedgerRow>(
-      `SELECT * FROM budget_ledger WHERE workspace_id=$1 AND idempotency_key=$2`,
-      [scope.workspaceId, entry.idempotencyKey],
-    );
-    if (dup.rows[0]) {
-      await client.query("COMMIT");
-      return { row: dup.rows[0], deduped: true, eventId: null };
-    }
-
-    const ins = await client.query<BudgetLedgerRow>(
-      `INSERT INTO budget_ledger
-         (workspace_id, project_id, episode, shot_id, cost_kind, amount, currency, idempotency_key, meta, occurred_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::timestamptz)
-       RETURNING *`,
-      [
-        scope.workspaceId, entry.projectId ?? null, entry.episode ?? null, entry.shotId ?? null,
-        entry.costKind, entry.amount, entry.currency ?? "CNY", entry.idempotencyKey,
-        JSON.stringify(entry.meta ?? {}), entry.occurredAt ?? new Date().toISOString(),
-      ],
-    );
-    const row = ins.rows[0]!;
-    // D16（#1/A）：台账行与计量事件同一事务同一 COMMIT；ref_event_id 互证
-    const eventId = await emitInTx(client, scope, String(row.id), {
-      action: "budget.cost_recorded",
-      after: {
-        ledgerId: row.id, projectId: entry.projectId ?? null, episode: entry.episode ?? null,
-        shotId: entry.shotId ?? null, costKind: entry.costKind, amount: entry.amount,
-        currency: entry.currency ?? "CNY", idempotencyKey: entry.idempotencyKey,
-      },
-      basis: ["成本逐事件计量落账（U7；UNIQUE(workspace_id,idempotency_key) 幂等）"],
-    });
-    await client.query(
-      `UPDATE budget_ledger SET ref_event_id=$3 WHERE workspace_id=$1 AND id=$2`,
-      [scope.workspaceId, row.id, eventId],
-    );
+    const result = await recordCostInTx(client, scope, entry);
     await client.query("COMMIT");
-    return { row: { ...row, ref_event_id: eventId }, deduped: false, eventId };
+    return result;
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw err;

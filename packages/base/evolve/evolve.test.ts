@@ -133,6 +133,8 @@ d("PG 集成 · 自我进化飞轮（种子库）", async () => {
 
   const app = new pg.Pool({ connectionString: process.env.DATABASE_APP_URL });
   const gateway = new pg.Pool({ connectionString: process.env.DATABASE_GATEWAY_URL });
+  /** 夹具自愈用高权限连接（app 角色对 org_memory 无 UPDATE 授权，见下方 mem-inj- 清理） */
+  const owner = new pg.Pool({ connectionString: process.env.DATABASE_URL });
   const scope = { tenantId: "tenant-demo", workspaceId: "ws-yunqi" };
   const embedder = new MockEmbedder();
   const RUN = Date.now().toString(36);
@@ -187,6 +189,17 @@ d("PG 集成 · 自我进化飞轮（种子库）", async () => {
   }
 
   it("偏好注入检索：forbidden 优先 + confidence 降序 + 只取 active", async () => {
+    /**
+     * 夹具自愈（2026-09-24）：本用例每次运行都会写两条 mem-inj-* 记忆，而 loadActivePreferences
+     * 的注入上限是 20（产品口径）——历史运行累积的 forbidden 夹具把注入窗口占满后，
+     * 本用例自己新增的 preference 被挤出 TOP20，断言随机转红（实测累积到 20 条 forbidden 时必红）。
+     * 处置：先把本用例历史夹具置为 disabled（不删行，保住 memory_usage 外键与审计），再写新夹具。
+     */
+    await owner.query(
+      `UPDATE org_memory SET status='recalled'
+        WHERE workspace_id=$1 AND memory_id LIKE 'mem-inj-%' AND status='active'`,
+      [scope.workspaceId],
+    );
     await upsertMemory(app, scope, {
       memoryId: `mem-inj-pref-${RUN}`, scope: "workspace", kind: "preference",
       content: `注入测试偏好 ${RUN}`, sourceEvents: ["E-SEED-8801"], confidence: 0.6,

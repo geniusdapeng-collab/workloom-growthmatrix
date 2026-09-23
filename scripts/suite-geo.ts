@@ -11,6 +11,7 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { judge, type RuntimeRule } from "@workloom/base/fence-engine";
+import { expandInternalCollaborationTemplate, loadInternalCollaborationTemplate } from "@workloom/base/bundles";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, "..");
@@ -50,13 +51,24 @@ const fenceRules: RuntimeRule[] = (fenceDoc.rules ?? []).map((r: { rule_id: stri
   rule_id: r.rule_id, version: fenceDoc.version, name: r.name, level: r.level, is_baseline: r.is_baseline,
   objectTypes: r.match.object_types, actions: r.match.actions, when: r.when,
 }));
+/**
+ * B-62：G-C01~G-C03 由通用模板（内部协作 auto / 花钱与付费生成 review / 对外动作 review）
+ * 在装配期按 `templates: [{name: internal-collaboration, prefix: G-C}]` 展开——不再手写在基线文件里。
+ * 套件必须把展开结果一并纳入规则台账，否则 E-04（rule_impact 引用规则存在）与 gate 引用校验会误报未知规则。
+ */
+const fenceTemplateRules: RuntimeRule[] = ((fenceDoc.templates ?? []) as Array<{ name: string; prefix: string }>)
+  .flatMap((decl) => expandInternalCollaborationTemplate(loadInternalCollaborationTemplate(), decl.prefix))
+  .map((r) => ({
+    rule_id: r.rule_id, version: r.version, name: r.name, level: r.level, is_baseline: r.is_baseline,
+    objectTypes: r.match.object_types, actions: r.match.actions, when: r.when,
+  }));
 const objectsJson = JSON.parse(readFileSync(join(BUNDLE, "schemas/objects.json"), "utf-8"));
 const stagesJson = JSON.parse(readFileSync(join(BUNDLE, "schemas/stages.json"), "utf-8"));
 const objectTypes = new Set<string>(objectsJson.objects.map((o: { type: string }) => o.type));
 const pipelines = readdirSync(join(BUNDLE, "pipelines")).filter(f => f.endsWith(".yml")).sort()
   .map(f => ({ file: f, doc: YAML.parse(readFileSync(join(BUNDLE, "pipelines", f), "utf-8")) }));
 const presetKeys = new Set<string>(presets.map(p => p.preset_key));
-const fenceIds = new Set<string>(fenceRules.map(r => r.rule_id));
+const fenceIds = new Set<string>([...fenceRules, ...fenceTemplateRules].map(r => r.rule_id));
 // 视觉栈围栏（G-VIS*，独立基线包）：presets 的 fence_bindings 校验必须并集，否则视觉岗被判"绑了不存在的围栏"
 const visualFenceDoc = YAML.parse(readFileSync(join(BUNDLE, "fences/geo-growth-visual.yml"), "utf-8"));
 const visualFenceRules: RuntimeRule[] = ((visualFenceDoc.rules ?? []) as Array<{ rule_id: string; name: string; level: RuntimeRule["level"]; is_baseline: boolean; match: { object_types: string[]; actions: string[] }; when: string }>).map(r => ({
@@ -69,7 +81,7 @@ for (const r of visualFenceRules) fenceIds.add(r.rule_id);
  * **工作区已激活的全部围栏包**判定。2026-09-20 真机验收修复：该检查此前只装 baseline 规则，
  * 视觉岗正常引用 G-VIS2（block 级事实红线）被判「未知规则」——假失败，非产品缺陷。
  */
-const allFenceRules: RuntimeRule[] = [...fenceRules, ...visualFenceRules];
+const allFenceRules: RuntimeRule[] = [...fenceRules, ...fenceTemplateRules, ...visualFenceRules];
 
 /* ================= A · Bundle 完整性 ================= */
 const a = C("A");
@@ -102,12 +114,18 @@ a("夜班编制覆盖跨时区值守（≥5 员 night_shift）", () => {
   for (const k of ["visibility-watcher", "entity-inspector", "data-board-officer", "company-ceo"])
     assert(n.includes(k), `${k} 应为夜班（跨时区/凌晨巡检纪律）`);
 });
-a("围栏基线 30 条（双域 17 + 获客用增 8 + 人审边界 2 + 素材制作放行 1 + 达人合规 2）全部 is_baseline（只可加严）", () => {
+a("围栏基线文件 28 条 + 模板派生 3 条（B-62）全部 is_baseline（只可加严）", () => {
   // 口径以 bundles/geo-growth/fences/geo-growth-baseline.yml 实物为准：
   // 2026-09-21 基线为 27 条（17 双域 + 8 获客用增 + G-C01/G-C02 内部协作放行面），
   // 视频链路批次新增 G-C04（素材制作渲染放行）后为 30 条（G-AD1/G-AD2 达人合规）。
-  assert(fenceRules.length === 30, `期望 30，实际 ${fenceRules.length}`);
+  // 2026-09-24 B-62：G-C01/G-C02 抽成跨包模板（packages/base/bundles/templates/internal-collaboration.yml），
+  // 基线文件剩 28 条；模板按 prefix=G-C 展开出 G-C01/G-C02/G-C03（新增对外动作兜底），语义与历史一致。
+  assert(fenceRules.length === 28, `期望 28，实际 ${fenceRules.length}`);
   assert(fenceRules.every(r => r.is_baseline), "存在非基线规则");
+  assert(fenceTemplateRules.length === 3, `模板派生规则期望 3，实际 ${fenceTemplateRules.length}`);
+  assert(fenceTemplateRules.every(r => r.is_baseline), "模板派生规则必须 is_baseline（只可加严）");
+  const tl = (id: string) => fenceTemplateRules.find(r => r.rule_id === id)?.level;
+  assert(tl("G-C01") === "auto" && tl("G-C02") === "review" && tl("G-C03") === "review", "模板派生规则级别不符（C01 auto / C02 review / C03 review）");
 });
 a("GEO 三闸到位：G-GEO1 review / G-GEO2 block / G-GEO3 block", () => {
   const lv = (id: string) => fenceRules.find(r => r.rule_id === id)?.level;
@@ -332,9 +350,11 @@ c("员工 fence_bindings 原样落库（F2.10）", async () => {
   const fb = r.rows[0]?.fence_bindings as string[];
   assert(Array.isArray(fb) && fb.includes("G-GEO1") && fb.includes("G-GEO2"), "绑定丢失");
 });
-c("30 条围栏 active 装载（与基线文件口径一致）", async () => {
+c("31 条围栏 active 装载（基线文件 28 + 模板派生 3，同以 geo-growth-baseline/v1 加载）", async () => {
   const r = await q(`SELECT count(*) n FROM fence_rules WHERE workspace_id=$1 AND status='active' AND version='geo-growth-baseline/v1'`, [WS]);
-  assert(Number(r.rows[0].n) === 30, `fences=${r.rows[0].n}`);
+  assert(Number(r.rows[0].n) === 31, `fences=${r.rows[0].n}`);
+  const t = await q(`SELECT DISTINCT rule_id FROM fence_rules WHERE workspace_id=$1 AND status='active' AND version='geo-growth-baseline/v1' AND rule_id IN ('G-C01','G-C02','G-C03') ORDER BY rule_id`, [WS]);
+  assert(t.rows.length === 3, `模板派生规则未装载：${t.rows.map(x => x.rule_id).join(",")}`);
 });
 c("30 个 GEO 技能已安装（双域 6 + 视觉 14 + 获客用增 10）", async () => {
   const r = await q(`SELECT count(*) n FROM skill_installs si JOIN skills s ON s.id=si.skill_id WHERE si.workspace_id=$1 AND s.bundle='geo-growth'`, [WS]);
@@ -478,7 +498,16 @@ const SYSTEM_TYPES = new Set([
   "secretary_reminder",
   // watchdog = 平台巡检报告对象（B-35；触发器/连接器/审批三类发现，不属于行业对象模型）
   "watchdog",
+  // 协作底座对象（B-37/B-39/B-40）：契约/交接回执/冲突仲裁由 service 层落账，属平台面对象
+  // （与 thread/task/approval 同类）；其"已执行"事实由契约状态机与结算台账互证，不强制 receipt/model_trace
+  "task_contract", "handoff_receipt", "conflict_arbitration",
 ]);
+/**
+ * 平台记账类动作（B-40）：其"回执"就是 budget_ledger 行本身（ref_event_id 双向互证），
+ * 台账行即证据快照，故不另写 receipt/model_trace。2026-09-24 起 cost-ledger 的新事件也补写
+ * receipt（ledger:// 快照）与计量位；本白名单保证修复前落账的历史事件不被误判为缺字段。
+ */
+const PLATFORM_EVENT_ACTIONS = ["budget.cost_recorded"];
 e("ws-geo 事件 ≥60 条且五元字段完整（容忍门禁活火写入）", async () => {
   const r = await q(`SELECT count(*) n FROM biz_events WHERE workspace_id=$1`, [WS]);
   assert(Number(r.rows[0].n) >= 60, `events=${r.rows[0].n}`);
@@ -497,7 +526,8 @@ e("ws-geo 事件 ≥60 条且五元字段完整（容忍门禁活火写入）", 
   const bad = await q(`SELECT count(*) n FROM biz_events WHERE workspace_id=$1
     AND payload->'decision'->'after' IS NOT NULL
     AND COALESCE(payload->'object'->>'type','') <> ALL($2::text[])
-    AND (payload->>'who' IS NULL OR payload->>'object' IS NULL OR payload->>'decision' IS NULL OR payload->>'receipt' IS NULL OR payload->>'model_trace' IS NULL)`, [WS, [...SYSTEM_TYPES]]);
+    AND COALESCE(payload->'decision'->>'action','') <> ALL($3::text[])
+    AND (payload->>'who' IS NULL OR payload->>'object' IS NULL OR payload->>'decision' IS NULL OR payload->>'receipt' IS NULL OR payload->>'model_trace' IS NULL)`, [WS, [...SYSTEM_TYPES], PLATFORM_EVENT_ACTIONS]);
   assert(Number(bad.rows[0].n) === 0, `五元缺失 ${bad.rows[0].n} 条`);
 });
 e("事件 GEO 对象类型全部在对象模型内（系统对象豁免）", async () => {
@@ -516,6 +546,8 @@ e("事件 who 全部在编制内（系统/人类豁免）", async () => {
     "render-operator",
     // watchdog = 三类巡检组件（触发器漏触发/连接器陈旧/审批 SLA 报告主体；B-35）
     "watchdog",
+    // cost-ledger = 成本台账组件（budget.cost_recorded 的留痕主体；B-40 契约结算同事务落账）
+    "cost-ledger",
   ]);
   const r = await q(`SELECT DISTINCT payload->'who'->>'id' id FROM biz_events WHERE workspace_id=$1`, [WS]);
   for (const row of r.rows) assert(presetKeys.has(row.id) || SYSTEM_ACTORS.has(row.id) || String(row.id).startsWith("MEM-"), `who=${row.id} 不在编制`);

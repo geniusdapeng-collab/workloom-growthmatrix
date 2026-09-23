@@ -61,7 +61,8 @@ const ledger = await recordCost(app, getGatewayPool(), scope, {
   costKind: "labor", amount: 88, idempotencyKey: `contract:${id}`, projectId: id,
   meta: { contractId: id, source: "goal-loop", threadId },
 }, "MEM-001");
-check(ledger.deduped === false && ledger.eventId !== null, "结算落预算账本（receipt→report 事实源）");
+// B-40：settle 已在同一 COMMIT 内落账（幂等键 contract:<id>），此处再记一次必须去重
+check(ledger.deduped === true && ledger.eventId === null, "结算已在契约事务内落账，重复记账被去重（receipt→report 事实源）");
 
 console.log(failed === 0 ? `\n目标闭环验收通过（契约 ${id}）` : `\n目标闭环验收失败：${failed} 项`);
 process.exit(failed === 0 ? 0 : 1);

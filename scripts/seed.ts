@@ -893,9 +893,16 @@ async function main(): Promise<void> {
     // 安装行与运行时 installSkill 同口径（#17 安装时快照 + D15-⑤ installed_version）：
     // 快照/版本从 skills 表取，保证 seed 与运行时两条路径的围栏并集计算一致
     await q(
+      // 2026-09-24：声明变更（bindings/version）时刷新安装快照——与运行时 installSkill 同口径，
+      // 否则老工作区的安装快照会停在旧声明（skills.test「双路径同构」红点根因）
       `INSERT INTO skill_installs (skill_id, workspace_id, installed_by, fence_bindings_snapshot, installed_version)
        SELECT s.id, $2, 'MEM-001', s.fence_bindings, s.version FROM skills s WHERE s.id = $1
-       ON CONFLICT (skill_id, workspace_id) DO NOTHING`,
+       ON CONFLICT (skill_id, workspace_id) DO UPDATE
+         SET fence_bindings_snapshot = EXCLUDED.fence_bindings_snapshot,
+             installed_version = EXCLUDED.installed_version,
+             installed_at = now()
+       WHERE skill_installs.fence_bindings_snapshot IS DISTINCT FROM EXCLUDED.fence_bindings_snapshot
+          OR skill_installs.installed_version IS DISTINCT FROM EXCLUDED.installed_version`,
       [skillId, WS_ID],
     );
   }
@@ -959,7 +966,12 @@ async function main(): Promise<void> {
     `INSERT INTO skill_installs (skill_id, workspace_id, installed_by, fence_bindings_snapshot, installed_version)
      SELECT s.id, $1, 'MEM-002', s.fence_bindings, s.version FROM skills s
      WHERE s.id = 'skill-t-ws-yunqi-weekly-ops-review'
-     ON CONFLICT (skill_id, workspace_id) DO NOTHING`,
+     ON CONFLICT (skill_id, workspace_id) DO UPDATE
+       SET fence_bindings_snapshot = EXCLUDED.fence_bindings_snapshot,
+           installed_version = EXCLUDED.installed_version,
+           installed_at = now()
+     WHERE skill_installs.fence_bindings_snapshot IS DISTINCT FROM EXCLUDED.fence_bindings_snapshot
+        OR skill_installs.installed_version IS DISTINCT FROM EXCLUDED.installed_version`,
     [WS_ID],
   );
   await q(

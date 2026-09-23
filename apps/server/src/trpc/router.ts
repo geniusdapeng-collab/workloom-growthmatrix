@@ -142,6 +142,7 @@ import { acquisitionQuestPlanner } from "../industry/hotel/acquisition-planner.j
 import { overlayRouter } from "./overlay-router.js";
 import { acquisitionRouter } from "./acquisition-router.js";
 import { collaborationRouter } from "./collaboration-router.js";
+import { arbitrationRouter } from "./arbitration-router.js";
 import {
   AccessAuthorityError,
   resolveAuthoritativeClientAccess,
@@ -3867,6 +3868,7 @@ export const appRouter = router({
   acquisition: acquisitionRouter,
   // 协作底座（规模化协作设计 §3–§4）：对象读模型/任务契约/交接回执/决策配额/组合看板/数字人叙事
   collaboration: collaborationRouter,
+  arbitration: arbitrationRouter,
   // 租户覆盖层（P26/P27）：实现早已随服务端构建，但此前从未挂载进根路由，
   // 三端 overlay.* 调用全部落到 404。挂载即生效，端点自身仍是受控守卫。
   overlay: overlayRouter,
