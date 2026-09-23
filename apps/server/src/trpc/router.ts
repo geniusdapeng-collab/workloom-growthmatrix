@@ -142,6 +142,7 @@ import { acquisitionQuestPlanner } from "../industry/hotel/acquisition-planner.j
 import { overlayRouter } from "./overlay-router.js";
 import { acquisitionRouter } from "./acquisition-router.js";
 import { collaborationRouter } from "./collaboration-router.js";
+import { arbitrationRouter } from "./arbitration-router.js";
 import {
   AccessAuthorityError,
   resolveAuthoritativeClientAccess,
@@ -156,6 +157,9 @@ import {
   welcomeProgress,
   WELCOME_STEPS,
 } from "../service/onboarding-continuity.js";
+import { advanceQuestline, firstActionCard, questlineFunnel, questlineState, replayQuestline } from "../service/questline.js";
+import { gateLoadMetrics, releaseGatesBatch } from "../service/gate-batch.js";
+import { latestTrustSnapshot, runTrustReview } from "../service/trust-runtime.js";
 import { bundledServiceFrontAvailable, resolveServiceFrontPublication } from "../service/service-front-publication.js";
 import { resolveWorkspaceInspectionAdapter } from "../service/inspection-adapter.js";
 import {
@@ -320,6 +324,44 @@ const onboardingRouter = router({
     memberNo: ctx.identity.memberNo,
     role: ctx.identity.role,
   })),
+
+  /* ---------------- B-63/B-64/B-69 首日上岗（服务端事实源 + 跨端续播 + 行动卡 + 漏斗） ---------------- */
+  /** 首日上岗：内容随包（按活动 Bundle）+ 服务端进度（账号维度跨设备续播） */
+  questline: protectedProcedure.query(async ({ ctx }) => questlineState(ctx.identity.workspaceId, {
+    memberId: ctx.identity.memberId,
+    memberNo: ctx.identity.memberNo,
+    role: ctx.identity.role,
+  })),
+  /** 推进一步：只允许当前关；done/skip 分别落 stageDone/skipped，账本写 questline.* 事件 */
+  questlineAdvance: writeProcedure
+    .input(z.object({
+      stage: z.enum(["meet", "goal", "dispatch", "review"]),
+      outcome: z.enum(["done", "skip"]),
+      litCards: z.array(z.string().trim().min(1).max(80)).max(20).optional(),
+      lastThreadId: z.string().trim().min(1).max(120).nullable().optional(),
+      achievements: z.array(z.string().trim().min(1).max(80)).max(20).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => advanceQuestline(ctx.identity.workspaceId, {
+      memberId: ctx.identity.memberId,
+      memberNo: ctx.identity.memberNo,
+      role: ctx.identity.role,
+    }, input)),
+  /** 重播首日上岗（清进度 + 计数 +1，账本留痕） */
+  replayQuestline: writeProcedure.mutation(async ({ ctx }) => replayQuestline(ctx.identity.workspaceId, {
+    memberId: ctx.identity.memberId,
+    memberNo: ctx.identity.memberNo,
+    role: ctx.identity.role,
+  })),
+  /** B-64 首登行动卡：今天的三件事（待放行关卡 + 续播 + 待验收交付） */
+  actionCard: protectedProcedure.query(async ({ ctx }) => firstActionCard(ctx.identity.workspaceId, {
+    memberId: ctx.identity.memberId,
+    memberNo: ctx.identity.memberNo,
+    role: ctx.identity.role,
+  })),
+  /** B-69 引导漏斗（近窗）：开始/完成/跳过与各关完成数 */
+  questlineFunnel: protectedProcedure
+    .input(z.object({ windowDays: z.number().int().min(1).max(365).optional() }).optional())
+    .query(async ({ ctx, input }) => questlineFunnel(ctx.identity.workspaceId, input?.windowDays ?? 30)),
 
   /** 运行态总览（P0 横幅/落地向导同一事实源）：数据模式 + LLM 装配 + 工作区规模 */
   status: protectedProcedure.query(async ({ ctx }) => {
@@ -1751,6 +1793,31 @@ const approvalsRouter = router({
   sweep: writeProcedure.mutation(async ({ ctx }) => {
     return expireSweep(getAppPool(), getGatewayPool(), scopeOf(ctx.identity));
   }),
+
+  /**
+   * B-70 业务关卡批量放行：低风险 + 配额内 + 未被抽检的关卡一次放行；
+   * L4/high_risk 一律留待逐条（planBatchRelease 硬约束），整批进账本（gate.batch_release）。
+   */
+  batchRelease: writeProcedure
+    .input(z.object({
+      quota: z.number().int().min(1).max(50).optional(),
+      sampleRate: z.number().min(0).max(1).optional(),
+      seed: z.number().int().nonnegative().optional(),
+    }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const scope = scopeOf(ctx.identity);
+      const result = await releaseGatesBatch(scope.workspaceId, {
+        memberNo: ctx.identity.memberNo, role: ctx.identity.role, id: ctx.identity.memberId,
+      }, input ?? {});
+      // 围栏激活接线（与单条/旧批量同口径：通过项触发激活）
+      for (const id of result.released) await activateFenceRuleAfterApproval(scope, id);
+      return result;
+    }),
+
+  /** B-70 H1 负载仪表：今日裁决量 / 均时长 / 排队与超龄（≤7 件/日、≤30 秒/件的口径来自常量） */
+  loadMetrics: protectedProcedure
+    .input(z.object({ windowDays: z.number().int().min(1).max(90).optional() }).optional())
+    .query(async ({ ctx, input }) => gateLoadMetrics(scopeOf(ctx.identity).workspaceId, input?.windowDays ?? 7)),
 });
 
 /** inspection router（B10/M9：巡检状态条 / 手动巡检 / 一键派单 / 回链） */
@@ -3185,6 +3252,19 @@ function withCharterLock<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 const captainRouter = router({
+  /**
+   * B-72 信任账户复核：跑一轮（降档自动收紧自治项、升档建议与补考单进关卡、写快照事件）。
+   * dryRun=true 只算不写（验收/演练）。
+   */
+  trustReview: writeProcedure
+    .input(z.object({ dryRun: z.boolean().optional() }).optional())
+    .mutation(async ({ ctx, input }) => runTrustReview(
+      scopeOf(ctx.identity).workspaceId,
+      { id: ctx.identity.memberNo, type: "human" },
+      { dryRun: input?.dryRun === true },
+    )),
+  /** 最近一次信任快照（晨报同口径） */
+  trustLevels: protectedProcedure.query(async ({ ctx }) => latestTrustSnapshot(scopeOf(ctx.identity).workspaceId)),
   /** 治理状态：宪章 + 模式 + 授权信息 + 待审分层 */
   state: protectedProcedure.query(async ({ ctx }) => {
     const scope = scopeOf(ctx.identity);
@@ -3867,6 +3947,7 @@ export const appRouter = router({
   acquisition: acquisitionRouter,
   // 协作底座（规模化协作设计 §3–§4）：对象读模型/任务契约/交接回执/决策配额/组合看板/数字人叙事
   collaboration: collaborationRouter,
+  arbitration: arbitrationRouter,
   // 租户覆盖层（P26/P27）：实现早已随服务端构建，但此前从未挂载进根路由，
   // 三端 overlay.* 调用全部落到 404。挂载即生效，端点自身仍是受控守卫。
   overlay: overlayRouter,

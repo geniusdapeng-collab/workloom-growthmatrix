@@ -14,8 +14,9 @@ import { registerWriteActions } from "../workdata/gateway.js";
 /* ---------- YAML 装载（L2.5：schema 校验先行） ---------- */
 
 const RuleSchema = z.object({
-  // 出厂包存在两种命名：底座/酒店 `R1`，行业包 `R-PM1` / `R-PL4`（统一装载口径）
-  rule_id: z.string().regex(/^R(?:-[A-Z0-9]+)?[0-9]+$/i, "rule_id 形如 R1 / R-PM1"),
+  // 出厂包存在两种命名家族：底座/酒店 `R1` / `R-PM1`，行业包 `G-GEO1` / `G-C01` / `G10a`
+  // （2026-09-24 B-71：行业包规则此前无法经 loadFencePack 校验——正则只认 R 家族，改为两家族都收）
+  rule_id: z.string().regex(/^(?:R|G)(?:-[A-Z0-9]+)?[0-9]+[a-z]?$/i, "rule_id 形如 R1 / R-PM1 / G-GEO1 / G-C01"),
   name: z.string().min(1),
   level: z.enum(["auto", "review", "block"]),
   // 行业围栏包（*-baseline.yml）里的规则默认即基线（只可加严）；显式 false 才退出基线保护

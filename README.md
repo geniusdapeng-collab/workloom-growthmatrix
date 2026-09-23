@@ -70,6 +70,26 @@
 > 📖 完整能力导览（含截图与体验路径）：[docs/capabilities.auto.md](docs/capabilities.auto.md) ｜ 🤖 AI Agent 入口：[AGENTS.md](AGENTS.md) ｜ 🎯 首启必跑：`pnpm preview:all`
 <!-- CAPABILITIES:END -->
 
+<!-- STATS:BEGIN -->
+<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（2026-09-23），请勿手改；重跑 pnpm capabilities 更新 -->
+
+## 📊 编制与资产统计（自动生成 · 与代码同步）
+
+| 口径 | 数值 | 事实源 |
+|---|---:|---|
+| 行业包 | 3 个 | bundles/ 目录 |
+| 数字员工岗位定义 | 82 个（组合去重后 77 岗 · 同名遮蔽 5 处） | bundles/*/presets/*.yml |
+| 随包技能 | 87 个 | bundles/*/skills/ |
+| 围栏规则 | 114 条（含模板派生 3 条 · 基线 111 条） | bundles/*/fences/*.yml + packages/base/bundles/templates/ |
+| 对象类型 | 134 类（去重后 118 类） | bundles/*/schemas/objects.json |
+| 管线 | 11 条 | bundles/*/pipelines/*.yml |
+| 触发器声明 | 35 条 | bundles/*/triggers.yml |
+| 首日上岗内容包 | 3 套（随包分发） | bundles/*/onboarding/questline.yml |
+| 获客矩阵条目 | 123 条（12 大类） | bundles/geo-growth/matrix/content-platform-matrix.yml |
+
+> 本表由脚本从代码事实计算，`pnpm capabilities --check` 在同一门禁里校验漂移。
+<!-- STATS:END -->
+
 ---
 
 ## 核心能力
@@ -141,7 +161,7 @@ AI 搜索月活破 8.2 亿、AI 问答流量占比首超传统搜索——客户
 
 ### 数字员工名册与数字人：获客班组的在岗证明
 
-- **编制可查（`/agents`）**：获客用增主包 29 个岗位（组合编制 77 岗：hotel 16 + ai-video 32 + geo-growth 29）与人类员工同一本通讯录——每个岗位都有平台档案：来源 Bundle、**围栏授权逐条对账**（悬空标红）、绑定技能包、运行约束、**30 天战绩**（动作数 / 采纳率 / 被驳回 / 积分与谷时占比）与等级段位；点「派遣」当场建任务线程；夜班岗位 22:00–08:00 自动上线，只读岗位标绿（无写工具）。
+- **编制可查（`/agents`）**：获客用增主包 29 个岗位（组合编制 **77 岗**：hotel 16 + ai-video 37 + geo-growth 29，去重后 77；逐项数字见上方「编制与资产统计」区块，由 `pnpm capabilities` 自动生成）与人类员工同一本通讯录——每个岗位都有平台档案：来源 Bundle、**围栏授权逐条对账**（悬空标红）、绑定技能包、运行约束、**30 天战绩**（动作数 / 采纳率 / 被驳回 / 积分与谷时占比）与等级段位；点「派遣」当场建任务线程；夜班岗位 22:00–08:00 自动上线，只读岗位标绿（无写工具）。
 - **数字人织伴（LoomMate）**：PC 端全页面常驻的 Live2D 秘书——语音 + 口型播报「昨夜内容发布 / 询盘承接 / 今日待拍板」，三态（小角落 / 大形象 / 屏保）可切；你不在电脑前时她聚合非 P0 事项、屏保守着全场，点她就能问数据、派活、看记忆。
 
 ---
@@ -150,7 +170,7 @@ AI 搜索月活破 8.2 亿、AI 问答流量占比首超传统搜索——客户
 
 <p align="center"><img src="docs/images/architecture.png" alt="骇客帝国架构（体验层 / 服务层 / geo-growth Bundle + 基座十域 / 运行时地基 / 数据层）" width="92%"/></p>
 
-五层结构自上而下：**体验层**（B 端工作台 / 移动端 / C 端 AI 服务前台 / 织伴数字人 + IM 通道）→ **服务层**（Hono + tRPC v11，工作区上下文 + RLS）→ **能力层**（geo-growth Bundle：29 个岗位 / 30 个技能 / 4 条管线，与 hotel + ai-video 组合后 77 岗 / 87 技能 / 10 管线 + 获客五环与双域触达 ＋ 基座十域零改动继承）→ **运行时地基**（DeepSeek Harness seam 适配）→ **数据层**（PostgreSQL 17 + pgvector：素材与线索全留痕、组织记忆、五元事件哈希链）。
+五层结构自上而下：**体验层**（B 端工作台 / 移动端 / C 端 AI 服务前台 / 织伴数字人 + IM 通道）→ **服务层**（Hono + tRPC v11，工作区上下文 + RLS）→ **能力层**（geo-growth Bundle：29 个岗位 / 30 个技能 / 4 条管线，与 hotel + ai-video 组合后 **77 岗 / 87 技能 / 11 管线** + 获客五环与双域触达 ＋ 基座十域零改动继承；统计口径见上方自动生成区块）→ **运行时地基**（DeepSeek Harness seam 适配）→ **数据层**（PostgreSQL 17 + pgvector：素材与线索全留痕、组织记忆、五元事件哈希链）。
 
 <p align="center"><img src="docs/images/business-loop.png" alt="获客一天的业务闭环：意图洞察 → 双域触达 → 四路承接 → 线索转化 → 归因复盘 → 老板拍板" width="92%"/></p>
 
@@ -345,6 +365,7 @@ Ask 问询另支持联网实时检索事实面（`ASK_WEB_SEARCH=1`，Bing RSS�
 - [酒店资产迁移判断与架构方案](docs/plan-hotel-migration.md)
 - [操作电脑能力生产部署指南](docs/computer-use-production.md) ｜ [浏览器自动化指南](docs/agent-computer-guide.md)
 - [酒店销售一页纸 ×3 客群](docs/sales/) ｜ [行业落地三技能体系](docs/methodology/01-行业落地三技能体系.md)
+- [行业包版本与发布治理（签名/公钥环/回滚）](docs/bundle-release-policy.md) ｜ [备份与回滚演练报告](docs/reports/backup-drill.md)
 
 ## 许可证
 

@@ -2,14 +2,16 @@
  * shared/event-freeze —— 事件 Schema 冻结与对象枚举扩展门禁（B-83）
  *
  * 纪律（附录 E）：
- *  - 事件**顶层五元字段冻结**：who / context / object / decision / rule_impact（可选 receipt/model_trace）；
+ *  - 事件**顶层字段冻结**：event_id + 五元 who / context / object / decision / rule_impact
+ *    （可选 receipt / model_trace / links / hash / ts——均为一等事件信封字段，随 A1 哈希链
+ *    与 A5 时间戳批次落地；行业扩展仍只能在 context/object/decision 内部加字段）；
  *    行业扩展只能在 context/object/decision 内部加字段，禁止新增顶层字段；
  *  - 对象枚举只增不改：新增 object.type 必须在冻结清单登记（本模块 + docs/event-object-freeze.json），
  *    防止「悄悄加对象」绕过契约与投影治理。
  */
 
-export const FROZEN_EVENT_TOP_LEVEL = ["who", "context", "object", "decision", "rule_impact"] as const;
-export const FROZEN_EVENT_OPTIONAL_TOP_LEVEL = ["receipt", "model_trace"] as const;
+export const FROZEN_EVENT_TOP_LEVEL = ["event_id", "who", "context", "object", "decision", "rule_impact"] as const;
+export const FROZEN_EVENT_OPTIONAL_TOP_LEVEL = ["receipt", "model_trace", "links", "hash", "ts"] as const;
 export type FrozenTopLevel = (typeof FROZEN_EVENT_TOP_LEVEL)[number];
 
 export interface FreezeViolation {

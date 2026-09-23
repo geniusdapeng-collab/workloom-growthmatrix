@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { accessAuthorityDeps } from "../service/access-authority.js";
 import { appRouter } from "./router.js";
+import { AGENT_CHANNEL_OFF } from "./agent-channel.js";
 
 describe("三端访问权威路由面", () => {
   it("挂载 access.me，且匿名请求失败关闭", async () => {
@@ -9,6 +10,7 @@ describe("三端访问权威路由面", () => {
       identity: null,
       partnerIdentity: null,
       headers: new Headers(),
+      agentChannel: AGENT_CHANNEL_OFF,
     });
 
     await expect(caller.access.me()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
@@ -33,6 +35,7 @@ describe("三端访问权威路由面", () => {
         identity: guest,
         partnerIdentity: null,
         headers: new Headers(),
+        agentChannel: AGENT_CHANNEL_OFF,
       });
 
       await expect(caller.onboarding.welcomeStatus()).resolves.toMatchObject({

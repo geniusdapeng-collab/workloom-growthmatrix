@@ -7,6 +7,8 @@
  *   ① docs/capabilities.auto.md   —— 能力导览（故事化，每能力一句话+怎么体验）
  *   ② docs/capabilities.auto.json —— 结构化数据（供 PPT 生成器等消费）
  *   ③ README.md 中 <!-- CAPABILITIES:BEGIN/END --> 区块 —— GitHub 项目页第一眼
+ *   ④ README.md 中 STATS 统计区块 —— 岗位/技能/围栏/对象/触发器口径（B-66）
+ *   ⑤ bundles/<bundle>/fences/*.yml 头部 `# workloom:stats:begin/end` 规则计数注释（B-66）
  *
  * 用法：
  *   node scripts/generate-capabilities.mjs          # 生成/更新（README 区块原地替换）
@@ -14,6 +16,7 @@
  */
 import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import YAML from "yaml";
 
 const ROOT = join(import.meta.dirname, "..");
 const CHECK = process.argv.includes("--check");
@@ -34,6 +37,169 @@ const productManifest = existsSync(join(ROOT, "product.manifest.json")) ? J("pro
 const defaultBundle = bundles.includes(productManifest.defaultBundle) ? productManifest.defaultBundle : null;
 const presets = defaultBundle ? ls(`bundles/${defaultBundle}/presets`, (f) => f.endsWith(".yml")) : [];
 const bundleSkills = defaultBundle ? ls(`bundles/${defaultBundle}/skills`, (d) => !d.includes(".")) : [];
+
+/* ================= B-66 统计口径（脚本化：README 统计块 + 围栏包头部计数） ================= */
+
+const readYaml = (rel) => {
+  try { return YAML.parse(readFileSync(join(ROOT, rel), "utf8")); } catch { return null; }
+};
+const fenceRulesOf = (doc) => [...(doc?.rules ?? []), ...(doc?.fences ?? [])];
+/** 模板派生规则（B-62）：包声明的 templates 在装配期按前缀展开，统计必须与之同口径 */
+const templateRuleCountOf = (doc) => {
+  const templates = doc?.templates ?? [];
+  let total = 0;
+  for (const decl of templates) {
+    const file = join(ROOT, "packages", "base", "bundles", "templates", `${decl.name}.yml`);
+    if (!existsSync(file)) continue;
+    const tpl = YAML.parse(readFileSync(file, "utf8"));
+    total += (tpl?.rules ?? []).length;
+  }
+  return total;
+};
+
+const stats = (() => {
+  const perBundle = [];
+  const presetToBundles = new Map();
+  let skillTotal = 0;
+  let fenceTotal = 0;
+  let fenceTemplateTotal = 0;
+  let fenceBaseline = 0;
+  let objectTotal = 0;
+  let pipelineTotal = 0;
+  let triggerTotal = 0;
+  let onboardingPacks = 0;
+  const objectTypes = new Set();
+  for (const bundleId of bundles) {
+    const presetsFiles = ls(`bundles/${bundleId}/presets`, (f) => f.endsWith(".yml"));
+    for (const file of presetsFiles) {
+      const doc = readYaml(`bundles/${bundleId}/presets/${file}`);
+      if (doc?.preset_key) {
+        const list = presetToBundles.get(doc.preset_key) ?? [];
+        list.push(bundleId);
+        presetToBundles.set(doc.preset_key, list);
+      }
+    }
+    const skillsHere = ls(`bundles/${bundleId}/skills`, (d) => !d.includes(".")).length;
+    const fenceFiles = ls(`bundles/${bundleId}/fences`, (f) => f.endsWith(".yml") && !f.includes("patch"));
+    let fencesHere = 0;
+    let templatesHere = 0;
+    let baselineHere = 0;
+    const ruleIds = new Set();
+    for (const file of fenceFiles) {
+      const doc = readYaml(`bundles/${bundleId}/fences/${file}`);
+      const rules = fenceRulesOf(doc);
+      fencesHere += rules.length;
+      baselineHere += rules.filter((r) => r.is_baseline !== false).length;
+      templatesHere += templateRuleCountOf(doc);
+      for (const rule of rules) if (rule.rule_id) ruleIds.add(rule.rule_id);
+    }
+    const objectsDoc = readYaml(`bundles/${bundleId}/schemas/objects.json`) ?? JSON.parse(readFileSync(join(ROOT, `bundles/${bundleId}/schemas/objects.json`), "utf8"));
+    const objectList = (objectsDoc?.objects ?? []).map((o) => o.type);
+    for (const t of objectList) objectTypes.add(t);
+    const pipelinesHere = ls(`bundles/${bundleId}/pipelines`, (f) => f.endsWith(".yml")).length;
+    const triggersDoc = readYaml(`bundles/${bundleId}/triggers.yml`);
+    const triggersHere = Array.isArray(triggersDoc) ? triggersDoc.length : (triggersDoc?.triggers ?? []).length;
+    const hasOnboarding = existsSync(join(ROOT, `bundles/${bundleId}/onboarding/questline.yml`));
+    perBundle.push({
+      bundleId, presets: presetsFiles.length, skills: skillsHere, fences: fencesHere,
+      fenceTemplates: templatesHere, fenceBaseline: baselineHere, objects: objectList.length,
+      pipelines: pipelinesHere, triggers: triggersHere, onboarding: hasOnboarding,
+    });
+    skillTotal += skillsHere;
+    fenceTotal += fencesHere;
+    fenceTemplateTotal += templatesHere;
+    fenceBaseline += baselineHere;
+    objectTotal += objectList.length;
+    pipelineTotal += pipelinesHere;
+    triggerTotal += triggersHere;
+    onboardingPacks += hasOnboarding ? 1 : 0;
+  }
+  const shadowed = [...presetToBundles.entries()].filter(([, list]) => list.length > 1);
+  const composed = presetToBundles.size;
+  const definitionTotal = [...presetToBundles.values()].reduce((n, list) => n + list.length, 0);
+  // 矩阵结构：{ version, schema, classes: [{ key, label, items: [...] }] }——条目数 = 各类 items 之和
+  const matrixDoc = defaultBundle ? readYaml(`bundles/${defaultBundle}/matrix/content-platform-matrix.yml`) : null;
+  const matrixClasses = matrixDoc?.classes ?? [];
+  const matrixEntries = matrixClasses.reduce((n, c) => n + (c?.items ?? []).length, 0);
+  return {
+    generatedAt: new Date().toISOString(),
+    bundles: perBundle,
+    totals: {
+      bundles: bundles.length,
+      presetDefinitions: definitionTotal,
+      composedRoster: composed,
+      shadowed: shadowed.length,
+      skills: skillTotal,
+      fences: fenceTotal + fenceTemplateTotal,
+      fenceBaseline,
+      fenceTemplates: fenceTemplateTotal,
+      objects: objectTotal,
+      objectTypes: objectTypes.size,
+      pipelines: pipelineTotal,
+      triggers: triggerTotal,
+      onboardingPacks,
+      matrixEntries,
+      matrixClasses: matrixClasses.length,
+    },
+  };
+})();
+
+const statsBlock = `<!-- STATS:BEGIN -->
+<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（${stats.generatedAt.slice(0, 10)}），请勿手改；重跑 pnpm capabilities 更新 -->
+
+## 📊 编制与资产统计（自动生成 · 与代码同步）
+
+| 口径 | 数值 | 事实源 |
+|---|---:|---|
+| 行业包 | ${stats.totals.bundles} 个 | bundles/ 目录 |
+| 数字员工岗位定义 | ${stats.totals.presetDefinitions} 个（组合去重后 ${stats.totals.composedRoster} 岗 · 同名遮蔽 ${stats.totals.shadowed} 处） | bundles/*/presets/*.yml |
+| 随包技能 | ${stats.totals.skills} 个 | bundles/*/skills/ |
+| 围栏规则 | ${stats.totals.fences} 条（含模板派生 ${stats.totals.fenceTemplates} 条 · 基线 ${stats.totals.fenceBaseline} 条） | bundles/*/fences/*.yml + packages/base/bundles/templates/ |
+| 对象类型 | ${stats.totals.objects} 类（去重后 ${stats.totals.objectTypes} 类） | bundles/*/schemas/objects.json |
+| 管线 | ${stats.totals.pipelines} 条 | bundles/*/pipelines/*.yml |
+| 触发器声明 | ${stats.totals.triggers} 条 | bundles/*/triggers.yml |
+| 首日上岗内容包 | ${stats.totals.onboardingPacks} 套（随包分发） | bundles/*/onboarding/questline.yml |
+| 获客矩阵条目 | ${stats.totals.matrixEntries} 条（${stats.totals.matrixClasses} 大类） | bundles/${defaultBundle ?? "-"}/matrix/content-platform-matrix.yml |
+
+> 本表由脚本从代码事实计算，\`pnpm capabilities --check\` 在同一门禁里校验漂移。
+<!-- STATS:END -->`;
+
+/** 围栏包头注释：与实际规则数同口径（marker 区块，脚本原地替换） */
+function fenceHeaderBlock(doc, bundleId, file) {
+  const rules = fenceRulesOf(doc);
+  const baseline = rules.filter((r) => r.is_baseline !== false).length;
+  const templates = templateRuleCountOf(doc);
+  const actions = new Set(rules.flatMap((r) => r.match?.actions ?? []));
+  const objects = new Set(rules.flatMap((r) => r.match?.object_types ?? []));
+  return [
+    "# workloom:stats:begin（由 scripts/generate-capabilities.mjs 生成，勿手改）",
+    `# 本包 ${rules.length} 条规则（基线 ${baseline} 条）${templates > 0 ? ` · 模板派生 ${templates} 条` : ""} · 覆盖对象 ${objects.size} 类 / 动作 ${actions.size} 个`,
+    "# workloom:stats:end",
+  ].join("\n");
+}
+
+function fenceHeaderUpdates() {
+  const updates = [];
+  for (const bundleId of bundles) {
+    for (const file of ls(`bundles/${bundleId}/fences`, (f) => f.endsWith(".yml") && !f.includes("patch"))) {
+      const rel = `bundles/${bundleId}/fences/${file}`;
+      const text = readFileSync(join(ROOT, rel), "utf8");
+      const doc = YAML.parse(text);
+      const block = fenceHeaderBlock(doc, bundleId, file);
+      const marker = /# workloom:stats:begin[\s\S]*?# workloom:stats:end/;
+      let next;
+      if (marker.test(text)) {
+        next = text.replace(marker, block);
+      } else {
+        // 首次：插在 version: 行之前（规则定义之前、文件头注释之后）
+        const versionIdx = text.search(/^version:\s/m);
+        next = versionIdx >= 0 ? `${text.slice(0, versionIdx)}${block}\n${text.slice(versionIdx)}` : `${block}\n${text}`;
+      }
+      if (next !== text) updates.push([rel, next]);
+    }
+  }
+  return updates;
+}
 const repoName = pkg.name?.split("/").pop() || "workloom";
 const desc = pkg.description || "AI 经营系统";
 
@@ -199,6 +365,20 @@ if (readme.includes("<!-- CAPABILITIES:BEGIN -->")) {
   newReadme = i >= 0 ? readme.slice(0, i) + "\n\n" + readmeBlock + "\n" + readme.slice(i) : readmeBlock + "\n" + readme;
 }
 outs.push(["README.md", newReadme]);
+// B-66：围栏包头部计数注释（marker 区块，与规则实物同口径）
+for (const [rel, content] of fenceHeaderUpdates()) outs.push([rel, content]);
+
+// B-66：README 统计区块（随 capabilities 同门禁校验）
+const readmeWithStats = (() => {
+  const text = newReadme;
+  if (text.includes("<!-- STATS:BEGIN -->")) {
+    return text.replace(/<!-- STATS:BEGIN -->[\s\S]*?<!-- STATS:END -->/, statsBlock);
+  }
+  const anchor = "<!-- CAPABILITIES:END -->";
+  const i = text.indexOf(anchor);
+  return i >= 0 ? `${text.slice(0, i + anchor.length)}\n\n${statsBlock}${text.slice(i + anchor.length)}` : `${text}\n\n${statsBlock}\n`;
+})();
+outs[outs.findIndex(([rel]) => rel === "README.md")] = ["README.md", readmeWithStats];
 
 // 校验模式下归一化易变字段（生成时间），避免跨时间误报漂移
 const normalize = (s) => s

@@ -60,4 +60,64 @@ describe.runIf(RUN_DB)("B-37 任务契约持久化", () => {
       successCriteria: [], mode: "m4_contract",
     }, actor)).rejects.toMatchObject({ code: "BAD_INPUT" });
   });
+
+  it("B-40：settle 同事务落预算账本（台账↔计量事件互证，幂等键 contract:<id>）", async () => {
+    const id = `ct-settle-inband-${Date.now().toString(36)}`;
+    await createContract(app, scope, {
+      id, title: "带内结算契约", goal: "带内结算不需关卡", requester: "growth-lead",
+      assigneePreset: "geo-content-planner", verifierPreset: "review-analyst",
+      successCriteria: ["结算落账"], budgetAmount: 88, mode: "m4_contract",
+    }, actor);
+    for (const action of ["accept", "start", "deliver", "verify", "settle"] as const) {
+      await advanceContract(app, scope, { id, action, by: actor });
+    }
+    const row = await owner.query<{ id: string; ref_event_id: string | null; amount: string; meta: Record<string, unknown> }>(
+      `SELECT id, ref_event_id, amount::text AS amount, meta FROM budget_ledger
+        WHERE workspace_id=$1 AND idempotency_key=$2`,
+      [scope.workspaceId, `contract:${id}`],
+    );
+    expect(row.rows[0]).toBeTruthy();
+    expect(row.rows[0]!.ref_event_id).toMatch(/^E-/);
+    expect(Number(row.rows[0]!.amount)).toBe(88);
+    const gate = await owner.query(
+      `SELECT 1 FROM approvals WHERE workspace_id=$1 AND approval_id=$2`,
+      [scope.workspaceId, `apr-${id.toLowerCase()}-settle`],
+    );
+    expect(gate.rows.length).toBe(0); // 带内不建关卡
+    await owner.query(`DELETE FROM budget_ledger WHERE workspace_id=$1 AND idempotency_key=$2`, [scope.workspaceId, `contract:${id}`]);
+  });
+
+  it("B-40：超自治带结算必须关卡放行（未放行拒绝，放行后通过）", async () => {
+    const id = `ct-settle-overband-${Date.now().toString(36)}`;
+    await createContract(app, scope, {
+      id, title: "超带结算契约", goal: "超带必须放行", requester: "growth-lead",
+      assigneePreset: "geo-content-planner", verifierPreset: "review-analyst",
+      successCriteria: ["超带需放行"], budgetAmount: 12000, mode: "m4_contract",
+    }, actor);
+    for (const action of ["accept", "start", "deliver", "verify"] as const) {
+      await advanceContract(app, scope, { id, action, by: actor });
+    }
+    const gateId = `apr-${id.toLowerCase()}-settle`;
+    const gate = await owner.query<{ status: string; tier: string }>(
+      `SELECT status, tier FROM approvals WHERE workspace_id=$1 AND approval_id=$2`, [scope.workspaceId, gateId],
+    );
+    expect(gate.rows[0]).toMatchObject({ status: "pending", tier: "l4_chairman" }); // >500×10 → L4
+
+    await expect(advanceContract(app, scope, { id, action: "settle", by: actor }))
+      .rejects.toMatchObject({ code: "BAD_STATE" });
+
+    await owner.query(
+      `UPDATE approvals SET status='approved', decided_by='MEM-001', decided_at=now() WHERE workspace_id=$1 AND approval_id=$2`,
+      [scope.workspaceId, gateId],
+    );
+    const settled = await advanceContract(app, scope, { id, action: "settle", by: actor });
+    expect(settled.contract.status).toBe("settled");
+    const ledger = await owner.query<{ amount: string; meta: Record<string, unknown> }>(
+      `SELECT amount::text AS amount, meta FROM budget_ledger WHERE workspace_id=$1 AND idempotency_key=$2`,
+      [scope.workspaceId, `contract:${id}`],
+    );
+    expect(ledger.rows[0]?.meta).toMatchObject({ approvalId: gateId, contractId: id });
+    await owner.query(`DELETE FROM budget_ledger WHERE workspace_id=$1 AND idempotency_key=$2`, [scope.workspaceId, `contract:${id}`]);
+    await owner.query(`DELETE FROM approvals WHERE workspace_id=$1 AND approval_id=$2`, [scope.workspaceId, gateId]);
+  });
 });

@@ -17,6 +17,12 @@ const freezePath = join(root, "docs", "event-object-freeze.json");
 const systemTypes = [
   "thread", "task", "approval", "conversation", "company_ceo", "client", "workspace", "member", "store",
   "review", "secretary_reminder", "watchdog", "fence_rule", "circuit_breaker", "model_config", "budget_ledger",
+  // 协作底座对象（B-37/B-39/B-40）：写 biz_events 的对象类型必须在冻结清单内，否则冻结门禁名不副实
+  "task_contract", "handoff_receipt", "conflict_arbitration",
+  // 首日上岗引导对象（B-63/B-69）：进度账本事件的载体，属平台面对象（非行业对象模型）
+  "onboarding_questline",
+  // 业务关卡批量放行汇总（B-70）：一次批量一条事件，平台面对象
+  "approval_batch",
 ];
 
 function collectObjectTypes(): string[] {
@@ -30,10 +36,21 @@ function collectObjectTypes(): string[] {
   return [...types].sort();
 }
 
+/**
+ * 顶层字段声明解析：schema 在基座同步中由 `FiveElementEventSchema` 更名为
+ * `BusinessEventSchema`，本扫描器旧名失配会把「声明」读成空数组 → 误报缺五元（门禁假红）。
+ * 现在按当前优先、旧名兜底；两者都不存在则显式抛错（fail-closed，禁止"空即通过"）。
+ */
 function declaredTopLevel(): string[] {
   const src = readFileSync(join(root, "packages", "shared", "src", "event-schema.ts"), "utf8");
-  const block = src.slice(src.indexOf("export const FiveElementEventSchema"), src.indexOf("export type FiveElementEvent"));
-  return [...block.matchAll(/^\s{2}([a-z_]+):/gm)].map((m) => m[1]!);
+  for (const schemaName of ["BusinessEventSchema", "FiveElementEventSchema"]) {
+    const start = src.indexOf(`export const ${schemaName} =`);
+    if (start < 0) continue;
+    const end = src.indexOf("export type", start);
+    const block = src.slice(start, end > start ? end : src.length);
+    return [...block.matchAll(/^\s{2}([a-z_]+):/gm)].map((m) => m[1]!);
+  }
+  throw new Error("event-freeze：未在 packages/shared/src/event-schema.ts 找到事件 schema 声明（BusinessEventSchema / FiveElementEventSchema）");
 }
 
 const currentTypes = collectObjectTypes();

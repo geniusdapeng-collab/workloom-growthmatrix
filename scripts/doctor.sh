@@ -140,6 +140,23 @@ if [ -f .env ]; then
   else
     warn "EVENT_BUS=$EB（需外部服务；启动前确认 NATS_URL/REDIS_URL 可达）"
   fi
+  AGENT_KEY=$(grep -E '^WORKLOOM_AGENT_KEY=' .env | cut -d= -f2- || true)
+  AGENT_KEY_LEN=${#AGENT_KEY}
+  if [ "$AGENT_KEY_LEN" -ge 16 ]; then
+    ok "agent 写通道已配置（B-38；密钥长度 $AGENT_KEY_LEN）"
+  else
+    warn "agent 写通道未配置或密钥过短（B-38）：agent/system 不能经 tRPC 写契约与冲突，通道整体关闭（fail-closed）"
+  fi
+  BAND=$(grep -E '^WORKLOOM_CONTRACT_BUDGET_BAND=' .env | cut -d= -f2- || true)
+  ok "契约自治预算带 = ${BAND:-500}（B-40：超带结算需业务关卡放行）"
+  EXEC_ROOTS=$(grep -E '^WORKLOOM_TOOL_EXECUTOR_ROOTS=' .env | cut -d= -f2- || true)
+  if [ -n "$EXEC_ROOTS" ]; then
+    ok "执行器沙箱允许根（B-65）：$EXEC_ROOTS"
+  else
+    warn "未显式配置执行器沙箱允许根（B-65）：按缺省 bundles/packages/apps/.workloom-runtime-deps 判定"
+  fi
+  MANIFESTS=$(find bundles packages apps -name '*.workloom-executor.json' 2>/dev/null | wc -l | tr -d ' ')
+  ok "执行器权限清单：${MANIFESTS} 份（未声明 tools 的模块不受工具级白名单约束）"
 else
   warn "无 .env：执行器与事件总线按缺省处理"
 fi

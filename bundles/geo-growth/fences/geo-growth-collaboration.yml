@@ -1,0 +1,43 @@
+# 协作纪律围栏包（B-62/B-71 · 内部协作 auto / 对外动作 review 的落地面）
+#
+# 口径（与《规模化协作设计》§9.2 同源）：
+#   · 内部协作（同一工作区内、可回滚、不对外承诺）默认放行，但**必须有任务契约作排产依据**；
+#   · 对外动作（发布/报价/承诺/投放）一律 review（既有 G9/G-GEO1/G12 等基线规则已覆盖）；
+#   · 共享黑板的写入只能由唯一主写者执行，其他角色只能只读或走契约（G-BB1）。
+# 命名说明：施工图原写「G-COL1/G-COL2」，但该 id 已被 ai-video 调色包占用（品牌 look / 覆盖原片），
+#   规则 id 是全局身份（单调守卫、dry-run、fence_rules 主键都按它派生），故本包改用
+#   G-CON1（契约强制）与 G-BB1（黑板单主写者），语义与施工图一致。
+# DSL 求值语义同其余基线包：match 命中后求值 when；block > review > auto（deny 优先并集）；
+#   路径缺失 → undefined，故本包统一采用 "显式声明才放行" 的 fail-closed 写法。
+# workloom:stats:begin（由 scripts/generate-capabilities.mjs 生成，勿手改）
+# 本包 2 条规则（基线 2 条） · 覆盖对象 5 类 / 动作 5 个
+# workloom:stats:end
+version: geo-growth-collaboration/v1
+default_level: review
+rules:
+  - rule_id: G-CON1
+    name: 跨岗排产必须带任务契约
+    level: block
+    is_baseline: true
+    match:
+      object_types: [task, task_list, content_calendar, publish_task]
+      actions: [task.dispatch, calendar.schedule, publish.dispatch]
+    when: "context.has_contract != true"
+    note: >
+      跨岗交付无契约禁止排产（G-CON1）。调用方在派工/排期动作的 context 里显式声明
+      `has_contract: true`（且真实存在契约，由 service 层校验），否则熔断。代码侧同一纪律的
+      守卫见 packages/base/collaboration/dispatch.ts#planDispatch（跨岗模式缺 contractId 直接抛错）。
+
+  - rule_id: G-BB1
+    name: 黑板单主写者（非主写者写入熔断）
+    level: block
+    is_baseline: true
+    match:
+      object_types: [blackboard_entry]
+      actions: [blackboard.write, blackboard.entry.write]
+    when: "context.blackboard_writer_declared == true and context.actor_id != context.blackboard_writer"
+    note: >
+      m3 黑板协作的单主写者纪律：同一时刻只允许一个 owner 写入共享黑板，其他角色只读或走契约
+      （走契约写入由主写者代写）。调用方需在 context 声明 blackboard_writer_declared=true 与
+      blackboard_writer=<preset_key>，及 actor_id；非主写者写入直接熔断。
+      代码侧同一纪律见 packages/base/collaboration/dispatch.ts#blackboardWriteGuard。

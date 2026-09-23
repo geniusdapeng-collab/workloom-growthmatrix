@@ -19,6 +19,12 @@ export interface DispatchInput {
   boardTopic?: string;
   deadline?: string | null;
   budgetAmount?: number;
+  /**
+   * B-71（G-CON1）：跨岗协作的任务契约 id。
+   * 跨岗模式（m2 管线 / m3 黑板 / m5 战役）**必填**——无契约不得排产；
+   * m1 单人闭环无需契约；m4 本身即契约协作（其产物就是契约），由调用方在 offer 后回填。
+   */
+  contractId?: string | null;
 }
 
 export type LaneKind = "work" | "handoff" | "verify" | "coordinate";
@@ -41,6 +47,8 @@ export interface DispatchPlan {
   blackboardWriter?: string;
   deadline: string | null;
   budgetAmount: number;
+  /** 排产依据的任务契约（G-COL1；跨岗模式必有值） */
+  contractId: string | null;
 }
 
 const requireParticipants = (input: DispatchInput, min: number, max = Number.POSITIVE_INFINITY): void => {
@@ -58,14 +66,27 @@ const requireParticipants = (input: DispatchInput, min: number, max = Number.POS
 /** 生成五模式执行计划；输入不满足模式约束时抛错（fail-closed）。 */
 export function planDispatch(input: DispatchInput): DispatchPlan {
   if (!input.goal.trim()) throw new Error("协作计划必须有目标");
-  const base = { mode: input.mode, goal: input.goal.trim(), deadline: input.deadline ?? null, budgetAmount: input.budgetAmount ?? 0 };
+  const contractId = input.contractId?.trim() || null;
+  /**
+   * G-COL1（B-71）：跨岗交付无契约禁止排产。
+   * 判据：跨岗模式（有交接/并行/共享写）必须携带任务契约；缺失即拒绝，不静默降级成单人模式。
+   * 与围栏包 `geo-growth-collaboration.yml#G-COL1` 同一纪律的代码侧守卫：
+   * 围栏拦"动作"，这里拦"排产计划"，两道都在，缺一不可。
+   */
+  if (["m2_pipeline", "m3_blackboard", "m5_campaign"].includes(input.mode) && !contractId) {
+    throw new Error(`G-CON1：${input.mode} 属跨岗协作，必须先有任务契约（contractId 缺失，无契约不得排产）`);
+  }
+  const base = {
+    mode: input.mode, goal: input.goal.trim(), deadline: input.deadline ?? null,
+    budgetAmount: input.budgetAmount ?? 0, contractId,
+  };
   switch (input.mode) {
     case "m1_single": {
       requireParticipants(input, 1, 1);
       return {
         ...base,
         lanes: [{ id: "work", owner: input.participants[0]!, kind: "work", dependsOn: [], deliverable: "目标交付物 + 回执" }],
-        rules: ["单人闭环：产出必须带回执（无回执不算完成）", "写动作仍过围栏瀑布"],
+        rules: ["单人闭环：产出必须带回执（无回执不算完成）", "写动作仍过围栏瀑布", "单人闭环无需任务契约（G-COL1 不适用）"],
       };
     }
     case "m2_pipeline": {
@@ -85,6 +106,7 @@ export function planDispatch(input: DispatchInput): DispatchPlan {
         ...base,
         lanes,
         rules: ["严格串行：上一阶段无交接回执，下一阶段不得开工", "阶段回执含证据与质量标记", "任一阶段失败即整体挂起转人工"],
+        // G-CON1：跨岗交接以契约为排产依据（契约 id 在 plan.contractId）
       };
     }
     case "m3_blackboard": {
@@ -106,6 +128,7 @@ export function planDispatch(input: DispatchInput): DispatchPlan {
           `单主写者：${writer} 是黑板「${topic}」唯一写入者`,
           "其他角色只读并输出建议；需落写的内容走契约交给主写者",
           "版本单调：黑板每次写入带版本号，冲突由主写者串行裁决",
+          `非主写者写入黑板一律熔断（G-BB1；围栏包同规则，plan.contractId=${contractId}）`,
         ],
       };
     }
@@ -123,6 +146,7 @@ export function planDispatch(input: DispatchInput): DispatchPlan {
           "契约状态机 draft→offered→accepted→in_progress→delivered→verified→settled",
           "无验收不得结算（无回执不算完成）",
           "退回必须给可复现理由；预算超带升级 L4",
+          "契约即排产依据（G-COL1 对本模式以「本次契约」满足）",
         ],
       };
     }

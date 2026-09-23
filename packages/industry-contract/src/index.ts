@@ -273,6 +273,12 @@ const ProvidesSchema = z.object({
   feedbackEnums: BundleAssetPath.optional(),
   serviceFront: z.array(BundleAssetPath).default([]),
   evalQuestions: BundleAssetPath.optional(),
+  /**
+   * 首日上岗内容包（B-63，v3.1 新增）：关卡文案/员工卡/目标卡/任务卡/驳回枚举随包分发，
+   * 服务端按工作区活动 Bundle 装载（客户端不再硬编码行业内容）。单文件 YAML，
+   * 由 packages/base/bundles/onboarding.ts 校验并解析 extends 基线。
+   */
+  onboarding: z.array(BundleAssetPath).default([]),
   seeds: z.array(BundleAssetPath).default([]),
 }).strict();
 

@@ -40,7 +40,26 @@ for (const action of steps) {
 }
 const final = (await listContracts(app, scope, { status: "settled", limit: 200 })).find((c) => c.id === id);
 check(final?.status === "settled", "契约最终状态 settled");
-// B-40：结算写预算账本（幂等：同 idempotencyKey 第二次去重）
+// B-40：结算在契约迁移的同一 COMMIT 内写预算账本（幂等键 contract:<id>），事件与台账互证
+const ledgerClient = await app.connect();
+let ledgerRow: { id: string; ref_event_id: string | null; amount: string } | null = null;
+try {
+  await ledgerClient.query("BEGIN");
+  await ledgerClient.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
+  const row = await ledgerClient.query<{ id: string; ref_event_id: string | null; amount: string }>(
+    `SELECT id, ref_event_id, amount::text AS amount FROM budget_ledger
+      WHERE workspace_id=$1 AND idempotency_key=$2`,
+    [scope.workspaceId, `contract:${id}`],
+  );
+  ledgerRow = row.rows[0] ?? null;
+  await ledgerClient.query("ROLLBACK");
+} finally {
+  ledgerClient.release();
+}
+check(ledgerRow !== null, "settle 同事务落预算账本（budget_ledger）", ledgerRow ? `ledger#${ledgerRow.id}` : "");
+check(Boolean(ledgerRow?.ref_event_id), "台账行与计量事件互证（ref_event_id）", ledgerRow?.ref_event_id ?? "");
+check(Number(ledgerRow?.amount ?? -1) === 66, "结算金额与契约预算一致", ledgerRow?.amount ?? "");
+// 幂等：同 idempotencyKey 再记账返回已有行（不重复写行、不重复写事件）
 const gateway = getGatewayPool();
 const ledger1 = await recordCost(app, gateway, scope, {
   costKind: "labor", amount: 66, idempotencyKey: `contract:${id}`, projectId: id,
@@ -49,7 +68,7 @@ const ledger1 = await recordCost(app, gateway, scope, {
 const ledger2 = await recordCost(app, gateway, scope, {
   costKind: "labor", amount: 66, idempotencyKey: `contract:${id}`, projectId: id,
 });
-check(ledger1.deduped === false && ledger2.deduped === true, "结算写预算账本且幂等去重");
+check(ledger1.deduped === true && ledger2.deduped === true, "重复记账被幂等去重（不重复写行/事件）");
 
 console.log(failed === 0
   ? `\n协作闭环验收通过（契约 ${id}）`

@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   QUEST_STORAGE_KEY,
+  QUEST_STAGE_ORDER,
   autoAdvance,
   bumpXp,
   completeStage,
@@ -18,11 +19,13 @@ import {
   createQuestState,
   levelOf,
   lightCard,
+  mergeServerProgress,
   parseQuestState,
   progressSummary,
   serializeQuestState,
   skipStage,
   startQuestline,
+  toServerAdvance,
   unlockAchievements,
   withThreadId,
   type QuestFacts,
@@ -105,9 +108,20 @@ export interface UseQuestlineOptions {
   facts: QuestFacts;
   /** 当前工作区活动 Bundle 的内容包（员工卡/目标/任务卡随行业切换） */
   content?: QuestlineConfig;
+  /**
+   * B-63 服务端同步适配器（跨设备断点续播）：
+   *  - load()：读服务端进度（未登录/离线返回 null）；
+   *  - advance()：把本机这一次推进镜像到服务端（失败只丢同步，不阻断本机游玩）。
+   */
+  sync?: QuestlineSync;
 }
 
-export function useQuestline({ ready, facts, content = QUESTLINE }: UseQuestlineOptions): QuestlineApi {
+export interface QuestlineSync {
+  load: () => Promise<import("./questline").ServerQuestProgress | null>;
+  advance: (input: { stage: QuestStageId; outcome: "done" | "skip"; litCards: string[]; lastThreadId: string | null; achievements: string[] }) => Promise<void>;
+}
+
+export function useQuestline({ ready, facts, content = QUESTLINE, sync }: UseQuestlineOptions): QuestlineApi {
   const [state, setState] = useState<QuestState>(() => (
     typeof localStorage === "undefined"
       ? createQuestState()
@@ -121,6 +135,10 @@ export function useQuestline({ ready, facts, content = QUESTLINE }: UseQuestline
   stateRef.current = state;
   /** 上一次已记账的状态：用于在 updater 之外做"差异 → 埋点/庆祝"（StrictMode 安全） */
   const bookedRef = useRef<QuestState | null>(null);
+  /** 服务端同步只跑一次 hydrate（避免每次渲染覆盖本机新进度） */
+  const syncedRef = useRef(false);
+  /** 补水（hydrate）引起的一次状态变化不镜像回服务端（否则把服务端自己的进度再打回去） */
+  const suppressMirrorRef = useRef(false);
   const factsKey = useMemo(() => [
     facts.goalConfirmed ? "g" : "-",
     facts.dispatched ? "d" : "-",
@@ -141,6 +159,40 @@ export function useQuestline({ ready, facts, content = QUESTLINE }: UseQuestline
       /* 忽略配额错误：内存态仍可用 */
     }
   }, [state]);
+
+  /* ---------- B-63：跨设备续播（服务端更靠前才采用；失败静默，不阻断本地游玩） ---------- */
+  useEffect(() => {
+    if (!sync || syncedRef.current) return;
+    syncedRef.current = true;
+    let stopped = false;
+    void (async () => {
+      try {
+        const server = await sync.load();
+        if (stopped || !server) return;
+        // 本机更靠前（离线走过几关）：按顺序把缺的关卡补齐到服务端（best-effort）
+        const localSnapshot = stateRef.current;
+        const localAdvanced = mergeServerProgress(localSnapshot, server).source === "local";
+        suppressMirrorRef.current = true;
+        setState((current) => {
+          const merged = mergeServerProgress(current, server);
+          if (merged.source === "server") track("questline.hydrated", { from: "server", stage: merged.state.stage });
+          return merged.state;
+        });
+        if (localAdvanced) {
+          for (const stage of QUEST_STAGE_ORDER) {
+            if (localSnapshot.stageDone.includes(stage) && !server.stageDone.includes(stage)) {
+              await sync.advance(toServerAdvance(localSnapshot, stage, "done")).catch(() => undefined);
+            } else if (localSnapshot.skipped.includes(stage) && !server.skipped.includes(stage)) {
+              await sync.advance(toServerAdvance(localSnapshot, stage, "skip")).catch(() => undefined);
+            }
+          }
+        }
+      } catch {
+        /* 离线/未登录：本地进度照常 */
+      }
+    })();
+    return () => { stopped = true; };
+  }, [sync, track]);
 
   /* ---------- 起跑：欢迎仪式结束后自动开始（已完成则不再自动弹） ---------- */
   useEffect(() => {
@@ -189,6 +241,16 @@ export function useQuestline({ ready, facts, content = QUESTLINE }: UseQuestline
     for (const stage of doneAdded) track("questline.step.completed", { stage, next: state.stage, status: state.status });
     const skippedAdded = state.skipped.filter((id) => !previous.skipped.includes(id));
     for (const stage of skippedAdded) track("questline.step.skipped", { stage, next: state.stage });
+    // B-63：把本机的推进镜像到服务端（一次一关；失败只丢同步，本机照常）
+    if (sync && !suppressMirrorRef.current) {
+      for (const stage of doneAdded) {
+        void sync.advance(toServerAdvance(state, stage, "done")).catch(() => undefined);
+      }
+      for (const stage of skippedAdded) {
+        void sync.advance(toServerAdvance(state, stage, "skip")).catch(() => undefined);
+      }
+    }
+    suppressMirrorRef.current = false;
     const cardsAdded = state.litCards.filter((id) => !previous.litCards.includes(id));
     for (const cardId of cardsAdded) track("questline.card.lit", { card_id: cardId, total: state.litCards.length });
     const achievementsAdded = state.achievements.filter((id) => !previous.achievements.includes(id));

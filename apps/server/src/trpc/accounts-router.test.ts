@@ -9,6 +9,8 @@ vi.mock("../service/access-authority.js", async (importOriginal) => {
 });
 
 import { accountsRouter } from "./accounts-router.js";
+import type { TrpcContext } from "./context.js";
+import { AGENT_CHANNEL_OFF } from "./agent-channel.js";
 
 const identity: Identity = {
   kind: "member",
@@ -21,16 +23,20 @@ const identity: Identity = {
   plan: "pro",
 };
 
-const context = {
+const context: TrpcContext = {
   session: identity,
   identity,
   partnerIdentity: null,
   headers: new Headers(),
+  agentChannel: AGENT_CHANNEL_OFF,
 };
 
 describe("账号高风险操作输入边界", () => {
   it("公开验证码端点拒绝高风险操作用途", async () => {
-    const caller = accountsRouter.createCaller({ session: null, identity: null, partnerIdentity: null, headers: new Headers() });
+    const caller = accountsRouter.createCaller({
+      session: null, identity: null, partnerIdentity: null, headers: new Headers(),
+      agentChannel: AGENT_CHANNEL_OFF,
+    });
     await expect(caller.auth.requestCode({
       channel: "phone",
       target: "13800001111",

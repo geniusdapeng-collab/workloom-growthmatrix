@@ -382,3 +382,81 @@ export function parseQuestState(raw: string | null | undefined, now: number = Da
 export function serializeQuestState(state: QuestState): string {
   return JSON.stringify(state);
 }
+
+/* ================= B-63：服务端进度（跨设备断点续播） ================= */
+
+/**
+ * 服务端进度快照（`onboarding.questline` 的 progress 字段形状）。
+ * 本地仍是"即时可玩"的事实源；服务端是"换设备也在"的续播源，二者合并见 mergeServerProgress。
+ */
+export interface ServerQuestProgress {
+  persisted: boolean;
+  status: "not_started" | "in_progress" | "completed";
+  stage: QuestStageId;
+  stageDone: QuestStageId[];
+  skipped: QuestStageId[];
+  achievements: string[];
+  litCards: string[];
+  lastThreadId: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  updatedAt: string | null;
+  replayCount: number;
+}
+
+/** 本地状态 → 服务端推进入参（仅记"这一关发生了什么"，不整包覆盖） */
+export function toServerAdvance(
+  state: QuestState, stage: QuestStageId, outcome: "done" | "skip",
+): { stage: QuestStageId; outcome: "done" | "skip"; litCards: string[]; lastThreadId: string | null; achievements: string[] } {
+  return {
+    stage,
+    outcome,
+    litCards: state.litCards,
+    lastThreadId: state.lastThreadId,
+    achievements: state.achievements,
+  };
+}
+
+const progressWeight = (state: Pick<QuestState, "status" | "stageDone" | "skipped" | "completedAt">): number => {
+  const base = state.stageDone.length * 100 + state.skipped.length * 100;
+  if (state.status === "completed" || state.completedAt !== null) return base + 10_000;
+  if (state.status === "running") return base + 1;
+  return base;
+};
+
+/**
+ * 合并本地与服务端进度：**取更靠前的一方**（不合并两侧的并集——否则"本机跳过 A 关、
+ * 另一台机器完成 A 关"会拼出一个谁都没走过的进度）。返回来源标记，便于埋点与展示。
+ * 纪律：只有服务端明确更靠前才采用服务端（本地"离线优先"不被空进度覆盖）。
+ */
+export function mergeServerProgress(
+  local: QuestState,
+  server: ServerQuestProgress | null | undefined,
+): { state: QuestState; source: "local" | "server" | "none" } {
+  if (!server || !server.persisted || server.status === "not_started") return { state: local, source: "none" };
+  const serverWeight = progressWeight({
+    status: server.status === "completed" ? "completed" : "running",
+    stageDone: server.stageDone,
+    skipped: server.skipped,
+    completedAt: server.completedAt ? Date.parse(server.completedAt) : null,
+  });
+  const localWeight = progressWeight(local);
+  if (serverWeight <= localWeight) return { state: local, source: "local" };
+  // 采用服务端进度：保留本地 XP（XP 来自真实事件投影，不随旅程进度回退）
+  return {
+    state: {
+      ...local,
+      status: server.status === "completed" ? "completed" : "running",
+      stage: server.status === "completed" ? server.stage : (server.stage as QuestStageId),
+      stageDone: [...server.stageDone],
+      skipped: [...server.skipped],
+      litCards: [...new Set([...server.litCards])],
+      achievements: [...new Set([...server.achievements])],
+      lastThreadId: server.lastThreadId ?? local.lastThreadId,
+      startedAt: server.startedAt ? Date.parse(server.startedAt) : local.startedAt,
+      completedAt: server.completedAt ? Date.parse(server.completedAt) : local.completedAt,
+      updatedAt: server.updatedAt ? Date.parse(server.updatedAt) : local.updatedAt,
+    },
+    source: "server",
+  };
+}

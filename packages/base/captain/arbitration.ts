@@ -96,3 +96,82 @@ export function arbitrationMemo(conflict: Conflict, recommendation: string): str
     "Situation / Options / Recommendation — WorkLoom Captain Arbitration v0",
   ].join("\n");
 }
+
+/* ================= B-39：冲突仲裁对象化（事件溯源对象 + 读模型） ================= */
+
+/**
+ * 对象化口径（与《规模化协作设计》§S7 同源）：
+ *  - 冲突 从「一次性函数调用」升级为一等业务对象 `conflict_arbitration`（可查、可审计、可复算）；
+ *  - 事件动作三件套：`conflict.raise`（登记冲突与两方提案）→ `conflict.arbitrate`（裁决：grant/escalate）
+ *    → `conflict.resolve`（升级后的人审结论落账，含结论文本）；
+ *  - 读模型由事件归约（`reduceConflict`），**不信任事件里声明的 status**：状态只能由合法动作推进，
+ *    与契约状态机同一纪律（防伪造事件把冲突直接"跳"到 resolved）。
+ */
+export const CONFLICT_ACTIONS = ["raise", "arbitrate", "resolve"] as const;
+export type ConflictAction = (typeof CONFLICT_ACTIONS)[number];
+
+export const CONFLICT_STATUSES = ["raised", "granted", "escalated", "resolved"] as const;
+export type ConflictStatus = (typeof CONFLICT_STATUSES)[number];
+
+export const CONFLICT_VERDICTS = ["grant", "escalate"] as const;
+export type ConflictVerdict = (typeof CONFLICT_VERDICTS)[number];
+
+const TRANSITIONS: Record<ConflictAction, { from: readonly ConflictStatus[]; to: readonly ConflictStatus[] }> = {
+  raise: { from: [], to: ["raised"] },
+  arbitrate: { from: ["raised"], to: ["granted", "escalated"] },
+  resolve: { from: ["escalated"], to: ["resolved"] },
+};
+
+export type ConflictAdvanceResult = { ok: true } | { ok: false; reason: string };
+
+/** 校验一次冲突状态迁移（不抛异常，由调用方决定拒绝策略）。 */
+export function advanceConflictStatus(current: ConflictStatus | null, action: ConflictAction): ConflictAdvanceResult {
+  const t = TRANSITIONS[action];
+  if (!t) return { ok: false, reason: `未知冲突动作 ${action}` };
+  if (current === null) {
+    return action === "raise" ? { ok: true } : { ok: false, reason: `冲突不存在，不允许动作 ${action}` };
+  }
+  if (!t.from.includes(current)) return { ok: false, reason: `状态 ${current} 不允许动作 ${action}` };
+  return { ok: true };
+}
+
+export interface ConflictEventLike {
+  action: string;
+  after?: { verdict?: string | null; status?: string | null } | null;
+}
+
+/**
+ * 由事件流归约冲突对象状态（事件溯源读模型）。
+ * 只认 conflict.* 动作；无事件返回 null（冲突不存在）。声明值只在合法迁移内被采纳。
+ */
+export function reduceConflictStatus(events: readonly ConflictEventLike[]):
+  { status: ConflictStatus; verdict: ConflictVerdict | null } | null {
+  let status: ConflictStatus | null = null;
+  let verdict: ConflictVerdict | null = null;
+  for (const ev of events) {
+    const action = ev.action.startsWith("conflict.") ? ev.action.slice("conflict.".length) : ev.action;
+    if (!(CONFLICT_ACTIONS as readonly string[]).includes(action)) continue;
+    const advance = advanceConflictStatus(status, action as ConflictAction);
+    if (!advance.ok) continue;
+    if (action === "raise") { status = "raised"; continue; }
+    if (action === "arbitrate") {
+      const declared = ev.after?.verdict;
+      const picked: ConflictVerdict = declared === "grant" ? "grant" : declared === "escalate" ? "escalate" : "escalate";
+      // 未声明或声明非法一律按保守方向（escalate）落档：宁可升级人审，不可静默自决
+      status = picked === "grant" ? "granted" : "escalated";
+      verdict = picked;
+      continue;
+    }
+    status = "resolved";
+  }
+  return status === null ? null : { status, verdict };
+}
+
+/** 纯函数的对象化裁决：给定冲突登记信息与事件流，算当前状态、裁决结果与备忘录。 */
+export function buildArbitrationRecord(
+  conflict: Conflict,
+  events: readonly ConflictEventLike[],
+): { status: ConflictStatus | null; verdict: ConflictVerdict | null; outcome: ArbitrationOutcome } {
+  const reduced = reduceConflictStatus(events);
+  return { status: reduced?.status ?? null, verdict: reduced?.verdict ?? null, outcome: arbitrate(conflict) };
+}

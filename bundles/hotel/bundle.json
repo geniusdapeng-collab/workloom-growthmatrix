@@ -6,7 +6,7 @@
     "industry": "hotel",
     "displayName": "WorkLoom 酒店行业版",
     "description": "酒店经营依赖候选包：酒店数字员工、围栏、技能、经营对象与服务前台投影；由获客增长主包按精确版本组合。",
-    "status": "candidate",
+    "status": "stable",
     "owner": "WorkLoom 酒店产品组",
     "example": false,
     "compatibility": {
@@ -100,7 +100,10 @@
         "connectors/connectors.json"
       ],
       "modelPolicy": "model-policy.yml",
-      "evalQuestions": "eval/questions.json"
+      "evalQuestions": "eval/questions.json",
+      "onboarding": [
+        "onboarding/questline.yml"
+      ]
     },
     "ui": {
       "schemaVersion": "workloom.bundle.ui/v1",
@@ -164,11 +167,11 @@
   },
   "integrity": {
     "algorithm": "sha256",
-    "digest": "c46c054c5c548be9c3f693b9056c48682f5c906b0d213cf0fdbfe38d79147a07",
+    "digest": "8a8faddf1431719ac53f43fb5d54f7dcc32a744b3b04cf43ff93a195cf77b932",
     "assets": {
       "connectors/connectors.json": "da242e8b9584c76bd95a5de798983fd6d8a401590f34944c64c5dd0eae86b863",
       "eval/questions.json": "33215bd927a2affcac4530a9e2679e7a7e97f2d72bc9fdd4f6c42f26fb577bcb",
-      "fences/hotel-baseline.yml": "3086f0e78f567997b6cf67cd4aea9ab5201bd36b3e39d8c9c8eb20d5ba043334",
+      "fences/hotel-baseline.yml": "5ac75563cc8b5ad2dad4136a9c161c508f4f04668733e237e34813d1117b7ae9",
       "fences/patches/audit-only-patch.yml": "8c6f1874bf895ba0e2ceea7b5b801195e590d35650ed12a7d7b7b8290393abba",
       "fences/patches/homestay-patch.yml": "64b1b4cdca3f3a962237c9e64d791527eae86a3b39e5dae5d68a653b7d44eeb9",
       "fences/patches/low-star-single-patch.yml": "0c66b5e8df8f6ec7ec7133cce8106e191ceff36cfe4f2763fdf3e430e710738b",
@@ -177,6 +180,7 @@
       "library/templates/price-rights-confirmation.md": "71c3c6e851d533557815dabdc4476abacd81c516c5a9f588291f18b18d6ad728",
       "library/templates/refund-change-policy.md": "f0d67420f4e918f97cebdff20f3b503e220adcad1a9311f6c41e83c775fe19b4",
       "model-policy.yml": "dad3e661ad3068caf442bf0774e58d8989996c0a10c7047b923571ca416f3871",
+      "onboarding/questline.yml": "85668ef3131a81a7014e4bc8f016b5b699a6112709f9b2ba519fba28f3475af7",
       "pipelines/hotel-acquisition-loop.yml": "633ec31086d575925f384cdb30549aade3aa1ee88789e3f2ee76834c154e5009",
       "presets/ai-receptionist.yml": "08c546c1bef578996354ab67cec01545f9bd8d47435de3379844b74573570f5d",
       "presets/channel-watcher.yml": "7a5a36baf3041f188dc915d2e7e0300c2356b968cc98644fa502e9a7111ea0ab",
@@ -230,6 +234,11 @@
       "skills/staff-scheduler/SKILL.md": "348ab622d0755a93ffac11f00afce73f3bd5760e5df8e2c9fe7c7d59bac0dc3e",
       "triggers.yml": "f7ce4e0c8f9d43ac66cbc86768200c0ea952441603ab264bd6a8f9301144f2ee",
       "ui/cases.json": "0b15be28bd6075223d1bce1396ca53653b851b575de2ce89ad1ae820f4baae52"
+    },
+    "signature": {
+      "algorithm": "ed25519",
+      "keyId": "ed25519-12613d8b27999511",
+      "value": "kUuhRuY04mer6q6+2ATHtcTUm9v6XLY+T8z7glAtzy5KgptjqsOZ+rrLtp/1jy59nTdzxJQlOXy9bJjrD594AQ=="
     }
   }
 }

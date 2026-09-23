@@ -10,6 +10,9 @@ import type pg from "pg";
 import { gatewayAppendOnClient } from "../workdata/gateway.js";
 import { advanceContractStatus, type ContractAction } from "./contract.js";
 import {
+  contractBudgetBand, ensureSettleGateOnClient, requireSettleGateOnClient, settleToLedgerOnClient,
+} from "./settlement.js";
+import {
   TaskContractSchema,
   type CollaborationMode, type ContractStatus, type TaskContract, type TaskContractLinks,
 } from "./schema.js";
@@ -131,8 +134,14 @@ export async function createContract(
        input.threadId ?? null, JSON.stringify(input.bundleScope ?? []), JSON.stringify(input.matrixRefs ?? []), actor.id],
     );
     const eventId = await emitContractEvent(client, scope, actor, input.id, "offer", {
-      status: advance.status, assigneePreset: input.assigneePreset, verifierPreset: input.verifierPreset,
-      budgetAmount: input.budgetAmount ?? 0, mode: input.mode,
+      /**
+       * 全量快照（2026-09-24 修复）：offer 是契约的**首条**事件，而事件溯源读模型
+       * （apps/server/src/service/collaboration.ts）以首条事件的 after 还原契约。
+       * 此前只写 5 个字段，导致 store 路径建出的契约在 tRPC 列表里 zod 校验失败
+       * （/portfolio 页 500："title: expected string, received undefined"）。
+       * 现在与事件溯源路径同口径：after = 行内全量契约快照。
+       */
+      ...toContract(inserted.rows[0]!),
     });
     return { contract: toContract(inserted.rows[0]!), eventId };
   });
@@ -161,6 +170,24 @@ export async function advanceContract(
         [threadId, scope.tenantId, scope.workspaceId, row.title, input.by.id, row.assignee_preset],
       );
     }
+    const band = contractBudgetBand();
+    const amount = Number(row.budget_amount ?? 0);
+    const overBand = amount > band;
+    // B-40：settle 前先校验业务关卡（超自治带必须有 approved 关卡），再与台账同一 COMMIT 落账
+    let gateId: string | null = null;
+    let settle: { ledgerId: string; ledgerEventId: string | null; deduped: boolean } | null = null;
+    if (input.action === "settle") {
+      const gate = await requireSettleGateOnClient(client, scope, { contractId: input.id, amount, band });
+      if (!gate.ok) {
+        throw new ContractStoreError("BAD_STATE",
+          `预算 ${amount} ${row.currency} 超自治带 ${band}：结算需业务关卡 ${gate.gateId} 放行（当前 ${gate.status ?? "缺失"}）`);
+      }
+      gateId = gate.gateId;
+      settle = await settleToLedgerOnClient(client, scope, {
+        contractId: input.id, amount, currency: row.currency,
+        actor: { id: input.by.id, type: input.by.type }, threadId, approvalId: gateId,
+      });
+    }
     const updated = await client.query<ContractRow>(
       `UPDATE task_contracts SET status=$3, thread_id=$4, updated_at=now() WHERE workspace_id=$1 AND id=$2 RETURNING *`,
       [scope.workspaceId, input.id, advance.status, threadId],
@@ -169,9 +196,20 @@ export async function advanceContract(
       status: advance.status, from: row.status,
       ...(threadId ? { threadId } : {}),
       ...(input.action === "deliver" ? { verifierPreset: row.verifier_preset, verifyRequested: true } : {}),
-      ...(input.action === "settle" ? { settleAmount: Number(row.budget_amount ?? 0), currency: row.currency } : {}),
+      ...(input.action === "settle" ? {
+        settleAmount: amount, currency: row.currency, budgetBand: band, approvalId: gateId,
+        ledgerId: settle?.ledgerId ?? null, ledgerEventId: settle?.ledgerEventId ?? null,
+        settleDeduped: settle?.deduped ?? false,
+      } : {}),
       ...(input.note ? { note: input.note } : {}),
     });
+    // verify 且超带：落待放行关卡（与 verify 事件同一 COMMIT；幂等）
+    if (input.action === "verify" && overBand) {
+      await ensureSettleGateOnClient(client, scope, {
+        contractId: input.id, title: row.title, amount, currency: row.currency,
+        band, eventId, threadId, verifierPreset: row.verifier_preset,
+      });
+    }
     return { contract: toContract(updated.rows[0]!), eventId };
   });
 }

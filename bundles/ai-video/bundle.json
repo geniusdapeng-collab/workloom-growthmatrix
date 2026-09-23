@@ -6,7 +6,7 @@
     "industry": "ai-video",
     "displayName": "视频经理 · AI视频制作智能经营系统",
     "description": "智能视频生产候选包：数字员工、围栏、技能、视频对象与三端行业投影。生产管线和内容库原样保留，待基座扩展资产契约纳入签名索引。",
-    "status": "candidate",
+    "status": "stable",
     "owner": "WorkLoom 视频产品组",
     "example": false,
     "compatibility": {
@@ -472,7 +472,10 @@
         "connectors/subtitle-bridge/kit/selftest.sh"
       ],
       "modelPolicy": "model-policy.yml",
-      "evalQuestions": "eval/questions.json"
+      "evalQuestions": "eval/questions.json",
+      "onboarding": [
+        "onboarding/questline.yml"
+      ]
     },
     "ui": {
       "schemaVersion": "workloom.bundle.ui/v1",
@@ -602,7 +605,7 @@
   },
   "integrity": {
     "algorithm": "sha256",
-    "digest": "9bf50ada8c28fc66258560a8aab60c7a03cc92055b8a59ad8e3b5c59dff19e33",
+    "digest": "5374dfe6e939c8f477d52c56d6e4171598758ad802cc6ee386ab46f2632c41c4",
     "assets": {
       "connectors/bgm-bridge/cli.mjs": "4a750118f5bbc7a6c6238be241ee1f3a4cbb695fd3b40066e4c71072179993ed",
       "connectors/bgm-bridge/core.mjs": "1f1a39da1a1460c19ac6e15c7ddbc7817a84acf027dc9c400c61c7c70a9232ec",
@@ -626,11 +629,11 @@
       "connectors/subtitle-bridge/server-adapter.mts": "f09160b620a5f96cf61480e855c758a773280c1399ecb25035bc342bf3a52f04",
       "connectors/subtitle-bridge/server.mjs": "77be6773cb3f5a25ea4ff191f4971684fe0f7026de92c4d7b39e7b2e800bf839",
       "eval/questions.json": "89b83e667089b9730d985beba5c27f348601e3845ee19dd80898570437e5c6b5",
-      "fences/ai-video-baseline.yml": "d0c8f2f8f7bf59dd3b9b74b2d880d3e1d405ddf849b64adca703b8c071b2eed7",
-      "fences/ai-video-bgm.yml": "ba75904e9846a51fd211a207d99f04cec7ffad8c929c7971a08d5453c9e307f8",
-      "fences/ai-video-color.yml": "709cb9fc3cba47a4ee2b4ee233d714277223cb23f9ca210ed3712de54c597ed6",
-      "fences/ai-video-subtitle.yml": "2e250b4470189a04a57aac68cee367c32457133dcd0154bf512cad15a03bdaf8",
-      "fences/ai-video-voice.yml": "52ab044fbfa8c4b1f83c91c8e469e97ae82d1c5d31b15dc420b705858694d295",
+      "fences/ai-video-baseline.yml": "9f7824749d49df520c27e7219cfe0e218d30a2c792aa206fdff86d017b85e2d6",
+      "fences/ai-video-bgm.yml": "a2349954627c5c201854c317fe29cfb414fe57e97a1f755da304dc87bb465e53",
+      "fences/ai-video-color.yml": "31eb3a94aab06fdae499c68acb2bef8702a1d3ed1457ff638b8e01d509183206",
+      "fences/ai-video-subtitle.yml": "9d7516b042a321af771cf3b19ca42175517edcb95959a390da166842895bd943",
+      "fences/ai-video-voice.yml": "d25bdc4f940267f706bef0b8aed307ac7cf2606c844b689063133766a402ad30",
       "library/bgm-library-curated/acoustic-warm-ghostrifter-official-zeal-456.m4a": "7d1f6edbc992ac9f8949aa55bad78f0aef93a2b8b94dc13373c1bce8acbcf164",
       "library/bgm-library-curated/acoustic-warm-john-bartmann-a-kwela-fella-461.m4a": "78c7bf7cce71ebeb5ba6ee5afb0d99c6659c14ede928aa7ba2c66bf079d821c7",
       "library/bgm-library-curated/acoustic-warm-liqwyd-shine-552.m4a": "a45534bdd346dd25d751fa4a1ca6cac736dc817d90f62fdcab7ca1d2f0ae664e",
@@ -968,6 +971,7 @@
       "library/templates/shot-card-v4-template.md": "46cd261292b95725f59576069131b9a772ef8b5c7a2cdf55bbbaf2117b0bad87",
       "library/typography-recipes/recipes.json": "08009f8e2b1884c2d7c04b65e724c08ab45cbdd9c2576a135966065690953601",
       "model-policy.yml": "15e2069bf71388b0c23f910fd2f1b16d37dd44a8e47b9a1a5709b6e2056325e8",
+      "onboarding/questline.yml": "96aad8de5bbad4e80906c4d8d5130f8932cb028820688605dee6f50d2aa66ca2",
       "pipelines/account-ops.yml": "455383c019ac1d0523db48c6088c7bfce4aa9e8e1eef8d7d71399aa69e107264",
       "pipelines/ads-creative-factory.yml": "90e475e5482ecf15541aa2d6eca5499aa1c9bea8d9928e2122975ae77df869c5",
       "pipelines/live-clip-reuse.yml": "3519f1175f88df6720db9e5badd3948ed9d35a7c3f11568919e975e19eb30dcd",
@@ -1041,6 +1045,11 @@
       "skills/voice-profile-craft/SKILL.md": "992f357c393ab217dd874e8d31c9107223da418fb575a41c69238bcec4820db9",
       "skills/voice-reference-craft/SKILL.md": "7b572de1953955f4e7b163805e6885fab23cd6d20b07058644d42850229ca3b1",
       "ui/cases.json": "2105dbbca42ca0f2f84a5b6d9af50659ec83fa9b310c509c729c0ac0c4ce569c"
+    },
+    "signature": {
+      "algorithm": "ed25519",
+      "keyId": "ed25519-12613d8b27999511",
+      "value": "wSXzFfILTurh09Ip78xT/MwFvd8olSMGWtRTGslJH86FbrB2vqasR5pJ27HTXVhS53bzMJimtGigVUEUP1KiCQ=="
     }
   }
 }

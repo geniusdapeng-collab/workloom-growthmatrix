@@ -24,6 +24,7 @@ import { safeParseReplayAwareEvent } from "@workloom/base/workdata";
 import { eventHash } from "@workloom/base/workdata";
 // 技能围栏绑定表（与基座 seed.ts 共用同一事实源；见 scripts/skill-bindings.mts）
 import { skillBindingsFor } from "./skill-bindings.mts";
+import { applyDeclaredFenceTemplates } from "@workloom/base/bundles";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, "..");
@@ -100,7 +101,10 @@ function loadFences(): FenceRule[] {
   const rules: FenceRule[] = [];
   for (const assetPath of declared) {
     if (assetPath.includes("/patches/")) continue;
-    const doc = YAML.parse(readFileSync(join(BUNDLE_DIR, assetPath), "utf-8"));
+    // B-62：围栏包可声明通用规则模板（内部协作 auto / 对外动作 review），装载前按包前缀展开
+    const doc = applyDeclaredFenceTemplates(
+      YAML.parse(readFileSync(join(BUNDLE_DIR, assetPath), "utf-8")) as { rules?: FenceRule[]; fences?: FenceRule[]; templates?: Array<{ name: string; prefix: string }> },
+    );
     const version = typeof doc?.version === "string" ? doc.version : FENCE_VERSION;
     for (const rule of (doc?.rules ?? doc?.fences ?? []) as FenceRule[]) {
       rules.push({ ...rule, packVersion: version });
@@ -424,7 +428,7 @@ async function main() {
    * 与基座 seed.ts（ws-yunqi 已按组合编制上岗 73 岗）口径不一致——RDAS L1 矩阵因此判 0/73。
    * 这里与基座同口径补齐；围栏按组合并集落库（只紧不松，不滚动客户已收紧的规则）。
    */
-  const { provisionComposedWorkforce } = await import("@workloom/base/bundles");
+  const { provisionComposedWorkforce, applyDeclaredFenceTemplates } = await import("@workloom/base/bundles");
   const composed = await provisionComposedWorkforce(
     { query: (sql: string, params?: unknown[]) => owner.query(sql, params as never[]) },
     { tenantId: TENANT_ID, workspaceId: WS_ID },

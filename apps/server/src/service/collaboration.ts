@@ -14,6 +14,9 @@ import {
   type ObjectState, type PortfolioDomain, type PortfolioSummary, type TaskContract,
 } from "@workloom/base/collaboration";
 import { appendEventOn, serviceTx, svcQuery } from "./events.js";
+import {
+  contractBudgetBand, ensureSettleGateOnClient, requireSettleGateOnClient, settleToLedgerOnClient,
+} from "@workloom/base/collaboration";
 
 type Actor = { id: string; type: "human" | "agent" | "system" };
 type EventRow = Record<string, unknown> & {
@@ -33,6 +36,27 @@ const iso = (value: unknown): string => {
   return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
 };
 const newId = (prefix: string): string => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+/** 事务内由事件归约契约当前状态（并发乐观锁：调用方比对期望状态） */
+async function contractStatusOnClient(
+  client: import("pg").PoolClient, workspaceId: string, contractId: string,
+): Promise<{ status: string; threadId: string | null }> {
+  const rows = await client.query<{ action: string; after: Record<string, unknown> | null; thread_id: string | null }>(
+    `SELECT payload->'decision'->>'action' AS action,
+            payload->'decision'->'after' AS after,
+            payload->'decision'->'after'->>'threadId' AS thread_id
+       FROM biz_events
+      WHERE workspace_id=$1 AND payload->'object'->>'type'='task_contract' AND payload->'object'->>'id'=$2
+      ORDER BY seq ASC LIMIT 5000`,
+    [workspaceId, contractId],
+  );
+  const status = reduceContractStatus(rows.rows.map((r) => ({
+    action: str(r.action),
+    after: (r.after ?? null) as { status?: string } | null,
+  }))) ?? null;
+  const threadId = [...rows.rows].reverse().find((r) => r.thread_id)?.thread_id ?? null;
+  return { status: status ?? "draft", threadId };
+}
 
 /** 获客用增班组 preset_key（组合看板域归属） */
 const GROWTH_PRESETS = new Set([
@@ -120,12 +144,23 @@ function toContract(events: EventRow[]): TaskContract | null {
     action: str(e.payload?.decision?.action),
     after: (e.payload?.decision?.after ?? null) as { status?: string } | null,
   }))) ?? "draft";
-  return TaskContractSchema.parse({
+  const parsed = TaskContractSchema.safeParse({
     ...base,
     id: str(first.payload?.object?.id),
     status,
     updatedAt: iso(last.created_at),
   });
+  if (parsed.success) return parsed.data;
+  /**
+   * 容错（2026-09-24）：历史事件（store 路径旧写入）只带少量字段，
+   * 单条残缺记录不得让整个列表 500（/portfolio 页实测因此报 internalError）。
+   * 处置：标记为 legacy 跳过并告警；表路径的行仍是权威（CLI/套件读表）。
+   */
+  console.warn("[collaboration] 跳过字段不全的契约事件（legacy 读模型容错）", {
+    contractId: str(first.payload?.object?.id),
+    issues: parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".")}：${i.message}`),
+  });
+  return null;
 }
 
 export async function listContracts(workspaceId: string): Promise<TaskContract[]> {
@@ -169,12 +204,23 @@ export async function createContract(workspaceId: string, actor: Actor, input: C
     id, ...input, requester: actor.id, budgetAmount: input.budgetAmount ?? 0, currency: input.currency ?? "CNY",
     deadline: input.deadline ?? null, status: "draft", createdAt: at, updatedAt: at,
   });
+  // B-40：创建即发出（draft→offer 一步完成，与表持久化路径同一语义）：
+  // 两条事件同一 COMMIT（create + offer），读模型归约出 offered，不需要客户端再补一次 offer。
+  const offered = advanceContractStatus("draft", "offer");
+  if (!offered.ok) throw new Error(offered.reason);
   await serviceTx(workspaceId, async (client, scope) => {
     await appendEventOn(client, scope, actor, {
       objectType: "task_contract", objectId: id, action: "contract.create", after: contract,
     });
+    await appendEventOn(client, scope, actor, {
+      objectType: "task_contract", objectId: id, action: "contract.offer",
+      after: {
+        status: offered.status, assigneePreset: contract.assigneePreset, verifierPreset: contract.verifierPreset,
+        budgetAmount: contract.budgetAmount, mode: contract.mode, updatedAt: at,
+      },
+    });
   });
-  return contract;
+  return { ...contract, status: offered.status, updatedAt: at };
 }
 
 export async function advanceContract(
@@ -185,13 +231,94 @@ export async function advanceContract(
   const next = advanceContractStatus(current.status, action as ContractAction);
   if (!next.ok) throw new Error(next.reason);
   const at = new Date().toISOString();
-  await serviceTx(workspaceId, async (client, scope) => {
+  const band = contractBudgetBand();
+  const overBand = Number(current.budgetAmount ?? 0) > band;
+  const result = await serviceTx(workspaceId, async (client, scope) => {
+    // 并发乐观锁：事务内重读读模型，状态被其他写入推进则拒绝本次迁移（不静默覆盖）
+    const live = await contractStatusOnClient(client, workspaceId, contractId);
+    if (live.status !== current.status) {
+      throw new Error(`契约 ${contractId} 状态已变化（${current.status} → ${live.status}），本次 ${action} 拒绝，请重读后重试`);
+    }
+
+    // B-40 ①：accept 自动建线程（契约↔线程；同事务，无线程则不算开工）
+    let threadId = live.threadId;
+    if (action === "accept" && !threadId) {
+      threadId = `T-${contractId.slice(-12)}`;
+      await client.query(
+        `INSERT INTO threads (id, tenant_id, workspace_id, title, mode, status, progress_done, progress_total, created_by, agent_id)
+         VALUES ($1,$2,$3,$4,'quest','running',0,1,$5,$6) ON CONFLICT (id) DO NOTHING`,
+        [threadId, scope.tenantId, scope.workspaceId, current.title, actor.id, current.assigneePreset],
+      );
+    }
+
+    const after: Record<string, unknown> = { status: next.status, updatedAt: at };
+    if (threadId) after.threadId = threadId;
+    // B-40 ②：deliver 点名 verifier（契约↔验收岗位）
+    if (action === "deliver") {
+      after.verifierPreset = current.verifierPreset;
+      after.verifyRequested = true;
+    }
+
+    // B-40 ③：verify 时若超自治带 → 同事务落一道业务关卡（等待放行；无回执不算完成）
+    if (action === "verify" && overBand) {
+      const ev = await appendEventOn(client, scope, actor, {
+        objectType: "task_contract", objectId: contractId, action: `contract.${action}`,
+        after: { ...after, budgetBand: band, settleGateRequired: true },
+      });
+      const gate = await ensureSettleGateOnClient(client, scope, {
+        contractId, title: current.title, amount: Number(current.budgetAmount ?? 0),
+        currency: current.currency, band, eventId: ev.eventId, threadId: threadId ?? null,
+        verifierPreset: current.verifierPreset,
+      });
+      return { threadId: threadId ?? null, gate, settle: null };
+    }
+
+    // B-40 ④：settle 先校验关卡、落台账，再把结算事实写进同一条契约事件（append-only，不回写事件）
+    if (action === "settle") {
+      const gate = await requireSettleGateOnClient(client, scope, {
+        contractId, amount: Number(current.budgetAmount ?? 0), band,
+      });
+      if (!gate.ok) {
+        throw new Error(
+          `契约 ${contractId} 预算 ${current.budgetAmount} ${current.currency} 超自治带 ${band}：结算需业务关卡 ${gate.gateId} 放行（当前 ${gate.status ?? "缺失"}）`,
+        );
+      }
+      const ledger = await settleToLedgerOnClient(client, scope, {
+        contractId, amount: Number(current.budgetAmount ?? 0), currency: current.currency,
+        actor: { id: actor.id, type: actor.type }, threadId: threadId ?? null, approvalId: gate.gateId,
+      });
+      await appendEventOn(client, scope, actor, {
+        objectType: "task_contract", objectId: contractId, action: `contract.${action}`,
+        after: {
+          ...after,
+          settleAmount: Number(current.budgetAmount ?? 0), currency: current.currency,
+          ledgerId: ledger.ledgerId, ledgerEventId: ledger.ledgerEventId,
+          approvalId: gate.gateId, budgetBand: band, settleDeduped: ledger.deduped,
+        },
+      });
+      return { threadId: threadId ?? null, gate: null, settle: { ...ledger, approvalId: gate.gateId } };
+    }
+
     await appendEventOn(client, scope, actor, {
       objectType: "task_contract", objectId: contractId, action: `contract.${action}`,
-      after: { status: next.status, updatedAt: at },
+      after,
     });
+    return { threadId: threadId ?? null, gate: null, settle: null };
   });
-  return { ...current, status: next.status, updatedAt: at };
+
+  const updated: TaskContract = {
+    ...current,
+    status: next.status,
+    updatedAt: at,
+  };
+  return Object.assign(updated, {
+    threadId: result.threadId,
+    ...(result.settle ? {
+      settleAmount: Number(current.budgetAmount ?? 0), currency: current.currency,
+      ledgerId: result.settle.ledgerId, ledgerEventId: result.settle.ledgerEventId, approvalId: result.settle.approvalId,
+    } : {}),
+    ...(result.gate ? { settleGateId: result.gate.gateId, settleGateTier: result.gate.tier, settleGateCreated: result.gate.created } : {}),
+  });
 }
 
 export interface RecordReceiptInput {

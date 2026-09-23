@@ -13,6 +13,32 @@
  */
 import type pg from "pg";
 
+/**
+ * RLS 上下文事务（2026-09-24 B-72 修复）：信任账户此前直接 `app.query`，
+ * 用应用角色（RLS 生效）调用时 `current_setting('app.workspace_id')` 为空 → **永远读到 0 行**，
+ * 于是"降档"在服务端运行时静默不发生（脚本用 owner 池才看得见数据，属测试盲区）。
+ * 现在统一在显式事务内设双 GUC 再查；传入 owner 池同样安全（仅多设两个会话变量）。
+ */
+async function withScope<T>(
+  app: pg.Pool, scope: { tenantId: string; workspaceId: string },
+  fn: (client: pg.PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await app.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
+    await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]);
+    const out = await fn(client);
+    await client.query("COMMIT");
+    return out;
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export interface TrustPolicy {
   windowDays: number;
   upgradeSample: number;
@@ -88,7 +114,8 @@ export async function buildTrustAccounts(
   app: pg.Pool, scope: { tenantId: string; workspaceId: string }, policy = DEFAULT_TRUST_POLICY,
 ): Promise<Array<{ evidence: DomainEvidence; verdict: TrustVerdict }>> {
   const windowDays = policy.windowDays;
-  const rows = await app.query<{
+  return withScope(app, scope, async (client) => {
+  const rows = await client.query<{
     domain: string; decided: string; approved: string; rejected: string; edited: string; escalated: string;
   }>(
     `SELECT split_part(snapshot->>'action','.',1) AS domain,
@@ -103,7 +130,7 @@ export async function buildTrustAccounts(
       GROUP BY 1 ORDER BY 1`,
     [scope.workspaceId, String(windowDays)],
   );
-  const outcomeRows = await app.query<{ domain: string; verdict: string; n: string }>(
+  const outcomeRows = await client.query<{ domain: string; verdict: string; n: string }>(
     `SELECT split_part(a.snapshot->>'action','.',1) AS domain,
             o.payload->'decision'->'params'->>'verdict' AS verdict, count(*)::text AS n
        FROM biz_events o
@@ -116,7 +143,7 @@ export async function buildTrustAccounts(
       GROUP BY 1, 2`,
     [scope.workspaceId, String(windowDays)],
   );
-  const incidentRows = await app.query<{ domain: string; n: string }>(
+  const incidentRows = await client.query<{ domain: string; n: string }>(
     `SELECT COALESCE(payload->'decision'->'params'->>'domain','未分域') AS domain, count(*)::text AS n
        FROM biz_events
       WHERE workspace_id=$1 AND payload->'decision'->>'action' IN ('breaker.trigger','circuit_breaker.trip')
@@ -149,6 +176,7 @@ export async function buildTrustAccounts(
     .filter((e) => e.decisions > 0)
     .sort((a, b) => b.decisions - a.decisions)
     .map((evidence) => ({ evidence, verdict: evalDomainEvidence(evidence, policy) }));
+  });
 }
 
 /** 三条曲线（§7）：自治率 / 客户干预率 / 回测命中率（按窗口，含 dry_run 排除口径）。 */
@@ -161,7 +189,8 @@ export async function buildMetricCurves(
   hitRate: number | null;
   counts: { ceoDecisions: number; escalated: number; clientGestures: number; outcomes: { hit: number; miss: number; fail: number } };
 }> {
-  const ceo = await app.query<{ n: string; esc: string }>(
+  return withScope(app, scope, async (client) => {
+  const ceo = await client.query<{ n: string; esc: string }>(
     `SELECT count(*)::text AS n,
             count(*) FILTER (WHERE payload->'decision'->'params'->>'verdict'='escalate')::text AS esc
        FROM biz_events
@@ -170,13 +199,13 @@ export async function buildMetricCurves(
         AND created_at > now() - ($2 || ' days')::interval`,
     [scope.workspaceId, String(windowDays)],
   );
-  const gestures = await app.query<{ n: string }>(
+  const gestures = await client.query<{ n: string }>(
     `SELECT count(*)::text AS n FROM approvals
       WHERE workspace_id=$1 AND decided_by IS NOT NULL AND decided_by <> 'company-ceo'
         AND created_at > now() - ($2 || ' days')::interval`,
     [scope.workspaceId, String(windowDays)],
   );
-  const outcomes = await app.query<{ verdict: string; n: string }>(
+  const outcomes = await client.query<{ verdict: string; n: string }>(
     `SELECT payload->'decision'->'params'->>'verdict' AS verdict, count(*)::text AS n
        FROM biz_events
       WHERE workspace_id=$1 AND payload->'decision'->>'action'='decision.outcome'
@@ -202,4 +231,5 @@ export async function buildMetricCurves(
     hitRate: totalOutcomes > 0 ? oc.hit / totalOutcomes : null,
     counts: { ceoDecisions, escalated, clientGestures, outcomes: oc },
   };
+  });
 }

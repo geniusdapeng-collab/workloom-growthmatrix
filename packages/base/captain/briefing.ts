@@ -20,6 +20,27 @@ export interface BriefFacts {
   routerReview?: { overallRate: number; raiseTierScenes: string[]; totalGenerations: number };
   /** 定制中心（覆盖层）健康：滞留草稿/超龄灰度预警（可选域，无数据不显示） */
   overlayHealth?: { drafts: number; staleDrafts: number; staleCanaries: number };
+  /**
+   * B-69：首日上岗（Day-1 Questline）漏斗——从 questline.* 事件聚合。
+   * 只报事实：开始数 / 各关完成 / 跳过 / 完成；跳过率单独列出（跳过不等于完成）。
+   */
+  questlineFunnel?: {
+    started: number;
+    completed: number;
+    stageDone: Record<string, number>;
+    skipped: number;
+    skipRate: number | null;
+  };
+  /**
+   * B-72：信任账户复核快照（最近一次 trust.reviewed）——升/降档建议进晨报：
+   * 降档已在运行时自动收紧自治项；升档与补考以业务关卡形式排队（晨报给摘要，处置去关卡队列）。
+   */
+  trust?: {
+    reviewed: number;
+    down: Array<{ domain: string; reason: string }>;
+    up: Array<{ domain: string; hitRate: number | null; approveRate: number | null }>;
+    retake: string[];
+  };
 }
 
 export type BriefingKind = "daily" | "weekly" | "monthly" | "fleet_daily";
@@ -78,6 +99,8 @@ export async function gatherBriefFacts(app: pg.Pool, scope: Scope, sinceHours = 
       }
     : undefined;
   const overlayHealth = await gatherOverlayHealth(app, scope);
+  const questlineFunnel = await gatherQuestlineFunnel(app, scope, sinceHours);
+  const trust = await gatherTrustSnapshot(app, scope);
   // B-49：只读岗位产出（按 agents.meta.coverage 的事件前缀聚合；无 coverage 的只读岗不虚报）
   const readonlyRows = await q<{ agent: string; label: string | null; action: string; n: string }>(
     app, scope,
@@ -106,7 +129,64 @@ export async function gatherBriefFacts(app: pg.Pool, scope: Scope, sinceHours = 
     incidents: Number(incidents[0]?.n ?? 0),
     routerReview,
     overlayHealth,
+    ...(questlineFunnel ? { questlineFunnel } : {}),
+    ...(trust ? { trust } : {}),
     ...(readonlyFindings.length > 0 ? { readonlyFindings } : {}),
+  };
+}
+
+/** B-72：最近一次信任复核快照（无快照 → undefined，不显示空栏） */
+async function gatherTrustSnapshot(app: pg.Pool, scope: Scope): Promise<BriefFacts["trust"]> {
+  const rows = await q<{ after: Record<string, unknown> | null }>(
+    app, scope,
+    `SELECT payload->'decision'->'after' AS after FROM biz_events
+      WHERE workspace_id=$1 AND payload->'decision'->>'action'='trust.reviewed'
+      ORDER BY seq DESC LIMIT 1`,
+    [scope.workspaceId],
+  );
+  const reviewed = (rows[0]?.after?.reviewed ?? []) as Array<{
+    domain: string; level: string; reason: string; retakeRequired?: boolean;
+    hitRate?: number | null; approveRate?: number | null;
+  }>;
+  if (reviewed.length === 0) return undefined;
+  const down = reviewed.filter((r) => r.level === "down").map((r) => ({ domain: r.domain, reason: r.reason }));
+  const up = reviewed.filter((r) => r.level === "up").map((r) => ({ domain: r.domain, hitRate: r.hitRate ?? null, approveRate: r.approveRate ?? null }));
+  const retake = reviewed.filter((r) => r.retakeRequired).map((r) => r.domain);
+  return { reviewed: reviewed.length, down, up, retake };
+}
+
+/**
+ * B-69：首日上岗漏斗（事件化后才有这张表）。窗口内无任何 questline.* 事件 → undefined
+ * （不显示空栏位，也不写 0 假装有数据）。
+ */
+async function gatherQuestlineFunnel(
+  app: pg.Pool, scope: Scope, sinceHours: number,
+): Promise<BriefFacts["questlineFunnel"]> {
+  const rows = await q<{ action: string; n: string; stage: string | null }>(
+    app, scope,
+    `SELECT payload->'decision'->>'action' AS action,
+            COALESCE(payload->'decision'->'after'->>'stage','') AS stage,
+            count(*)::text AS n
+       FROM biz_events
+      WHERE workspace_id=$1 AND payload->'decision'->>'action' LIKE 'questline.%'
+        AND created_at > now() - ($2 || ' hours')::interval
+      GROUP BY 1,2`,
+    [scope.workspaceId, String(sinceHours)],
+  );
+  if (rows.length === 0) return undefined;
+  const started = rows.filter((r) => r.action === "questline.started").reduce((n, r) => n + Number(r.n), 0);
+  const completed = rows.filter((r) => r.action === "questline.completed").reduce((n, r) => n + Number(r.n), 0);
+  const skipped = rows.filter((r) => r.action === "questline.stage.skipped").reduce((n, r) => n + Number(r.n), 0);
+  const stageDone: Record<string, number> = {};
+  for (const r of rows) {
+    // 末关完成记在 questline.completed（stage 仍带关卡名），一并计入该关
+    if ((r.action !== "questline.stage.completed" && r.action !== "questline.completed") || !r.stage) continue;
+    stageDone[r.stage] = (stageDone[r.stage] ?? 0) + Number(r.n);
+  }
+  const totalStages = started > 0 ? started : 0;
+  return {
+    started, completed, stageDone, skipped,
+    skipRate: totalStages > 0 ? skipped / (totalStages * 4) : null,
   };
 }
 
@@ -145,26 +225,39 @@ const KIND_LABEL: Record<BriefingKind, string> = {
 };
 
 export function composeBriefing(kind: BriefingKind, f: BriefFacts, name: string): string {
-  const readonlyLine = f.readonlyFindings && f.readonlyFindings.length > 0
-    ? `五、只读岗位发现（巡检/竞对/驾驶舱）：${f.readonlyFindings
-        .map((x) => `${x.label}｜${x.agent}：${x.action} ×${x.n}`).join(" · ")}`
-    : null;
-  const overlayNo = readonlyLine ? "六" : "五";
-  const lines = [
-    `【${KIND_LABEL[kind]} · ${name}】`,
-    `一、经营概况：${Object.entries(f.kpi).map(([k, v]) => `${k} ${v}`).join("；") || "—"}`,
-    `二、系统动态（近窗）：${f.actionsTop.map((a) => `${a.action} ×${a.n}`).join(" · ") || "静默"}`,
-    `三、请示与裁决：L2 待我裁决 ${f.pendingByTier.l2_captain ?? 0} 件 · L3 待集团 ${f.pendingByTier.l3_fleet ?? 0} 件 · **L4 请示董事长 ${f.pendingByTier.l4_chairman ?? 0} 件**`,
-    `四、风险：近 7 天断点 ${f.incidents} 起${f.goalDeviation ? `；目标偏差：${f.goalDeviation}` : ""}${f.routerReview ? `；模型路由升级率 ${(f.routerReview.overallRate * 100).toFixed(1)}%（${f.routerReview.totalGenerations} 次生成）${f.routerReview.raiseTierScenes.length > 0 ? `，建议上调默认档：${f.routerReview.raiseTierScenes.join("、")}` : "，各场景健康"}` : ""}`,
-    readonlyLine,
+  /**
+   * 栏位编号动态生成（2026-09-24 B-69）：此前"五/六"是硬编码，新增栏位（首日上岗漏斗）
+   * 要改动多处分母，容易串号。现在按实际出现的栏位顺序编号，可选栏位缺席不留空号。
+   */
+  const sections: Array<string | null> = [
+    `经营概况：${Object.entries(f.kpi).map(([k, v]) => `${k} ${v}`).join("；") || "—"}`,
+    `系统动态（近窗）：${f.actionsTop.map((a) => `${a.action} ×${a.n}`).join(" · ") || "静默"}`,
+    `请示与裁决：L2 待我裁决 ${f.pendingByTier.l2_captain ?? 0} 件 · L3 待集团 ${f.pendingByTier.l3_fleet ?? 0} 件 · **L4 请示董事长 ${f.pendingByTier.l4_chairman ?? 0} 件**`,
+    `风险：近 7 天断点 ${f.incidents} 起${f.goalDeviation ? `；目标偏差：${f.goalDeviation}` : ""}${f.routerReview ? `；模型路由升级率 ${(f.routerReview.overallRate * 100).toFixed(1)}%（${f.routerReview.totalGenerations} 次生成）${f.routerReview.raiseTierScenes.length > 0 ? `，建议上调默认档：${f.routerReview.raiseTierScenes.join("、")}` : "，各场景健康"}` : ""}`,
+    f.readonlyFindings && f.readonlyFindings.length > 0
+      ? `只读岗位发现（巡检/竞对/驾驶舱）：${f.readonlyFindings.map((x) => `${x.label}｜${x.agent}：${x.action} ×${x.n}`).join(" · ")}`
+      : null,
     f.overlayHealth && (f.overlayHealth.staleDrafts > 0 || f.overlayHealth.staleCanaries > 0)
-      ? `${overlayNo}、定制中心：⚠️ 定制草稿 ${f.overlayHealth.drafts} 份待流转（超 3 天 ${f.overlayHealth.staleDrafts} 份）· 灰度超 7 天 ${f.overlayHealth.staleCanaries} 项——请速到「定制中心 /p26」处置`
+      ? `定制中心：⚠️ 定制草稿 ${f.overlayHealth.drafts} 份待流转（超 3 天 ${f.overlayHealth.staleDrafts} 份）· 灰度超 7 天 ${f.overlayHealth.staleCanaries} 项——请速到「定制中心 /p26」处置`
       : f.overlayHealth
-        ? `${overlayNo}、定制中心：运转正常（在途草稿 ${f.overlayHealth.drafts} 份，无滞留）`
+        ? `定制中心：运转正常（在途草稿 ${f.overlayHealth.drafts} 份，无滞留）`
         : null,
-    `以上数字均来自事件库实时取数，可下钻溯源。`,
+    f.questlineFunnel
+      ? `首日上岗漏斗（近窗）：开始 ${f.questlineFunnel.started} 人 · 完成 ${f.questlineFunnel.completed} 人 · 跳过 ${f.questlineFunnel.skipped} 次${f.questlineFunnel.skipRate !== null ? `（跳过率 ${(f.questlineFunnel.skipRate * 100).toFixed(0)}%）` : ""}`
+      : null,
+    f.trust
+      ? `信任账户（${f.trust.reviewed} 域复核）：${f.trust.down.length > 0 ? `降档 ${f.trust.down.map((d) => d.domain).join("、")}（自治项已自动收紧）` : "无降档"}${f.trust.up.length > 0 ? `；升档建议待您放行：${f.trust.up.map((u) => u.domain).join("、")}` : ""}${f.trust.retake.length > 0 ? `；补考待安排：${f.trust.retake.join("、")}` : ""}`
+      : null,
   ];
-  return lines.filter((l): l is string => typeof l === "string").join("\n");
+  const numerals = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+  const body = sections
+    .filter((s): s is string => typeof s === "string" && s.length > 0)
+    .map((s, i) => `${numerals[i] ?? String(i + 1)}、${s}`);
+  return [
+    `【${KIND_LABEL[kind]} · ${name}】`,
+    ...body,
+    `以上数字均来自事件库实时取数，可下钻溯源。`,
+  ].join("\n");
 }
 
 export async function generateBriefing(

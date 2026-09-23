@@ -290,17 +290,47 @@ export async function installSkill(
     await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
     await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]); // D16：append_event_insert 双 GUC 校验要求
     // D15-⑤：安装时记录版本快照（installed_version），供 listSkillUpdates 版本通道对比
-    const r = await client.query(
-      `INSERT INTO skill_installs (skill_id, workspace_id, installed_by, fence_bindings_snapshot, installed_version)
-       VALUES ($1,$2,$3,$4,$5)
-       ON CONFLICT (skill_id, workspace_id) DO NOTHING`,
-      [skill.id, scope.workspaceId, input.by, JSON.stringify(bindings), skill.version],
+    /**
+     * 2026-09-24 修复（技能安装快照漂移）：原实现在重复安装时 DO NOTHING，
+     * 于是技能作者后来改了 fence_bindings/version（例如曲库批次给选曲技能加 G-BGM0）后，
+     * 老工作区的安装快照永远停在旧值——运行时并集与卸载撤销清单双双失真
+     * （skills.test「双路径同构」用例即为此红）。现在：
+     *   · 快照/版本与当前声明一致 → 仍按幂等处理（deduped=true，不写事件）；
+     *   · 漂移 → 刷新快照与版本并写 skill.installed（同名事件保留全量清单历史，事件账本只增）。
+     */
+    const existing = await client.query<{ snap: string[]; ver: string }>(
+      `SELECT fence_bindings_snapshot AS snap, installed_version AS ver
+         FROM skill_installs WHERE skill_id=$1 AND workspace_id=$2`,
+      [skill.id, scope.workspaceId],
     );
-    deduped = r.rowCount === 0;
+    const prev = existing.rows[0];
+    if (!prev) {
+      await client.query(
+        `INSERT INTO skill_installs (skill_id, workspace_id, installed_by, fence_bindings_snapshot, installed_version)
+         VALUES ($1,$2,$3,$4,$5)`,
+        [skill.id, scope.workspaceId, input.by, JSON.stringify(bindings), skill.version],
+      );
+      deduped = false;
+    } else {
+      const sameBindings = JSON.stringify(prev.snap ?? []) === JSON.stringify(bindings);
+      const sameVersion = prev.ver === skill.version;
+      deduped = sameBindings && sameVersion;
+      if (!deduped) {
+        await client.query(
+          `UPDATE skill_installs
+              SET fence_bindings_snapshot=$3, installed_version=$4, installed_by=$5, installed_at=now()
+            WHERE skill_id=$1 AND workspace_id=$2`,
+          [skill.id, scope.workspaceId, JSON.stringify(bindings), skill.version, input.by],
+        );
+      }
+    }
     if (!deduped) {
       await emitInTx(client, scope, input.by, {
         action: "skill.installed",
-        after: { skillId: skill.id, name: skill.name, level: skill.level, bindings },
+        after: {
+          skillId: skill.id, name: skill.name, level: skill.level, bindings,
+          ...(prev ? { refreshed: true, previousBindings: prev.snap ?? [], previousVersion: prev.ver } : {}),
+        },
         basis: ["安装即绑定围栏（F8.2）；技能动作照常过围栏瀑布（L8.3，运行时由 tools/pre-execute 瀑布强制）"],
       });
     }
