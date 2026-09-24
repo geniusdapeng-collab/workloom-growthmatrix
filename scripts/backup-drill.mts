@@ -82,17 +82,30 @@ async function pgBackupRestore(): Promise<{ detail: string; rtoSeconds: number }
     throw new Error("本机缺 pg_dump/pg_restore/createdb（Postgres.app bin 不在 PATH）→ 未验证，不算通过");
   }
   const dumpFile = `/tmp/${drillDb}.dump`;
+  /**
+   * 连接参数一律从 DATABASE_URL 派生（2026-09-24 修复）：旧实现把 createdb/pg_dump/pg_restore/dropdb
+   * 全部硬编码成 `-h 127.0.0.1 -p 5432 -U postgres workloom`，与本仓"客户端运行时"档
+   * （PG 5432+420=5852，端口偏移语义）不符 —— 演练库建在 5432，校验却按 DATABASE_URL 去 5852 找，
+   * 实测报 `database "workloom_drill_…" does not exist`（假失败，且演练本身没覆盖真库）。
+   */
+  const target = new URL(DATABASE_URL);
+  const dbHost = target.hostname || "127.0.0.1";
+  const dbPort = target.port || "5432";
+  const dbUser = decodeURIComponent(target.username || "postgres");
+  const dbName = (target.pathname || "/workloom").replace(/^\//, "") || "workloom";
+  const dbPassword = decodeURIComponent(target.password || "");
+  const pgEnv = { ...process.env, ...(dbPassword ? { PGPASSWORD: dbPassword } : {}) };
   const run = (bin: string, args: string[]): void => {
-    const r = spawnSync(bin, args, { encoding: "utf8" });
+    const r = spawnSync(bin, args, { encoding: "utf8", env: pgEnv });
     if (r.status !== 0) throw new Error(`${bin} ${args[0]} 失败：${(r.stderr || "").trim().slice(0, 300)}`);
   };
-  run(createdb, ["-h", "127.0.0.1", "-p", "5432", "-U", "postgres", drillDb]);
+  run(createdb, ["-h", dbHost, "-p", dbPort, "-U", dbUser, drillDb]);
   try {
     const dumpStart = Date.now();
-    run(dumpBin, ["-h", "127.0.0.1", "-p", "5432", "-U", "postgres", "-Fc", "--no-owner", "-f", dumpFile, "workloom"]);
+    run(dumpBin, ["-h", dbHost, "-p", dbPort, "-U", dbUser, "-Fc", "--no-owner", "-f", dumpFile, dbName]);
     const dumpSeconds = (Date.now() - dumpStart) / 1000;
     const restoreStart = Date.now();
-    run(restoreBin, ["-h", "127.0.0.1", "-p", "5432", "-U", "postgres", "--no-owner", "-d", drillDb, dumpFile]);
+    run(restoreBin, ["-h", dbHost, "-p", dbPort, "-U", dbUser, "--no-owner", "-d", drillDb, dumpFile]);
     const restoreSeconds = (Date.now() - restoreStart) / 1000;
 
     const scratch = new pg.Pool({ connectionString: `${DATABASE_URL.replace(/\/[^/]+$/, `/${drillDb}`)}`, max: 2 });
@@ -117,7 +130,7 @@ async function pgBackupRestore(): Promise<{ detail: string; rtoSeconds: number }
       await scratch.end();
     }
   } finally {
-    run(dropdb, ["-h", "127.0.0.1", "-p", "5432", "-U", "postgres", drillDb]);
+    run(dropdb, ["-h", dbHost, "-p", dbPort, "-U", dbUser, drillDb]);
   }
 }
 

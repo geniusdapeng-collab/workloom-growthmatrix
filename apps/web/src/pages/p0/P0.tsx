@@ -14,6 +14,7 @@ import { CommandCard } from "../../components/CommandCard";
 import { actionText, actorText } from "../../lib/display";
 import { SimBanner } from "../../components/SimBanner";
 import { SkillDistBanner } from "../../components/SkillDistBanner";
+import { ActionCardBanner } from "../../components/ActionCardBanner";
 import { FloorView, type FloorPayload, type FloorAgent } from "./Floor";
 import { Stage3D } from "../../components/Stage3D";
 import { Floor3D } from "../../components/Floor3D";
@@ -481,6 +482,8 @@ export default function P0() {
       <SimBanner />
       {/* 技能更新通栏（技能保鲜环：夜班自动更新提示 / L2 待审批引导） */}
       <SkillDistBanner />
+      {/* B-64 首登行动卡通栏：今日待决关卡 / 首日上岗续播 / 待验收交付（事实来自服务端，无待办不渲染） */}
+      <ActionCardBanner />
 
       {/* 舞台 */}
       <main className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center px-4">

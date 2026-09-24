@@ -80,7 +80,7 @@
 | 行业包 | 3 个 | bundles/ 目录 |
 | 数字员工岗位定义 | 84 个（组合去重后 79 岗 · 同名遮蔽 5 处） | bundles/*/presets/*.yml |
 | 随包技能 | 91 个 | bundles/*/skills/ |
-| 围栏规则 | 127 条（含模板派生 3 条 · 基线 124 条） | bundles/*/fences/*.yml + packages/base/bundles/templates/ |
+| 围栏规则 | 128 条（含模板派生 3 条 · 基线 125 条） | bundles/*/fences/*.yml + packages/base/bundles/templates/ |
 | 对象类型 | 134 类（去重后 118 类） | bundles/*/schemas/objects.json |
 | 管线 | 11 条 | bundles/*/pipelines/*.yml |
 | 触发器声明 | 35 条 | bundles/*/triggers.yml |

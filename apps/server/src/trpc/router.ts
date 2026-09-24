@@ -160,6 +160,7 @@ import {
 import { advanceQuestline, firstActionCard, questlineFunnel, questlineState, replayQuestline } from "../service/questline.js";
 import { gateLoadMetrics, releaseGatesBatch } from "../service/gate-batch.js";
 import { latestTrustSnapshot, runTrustReview } from "../service/trust-runtime.js";
+import { svcQuery } from "../service/events.js";
 import { bundledServiceFrontAvailable, resolveServiceFrontPublication } from "../service/service-front-publication.js";
 import { resolveWorkspaceInspectionAdapter } from "../service/inspection-adapter.js";
 import {
@@ -1726,8 +1727,13 @@ const approvalsRouter = router({
           input.approvalId,
           { type: input.gesture, reasonEnum: input.reasonEnum, reasonText: input.reasonText, editedAfter: input.editedAfter, editKind: input.editKind },
         );
-        // E1 联调接线（PF.5/F2.4）：fence.rule.propose 手势通过 → 激活规则版本
-        if (!res.deduped && res.status === "approved") {
+        /**
+         * E1 联调接线（PF.5/F2.4）：fence.rule.propose 手势通过 → 激活规则版本。
+         * 2026-09-24 修复（RDAS O 域 ADR-T02 实测）：**编辑放行（edited）与通过同等续跑**——
+         * 旧实现只对 status==='approved' 续跑，H2「轻修正后交付」手势把审批置为 edited 后就再没人推进，
+         * 线程永远停在 pending_review（runtime 侧 approvedStepIds 本就接受 approved+edited，两侧口径不一致）。
+         */
+        if (!res.deduped && (res.status === "approved" || res.status === "edited")) {
           await activateFenceRuleAfterApproval(scopeOf(ctx.identity), input.approvalId);
           // 步骤级审批通过 → 自动续跑所属 Quest（2026-09-20：否则"批完还得手动推进"，生图链路停在半路）
           scheduleQuestResumeAfterApproval(scopeOf(ctx.identity), input.approvalId);
@@ -1779,6 +1785,8 @@ const approvalsRouter = router({
         // E1 联调接线（PF.5/F2.4）：批量采纳通过项同样触发围栏激活接线（防御性；围栏提案标记 high_risk 本不可批量）
         for (const id of res.approved) {
           await activateFenceRuleAfterApproval(scopeOf(ctx.identity), id);
+          // 2026-09-24 修复：批量放行与单条决定同口径——放行即续跑所属 Quest（否则批量后全靠手动"推进"）
+          scheduleQuestResumeAfterApproval(scopeOf(ctx.identity), id);
         }
         return res;
       } catch (err) {
@@ -1810,7 +1818,12 @@ const approvalsRouter = router({
         memberNo: ctx.identity.memberNo, role: ctx.identity.role, id: ctx.identity.memberId,
       }, input ?? {});
       // 围栏激活接线（与单条/旧批量同口径：通过项触发激活）
-      for (const id of result.released) await activateFenceRuleAfterApproval(scope, id);
+      for (const id of result.released) {
+        await activateFenceRuleAfterApproval(scope, id);
+        // 2026-09-24 修复（B-70 复核）：批量放行的关卡此前**不触发续跑**，被放行的线程会一直停在
+        // pending_review，只有人工点"推进"才动——与"批量放行"的产品语义（一次手势放行一批）矛盾。
+        scheduleQuestResumeAfterApproval(scope, id);
+      }
       return result;
     }),
 
@@ -2449,6 +2462,30 @@ const nightShiftRouter = router({
 
 /** fence router（F8 起 P5 数据源：规则版本化投影 + 30 天触发聚合 + dry-run 生命周期 F2.4/F2.5） */
 const fenceRouter = router({
+  /**
+   * 生效围栏规则（客户端/执行器瀑布的数据源）：给 dsh 围栏插件与外部执行器用的**最小投影**
+   * （rule_id / level / match）。2026-09-24 新增：P 域实测发现 harness 指向的
+   * `fence.activeRules` 在本仓不存在（404 → 插件把错误体当数组 → 整个工具层不可用），
+   * 现补上该端点；返回体只有判定所需字段，不含规则说明与来源细节。
+   */
+  activeRules: protectedProcedure.query(async ({ ctx }) => {
+    const scope = scopeOf(ctx.identity);
+    const rows = await svcQuery<{ rule_id: string; level: string; match_spec: Record<string, unknown> | null }>(scope.workspaceId,
+      `SELECT rule_id, level, match_spec FROM fence_rules
+        WHERE (workspace_id=$1 OR workspace_id='*') AND status='active'
+        ORDER BY rule_id`,
+      [scope.workspaceId]);
+    return rows.map((r) => ({
+      rule_id: r.rule_id,
+      level: r.level,
+      match: {
+        actions: (r.match_spec?.actions as string[] | undefined) ?? [],
+        object_types: (r.match_spec?.object_types as string[] | undefined) ?? [],
+        when: String(r.match_spec?.when ?? "true"),
+      },
+    }));
+  }),
+
   /** 规则列表（P5E2：级别 pill + 来源 + 30 天触发数；基线 🔒 集团强制 F2.3） */
   rules: protectedProcedure.query(async ({ ctx }) => {
     const scope = scopeOf(ctx.identity);

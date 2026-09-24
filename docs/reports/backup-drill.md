@@ -1,19 +1,19 @@
 # 备份与回滚演练报告（B-74）
 
-> 生成时间：2026-09-23T18:06:30.424Z｜执行方式：`pnpm drill:backup`
-> 沙箱：演练库 `workloom_drill_20260923180627`（已删除）· 演练工作区 `ws-drill-20260923180627`（已清理）；不触碰演示工作区与生产配置。
+> 生成时间：2026-09-24T14:39:50.792Z｜执行方式：`pnpm drill:backup`
+> 沙箱：演练库 `workloom_drill_20260924143948`（已删除）· 演练工作区 `ws-drill-20260924143948`（已清理）；不触碰演示工作区与生产配置。
 
 | 演练项 | 结果 | RTO（秒） | 说明 |
 |---|---|---:|---|
-| pg-restore | ✅ 通过 | 1.29 | dump 0.6s + restore 0.7s；7 张关键表行数一致；事件链抽样 200 条 |
-| bundle-rollback | ✅ 通过 | 1.41 | 沙箱装配 77 岗 → 卸载后 0 → 快照 bs-mueezrvi-592f95 回滚后 77（与演练前一致） |
+| pg-restore | ✅ 通过 | 0.7 | dump 0.2s + restore 0.5s；7 张关键表行数一致；事件链抽样 200 条 |
+| bundle-rollback | ✅ 通过 | 1.63 | 沙箱装配 79 岗 → 卸载后 0 → 快照 bs-mufn1ux1-6a8290 回滚后 79（与演练前一致） |
 | fence-rollback | ✅ 通过 | 0.02 | G-AD1 加严激活 → 回滚恢复（定义逐字一致）；审计留痕 2 条历史版本 |
 | model-rollback | ✅ 通过 | 0 | 变更 1 项（mock-001 → mock-002）→ 回滚命令已生成（指向 mock-001）：tsx scripts/model-ledger.mts --set content-generate=mock-001 |
 | executor-rollback | ✅ 通过 | 0 | 配置 publish 执行器可加载 → 撤下模块配置后回落到「未核实」安全态（不残留半配置） |
 
 ## RTO / RPO 记录
 
-- 最长单项 RTO：bundle-rollback 1.41 秒（本机单机 PG，逻辑备份口径）。
+- 最长单项 RTO：bundle-rollback 1.63 秒（本机单机 PG，逻辑备份口径）。
 - RPO：逻辑备份口径 = 备份时刻；生产建议按 WAL 归档 / 云备份策略执行，本报告只记录**可复现的恢复能力**，不宣称生产 RPO。
 - 结论：五条回滚路径全部可复现通过。
 

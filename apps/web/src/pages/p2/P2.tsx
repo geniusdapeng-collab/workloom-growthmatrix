@@ -19,6 +19,7 @@ import { Bridge } from "../../shell/Bridge";
 import { useNavigationAccess } from "../../shell/NavigationAccess";
 import { RejectDialog } from "../../components/RejectDialog";
 import { PageExitLink } from "../../shell/PageExitLink";
+import { isVisibleGateCard, type GateApprovalSnapshot } from "./gate-filter";
 import {
   AgentActionMessage,
   BannerAlert,
@@ -51,7 +52,13 @@ interface Ev {
 }
 interface ApprovalRow {
   approval_id: string; event_id: string; status: string;
-  snapshot: { summary?: string; before?: unknown; after?: unknown; rule_version?: string };
+  /**
+   * snapshot 口径（2026-09-24）：
+   *  - `gate/tool/rule_ids/step_id` = 运行时落的**关卡事实位**（新行必有；历史行可能缺失），
+   *    `gate-filter.ts` 据此判定关卡卡是否显示，不再只靠动作名猜；
+   *  - `summary/before/after/rule_version` 为卡片展示字段。
+   */
+  snapshot: GateApprovalSnapshot & { summary?: string; before?: unknown; after?: unknown; rule_version?: string };
 }
 
 /** 回执三态映射（L3.6/E3.7：无回执=未核实，不得宣称完成） */
@@ -235,13 +242,8 @@ export default function P2() {
          * （2026-09-21 产品所有者口径；配套围栏 G-C01 已把内部协作改为 auto）。
          * 历史遗留的挂起项在这里一并过滤，等服务端过期清扫收口。
          */
-        setApprovals(ap.filter((a) => ids.has(a.event_id)).filter((a) => {
-          const snapshot = a.snapshot as { gate?: unknown; action?: unknown };
-          if (snapshot?.gate) return true;                       // G1–G10 决策门
-          const action = typeof snapshot?.action === "string" ? snapshot.action : "";
-          return /\.(confirm|execute|submit|publish|boost|approve|adjust|commit|finalize|topup)$/.test(action)
-            || /^(gate|publish|ads|price|deal|budget|credit|spend|purchase|order|invoice)\./.test(action);
-        }));
+        // 关卡卡可见性：事实位优先（见 gate-filter.ts 的修复说明）
+        setApprovals(ap.filter((a) => ids.has(a.event_id)).filter((a) => isVisibleGateCard(a.snapshot)));
       }
       setOffline(false);
     } catch {

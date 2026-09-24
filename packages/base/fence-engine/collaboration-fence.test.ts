@@ -18,11 +18,31 @@ const PACK = join(
 const pack = loadFencePack(readFileSync(PACK, "utf-8"));
 
 describe("B-71 协作纪律围栏包", () => {
-  it("包本身是基线包（只可加严），声明 G-CON1/G-BB1 两条阻断规则", () => {
+  it("包本身是基线包（只可加严）：G-CON1/G-BB1 阻断 + G-CON2 域内放行", () => {
     expect(pack.version).toBe("geo-growth-collaboration/v1");
     expect(pack.defaultLevel).toBe("review");
-    expect(pack.rules.map((r) => r.rule_id)).toEqual(["G-CON1", "G-BB1"]);
-    expect(pack.rules.every((r) => r.is_baseline && r.level === "block")).toBe(true);
+    expect(pack.rules.map((r) => r.rule_id)).toEqual(["G-CON1", "G-BB1", "G-CON2"]);
+    const blocks = pack.rules.filter((r) => r.level === "block").map((r) => r.rule_id);
+    expect(blocks).toEqual(["G-CON1", "G-BB1"]);
+    expect(pack.rules.every((r) => r.is_baseline)).toBe(true);
+  });
+
+  it("G-CON2：GEO 域内部产出走 auto（工具前缀视图命中），对外/花钱动作不在清单内", () => {
+    // 工具前缀视图（safeObjectType('geo_queue.emit') = geo_queue）：内部队列推送 → auto
+    const internal = judge({
+      object: { type: "geo_queue" }, action: "geo_queue.emit", effect: "write", context: {},
+    }, pack.rules, pack.defaultLevel);
+    expect(internal.level).toBe("auto");
+    expect(internal.impacts.some((i) => i.rule_id === "G-CON2" && i.result === "pass")).toBe(true);
+    // 语义动作视图（geo.rewrite）同样命中
+    const rewrite = judge({ object: { type: "geo" }, action: "geo.rewrite", effect: "write", context: {} }, pack.rules, pack.defaultLevel);
+    expect(rewrite.level).toBe("auto");
+    // 对外发布与花钱动作不在清单内 → 落包默认级（review），交由 G9/G-GEO1/G12/G-C02 把关
+    const publish = judge({ object: { type: "geo" }, action: "rpa.publish", effect: "write", context: {} }, pack.rules, pack.defaultLevel);
+    expect(publish.level).toBe("review");
+    expect(publish.impacts).toEqual([]);
+    const budget = judge({ object: { type: "budget" }, action: "budget.allocate.write", effect: "write", context: {} }, pack.rules, pack.defaultLevel);
+    expect(budget.level).toBe("review");
   });
 
   it("G-CON1：无契约排产（task.dispatch / calendar.schedule / publish.dispatch）一律熔断", () => {

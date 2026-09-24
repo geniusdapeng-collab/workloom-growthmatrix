@@ -26,8 +26,14 @@ export interface PortraitSet {
   anchors?: string[];
   /** 生成失败的角度（逐角度隔离；角度数组 angles 只含成功项） */
   failedAngles?: Array<{ angle: string; error: string }>;
-  /** 背景干净度实测（抠像友好硬闸的留痕：阈值口径 + 逐角度实测值） */
-  backgroundChecks?: Record<string, Record<string, unknown>>;
+  /**
+   * 背景干净度实测（抠像友好硬闸的留痕：阈值口径 + 逐角度实测值；值形如 video-studio
+   * `BackgroundCheck`：ok/policy/mode/bands/cornerSpread/maxRange/maxSat/notes）。
+   * 2026-09-24 类型修复：此前声明为 `Record<string, Record<string, unknown>>`，与
+   * portrait-agent 写入的强类型 `BackgroundCheck` 不兼容 → `pnpm typecheck` 红；
+   * 现改为 `Record<string, unknown>`（保留审计字段，且不强迫写入方实现索引签名）。
+   */
+  backgroundChecks?: Record<string, unknown>;
   active?: boolean;
   model?: string;
   seed?: number;
