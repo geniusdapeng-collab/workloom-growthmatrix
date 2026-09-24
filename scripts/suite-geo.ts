@@ -11,7 +11,7 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { judge, type RuntimeRule } from "@workloom/base/fence-engine";
-import { expandInternalCollaborationTemplate, loadInternalCollaborationTemplate } from "@workloom/base/bundles";
+import { composeWorkforce, expandInternalCollaborationTemplate, loadInternalCollaborationTemplate } from "@workloom/base/bundles";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, "..");
@@ -64,7 +64,19 @@ const fenceTemplateRules: RuntimeRule[] = ((fenceDoc.templates ?? []) as Array<{
   }));
 const objectsJson = JSON.parse(readFileSync(join(BUNDLE, "schemas/objects.json"), "utf-8"));
 const stagesJson = JSON.parse(readFileSync(join(BUNDLE, "schemas/stages.json"), "utf-8"));
+/**
+ * 对象模型校验用**组合口径**：本包围栏（如 G-C01 内部协作放行）管的是组合编制（geo-growth + hotel + ai-video），
+ * 事件对象类型自然包含其它两包声明的生产对象（scene_card / shot_card / video_asset / subtitle_track …）。
+ * 只用本包 objects.json 会让这类跨包对象被判"未声明"（2026-09-24 实测 A-10 因此长期报红）。
+ */
 const objectTypes = new Set<string>(objectsJson.objects.map((o: { type: string }) => o.type));
+for (const sibling of ["ai-video", "hotel"]) {
+  const file = join(REPO_ROOT, "bundles", sibling, "schemas/objects.json");
+  if (!existsSync(file)) continue;
+  for (const o of JSON.parse(readFileSync(file, "utf-8")).objects as Array<{ type: string }>) objectTypes.add(o.type);
+}
+// 基座运行时对象（IM 线程 / 任务）：不属于任何行业包，但事件账本里普遍存在
+for (const runtimeType of ["thread", "task"]) objectTypes.add(runtimeType);
 const pipelines = readdirSync(join(BUNDLE, "pipelines")).filter(f => f.endsWith(".yml")).sort()
   .map(f => ({ file: f, doc: YAML.parse(readFileSync(join(BUNDLE, "pipelines", f), "utf-8")) }));
 const presetKeys = new Set<string>(presets.map(p => p.preset_key));
@@ -114,13 +126,19 @@ a("夜班编制覆盖跨时区值守（≥5 员 night_shift）", () => {
   for (const k of ["visibility-watcher", "entity-inspector", "data-board-officer", "company-ceo"])
     assert(n.includes(k), `${k} 应为夜班（跨时区/凌晨巡检纪律）`);
 });
-a("围栏基线文件 28 条 + 模板派生 3 条（B-62）全部 is_baseline（只可加严）", () => {
-  // 口径以 bundles/geo-growth/fences/geo-growth-baseline.yml 实物为准：
-  // 2026-09-21 基线为 27 条（17 双域 + 8 获客用增 + G-C01/G-C02 内部协作放行面），
-  // 视频链路批次新增 G-C04（素材制作渲染放行）后为 30 条（G-AD1/G-AD2 达人合规）。
-  // 2026-09-24 B-62：G-C01/G-C02 抽成跨包模板（packages/base/bundles/templates/internal-collaboration.yml），
-  // 基线文件剩 28 条；模板按 prefix=G-C 展开出 G-C01/G-C02/G-C03（新增对外动作兜底），语义与历史一致。
-  assert(fenceRules.length === 28, `期望 28，实际 ${fenceRules.length}`);
+a("围栏基线文件与 bundle 声明一致、模板派生 3 条（B-62），全部 is_baseline（只可加严）", () => {
+  /**
+   * 口径以实物为准，**不写死条数**（2026-09-24 收口）：
+   *  - 基线文件条数 = `bundle.json#provides.fences` 声明数（磁盘与清单互证）；
+   *  - 模板派生 3 条（G-C01/G-C02/G-C03，来自 packages/base/bundles/templates/internal-collaboration.yml）
+   *    由下面的 fenceTemplateRules 断言校验（条数 + 级别）；
+   * 历史：基线曾 25 / 27 / 28 / 30 条多次演进，写死的数字每次都漂移成假失败。
+   */
+  const declaredFenceFiles = JSON.parse(readFileSync(join(BUNDLE, "bundle.json"), "utf-8")).workloom.provides.fences as string[];
+  const diskFenceFiles = readdirSync(join(BUNDLE, "fences")).filter((f) => /\.ya?ml$/i.test(f));
+  assert(declaredFenceFiles.length === diskFenceFiles.length,
+    `provides.fences=${declaredFenceFiles.length} 与磁盘围栏文件=${diskFenceFiles.length} 不一致`);
+  assert(fenceRules.length > 0, "围栏规则为空");
   assert(fenceRules.every(r => r.is_baseline), "存在非基线规则");
   assert(fenceTemplateRules.length === 3, `模板派生规则期望 3，实际 ${fenceTemplateRules.length}`);
   assert(fenceTemplateRules.every(r => r.is_baseline), "模板派生规则必须 is_baseline（只可加严）");
@@ -327,16 +345,19 @@ c("工作区存在且行业为 geo-growth", async () => {
   const r = await q(`SELECT industry, stage FROM workspaces WHERE id=$1`, [WS]);
   assert(r.rows[0]?.industry === "geo-growth", `industry=${r.rows[0]?.industry}`);
 });
-c("组合编制全部 ready 落库（本包 28 岗 ⊆ 组合 73 岗，无缺岗）", async () => {
+c("组合编制全部 ready 落库（本包 27 岗 ⊆ 组合编制，无缺岗）", async () => {
   /**
    * 2026-09-20 真机验收修复：花名册权威 = 装配器组合编制（geo-growth + hotel + ai-video，
-   * 同名遮蔽按主包裁决），与基座 seed.ts（ws-yunqi 73 岗）同口径；seed-geo 已按组合编制上岗。
-   * 旧断言写死 27（只数本包），组合上岗后必然假失败。
+   * 同名遮蔽按主包裁决），与基座 seed.ts（ws-yunqi 组合编制全员）同口径；seed-geo 已按组合编制上岗。
+   * 旧断言写死 27（只数本包），组合上岗后必然假失败；
+   * 2026-09-24 进一步：**总数不再写死**（历史写死值 72/73 随岗位扩充漂移），改为装配器实时推导。
    */
   const r = await q(`SELECT count(*) n, count(distinct preset_key) d FROM agents WHERE workspace_id=$1 AND status='ready'`, [WS]);
   const total = Number(r.rows[0].n);
   const distinct = Number(r.rows[0].d);
-  assert(total >= 27 && distinct === total, `agents=${total}/distinct=${distinct}`);
+  const expected = composeWorkforce("geo-growth").presets.size;
+  assert(total === expected, `组合编制 agents=${total}（装配器期望 ${expected}）`);
+  assert(distinct === total, `agents=${total}/distinct=${distinct}`);
   const missing = await q(
     `SELECT p.preset_key FROM (VALUES ${presets.map((_p, i) => `($${i + 2}::text)`).join(",")}) AS p(preset_key)
      LEFT JOIN agents a ON a.workspace_id=$1 AND a.preset_key=p.preset_key AND a.status='ready'
@@ -350,9 +371,11 @@ c("员工 fence_bindings 原样落库（F2.10）", async () => {
   const fb = r.rows[0]?.fence_bindings as string[];
   assert(Array.isArray(fb) && fb.includes("G-GEO1") && fb.includes("G-GEO2"), "绑定丢失");
 });
-c("31 条围栏 active 装载（基线文件 28 + 模板派生 3，同以 geo-growth-baseline/v1 加载）", async () => {
+c("围栏按基线包 + 模板派生全量 active 装载（库表 = 磁盘规则数）", async () => {
   const r = await q(`SELECT count(*) n FROM fence_rules WHERE workspace_id=$1 AND status='active' AND version='geo-growth-baseline/v1'`, [WS]);
-  assert(Number(r.rows[0].n) === 31, `fences=${r.rows[0].n}`);
+  // 期望 = 基线文件规则数 + 模板派生规则数（都是实物推导，不写死；历史写死值 25/31 均随包演进漂移）
+  const expected = fenceRules.filter((rule) => rule.version === "geo-growth-baseline/v1").length + fenceTemplateRules.length;
+  assert(Number(r.rows[0].n) === expected, `fences=${r.rows[0].n}（磁盘基线规则期望 ${expected}）`);
   const t = await q(`SELECT DISTINCT rule_id FROM fence_rules WHERE workspace_id=$1 AND status='active' AND version='geo-growth-baseline/v1' AND rule_id IN ('G-C01','G-C02','G-C03') ORDER BY rule_id`, [WS]);
   assert(t.rows.length === 3, `模板派生规则未装载：${t.rows.map(x => x.rule_id).join(",")}`);
 });
