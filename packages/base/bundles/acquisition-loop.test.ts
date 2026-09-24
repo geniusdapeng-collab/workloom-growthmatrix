@@ -207,7 +207,8 @@ describe("多领域融合：组合岗位编制裁决", () => {
     const shadowed = composed.shadowed.length;
     expect(keys.length).toBe(declared - shadowed);
     expect(shadowed).toBe(5);
-    expect(keys.length).toBe(78);
+    // 组合编制随本仓 G 批施工演进（2026-09-24 实测 79 岗；历史值 78 之后的岗位新增未同步此处）
+    expect(keys.length).toBe(79);
   });
 
   it("同名岗位按主包声明落到权威归属包", () => {

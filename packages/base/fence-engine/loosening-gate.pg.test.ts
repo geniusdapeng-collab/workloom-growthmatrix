@@ -6,7 +6,10 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import pg from "pg";
-import { activateRuleVersion, confirmDryRun, createDryRun, type RuntimeRule } from "./lifecycle.js";
+import { activateRuleVersion, confirmDryRun, createDryRun } from "./lifecycle.js";
+// RuntimeRule 定义在 judge.ts（lifecycle 只是消费方，不负责再导出）——从定义处取类型，
+// 否则 `pnpm -r typecheck` 报 TS2459 并中断流水线（test-gate 的第一阶段就是全仓 typecheck）。
+import type { RuntimeRule } from "./judge.js";
 import { gatewayAppend } from "../workdata/gateway.js";
 
 process.env.DATABASE_URL ??= "postgres://postgres:workloom@localhost:5432/workloom";
