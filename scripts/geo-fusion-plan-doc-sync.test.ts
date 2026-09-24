@@ -67,21 +67,23 @@ describe("口径说明行与装配器实测同步（防复发）", () => {
     expect(found, "docs/geo-fusion-plan.md 缺「口径说明」行（§2.2）").toBeTruthy();
     return found!;
   };
+  /** 各仓对该行的加粗写法不完全一致（三仓同源但排版有差），比对前统一去掉 `**` 强调符。 */
+  const plain = (): string => line().replace(/\*\*/g, "");
 
   it("组合编制总岗数 / 遮蔽处数 = 装配器运行结果", () => {
     const composed = composeWorkforce("geo-growth");
-    expect(line()).toContain(`完整组合编制为三包合并 **${composed.presets.size} 岗**`);
-    expect(line()).toContain(`其中 ${composed.shadowed.length} 处同名遮蔽`);
+    expect(plain()).toContain(`完整组合编制为三包合并 ${composed.presets.size} 岗`);
+    expect(plain()).toContain(`其中 ${composed.shadowed.length} 处同名遮蔽`);
   });
 
   it("各包声明岗数 = 各包 provides.presets 资产数", () => {
     const counts = declaredPresetCounts();
-    expect(line()).toContain(
+    expect(plain()).toContain(
       `各包声明 hotel ${counts.hotel} + ai-video ${counts["ai-video"]} + geo-growth ${counts["geo-growth"]}`,
     );
   });
 
   it("三包围栏并集条数 = provides.fences 逐文件 rule_id 去重数", () => {
-    expect(line()).toContain(`围栏并集 **${fenceUnionSize()} 条**`);
+    expect(plain()).toContain(`围栏并集 ${fenceUnionSize()} 条`);
   });
 });
