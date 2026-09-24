@@ -22,21 +22,23 @@ describe.runIf(RUN_DB)("B-37 任务契约持久化", () => {
     await owner.end();
   });
 
-  it("创建 → offered，事件 contract.offer 落账", async () => {
+  it("创建 → draft（初始为草稿），事件 contract.create 落账", async () => {
     const { contract, eventId } = await createContract(app, scope, {
       id: contractId, title: "B-37 契约持久化用例", goal: "验证契约状态机与事件留痕",
       requester: "growth-lead", assigneePreset: "geo-content-planner", verifierPreset: "review-analyst",
       successCriteria: ["状态按状态机推进", "每次迁移有事件回执"],
       budgetAmount: 120, mode: "m4_contract", threadId: "T-G01", bundleScope: ["geo-growth"], matrixRefs: ["mx-1"],
     }, actor);
-    expect(contract).toMatchObject({ id: contractId, status: "offered", threadId: "T-G01", bundleScope: ["geo-growth"] });
+    // 2026-09-24 修复（H-23）：创建=草稿；发放是显式迁移（advance offer），不再"创建即 offer"
+    expect(contract).toMatchObject({ id: contractId, status: "draft", threadId: "T-G01", bundleScope: ["geo-growth"] });
     expect(eventId).toMatch(/^E-/);
   });
 
   it("状态机：accept→start→deliver→verify→settle；非法跳步拒绝", async () => {
     await expect(advanceContract(app, scope, { id: contractId, action: "settle", by: actor }))
       .rejects.toMatchObject({ code: "BAD_STATE" });
-    for (const action of ["accept", "start", "deliver", "verify", "settle"] as const) {
+    // draft 起步：先显式发放（offer），再走 accept→…→settle
+    for (const action of ["offer", "accept", "start", "deliver", "verify", "settle"] as const) {
       const r = await advanceContract(app, scope, { id: contractId, action, by: actor });
       expect(r.contract.status).not.toBeUndefined();
     }
@@ -68,7 +70,8 @@ describe.runIf(RUN_DB)("B-37 任务契约持久化", () => {
       assigneePreset: "geo-content-planner", verifierPreset: "review-analyst",
       successCriteria: ["结算落账"], budgetAmount: 88, mode: "m4_contract",
     }, actor);
-    for (const action of ["accept", "start", "deliver", "verify", "settle"] as const) {
+    // 创建=草稿（2026-09-24 修复）：先显式发放，再走后续状态机
+    for (const action of ["offer", "accept", "start", "deliver", "verify", "settle"] as const) {
       await advanceContract(app, scope, { id, action, by: actor });
     }
     const row = await owner.query<{ id: string; ref_event_id: string | null; amount: string; meta: Record<string, unknown> }>(
@@ -94,7 +97,7 @@ describe.runIf(RUN_DB)("B-37 任务契约持久化", () => {
       assigneePreset: "geo-content-planner", verifierPreset: "review-analyst",
       successCriteria: ["超带需放行"], budgetAmount: 12000, mode: "m4_contract",
     }, actor);
-    for (const action of ["accept", "start", "deliver", "verify"] as const) {
+    for (const action of ["offer", "accept", "start", "deliver", "verify"] as const) {
       await advanceContract(app, scope, { id, action, by: actor });
     }
     const gateId = `apr-${id.toLowerCase()}-settle`;

@@ -47,7 +47,9 @@ describe.runIf(RUN_DB)("B-40 契约全链（事件溯源路径）", () => {
       title: "带内契约全链", goal: "验证线程/验收/结算三链", assigneePreset: "geo-content-planner",
       verifierPreset: "review-analyst", successCriteria: ["全链可复算"], budgetAmount: 120, mode: "m4_contract",
     });
-    expect(created.status).toBe("offered");
+    // 2026-09-24 修复（H-23）：创建=草稿，发放是显式迁移
+    expect(created.status).toBe("draft");
+    await advanceContract(workspaceId, actor, created.id, "offer");
 
     const accepted = await advanceContract(workspaceId, actor, created.id, "accept");
     const threadId = (accepted as unknown as { threadId?: string }).threadId;
@@ -95,7 +97,8 @@ describe.runIf(RUN_DB)("B-40 契约全链（事件溯源路径）", () => {
       title: "超带契约全链", goal: "超带需关卡", assigneePreset: "geo-content-planner",
       verifierPreset: "review-analyst", successCriteria: ["关卡可复算"], budgetAmount: 900, mode: "m4_contract",
     });
-    for (const action of ["accept", "start", "deliver", "verify"] as const) {
+    // 创建=草稿（2026-09-24 修复）：先显式发放，再走后续状态机
+    for (const action of ["offer", "accept", "start", "deliver", "verify"] as const) {
       await advanceContract(workspaceId, actor, created.id, action);
     }
     const gateId = contractGateId(created.id);
@@ -123,7 +126,7 @@ describe.runIf(RUN_DB)("B-40 契约全链（事件溯源路径）", () => {
   it("跨路径读模型：表路径建出的契约在事件溯源列表里可见且字段完整（首条事件全量快照）", async () => {
     const storeId = `ct-store-${suffix}`;
     await storeCreateContract(getAppPool(), { tenantId, workspaceId }, {
-      id: storeId, title: "表路径契约（跨路径读模型）", goal: "验证 offer 事件带全量快照",
+      id: storeId, title: "表路径契约（跨路径读模型）", goal: "验证 create 事件带全量快照",
       requester: "growth-lead", assigneePreset: "geo-content-planner", verifierPreset: "review-analyst",
       successCriteria: ["列表可见", "字段完整"], budgetAmount: 45, mode: "m4_contract",
     }, { id: "MEM-001", type: "human" });
@@ -140,7 +143,7 @@ describe.runIf(RUN_DB)("B-40 契约全链（事件溯源路径）", () => {
          FROM biz_events WHERE workspace_id=$1 AND payload->'object'->>'id'=$2 ORDER BY seq ASC LIMIT 1`,
       [workspaceId, storeId],
     );
-    expect(first.rows[0]?.action).toBe("contract.offer");
+    expect(first.rows[0]?.action).toBe("contract.create"); // 2026-09-24 修复：首条事件是 create（创建=草稿）
     expect(first.rows[0]?.after).toMatchObject({ title: "表路径契约（跨路径读模型）", id: storeId });
     await owner.query(`DELETE FROM task_contracts WHERE id=$1`, [storeId]).catch(() => undefined);
   });

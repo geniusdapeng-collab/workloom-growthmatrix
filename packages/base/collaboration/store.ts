@@ -93,7 +93,8 @@ async function withTx<T>(app: pg.Pool, scope: Scope, fn: (client: pg.PoolClient)
 
 async function emitContractEvent(
   client: pg.PoolClient, scope: Scope, actor: ContractActor, contractId: string,
-  action: ContractAction, after: Record<string, unknown>,
+  /** `create` 是首条事件（读模型 reduceContractStatus 显式识别它 → draft），不属于状态机迁移动作 */
+  action: ContractAction | "create", after: Record<string, unknown>,
 ): Promise<string> {
   const r = await gatewayAppendOnClient(client, { ...scope, actor: { id: actor.id, type: actor.type } }, {
     who: { type: actor.type, id: actor.id },
@@ -105,7 +106,14 @@ async function emitContractEvent(
   return r.eventId;
 }
 
-/** 创建契约：落到 `offered`（draft→offer 一步完成），并写 contract.offer 事件。 */
+/**
+ * 创建契约：落到 **`draft`**，并写 `contract.create` 事件（全量快照）。
+ *
+ * 2026-09-24 修复（H-23）：本仓 B-40 曾把创建改成"draft→offer 一步完成"（落 offered、发 contract.offer），
+ * 于是 `collaboration.contracts.create` 返回 offered，与状态机契约（draft→offered→accepted…）、
+ * 客户端 schema 默认值、以及验收套件"初始为草稿"的口径相冲突；而基座仓的同名链路是**只发 create**。
+ * 现在与基座同语义：创建=草稿；要推进请显式 `advance(id, "offer")`（状态机与事件读模型据此归约）。
+ */
 export async function createContract(
   app: pg.Pool, scope: Scope, input: CreateContractInput, actor: ContractActor,
 ): Promise<{ contract: StoredTaskContract; eventId: string }> {
@@ -119,8 +127,6 @@ export async function createContract(
   if (!parsed.success) {
     throw new ContractStoreError("BAD_INPUT", parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".")}：${i.message}`).join("；"));
   }
-  const advance = advanceContractStatus("draft", "offer");
-  if (!advance.ok) throw new ContractStoreError("BAD_STATE", advance.reason);
   return withTx(app, scope, async (client) => {
     const inserted = await client.query<ContractRow>(
       `INSERT INTO task_contracts
@@ -130,12 +136,12 @@ export async function createContract(
        RETURNING *`,
       [input.id, scope.tenantId, scope.workspaceId, input.title, input.goal, input.requester,
        input.assigneePreset, input.verifierPreset, JSON.stringify(input.successCriteria),
-       input.budgetAmount ?? 0, input.currency ?? "CNY", input.deadline ?? null, input.mode, advance.status,
+       input.budgetAmount ?? 0, input.currency ?? "CNY", input.deadline ?? null, input.mode, "draft",
        input.threadId ?? null, JSON.stringify(input.bundleScope ?? []), JSON.stringify(input.matrixRefs ?? []), actor.id],
     );
-    const eventId = await emitContractEvent(client, scope, actor, input.id, "offer", {
+    const eventId = await emitContractEvent(client, scope, actor, input.id, "create", {
       /**
-       * 全量快照（2026-09-24 修复）：offer 是契约的**首条**事件，而事件溯源读模型
+       * 全量快照（2026-09-24 修复）：create 是契约的**首条**事件，而事件溯源读模型
        * （apps/server/src/service/collaboration.ts）以首条事件的 after 还原契约。
        * 此前只写 5 个字段，导致 store 路径建出的契约在 tRPC 列表里 zod 校验失败
        * （/portfolio 页 500："title: expected string, received undefined"）。

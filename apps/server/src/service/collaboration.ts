@@ -204,23 +204,18 @@ export async function createContract(workspaceId: string, actor: Actor, input: C
     id, ...input, requester: actor.id, budgetAmount: input.budgetAmount ?? 0, currency: input.currency ?? "CNY",
     deadline: input.deadline ?? null, status: "draft", createdAt: at, updatedAt: at,
   });
-  // B-40：创建即发出（draft→offer 一步完成，与表持久化路径同一语义）：
-  // 两条事件同一 COMMIT（create + offer），读模型归约出 offered，不需要客户端再补一次 offer。
-  const offered = advanceContractStatus("draft", "offer");
-  if (!offered.ok) throw new Error(offered.reason);
+  /**
+   * 2026-09-24 修复（H-23）：创建**只落 draft**（与基座仓同语义、与状态机与客户端 schema 一致）。
+   * 本仓 B-40 曾在这里"创建即 offer"（同一 COMMIT 写 create + offer，返回 offered），
+   * 与验收套件「初始为草稿」以及 UI/CLI 的推进语义冲突。
+   * 要发放请显式调 `advance(id, "offer")`——状态机与事件读模型都按 draft→offered 归约。
+   */
   await serviceTx(workspaceId, async (client, scope) => {
     await appendEventOn(client, scope, actor, {
       objectType: "task_contract", objectId: id, action: "contract.create", after: contract,
     });
-    await appendEventOn(client, scope, actor, {
-      objectType: "task_contract", objectId: id, action: "contract.offer",
-      after: {
-        status: offered.status, assigneePreset: contract.assigneePreset, verifierPreset: contract.verifierPreset,
-        budgetAmount: contract.budgetAmount, mode: contract.mode, updatedAt: at,
-      },
-    });
   });
-  return { ...contract, status: offered.status, updatedAt: at };
+  return contract;
 }
 
 export async function advanceContract(
