@@ -41,7 +41,7 @@
 
 ### 2.2 员工编制（GEO 双域包自身 14 员 + 2 指挥官）
 
-> **口径说明（2026-09-24 修订·字幕/配音/人物档案批次后）**：本节描述的是 `bundles/geo-growth` 包自身的编制——双域 16 岗 + 视觉栈 2 岗（视觉设计师 / 素材寻源员）+ 获客用增班组 10 岗（核心 8 岗：增长负责人 / 增长策略师 / 增长实验官 / 线索转化官 / 投放组合经理 / 承接转化设计师 / 直播操盘手 / 版权管理员；P2 条件 2 岗：生命周期增长官 / 渠道增长官，未激活受 G-GROW7/8 硬门禁），本包共 29 个 preset。本产品的完整组合编制为三包合并 **79 岗**（hotel 16 + ai-video 34 + geo-growth 29，5 处同名遮蔽按主包裁决；三包基线围栏并集 117 条），事实源为 `bundles/geo-growth/bundle.json#composition.presetOwners` 与 `packages/base/bundles/assembly.ts`；逐项数字以 README「编制与资产统计」自动生成区块为准（`pnpm capabilities --check` 同门禁校验）。
+> **口径说明（2026-09-24 修订·偏好回流与围栏词表对齐落地后复算）**：本节描述的是 `bundles/geo-growth` 包自身的编制——双域 16 岗 + 视觉栈 2 岗 + 获客用增班组 + 本仓 B-09/B-47 下沉的 `creator-partner` / `ip-curator`，本包共 29 个 preset。本产品（骇客帝国实验版）的完整组合编制为三包合并 **79 岗**（各包声明 hotel 16 + ai-video 34 + geo-growth 29，其中 5 处同名遮蔽按主包裁决；**三包 `provides.fences` 逐文件去重后围栏并集 116 条**，另含 B-62 内部协作模板派生 G-C01/G-C02/G-C03），事实源为 `bundles/geo-growth/bundle.json#composition.presetOwners` 与 `packages/base/bundles/assembly.ts`（装配器实测口径，与 `scripts/suite-hotel.ts`、`scripts/suite-geo.ts` 同源）；岗位与围栏随包演进，引用时以装配器运行结果为准。
 
 | 班组 | 员工 | 职责 | 复用/新增 |
 |---|---|---|---|
