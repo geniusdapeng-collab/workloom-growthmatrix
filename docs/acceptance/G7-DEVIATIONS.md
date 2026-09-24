@@ -138,3 +138,50 @@ pnpm typecheck ; pnpm test ; pnpm test:scripts ; pnpm suite:geo ; pnpm suite:hot
 - 人工口径建议：**条件通过（隔离副本 · 生产实测档）**——P 域全绿、L 域除声明偏离项外无失败、U/O 人工证据缺项照实记未验证。
 - Go/No-Go：**内部/演示：Go**（release:gate 11/11、双域套件 81/81 · 43/43、全量单测与类型检查绿）；
   **对外生产发布：待产品所有者确认"业务关卡"替代"审批中心"的验收口径**（DEV-01）后 Go。
+
+---
+
+## 第三批（2026-09-25）· 人工项落地 / 长跑启动 / 9 项修复回基座
+
+### 1. 人工项（RDAS 检查单）落地：`manual-missing` 157 → 82
+
+机检工具：`scripts/acceptance-local/manual-evidence.mjs` + `scripts/acceptance-local/domain-evidence.mjs`（可复跑；证据写入
+`outputs/acceptance/manual/<ID>.json`，计划写入 `outputs/acceptance/manual/MANUAL-PLAN.md`）。
+
+| 类别 | 项数 | 处理方式 |
+|---|---:|---|
+| 真机跑过的机检项（→ `pass`） | 47 | 账本不可改（UPDATE/DELETE/TRUNCATE 全拒）· 备份/回滚五路径 · 指标留存 7 天 · 峰谷计费留痕 · 变更复考门禁 · 记忆治理用例 · 交付契约/口径文档（U0/ADR/O0/O1/O7）· 首价值与点击预算 · 三端一致 · step 级幂等 · ASVS L2 声明 + 5 项抽验等 |
+| 证据待判定（→ `evidence-present`，不计通过） | 28 | 视口/UA 6 组（**WebKit/Firefox 下载失败未跑**）· 断网 30s（机检近似）· 自建 SBOM（非 CycloneDX）· 台账↔事件逐条对账（`ref_event_id` 为空）· 延迟 P95（样本不足）· 专家盲评（c-layer）· 真机/读屏/打印剪贴板等 |
+| 不适用（→ `evidence-present` + 理由） | 13 | M 舰队机制项：隔离副本不在十队列（协议 §0.1），需纳管后适用 |
+| 仍需人工（保留 `manual-missing`） | 82 | U 33（真实用户研究/读屏/设备矩阵）· O 31（真实业务周期与三方对账）· L 16（真手机/告警通道/万行导入/法务与专家评审）· ADR 2 |
+
+新增文档（已入库）：`UX-MODEL.md`（角色/JTBD/六段旅程/四线蓝图/关键性矩阵/招募配额）·
+`ADR-HIR-METHOD.md`（单位/分母/排除口径、H0–H4 契约、AVR 五判据四象限、对照与替代解释）·
+`OUTCOME-CONTRACT.md`（岗位交付契约/KPI 映射/动作分类/rubric 预注册）· `ASVS-DECLARATION.md`（L2 目标 + 5 项抽验）。
+
+⚠️ 纪律：计划与"文档化交付"不等于用户研究结论；`REPORT.md` 的 U/O 两层仍按「未验证」记录。
+
+### 2. 长跑（O5）：24h + 7d 已启动
+
+- 启动：2026-09-25 00:11（24h，间隔 60s）→ 完成后自动串行 7d（168h，间隔 300s）。
+- 承载：`screen` 会话 `wlsoak`（脱离会话存活）；状态文件 `work/soak-long.status`，样本 `outputs/acceptance/soak{,-7d}/soak-samples.jsonl`。
+- 通知：Codex 自动化 `growthmatrix-soak-watch`（每 2h 检查，**仅在 24h/7d 完成或失败时**通知，其余保持安静）。
+- 口径：长跑只证明"采样窗口内无系统性异常"；health/线程/事件增量逐样留痕，不做趋势外推。
+
+### 3. 9 项修复回基座（协议 §7：隔离副本不回流 → 提案任务卡）
+
+- 提案卡：`workloom-ai/workloom-im` **#155**（含逐项缺陷、基座现状、建议修复、验证与回滚）。
+- 回基座 PR：**#156**（分支 `task/T-2026-0924-0001`，10 文件）——围栏 `judgeViews` 视图角色化 + `judge-views.test.ts`（5 例）·
+  运行时 decision 补 `tool`/审批快照补 `gate/tool/rule_ids` · 验收执行器 5 项（outcome/redteam/autonomy/live+providers/matrix）· `release-gate` QUEST 等待上限可配置。
+- 本地验证（基座工作树实测）：`pnpm typecheck` 全绿 · `pnpm test` 全绿（composite 0 fail；base 685 / server 144 / web 85 / ui 56 / runtime 9）·
+  `node scripts/acceptance/live.mjs --selftest` 通过（9 任务 5 ok / 3 blocked / 0 failed）。
+- **状态：待合并**——CNB 报 `blocked_on=status_check`，`pull_request` 流水线未上报状态；`POST /-/build/start` 仅接受
+  `api_trigger*` 事件（无法由我触发 PR 流水线）→ 需产品所有者/基座维护者触发门禁或人工合并。
+- 两条**不适用**（已在 #155 记录，不随 PR 实现）：基座当前**无**自动续跑路径（`scheduleQuestResumeAfterApproval`/`batchRelease` 不存在），
+  也没有业务关卡卡渲染 → "编辑放行/批量放行续跑""关卡卡按事实位显示"属**审批语义变更**，应另开任务卡评审。
+
+### 4. 本批新增未决风险
+
+- **P2 · 已完成线程"继续推进"会重新规划并追加步骤**（实测 3 步 → 5 步，事件账本追加；step 级幂等未破坏）。
+  若产品期望"已完成不再消耗模型额度"，需在 `threads.run` 增加终态短路；当前按产品语义（继续干活）记录，待裁决。
+- **P3 · 多引擎矩阵缺位**：WebKit/Firefox 二进制经代理下载失败（code=1），本轮只跑 chromium 6 组视口/UA（记证据待判定）。
