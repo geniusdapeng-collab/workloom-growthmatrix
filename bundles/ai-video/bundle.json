@@ -112,7 +112,8 @@
         "pipelines/ads-creative-factory.yml",
         "pipelines/marketing-film.yml",
         "pipelines/narrative-film.yml",
-        "pipelines/settlement-recon.yml"
+        "pipelines/settlement-recon.yml",
+        "pipelines/live-clip-reuse.yml"
       ],
       "library": [
         "library/bgm-library-curated/acoustic-warm-ghostrifter-official-zeal-456.m4a",
@@ -452,7 +453,9 @@
         "library/templates/prompt-v4-template.md",
         "library/templates/scene-card-template.md",
         "library/templates/shot-card-v4-template.md",
-        "library/typography-recipes/recipes.json"
+        "library/typography-recipes/recipes.json",
+        "library/templates/live-battle-report.md",
+        "library/templates/live-script-template.md"
       ],
       "segmentDefaults": [],
       "connectors": [
@@ -484,7 +487,11 @@
         "connectors/post-bridge/executor.ts",
         "connectors/post-bridge/server-adapter.mts"
       ],
-      "modelPolicy": "model-policy.yml"
+      "modelPolicy": "model-policy.yml",
+      "onboarding": [
+        "onboarding/questline.yml"
+      ],
+      "evalQuestions": "eval/questions.json"
     },
     "ui": {
       "schemaVersion": "workloom.bundle.ui/v1",
@@ -614,7 +621,7 @@
   },
   "integrity": {
     "algorithm": "sha256",
-    "digest": "bb5d4cc4bccd19915cec13a45d6fe54550c23f8f57b1bbbe59d276b64d821b63",
+    "digest": "5f434e6722b1902a5d955c32ae9717ff01fd32e17e4e6d1d00ab2b5eb9971716",
     "assets": {
       "connectors/bgm-bridge/cli.mjs": "4a750118f5bbc7a6c6238be241ee1f3a4cbb695fd3b40066e4c71072179993ed",
       "connectors/bgm-bridge/core.mjs": "0aa4c047b38e6170e1f73425829b8178d7d01f29f700348519d3b51350e31780",
@@ -643,6 +650,7 @@
       "connectors/subtitle-bridge/README.md": "0494cfa3a21698618c7db4adddf27a097750d771e75cdb5e4f49ce192b9341c8",
       "connectors/subtitle-bridge/server-adapter.mts": "f09160b620a5f96cf61480e855c758a773280c1399ecb25035bc342bf3a52f04",
       "connectors/subtitle-bridge/server.mjs": "77be6773cb3f5a25ea4ff191f4971684fe0f7026de92c4d7b39e7b2e800bf839",
+      "eval/questions.json": "89b83e667089b9730d985beba5c27f348601e3845ee19dd80898570437e5c6b5",
       "fences/ai-video-baseline.yml": "9f7824749d49df520c27e7219cfe0e218d30a2c792aa206fdff86d017b85e2d6",
       "fences/ai-video-bgm.yml": "a2349954627c5c201854c317fe29cfb414fe57e97a1f755da304dc87bb465e53",
       "fences/ai-video-cine-kb.yml": "de27daa2897e78137b98d43eb88864a38df4c1d2359f2e820ae89a969d2c10a0",
@@ -983,14 +991,18 @@
       "library/style-variants/index.json": "4ce282d2e6d6be52af1b93d351d3a3433761d74cc66e8597c6c3a8064eae3a30",
       "library/style-variants/warm-story.json": "fd6e273c0d5d0d25c1b0831fe1e097c952b607d5df0fd7afcb95aafea5865698",
       "library/templates/director-review-form.md": "e1c072bebcd45bf11e16c7dc53968ed4bbd27225c875b0d4b02191214ce6b0df",
+      "library/templates/live-battle-report.md": "0d2af19aa91d44f493f092727d2350cbc94a30ac625607ad0e535842b8fee692",
+      "library/templates/live-script-template.md": "1855ef6a161b435d20d99c345c35a74e1d98f6647fbb866cdc88a8b6a8cef93c",
       "library/templates/project-config-template.json": "d236841a1713bb0a664ba8b7cb6c50a481676e18986e076ee92c63af0475e398",
       "library/templates/prompt-v4-template.md": "b9598401980b9b42864ca96c87c44af68d7774d7efc8f2c262d09044f9b15f60",
       "library/templates/scene-card-template.md": "1db045140ae41be4b3f32e1c08967b74d0fb2a7101a567e0c8054b2bd47ac8b1",
       "library/templates/shot-card-v4-template.md": "46cd261292b95725f59576069131b9a772ef8b5c7a2cdf55bbbaf2117b0bad87",
       "library/typography-recipes/recipes.json": "08009f8e2b1884c2d7c04b65e724c08ab45cbdd9c2576a135966065690953601",
       "model-policy.yml": "15e2069bf71388b0c23f910fd2f1b16d37dd44a8e47b9a1a5709b6e2056325e8",
+      "onboarding/questline.yml": "96aad8de5bbad4e80906c4d8d5130f8932cb028820688605dee6f50d2aa66ca2",
       "pipelines/account-ops.yml": "455383c019ac1d0523db48c6088c7bfce4aa9e8e1eef8d7d71399aa69e107264",
       "pipelines/ads-creative-factory.yml": "90e475e5482ecf15541aa2d6eca5499aa1c9bea8d9928e2122975ae77df869c5",
+      "pipelines/live-clip-reuse.yml": "3519f1175f88df6720db9e5badd3948ed9d35a7c3f11568919e975e19eb30dcd",
       "pipelines/marketing-film.yml": "4ba95c0e83538de605126072ce26a462211e4cea3a82c5fcaee8227a71b485b1",
       "pipelines/narrative-film.yml": "3e36c44074910551277c3e5b82a5240fcbe1dc7dde616da2ad77e54ccf81405a",
       "pipelines/settlement-recon.yml": "c4af96be653224e31ec8882ae19da37026dbbe1f2d5fb28435deee92b37db1d0",
@@ -1071,7 +1083,7 @@
     "signature": {
       "algorithm": "ed25519",
       "keyId": "ed25519-12613d8b27999511",
-      "value": "/NecTr6NZeARyKLuf2ppbRfkIw8S41tIbpXy/bHpFV9gXSEbZJKFXKAJUVdEDuMjRL+AXLGsECs0X62VWuoJDw=="
+      "value": "RxOFJHYqysdJ08UmapquH4AE8jreGt51uLnKiHpz0e71sxRm2c33ofwFkLjFaujP9ztXKhUogh2Yivx/cPc4DQ=="
     }
   }
 }

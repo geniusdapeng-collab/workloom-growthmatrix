@@ -175,16 +175,36 @@ d("PG 集成 Quest 循环（种子库）", async () => {
     ).rejects.toThrow(AssemblyReject);
   });
 
-  it("调价 Quest 全流程：3 步自动执行 → completed，事件带 step_id+回执", async () => {
+  it("调价 Quest 全流程：执行真相视图挂人审（补偿控制）→ 放行后 completed，事件带 step_id+回执", async () => {
+    const { decide } = await import("@workloom/base/review-console");
     const tid = await newThread("周五雅致大床房调价");
+    const r1 = await runQuest(app, gw, scope, { threadId: tid, goal: "周五调价 2%", presetKey: "pricing-agent", fallbackPlanner: hotelFixturePlanner });
+    /**
+     * 2026-09-24（acdc037 去审批化补偿控制 + 判定视图语义）：调价这类步骤带**工具名视图**
+     * （`pms.price.write`），该视图是执行真相且 fail-closed——没有规则覆盖工具本身时必须挂人审，
+     * 不能被语义视图（`price.adjust` 命中 R1 ≤8% auto）冲淡。故链路断言改为：
+     * 首次 pending_review → 人放行 → 续跑 completed（3 步事件与回执仍在）。
+     */
+    expect(r1.status).toBe("pending_review");
+    expect(r1.pendingApprovalId).toBeDefined();
+    await decide(app, gw, scope, { memberNo: "MEM-001", role: "owner" }, r1.pendingApprovalId!, { type: "approve" });
     const r = await runQuest(app, gw, scope, { threadId: tid, goal: "周五调价 2%", presetKey: "pricing-agent", fallbackPlanner: hotelFixturePlanner });
     expect(r.status).toBe("completed");
     expect(r.stepsDone).toBe(3);
     const evs = await threadEvents(tid);
-    expect(evs.map((e) => e.decision.step_id)).toEqual(["s1", "s2", "s3"]);
-    const adjust = evs.find((e) => e.decision.action === "price.adjust")!;
-    expect((adjust.rule_impact as Array<{ rule_id: string }>)[0]!.rule_id).toBe("R1"); // 涨幅≤8% auto
+    /**
+     * 事件链按"回执"分层（2026-09-24 复核）：挂起那次只写 gate 事件（无 receipt），
+     * 放行后同一 step 再写执行事件（带 receipt + 审批引用）——两笔都在，审计才看得到
+     * "先挂起、后授权执行"。故执行侧断言按 receipt 过滤，挂起侧单独守。
+     */
+    const executed = evs.filter((e) => e.decision.step_id && e.receipt);
+    expect(executed.map((e) => e.decision.step_id)).toEqual(["s1", "s2", "s3"]);
+    const gates = evs.filter((e) => e.decision.step_id && !e.receipt);
+    expect(gates.map((e) => e.decision.step_id)).toEqual(["s3"]);
+    const adjust = executed.find((e) => e.decision.action === "price.adjust")!;
+    expect((adjust.rule_impact as Array<{ rule_id: string }>)[0]!.rule_id).toBe("R1"); // 涨幅≤8% auto（语义视图）
     expect(adjust.receipt).toBeDefined(); // 回执位（L3.6）
+    expect(adjust.decision.basis?.[0]).toContain("经审批"); // L3.5 授权留痕（approvalRef）
   });
 
   it("差评 Quest：R6 越围栏挂起 → pending_review + 审批行", async () => {
