@@ -21,6 +21,14 @@
 >   **逐字节一致**（sha256 可复核）；`router.ts` 仅差生产仓的用户界面增量。
 > · 踩坑留痕：偏好文案禁用 `warm-film@0.75` 形态（workdata 脱敏会判成邮箱替换为 `[PII:EMAIL:…]`，真机实测偏好整段丢失），改用「（强度 0.75）」。
 > · 残留：探针库（`wl_evo_probe` / `wl_evo_probe2` / `wl_gm_h23` / `wl_gt_evo`）与临时服务已在本会话收尾清理。
+> · **真机复核追加（同日，PR #51）**：本仓交付包真机复跑（3 镜 / 合成素材 / 3 变体）暴露一处**假比较文案**——
+>   素材全程连续现场声时既无绝对静音、也无相对安静窗口，配乐可闻度只能测出 `null`，却被写成
+>   「配乐可闻度 **nulldB** < 3dB」（没发生过的比较，读起来像电平问题）。已改为如实报
+>   「**无法测量**（原因）+ 可执行下一步」，并把 `presenceBasis`（quiet-window / room-tone / none）写进回执；
+>   该情形显式标 `retryable:false`，post-bridge 据此跳过一次注定白跑的 -3dB 混音（失败包总时长 46s → 37s）。
+>   新增单测 `bundles/ai-video/connectors/bgm-bridge/verify-message.test.ts`（`test:scripts` 15 文件 / 93 用例全绿）。
+>   **未修（如实披露）**：连续现场声素材仍拿不到配乐（fail-closed 语义未变）——要恢复配乐需引入"音乐频带差分"类
+>   兜底测量，属产品语义变更，留给后续任务卡决策。
 
 > **会话 12 收尾（2026-09-24 深夜）**：PR **#47 已 squash 合并 → main `acdc037`**（本账本条目的提交即在其上）。
 > 本轮主题：**RDAS v3.1 第二轮生产实测 + 9 项真机缺陷修复 + 去审批化补偿控制**。
@@ -487,3 +495,4 @@ export PATH="/tmp/wl-bin:$PATH"
 | 2026-09-24 | 会话 12：**RDAS 第二轮**（PR #47 → main `acdc037`）。P 域生产实测首次全绿 8/8（LLM×4 / Seedream 图×3 / Seedance 12s / 产品派单；配额 3 图 · 1 段 · ¥15.514）；O 域 outcome 4/4（pass@1=1 · 假成功 0）、redteam 7 例 0 发现、autonomy ADR-1 98.8%（CI 93.3–99.8，N=81）/HIR 4.9%/HIR-NI 1.2%/回执覆盖 80.2%；L/U：matrix 79/79 · 91/91、ui 79/79 档案页 · 97/97 技能卡 · 33/33 路由、experience 9/10（唯一失败=DEV-01）、ux 39/39。修复 9 项真机缺陷（judgeViews 执行真相视图 fail-closed、H2/批量放行不续跑、关卡卡不可见、Seedream 5.0 pro 组图参数、backup-drill 端口硬编码、autonomy 回执口径、redteam 假通过/假告警、交付包技能围栏绑定、release-gate QUEST 等待上限）。合并期间 main 两次推进（摄影师/交付包批次）→ 变基后重装工作区、重跑全部证据并同步 79 岗/91 技能/128 围栏口径；squash 合并后在 main 复跑 capabilities/bundle-governance/test:scripts/typecheck/pnpm test 全绿。 |
 | 2026-09-24 | 会话 12 追加：**去审批化补偿控制**复跑 `acceptance:gates 11/11`；真机验证任务页关卡卡三杆（推进/校准/制动）可见可点；`drill:backup 5/5`（PG 逻辑备份恢复 0.48s / 7 表行数一致 / 事件链抽样 200）；`db:verify-chain` 8 段 1120+ 事件全绿。残留与未决风险（drill 工作区行、1 条夹具待放行关卡、QUEST 谷时档位耗时）已写入 `outputs/acceptance/DEVIATIONS.md` §5/§8。 |
 | 2026-09-24 | 会话 13：growthmatrix 下发 ②③（选择结果回流偏好池 evolve 写入侧 + 口径断言改装配器推导 + 围栏幽灵词表对齐），PR #50 合并（squash）。同源实现已先在生产仓 PR #136、增长测试仓 PR #37 落地。顺手修 main 既有红灯：R-22 名册绑定、O-03/O-04 与 `runtime.test.ts` 调价链路断言（执行真相视图 fail-closed → 首次挂起+放行续跑）。门禁：typecheck / `pnpm test` 2025 / `test:scripts` 86 / `suite` 467/467 / `bundle:governance --release` 验签 / `capabilities:check` / `db:seed` 全绿。 |
+| 2026-09-24 | 会话 13 追加：交付包**真机复核**（3 镜 / 3 变体 / 旁挂字幕 / 软字幕轨，ffmpeg 实跑）→ 主链路全绿（母版不含字幕、三变体画面差 13.45–19.72/255 visible、封面差 92–93/255、软字幕轨存在且母版零改动）；暴露并修复「配乐可闻度 nulldB」假比较文案（改报无法测量+下一步，`presenceBasis` 入回执，`retryable:false` 省一次白跑混音）；新增 `verify-message.test.ts`。门禁：test:scripts 93/93、capabilities:check、bundle:governance --refresh-digests --release 全绿。 |
