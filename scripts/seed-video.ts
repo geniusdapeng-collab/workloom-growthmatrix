@@ -455,43 +455,53 @@ async function main() {
   }
   console.log(`✓ 工艺技能库 ×${craftSkills.length} 已注册并安装（技能广场可见）`);
 
-  // 自动化触发器（account-ops 管线：采集/战报/评论监听）
-  const triggers = [
-    {
-      id: "tg-metrics-2h",
-      name: "账号数据每 2 小时采集",
-      kind: "cron",
-      schedule: "7 */2 * * *",
-      action: { dispatch: "metrics-watcher", template: "metrics.collect" },
-    },
-    {
-      id: "tg-morning-0800",
-      name: "早八点经营战报",
-      kind: "cron",
-      schedule: "0 8 * * *",
-      action: { dispatch: "metrics-watcher", template: "report.morning" },
-    },
-    {
-      id: "tg-comments-30m",
-      name: "评论每 30 分钟采集分流",
-      kind: "cron",
-      schedule: "*/30 * * * *",
-      action: { dispatch: "comment-operator", template: "comments.ingest" },
-    },
-    // 数字CEO 节拍（D21：CEO Loop；调度器消费前经治理守卫校验 charter.mode）
-    { id: "tg-ceo-brief-0830", name: "公司CEO 晨报 08:30", kind: "cron", schedule: "30 8 * * *", action: { beat: "daily" } },
-    { id: "tg-ceo-queue-2h", name: "公司CEO 裁决巡检 2h", kind: "cron", schedule: "7 */2 * * *", action: { beat: "queue" } },
-    { id: "tg-ceo-deviation", name: "公司CEO 目标偏差扫描", kind: "cron", schedule: "15 */4 * * *", action: { beat: "deviation" } },
-    { id: "tg-ceo-breaker", name: "公司CEO 自治熔断巡检", kind: "cron", schedule: "45 23 * * *", action: { beat: "breaker" } },
-  ];
-  for (const t of triggers) {
+  /**
+   * 自动化触发器（B-06c 去硬编码）：声明源 = `bundles/ai-video/triggers.yml`，
+   * 落库口径与装配器 `provisionComposedWorkforce` 完全一致：
+   *   · id = `<declared_id>-<workspace_id>`，并写 declared_id/source_bundle/declared_version；
+   *   · 按 (workspace_id, declared_id) 幂等 upsert；客户自建（declared_id 为空）永不覆盖；
+   *   · 历史硬编码行（declared_id 为空、created_by='system:seed'）只禁用不删除，保留审计轨迹。
+   * 背景：此前本脚本把 7 条 cron 写死在代码里，与包声明双份事实源，包改了就漂移（B-06c 遗留项）。
+   */
+  const aiVideoTriggers = YAML.parse(
+    readFileSync(join(BUNDLE_DIR, "triggers.yml"), "utf-8"),
+  ) as { triggers?: Array<{ id: string; name: string; kind?: "cron" | "event"; schedule: string; action: Record<string, unknown>; enabled?: boolean }> };
+  const bundleVersion = (JSON.parse(readFileSync(join(BUNDLE_DIR, "bundle.json"), "utf-8")) as { version?: string }).version ?? "unknown";
+  const declaredTriggers = aiVideoTriggers.triggers ?? [];
+  let skippedCustomerOwned = 0;
+  for (const t of declaredTriggers) {
+    // 客户自建保护（与装配器 provisionComposedWorkforce 同口径）：declared_id 命中但无来源包的行
+    // 是租户自己改过的版本，声明式装载只跳过、不覆盖（计数留痕）。
+    const existing = await q(
+      `SELECT id, source_bundle FROM triggers WHERE workspace_id=$1 AND declared_id=$2`,
+      [WS_ID, t.id],
+    );
+    if (existing.rows[0] && existing.rows[0].source_bundle === null) {
+      skippedCustomerOwned += 1;
+      continue;
+    }
     await q(
-      `INSERT INTO triggers (id, workspace_id, name, kind, schedule, action, enabled, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,true,'system:seed') ON CONFLICT (id) DO NOTHING`,
-      [t.id, WS_ID, t.name, t.kind, t.schedule, JSON.stringify(t.action)],
+      `INSERT INTO triggers
+         (id, workspace_id, name, kind, schedule, action, enabled, created_by, source_bundle, declared_version, declared_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,'system:seed-video','ai-video',$8,$9)
+       ON CONFLICT (id) DO UPDATE SET
+         name = EXCLUDED.name, kind = EXCLUDED.kind, schedule = EXCLUDED.schedule, action = EXCLUDED.action,
+         enabled = EXCLUDED.enabled, updated_at = now(),
+         source_bundle = EXCLUDED.source_bundle, declared_version = EXCLUDED.declared_version,
+         declared_id = EXCLUDED.declared_id`,
+      [existing.rows[0]?.id ?? `${t.id}-${WS_ID}`, WS_ID, t.name, t.kind ?? "cron", t.schedule,
+        JSON.stringify(t.action), t.enabled !== false, `ai-video@${bundleVersion}`, t.id],
     );
   }
-  console.log(`✓ 自动化触发器 ×${triggers.length}`);
+  // 退场：历史硬编码触发器（declared_id 为空、由本 seed 创建）统一禁用，避免与声明式触发器双跑。
+  const retired = await q(
+    `UPDATE triggers SET enabled=false, updated_at=now()
+      WHERE workspace_id=$1 AND declared_id IS NULL AND enabled=true
+        AND created_by IN ('system:seed','system:seed-video')`,
+    [WS_ID],
+  );
+  console.log(`✓ 声明式触发器 ×${declaredTriggers.length - skippedCustomerOwned}（随 ai-video 包 ${bundleVersion} 装载；` +
+    `客户自建跳过 ${skippedCustomerOwned} 条；退役历史硬编码 ${retired.rowCount ?? 0} 条）`);
 
   // 演示项目 + 渲染脚本（v1）+ 素材（列口径对齐 0009_video_studio.sql）
   await q(

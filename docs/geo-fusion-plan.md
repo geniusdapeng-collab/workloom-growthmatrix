@@ -41,7 +41,7 @@
 
 ### 2.2 员工编制（GEO 双域包自身 14 员 + 2 指挥官）
 
-> **口径说明（2026-09-24 修订·字幕/配音/人物档案批次后）**：本节描述的是 `bundles/geo-growth` 包自身的编制——双域 16 岗 + 视觉栈 2 岗（视觉设计师 / 素材寻源员）+ 获客用增班组 10 岗（核心 8 岗：增长负责人 / 增长策略师 / 增长实验官 / 线索转化官 / 投放组合经理 / 承接转化设计师 / 直播操盘手 / 版权管理员；P2 条件 2 岗：生命周期增长官 / 渠道增长官，未激活受 G-GROW7/8 硬门禁），本包共 29 个 preset。本产品的完整组合编制为三包合并 **78 岗**（hotel 16 + ai-video 38 + geo-growth 29，5 处同名遮蔽按主包裁决；三包基线围栏并集 114 条），事实源为 `bundles/geo-growth/bundle.json#composition.presetOwners` 与 `packages/base/bundles/assembly.ts`；逐项数字以 README「编制与资产统计」自动生成区块为准（`pnpm capabilities --check` 同门禁校验）。
+> **口径说明（2026-09-24 修订·字幕/配音/人物档案批次后）**：本节描述的是 `bundles/geo-growth` 包自身的编制——双域 16 岗 + 视觉栈 2 岗（视觉设计师 / 素材寻源员）+ 获客用增班组 10 岗（核心 8 岗：增长负责人 / 增长策略师 / 增长实验官 / 线索转化官 / 投放组合经理 / 承接转化设计师 / 直播操盘手 / 版权管理员；P2 条件 2 岗：生命周期增长官 / 渠道增长官，未激活受 G-GROW7/8 硬门禁），本包共 29 个 preset。本产品的完整组合编制为三包合并 **79 岗**（hotel 16 + ai-video 34 + geo-growth 29，5 处同名遮蔽按主包裁决；三包基线围栏并集 117 条），事实源为 `bundles/geo-growth/bundle.json#composition.presetOwners` 与 `packages/base/bundles/assembly.ts`；逐项数字以 README「编制与资产统计」自动生成区块为准（`pnpm capabilities --check` 同门禁校验）。
 
 | 班组 | 员工 | 职责 | 复用/新增 |
 |---|---|---|---|

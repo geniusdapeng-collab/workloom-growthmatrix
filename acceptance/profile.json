@@ -99,7 +99,6 @@
       "suite.",
       "suite-",
       "apr-suite-",
-      "apr-e-",
       "T-suite"
     ],
     "windows": [
@@ -130,10 +129,10 @@
     "target": {
       "apiUrl": "http://127.0.0.1:9207",
       "pcUrl": "http://127.0.0.1:5593",
-      "bMobileUrl": null,
-      "cMobileUrl": null
+      "bMobileUrl": "http://127.0.0.1:3421",
+      "cMobileUrl": "http://127.0.0.1:3422"
     },
-    "notes": "本仓桌面客户端按 product.manifest.json#desktop.portOffset=420 偏移端口：server 8787+420=9207、web 5173+420=5593、PG 5432+420=5852；生产实测用 --env client-runtime。"
+    "notes": "本仓桌面客户端按 product.manifest.json#desktop.portOffset=420 偏移端口：server 8787+420=9207、web 5173+420=5593、B 端移动 3001+420=3421、C 端 3002+420=3422、PG 5432+420=5852；四端同属一个独立运行时实例（脚本：本会话 work/desktop-runtime-serve.sh + work/mobile-serve.sh），生产实测用 --env client-runtime。"
   },
   "live": {
     "enabled": true,

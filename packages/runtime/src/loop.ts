@@ -11,7 +11,7 @@
  *  - E3.7：工具执行无回执（receipt.synced≠true）→ 标「未核实」，线程不得转 completed
  */
 import type pg from "pg";
-import { judge, judgeViews, type JudgeInput, type RuntimeRule } from "@workloom/base/fence-engine";
+import { judge, judgeViews, type JudgeView, type RuntimeRule } from "@workloom/base/fence-engine";
 import { gatewayAppend, gatewayAppendOnClient, registerWriteActions } from "@workloom/base/workdata";
 
 /** D16（#1/A）：步骤内「事件 + 线程状态」单事务封装（双 GUC 齐备） */
@@ -350,7 +350,7 @@ export async function runQuest(
     //           LLM 规划的动作名不能掩盖真正的执行工具（反之亦然）。
     const toolAccess: "read" | "write" =
       preset.tools.find((tool) => tool.name === step.tool)?.access === "read" ? "read" : "write";
-    const views: JudgeInput[] = [{
+    const views: JudgeView[] = [{
       object: { type: step.objectType, id: step.objectId }, action: step.action, effect: toolAccess,
       params: step.params, before: step.before, after: step.after, context: step.context,
     }];
@@ -359,6 +359,28 @@ export async function runQuest(
         object: { type: step.objectType, id: step.objectId }, action: step.tool, effect: toolAccess,
         params: step.params, before: step.before, after: step.after, context: step.context,
       });
+      /**
+       * 第三视图：按**工具名前缀**派生对象视图（与默认规划器 `safeObjectType(tool.name)` 同口径）。
+       * 2026-09-24 修复（P 域实测）：LLM 规划器会自造对象标识（如 geo_article），而围栏规则按
+       * 声明对象（content / geo_content…）与动词族编写 → 语义视图与工具视图都用自造对象类型时必然全不命中，
+       * 写步骤一律落 default review（实测 T-104..T-107 全挂）。补上派生视图后，已声明工具（如 content.*）
+       * 能被对应规则正常命中；未命中任何视图时仍按 default fail-closed。
+       *
+       * 视图角色（2026-09-24 红队复核）：执行真相视图标 `failClosed: true`——工具没被任何规则覆盖时
+       * 必须保留 default 的 fail-closed；语义/自造对象视图只是"标签"，只做加严，不回落 default。
+       */
+      const toolObjectType = safeObjectType(step.tool);
+      const toolView = views[views.length - 1]!;
+      if (toolObjectType === step.objectType) {
+        // 派生对象类型与规划对象一致：工具视图本身就是执行真相视图
+        toolView.failClosed = true;
+      } else {
+        views.push({
+          object: { type: toolObjectType, id: step.objectId }, action: step.tool, effect: toolAccess,
+          params: step.params, before: step.before, after: step.after, context: step.context,
+          failClosed: true,
+        });
+      }
     }
     const verdict = views.length === 1 ? judge(views[0]!, rules, defaultLevel) : judgeViews(views, rules, defaultLevel);
 
@@ -377,7 +399,7 @@ export async function runQuest(
           context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString() },
           object: { type: step.objectType, id: step.objectId },
           decision: {
-            action: step.action, step_id: step.stepId, effect: effectOf(step.tool), params: step.params,
+            action: step.action, tool: step.tool, step_id: step.stepId, effect: effectOf(step.tool), params: step.params,
             basis: [`熔断：${verdict.triggeredBy.join("、")}`],
             ...(prefUsageRecorded ? {} : { memory_refs: preferenceMemoryRefs(prefs) }),
           },
@@ -416,7 +438,7 @@ export async function runQuest(
           context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString() },
           object: { type: step.objectType, id: step.objectId },
           decision: {
-            action: step.action, step_id: step.stepId, effect: effectOf(step.tool), params: step.params,
+            action: step.action, tool: step.tool, step_id: step.stepId, effect: effectOf(step.tool), params: step.params,
             basis: [`越围栏挂起：${verdict.triggeredBy.join("、")}`],
             ...(prefUsageRecorded ? {} : { memory_refs: preferenceMemoryRefs(prefs) }),
           },
@@ -455,6 +477,16 @@ export async function runQuest(
            ON CONFLICT (event_id, channel) DO NOTHING`,
           [aprId, scope.tenantId, scope.workspaceId, ev.eventId,
             JSON.stringify({
+              /**
+               * 关卡事实（2026-09-24 补）：UI/巡检要按"这是不是步骤级人审关卡"筛选，
+               * 而不能按 LLM 自造的动作名猜——实测 `publish_article` 这种自造名不在任何
+               * 命名白名单里，任务页会把**真实待放行**的关卡卡过滤掉（人看不到、放不了行）。
+               * 这里显式落 gate/tool/rule_ids/step_id，前端按 gate=true 判定。
+               */
+              gate: true,
+              tool: step.tool,
+              step_id: step.stepId,
+              rule_ids: verdict.impacts.map((i) => i.rule_id),
               before: step.before ?? null,
               after: step.params,
               action: step.action,
@@ -496,7 +528,12 @@ export async function runQuest(
         context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString() },
         object: { type: step.objectType, id: step.objectId },
         decision: {
-          action: step.action, step_id: step.stepId, effect: effectOf(step.tool), params: step.params, before: step.before,
+          /**
+           * `tool`：真正执行的工具名（2026-09-24 红队复核补）。LLM 规划的动作名（action）可以是
+           * 自造词（实测 T-113：action=publish_article 而实际工具是内部的 ai_task.emit），
+           * 只留 action 会让审计误读成"对外发布被自动放行"；工具名入账后判定链可复核。
+           */
+          action: step.action, tool: step.tool, step_id: step.stepId, effect: effectOf(step.tool), params: step.params, before: step.before,
           after: { ...(typeof step.after === "object" && step.after !== null ? step.after as Record<string, unknown> : {}), result: out.result },
           basis: approvalRef ? [`经审批 ${approvalRef} 批准执行（E3.3 恢复闭环）`] : undefined,
           ...(prefUsageRecorded ? {} : { memory_refs: preferenceMemoryRefs(prefs) }),

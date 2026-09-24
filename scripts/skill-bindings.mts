@@ -58,6 +58,14 @@ export const COMPOSED_SKILL_BINDINGS: Record<"ai-video" | "geo-growth", Record<s
     "color-grade": ["G-COL0", "G-COL1", "G-COL2", "G-COL3", "G-COL4"],
     "color-look-design": ["G-COL0", "G-COL1", "G-COL2", "G-COL3", "G-COL4"],
     "color-shot-matching": ["G-COL0", "G-COL1", "G-COL2", "G-COL3", "G-COL4"],
+    /**
+     * 交付包与返修套件（2026-09-24 视频「交付包机制」批次 d216a50/0dc431b/f87d231）：
+     * `delivery-package-ops` SKILL.md 显式声明 G-DLV0..G-DLV7、`delivery-revision-ops` 声明 G-DLV4..G-DLV7，
+     * 而绑定表缺这两条 → 注册表落空绑定，RDAS matrix SA3_fences 判「声明未进绑定」（真机实测）。
+     * 按成片交付门口径登记（同调色/BGM/字幕/配音先例）。
+     */
+    "delivery-package-ops": ["G-DLV0", "G-DLV1", "G-DLV2", "G-DLV3", "G-DLV4", "G-DLV5", "G-DLV6", "G-DLV7"],
+    "delivery-revision-ops": ["G-DLV4", "G-DLV5", "G-DLV6", "G-DLV7"],
     "color-delivery-spec": ["G-COL0", "G-COL1", "G-COL2", "G-COL3", "G-COL4"],
     "bgm-score-design": ["G-BGM0", "G-BGM1", "G-BGM3", "G-BGM5"],
     "bgm-audio-layering": ["G-BGM0", "G-BGM2", "G-BGM3", "G-BGM4", "G-BGM5"],
