@@ -424,8 +424,8 @@ async function main() {
   /**
    * 组合编制上岗（2026-09-20 真机验收修复）：
    * geo-growth 的 bundle.json 声明 composition（hotel + ai-video 依赖，presetOwners 含 company-ceo 等），
-   * 权威花名册 = 装配器 composeWorkforce 的运行结果（73 岗，含同名遮蔽裁决）。此前 seed 只落本包 28 岗，
-   * 与基座 seed.ts（ws-yunqi 已按组合编制上岗 73 岗）口径不一致——RDAS L1 矩阵因此判 0/73。
+   * 权威花名册 = 装配器 composeWorkforce 的运行结果（数字以装配器实测为准，含同名遮蔽裁决）。此前 seed 只落本包岗位，
+   * 与基座 seed.ts（ws-yunqi 已按组合编制上岗）口径不一致——RDAS L1 矩阵因此判 0/组合编制。
    * 这里与基座同口径补齐；围栏按组合并集落库（只紧不松，不滚动客户已收紧的规则）。
    */
   const { provisionComposedWorkforce, applyDeclaredFenceTemplates } = await import("@workloom/base/bundles");

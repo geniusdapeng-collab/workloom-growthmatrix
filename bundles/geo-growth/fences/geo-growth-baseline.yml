@@ -5,7 +5,7 @@
 #   写类动作无任何规则命中 → 按 default_level 处理；求值异常 → 按 block（宁可错杀）
 # 三大纪律：① GEO 灰帽零容忍（G-GEO3 熔断）；② 事实红线一票否决（G-GEO2）；③ 涉人设/品牌表态强制 L4（G20）
 # workloom:stats:begin（由 scripts/generate-capabilities.mjs 生成，勿手改）
-# 本包 28 条规则（基线 28 条） · 模板派生 3 条 · 覆盖对象 36 类 / 动作 42 个
+# 本包 28 条规则（基线 28 条） · 模板派生 3 条 · 覆盖对象 33 类 / 动作 42 个
 # workloom:stats:end
 version: geo-growth-baseline/v1
 default_level: review
@@ -280,7 +280,9 @@ rules:
     level: auto
     is_baseline: true
     match:
-      object_types: [render_script, render_job, video, video_task, media, asset, content_asset]
+      # 对象词表（2026-09-24 对齐真实对象模型）：素材制作/渲染提交只涉及这几类真实对象
+      # （video/media/asset/content_asset 在任何 bundle 都未声明，属幽灵词表，已剔除）
+      object_types: [render_script, render_job, video_asset, final_video, content, visual_asset]
       actions: [render.submit, render.script.gen, render.poll, video.generate, generate_video]
     when: "context.render_auto == true"
     note: 素材制作全自动；超预算与投放/改价/公网发布仍由 G11/G12/G9 拦住

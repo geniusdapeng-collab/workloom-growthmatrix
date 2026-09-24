@@ -1809,7 +1809,19 @@ o("晨会派单：一句话调价任务跑通到 completed", async () => {
   const r = await runQuest(app, gw, scope, {
     threadId: tid, goal: "把周五主打款调价 5%", presetKey: "pricing-agent", fallbackPlanner: planPrice,
   });
-  eq(r.status, "completed", "调价任务完成");
+  /**
+   * 2026-09-24（acdc037 去审批化补偿控制 + 红队复核后的判定视图语义）：工具视图
+   * （`pms.price.write` 派生对象）是**执行真相**且 fail-closed——工具没有被任何规则覆盖时必须挂人审，
+   * 不能被语义视图（`price.adjust` 命中 R1 auto）冲淡。所以"调价任务自动完成"的旧期望不再成立：
+   * 正确链路 = 首次执行挂 pending_review → 人放行 → 续跑完成（补偿控制仍然可见、可审）。
+   */
+  eq(r.status, "pending_review", "未覆盖工具的执行真相视图挂人审（补偿控制）");
+  assert(r.pendingApprovalId, "挂起步骤进审批队列");
+  await decide(app, gw, scope, boss, r.pendingApprovalId!, { type: "approve" });
+  const r2 = await runQuest(app, gw, scope, {
+    threadId: tid, goal: "把周五主打款调价 5%", presetKey: "pricing-agent", fallbackPlanner: planPrice,
+  });
+  eq(r2.status, "completed", "放行后续跑完成");
   const row = await qApp<{ status: string }>(`SELECT status FROM threads WHERE id=$1`, [tid]);
   eq(row.rows[0]!.status, "completed", "线程状态同步");
 });
@@ -1843,7 +1855,14 @@ o("生产行业规划器：百分比调价落真实价带锚点 + 夜班上下�
     threadId: tid, goal, presetKey: "pricing-agent",
     fallbackPlanner: acquisitionQuestPlanner(goal),
   });
-  eq(r.status, "completed", "生产规划器百分比调价自动执行");
+  // 同上：执行真相视图（工具名）fail-closed → 需人放行后再续跑（价带锚点与夜班上下文仍被本用例守）
+  eq(r.status, "pending_review", "生产规划器调价进补偿控制（人审）");
+  assert(r.pendingApprovalId, "挂起步骤进审批队列");
+  await decide(app, gw, scope, boss, r.pendingApprovalId!, { type: "approve" });
+  const r2 = await runQuest(app, gw, scope, {
+    threadId: tid, goal, presetKey: "pricing-agent", fallbackPlanner: acquisitionQuestPlanner(goal),
+  });
+  eq(r2.status, "completed", "放行后调价续跑完成（真实价带锚点 + 夜班上下文）");
   const row = await qApp<{ status: string }>(`SELECT status FROM threads WHERE id=$1`, [tid]);
   eq(row.rows[0]!.status, "completed", "线程状态同步");
 });
@@ -3222,7 +3241,17 @@ h2("协作·readonly 写契约/推进/回执 → 403（API 层强制，审计回
     const arc = await getArchive();
     try {
       // 注入一个到期的决策日记 + 基线 KPI
-      await gatewayAppend(gw, { ...scope, actor: { id: "company-ceo", type: "agent" }, sessionId: "suite-r23" }, {
+      /**
+       * agent 通道必须带名册里的 fence_bindings（F2.10 显式写动作的系统级禁写）：
+       * acdc037 把 `ceo.decision` 等内部协作动作登记为**显式写动作**（由 geo-growth-collaboration 围栏包装载时
+       * registerWriteActions 注册），于是"agent 身份 + 无绑定"的旧写法被段①拒绝（真机 R-22 报
+       * 「Agent company-ceo 未声明 fence_bindings」）。这里按 ws-yunqi 名册真实绑定补齐，与生产 agent 通道一致。
+       */
+      await gatewayAppend(gw, {
+        ...scope,
+        actor: { id: "company-ceo", type: "agent", fenceBindings: ["G17", "G18"] },
+        sessionId: "suite-r23",
+      }, {
         who: { type: "agent", id: "company-ceo" },
         context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString() },
         object: { type: "company_ceo", id: scope.workspaceId },

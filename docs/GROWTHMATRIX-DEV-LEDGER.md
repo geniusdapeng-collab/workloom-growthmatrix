@@ -1,5 +1,27 @@
 # GrowthMatrix 开发进度账本（跨会话唯一状态源）
 
+> **会话 13 收尾（2026-09-24 深夜）**：growthmatrix 车道下发 ②③——
+> **选择结果回流偏好池（evolve 写入侧闭环）+ 口径断言改装配器推导 + 围栏幽灵词表对齐**，PR **#50 → main**（本账本条目的提交即在其上）。
+> · **交付**：`selectDeliveryVariant` 增返 `selectionCount/projectId/variant`；新增 `buildVariantPreferenceContent`
+>   （调色/BGM/转场/文案口吻/定位 → 偏好记忆）、`deliveryPreferenceConfidence`（0.5 起、每次 +0.05、上限 0.9）、
+>   `deliveryPreferenceMemoryId`（工作区×变体稳定，重复选择=更新同一条）；`router.selectVariant` 在同一 COMMIT 内
+>   `FOR UPDATE` 取旧来源 → 去重合并（≤20 条）→ `upsertMemoryInTx` → `GREATEST` 抬置信度（只升不降）。
+>   下一轮出片由既有 `loadActivePreferences` + `buildPreferenceBlock` 注入，默认贴近该口味。
+> · **口径**：`suite-hotel`/`suite-geo` 改 `composeWorkforce("geo-growth")` 实时推导，不再写死岗位/围栏数
+>   （历史写死值 72/78/79 随扩充漂移成假失败）；围栏幽灵词清理后 **79 岗 / 91 技能 / 128 围栏（基线 125 + 模板派生 3）/ 三包并集 115**。
+> · **顺手修 main 既有红灯（acdc037 引入，非本次功能）**：R-22 `company-ceo` 缺 `fence_bindings`（F2.10 显式写动作）
+>   → 按名册绑定 G17/G18；O-03/O-04「调价自动 completed」不再成立（工具名视图 `pms.price.write` 为执行真相且
+>   fail-closed）→ 断言改「首次 pending_review → 人放行 → 续跑 completed」，`runtime.test.ts` 按
+>   「挂起事件（无回执）+ 执行事件（带审批引用）」两层断言。
+> · **门禁（本机 A 级，全部在 main 基线 `e2fe5a4` 之上复跑）**：`typecheck` 0 错误 · `pnpm test` 2025 用例全绿
+>   （base 1223 / server 426 / web 122 / video-studio 99 / audit 64 / industry-contract 40 / webc 24 / runtime 15 / shared 6 / webb 6）·
+>   `test:scripts` 86/86 · `pnpm suite` **467/467**（HTTP E2E 51/51）· `bundle:governance --refresh-digests --release` 发布验签通过 ·
+>   `capabilities:check` 同步 · `db:seed` 完成。
+> · **同源性**：`apps/server/src/video/delivery.ts` 与 `docs/video-delivery-and-revision.md` 与生产仓（PR #136）/增长测试仓（PR #37）
+>   **逐字节一致**（sha256 可复核）；`router.ts` 仅差生产仓的用户界面增量。
+> · 踩坑留痕：偏好文案禁用 `warm-film@0.75` 形态（workdata 脱敏会判成邮箱替换为 `[PII:EMAIL:…]`，真机实测偏好整段丢失），改用「（强度 0.75）」。
+> · 残留：探针库（`wl_evo_probe` / `wl_evo_probe2` / `wl_gm_h23` / `wl_gt_evo`）与临时服务已在本会话收尾清理。
+
 > **会话 12 收尾（2026-09-24 深夜）**：PR **#47 已 squash 合并 → main `acdc037`**（本账本条目的提交即在其上）。
 > 本轮主题：**RDAS v3.1 第二轮生产实测 + 9 项真机缺陷修复 + 去审批化补偿控制**。
 > · **P 域首次全绿 8/8**（真实凭据 · client-runtime 四端 9207/5593/3421/3422 + PG 5852）：LLM-R1/T1/M1（dsh + 围栏瀑布 + 哈希链）·
@@ -464,3 +486,4 @@ export PATH="/tmp/wl-bin:$PATH"
 
 | 2026-09-24 | 会话 12：**RDAS 第二轮**（PR #47 → main `acdc037`）。P 域生产实测首次全绿 8/8（LLM×4 / Seedream 图×3 / Seedance 12s / 产品派单；配额 3 图 · 1 段 · ¥15.514）；O 域 outcome 4/4（pass@1=1 · 假成功 0）、redteam 7 例 0 发现、autonomy ADR-1 98.8%（CI 93.3–99.8，N=81）/HIR 4.9%/HIR-NI 1.2%/回执覆盖 80.2%；L/U：matrix 79/79 · 91/91、ui 79/79 档案页 · 97/97 技能卡 · 33/33 路由、experience 9/10（唯一失败=DEV-01）、ux 39/39。修复 9 项真机缺陷（judgeViews 执行真相视图 fail-closed、H2/批量放行不续跑、关卡卡不可见、Seedream 5.0 pro 组图参数、backup-drill 端口硬编码、autonomy 回执口径、redteam 假通过/假告警、交付包技能围栏绑定、release-gate QUEST 等待上限）。合并期间 main 两次推进（摄影师/交付包批次）→ 变基后重装工作区、重跑全部证据并同步 79 岗/91 技能/128 围栏口径；squash 合并后在 main 复跑 capabilities/bundle-governance/test:scripts/typecheck/pnpm test 全绿。 |
 | 2026-09-24 | 会话 12 追加：**去审批化补偿控制**复跑 `acceptance:gates 11/11`；真机验证任务页关卡卡三杆（推进/校准/制动）可见可点；`drill:backup 5/5`（PG 逻辑备份恢复 0.48s / 7 表行数一致 / 事件链抽样 200）；`db:verify-chain` 8 段 1120+ 事件全绿。残留与未决风险（drill 工作区行、1 条夹具待放行关卡、QUEST 谷时档位耗时）已写入 `outputs/acceptance/DEVIATIONS.md` §5/§8。 |
+| 2026-09-24 | 会话 13：growthmatrix 下发 ②③（选择结果回流偏好池 evolve 写入侧 + 口径断言改装配器推导 + 围栏幽灵词表对齐），PR #50 合并（squash）。同源实现已先在生产仓 PR #136、增长测试仓 PR #37 落地。顺手修 main 既有红灯：R-22 名册绑定、O-03/O-04 与 `runtime.test.ts` 调价链路断言（执行真相视图 fail-closed → 首次挂起+放行续跑）。门禁：typecheck / `pnpm test` 2025 / `test:scripts` 86 / `suite` 467/467 / `bundle:governance --release` 验签 / `capabilities:check` / `db:seed` 全绿。 |
