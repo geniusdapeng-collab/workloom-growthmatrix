@@ -55,7 +55,7 @@
 **获客的精髓就一句话：在对的地方，用对的内容，接住有意图的人，并且每一环都能度量到钱。**
 
 <!-- CAPABILITIES:BEGIN -->
-<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（2026-09-24），请勿手改；重跑 pnpm capabilities 更新 -->
+<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（2026-09-25），请勿手改；重跑 pnpm capabilities 更新 -->
 
 ## 🧩 系统能力速览（自动生成 · 与代码同步）
 
@@ -71,16 +71,16 @@
 <!-- CAPABILITIES:END -->
 
 <!-- STATS:BEGIN -->
-<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（2026-09-24），请勿手改；重跑 pnpm capabilities 更新 -->
+<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（2026-09-25），请勿手改；重跑 pnpm capabilities 更新 -->
 
 ## 📊 编制与资产统计（自动生成 · 与代码同步）
 
 | 口径 | 数值 | 事实源 |
 |---|---:|---|
 | 行业包 | 3 个 | bundles/ 目录 |
-| 数字员工岗位定义 | 84 个（组合去重后 79 岗 · 同名遮蔽 5 处） | bundles/*/presets/*.yml |
-| 随包技能 | 91 个 | bundles/*/skills/ |
-| 围栏规则 | 128 条（含模板派生 3 条 · 基线 125 条） | bundles/*/fences/*.yml + packages/base/bundles/templates/ |
+| 数字员工岗位定义 | 85 个（组合去重后 80 岗 · 同名遮蔽 5 处） | bundles/*/presets/*.yml |
+| 随包技能 | 92 个 | bundles/*/skills/ |
+| 围栏规则 | 133 条（含模板派生 3 条 · 基线 130 条） | bundles/*/fences/*.yml + packages/base/bundles/templates/ |
 | 对象类型 | 137 类（去重后 121 类） | bundles/*/schemas/objects.json |
 | 管线 | 11 条 | bundles/*/pipelines/*.yml |
 | 触发器声明 | 35 条 | bundles/*/triggers.yml |
