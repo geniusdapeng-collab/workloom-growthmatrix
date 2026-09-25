@@ -49,8 +49,9 @@ describe("B-66 统计口径脚本化", () => {
     const templateRules = (YAML.parse(readFileSync(join(ROOT, "packages/base/bundles/templates/internal-collaboration.yml"), "utf-8")) as { rules?: unknown[] }).rules?.length ?? 0;
     expect(block).toContain(`围栏规则 | ${rules + templateRules} 条`);
     expect(block).toContain("数字员工岗位定义");
-    // 组合去重口径以生成器实测为准（本仓 2026-09-24 实测 79 岗 / 遮蔽 5 处；历史值 78）
-    expect(block).toContain("组合去重后 79 岗");
+    // 组合去重口径以生成器实测为准（本仓 2026-09-25 实测 80 岗 / 遮蔽 5 处；历史 78 → 79 → 80，
+    // 最近一次变化来自 bundles/ai-video/presets/cover-designer.yml）
+    expect(block).toContain("组合去重后 80 岗");
     for (const bundleId of ["hotel", "geo-growth", "ai-video"]) {
       const fencesDir = join(ROOT, "bundles", bundleId, "fences");
       const files = readdirSync(fencesDir).filter((f) => f.endsWith(".yml") && !f.includes("patch"));
