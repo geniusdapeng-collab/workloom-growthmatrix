@@ -51,4 +51,25 @@ describe("三端访问权威路由面", () => {
       accessAuthorityDeps.loadMemberFacts = originalLoadMemberFacts;
     }
   });
+
+  /**
+   * 回归守卫（T-2026-0925-0007）：
+   * ① `fence.activeRules` 是 dsh 围栏插件的数据源（`packages/runtime/plugins/workloom-fence.plugin.js` 直接 fetch）；
+   *    本仓 2026-09-24 P 域实测过"端点 404 → 插件把错误体当数组遍历 → 工具层整体不可用"，
+   *    端点由 `acdc037` 补过、随后被移植覆盖丢失；
+   * ② `arbitration`（B-39 冲突仲裁数据面）的挂载同样被那次覆盖丢失，文件与服务层一直在。
+   */
+  it("挂载围栏数据源端点 fence.activeRules 与仲裁数据面 arbitration（覆盖丢失回归守卫）", () => {
+    const caller = appRouter.createCaller({
+      session: null,
+      identity: null,
+      partnerIdentity: null,
+      headers: new Headers(),
+      agentChannel: AGENT_CHANNEL_OFF,
+    });
+    expect(typeof caller.fence.activeRules).toBe("function");
+    expect(typeof caller.arbitration.conflicts.list).toBe("function");
+    expect(typeof caller.arbitration.conflicts.raise).toBe("function");
+    expect(typeof caller.arbitration.agent.conflicts.raise).toBe("function");
+  });
 });

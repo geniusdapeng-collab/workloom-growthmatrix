@@ -24,6 +24,7 @@ import { gatewayAppend, gatewayAppendOnClient, MockEmbedder, upsertMemoryInTx } 
 import { makeReadableId } from "@workloom/shared";
 import { capabilityWriteProcedure, protectedProcedure, publicProcedure, router, scopeOf, sessionProcedure, writeProcedure } from "./context.js";
 import { accountsRouter } from "./accounts-router.js";
+import { arbitrationRouter } from "./arbitration-router.js";
 import {
   ApprovalError,
   batchApprove,
@@ -159,6 +160,7 @@ import {
 } from "../service/onboarding-continuity.js";
 import { advanceQuestline, firstActionCard, questlineFunnel, questlineState, replayQuestline } from "../service/questline.js";
 import { bundledServiceFrontAvailable, resolveServiceFrontPublication } from "../service/service-front-publication.js";
+import { svcQuery } from "../service/events.js";
 import { resolveWorkspaceInspectionAdapter } from "../service/inspection-adapter.js";
 import {
   buildEvolutionScorecard,
@@ -2512,6 +2514,31 @@ const nightShiftRouter = router({
 
 /** fence router（F8 起 P5 数据源：规则版本化投影 + 30 天触发聚合 + dry-run 生命周期 F2.4/F2.5） */
 const fenceRouter = router({
+  /**
+   * 生效围栏规则（客户端/执行器瀑布的数据源）：给 dsh 围栏插件与外部执行器用的**最小投影**
+   * （rule_id / level / match）。origin：`acdc037` 在隔离副本补过该端点——P 域实测发现 harness 指向的
+   * `fence.activeRules` 不存在（404 → 插件把错误体当数组遍历 → **整个工具层不可用**）；
+   * `packages/runtime/plugins/workloom-fence.plugin.js` 与 `packages/runtime/plugins/README.md` 都按此路径对接。
+   * 本仓（主仓）此前从未实现该端点（T-2026-0925-0007 补齐），返回体只含判定所需字段，不含规则说明与来源细节。
+   */
+  activeRules: protectedProcedure.query(async ({ ctx }) => {
+    const scope = scopeOf(ctx.identity);
+    const rows = await svcQuery<{ rule_id: string; level: string; match_spec: Record<string, unknown> | null }>(scope.workspaceId,
+      `SELECT rule_id, level, match_spec FROM fence_rules
+        WHERE (workspace_id=$1 OR workspace_id='*') AND status='active'
+        ORDER BY rule_id`,
+      [scope.workspaceId]);
+    return rows.map((r) => ({
+      rule_id: r.rule_id,
+      level: r.level,
+      match: {
+        actions: (r.match_spec?.actions as string[] | undefined) ?? [],
+        object_types: (r.match_spec?.object_types as string[] | undefined) ?? [],
+        when: String(r.match_spec?.when ?? "true"),
+      },
+    }));
+  }),
+
   /** 规则列表（P5E2：级别 pill + 来源 + 30 天触发数；基线 🔒 集团强制 F2.3） */
   rules: protectedProcedure.query(async ({ ctx }) => {
     const scope = scopeOf(ctx.identity);
@@ -3983,6 +4010,12 @@ export const appRouter = router({
   workspace: workspaceRouter,
   nightShift: nightShiftRouter,
   fence: fenceRouter,
+  /**
+   * 冲突仲裁数据面（B-39）：列表/单对象 + raise → arbitrate → resolve + agent 通道。
+   * 恢复说明（T-2026-0925-0007）：`arbitration-router.ts` 与服务层一直都在，但
+   * `c0e8ed8`（从主仓移植 router.ts）把本行挂载覆盖丢失 → B-39 数据面整条不可达。
+   */
+  arbitration: arbitrationRouter,
   roster: rosterRouter,
   im: imRouter,
   bundles: bundlesRouter,
