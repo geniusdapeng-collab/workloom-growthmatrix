@@ -37,6 +37,7 @@ import { providerFromEnv, OpenAiCompatibleProvider } from "@workloom/base/model-
 import { routedLlmCall, resetLlmAssembly } from "../service/llm.js";
 import { loadDeploymentToolExecutor } from "../runtime/tool-executor.js";
 import { startVideoProjectRun, StudioWorkerError } from "../video/studio-worker.js";
+import { applyRouteToMetadata, buildPipelineIntent, routeVideoPipeline } from "@hyperreality/video-studio";
 import { creditsRouter, modelFeedbackRouter } from "./credits-router.js";
 import { runRouterReviewBeat } from "@workloom/base/model-router";
 import {
@@ -142,7 +143,6 @@ import { acquisitionQuestPlanner } from "../industry/hotel/acquisition-planner.j
 import { overlayRouter } from "./overlay-router.js";
 import { acquisitionRouter } from "./acquisition-router.js";
 import { collaborationRouter } from "./collaboration-router.js";
-import { arbitrationRouter } from "./arbitration-router.js";
 import {
   AccessAuthorityError,
   resolveAuthoritativeClientAccess,
@@ -157,10 +157,6 @@ import {
   welcomeProgress,
   WELCOME_STEPS,
 } from "../service/onboarding-continuity.js";
-import { advanceQuestline, firstActionCard, questlineFunnel, questlineState, replayQuestline } from "../service/questline.js";
-import { gateLoadMetrics, releaseGatesBatch } from "../service/gate-batch.js";
-import { latestTrustSnapshot, runTrustReview } from "../service/trust-runtime.js";
-import { svcQuery } from "../service/events.js";
 import { bundledServiceFrontAvailable, resolveServiceFrontPublication } from "../service/service-front-publication.js";
 import { resolveWorkspaceInspectionAdapter } from "../service/inspection-adapter.js";
 import {
@@ -325,44 +321,6 @@ const onboardingRouter = router({
     memberNo: ctx.identity.memberNo,
     role: ctx.identity.role,
   })),
-
-  /* ---------------- B-63/B-64/B-69 首日上岗（服务端事实源 + 跨端续播 + 行动卡 + 漏斗） ---------------- */
-  /** 首日上岗：内容随包（按活动 Bundle）+ 服务端进度（账号维度跨设备续播） */
-  questline: protectedProcedure.query(async ({ ctx }) => questlineState(ctx.identity.workspaceId, {
-    memberId: ctx.identity.memberId,
-    memberNo: ctx.identity.memberNo,
-    role: ctx.identity.role,
-  })),
-  /** 推进一步：只允许当前关；done/skip 分别落 stageDone/skipped，账本写 questline.* 事件 */
-  questlineAdvance: writeProcedure
-    .input(z.object({
-      stage: z.enum(["meet", "goal", "dispatch", "review"]),
-      outcome: z.enum(["done", "skip"]),
-      litCards: z.array(z.string().trim().min(1).max(80)).max(20).optional(),
-      lastThreadId: z.string().trim().min(1).max(120).nullable().optional(),
-      achievements: z.array(z.string().trim().min(1).max(80)).max(20).optional(),
-    }))
-    .mutation(async ({ ctx, input }) => advanceQuestline(ctx.identity.workspaceId, {
-      memberId: ctx.identity.memberId,
-      memberNo: ctx.identity.memberNo,
-      role: ctx.identity.role,
-    }, input)),
-  /** 重播首日上岗（清进度 + 计数 +1，账本留痕） */
-  replayQuestline: writeProcedure.mutation(async ({ ctx }) => replayQuestline(ctx.identity.workspaceId, {
-    memberId: ctx.identity.memberId,
-    memberNo: ctx.identity.memberNo,
-    role: ctx.identity.role,
-  })),
-  /** B-64 首登行动卡：今天的三件事（待放行关卡 + 续播 + 待验收交付） */
-  actionCard: protectedProcedure.query(async ({ ctx }) => firstActionCard(ctx.identity.workspaceId, {
-    memberId: ctx.identity.memberId,
-    memberNo: ctx.identity.memberNo,
-    role: ctx.identity.role,
-  })),
-  /** B-69 引导漏斗（近窗）：开始/完成/跳过与各关完成数 */
-  questlineFunnel: protectedProcedure
-    .input(z.object({ windowDays: z.number().int().min(1).max(365).optional() }).optional())
-    .query(async ({ ctx, input }) => questlineFunnel(ctx.identity.workspaceId, input?.windowDays ?? 30)),
 
   /** 运行态总览（P0 横幅/落地向导同一事实源）：数据模式 + LLM 装配 + 工作区规模 */
   status: protectedProcedure.query(async ({ ctx }) => {
@@ -1230,6 +1188,58 @@ const threadsRouter = router({
         // 含糊指令：反问澄清，不盲目建任务
         return { kind: "clarify" as const, question: intent.clarifyQuestion, via: intent.via };
       }
+      /**
+       * 视频目标「管线分流」（T-2026-0925-0002）。
+       *
+       * 此前这里对所有视频目标硬编码 `isMarketing: true` 且不传 metadata：
+       *   ① 叙事片/知识片也被当成营销片立项，而营销片要多跑情报五站 + G1 门，成本更高；
+       *   ② 营销片其实**没有真的跑情报**——vendor 靠 `metadata.dataMining / brief.product`
+       *      数据驱动，两个条件都不成立就整层跳过，等于「营销片 = 叙事片 + 一个营销标签」。
+       *
+       * 现在改成：先分流（规则优先，摇摆时才走模型仲裁），拿不准就把选择交回用户
+       * （`clarify`，不建线程、不建项目、不花渲染/情报成本）；营销片必须带商品锚点，
+       * 缺商品名同样先问清楚。
+       */
+      const videoGoal = /视频|短片|影片|成片|镜头卡|分镜|宣传片|TVC|纪录片|口播|种草片|混剪/.test(input.title);
+      const isVideoQuest = input.runImmediately && intent.mode === "quest" && videoGoal;
+      const videoRoute = isVideoQuest
+        ? await routeVideoPipeline({ text: input.title }, { llmCall: llmCall("pipeline-route", scope) })
+        : null;
+      if (videoRoute && videoRoute.route === "clarify") {
+        // 澄清留痕（无线程可挂，用视频路由对象作载体；依据与信号一并落账，便于复盘"为什么没开工"）
+        await gatewayAppend(getGatewayPool(), {
+          tenantId: scope.tenantId, workspaceId: scope.workspaceId,
+          actor: { id: ctx.identity.memberNo, type: "human" },
+        }, {
+          who: { type: "human", id: ctx.identity.memberNo },
+          context: {
+            tenant_id: scope.tenantId, workspace_id: scope.workspaceId,
+            time: new Date().toISOString(), channel: "inapp",
+          },
+          object: { type: "video_pipeline_route", id: `route-${Date.now().toString(36)}` },
+          decision: {
+            action: "video.route.clarify",
+            after: {
+              intent: input.title.slice(0, 500),
+              missing: videoRoute.clarify?.missing ?? ["route"],
+              signals: videoRoute.signals,
+              rationale: videoRoute.rationale,
+            },
+            basis: ["分流不确定 → 先问用户，避免按错误管线花情报/渲染成本（宁可多问一句，不做错一条片）"],
+          },
+          rule_impact: [],
+        });
+        return {
+          kind: "clarify" as const,
+          question: videoRoute.clarify?.question ?? "这条片子走营销片还是叙事片？",
+          via: videoRoute.via,
+          videoRoute: {
+            route: "clarify" as const,
+            missing: videoRoute.clarify?.missing ?? ["route"],
+            signals: videoRoute.signals,
+          },
+        };
+      }
       const presetKey = input.presetKey ?? (await resolveDispatchPresetKey(scope));
       const app = getAppPool();
       const client = await app.connect();
@@ -1296,12 +1306,28 @@ const threadsRouter = router({
        * 照单执行并留下「未提供工具」的空跑记录（真机实测：T-175 视频任务）。
        * 线程照常建档（任务中心可见），并落一条关联事件把线程与视频项目串起来。
        */
-      const videoGoal = /视频|短片|影片|成片|镜头卡|分镜|宣传片|TVC|纪录片|口播|种草片|混剪/.test(input.title);
-      if (input.runImmediately && intent.mode === "quest" && videoGoal) {
+      if (isVideoQuest) {
+        const decision = videoRoute!;
         try {
+          /**
+           * 分流结论落到 metadata（营销片写 dataMining/brief，叙事片显式清空），
+           * 这样 vendor 的情报层才会按"数据驱动"的口径被真正激活或跳过。
+           */
+          const seededMetadata = applyRouteToMetadata(undefined, decision);
+          /**
+           * 创作意图清理 + 需求口径（真机 VID-AUDIT-M1）：
+           * ① 「走营销片」这类分流行指令不能进创意解析（否则主题被解析成「走营销片」，质量 0/5）；
+           * ② 营销片默认竖屏 30s（与本仓 brief 默认一致），显式写进口径块，
+           *    否则生成器按类型推导出 45s，G2 监制以「时长自相矛盾 + 缺画幅」打回。
+           */
+          const pipelineIntent = buildPipelineIntent(input.title, {
+            durationSec: 30,
+            aspectRatio: decision.route === "marketing" ? "9:16" : undefined,
+          });
           const started = await startVideoProjectRun(scope, {
-            intent: input.title,
-            isMarketing: true, // 本仓目标语料以营销/获客素材为主，走营销片管线（含情报前置层）
+            intent: pipelineIntent,
+            metadata: seededMetadata,
+            isMarketing: decision.route === "marketing",
             by: { id: ctx.identity.memberNo, type: "human" },
             threadId,
           });
@@ -1318,15 +1344,33 @@ const threadsRouter = router({
             object: { type: "video_project", id: started.projectId },
             decision: {
               action: "video.route.standard",
-              after: { threadId, projectId: started.projectId, runId: started.runId },
-              basis: ["视频目标路由到标准视频管线（25/30 字段镜头卡 + 导演前置评审 + 定妆锚定）"],
+              after: {
+                threadId, projectId: started.projectId, runId: started.runId,
+                pipeline: decision.route,
+                via: decision.via,
+                confidence: decision.confidence,
+                product: decision.product?.name ?? null,
+                productSource: decision.product?.source ?? null,
+                signals: decision.signals,
+              },
+              basis: [
+                decision.route === "marketing"
+                  ? "分流判定：营销片（含商品情报档案 Stage -2：情报五站 + G1 确认门）"
+                  : "分流判定：叙事片（通用管线，不跑情报层）",
+                `分流依据：${decision.rationale}`,
+              ],
             },
             rule_impact: [],
           });
           return {
             kind: "routed" as const, mode: "quest" as const, via: intent.via, threadId,
             status: "running" as const,
-            video: { projectId: started.projectId, runId: started.runId },
+            video: {
+              projectId: started.projectId,
+              runId: started.runId,
+              pipeline: decision.route,
+              product: decision.product?.name ?? null,
+            },
           };
         } catch (error) {
           if (error instanceof StudioWorkerError && error.code === "LLM_MISSING") {
@@ -1727,13 +1771,8 @@ const approvalsRouter = router({
           input.approvalId,
           { type: input.gesture, reasonEnum: input.reasonEnum, reasonText: input.reasonText, editedAfter: input.editedAfter, editKind: input.editKind },
         );
-        /**
-         * E1 联调接线（PF.5/F2.4）：fence.rule.propose 手势通过 → 激活规则版本。
-         * 2026-09-24 修复（RDAS O 域 ADR-T02 实测）：**编辑放行（edited）与通过同等续跑**——
-         * 旧实现只对 status==='approved' 续跑，H2「轻修正后交付」手势把审批置为 edited 后就再没人推进，
-         * 线程永远停在 pending_review（runtime 侧 approvedStepIds 本就接受 approved+edited，两侧口径不一致）。
-         */
-        if (!res.deduped && (res.status === "approved" || res.status === "edited")) {
+        // E1 联调接线（PF.5/F2.4）：fence.rule.propose 手势通过 → 激活规则版本
+        if (!res.deduped && res.status === "approved") {
           await activateFenceRuleAfterApproval(scopeOf(ctx.identity), input.approvalId);
           // 步骤级审批通过 → 自动续跑所属 Quest（2026-09-20：否则"批完还得手动推进"，生图链路停在半路）
           scheduleQuestResumeAfterApproval(scopeOf(ctx.identity), input.approvalId);
@@ -1785,8 +1824,6 @@ const approvalsRouter = router({
         // E1 联调接线（PF.5/F2.4）：批量采纳通过项同样触发围栏激活接线（防御性；围栏提案标记 high_risk 本不可批量）
         for (const id of res.approved) {
           await activateFenceRuleAfterApproval(scopeOf(ctx.identity), id);
-          // 2026-09-24 修复：批量放行与单条决定同口径——放行即续跑所属 Quest（否则批量后全靠手动"推进"）
-          scheduleQuestResumeAfterApproval(scopeOf(ctx.identity), id);
         }
         return res;
       } catch (err) {
@@ -1801,36 +1838,6 @@ const approvalsRouter = router({
   sweep: writeProcedure.mutation(async ({ ctx }) => {
     return expireSweep(getAppPool(), getGatewayPool(), scopeOf(ctx.identity));
   }),
-
-  /**
-   * B-70 业务关卡批量放行：低风险 + 配额内 + 未被抽检的关卡一次放行；
-   * L4/high_risk 一律留待逐条（planBatchRelease 硬约束），整批进账本（gate.batch_release）。
-   */
-  batchRelease: writeProcedure
-    .input(z.object({
-      quota: z.number().int().min(1).max(50).optional(),
-      sampleRate: z.number().min(0).max(1).optional(),
-      seed: z.number().int().nonnegative().optional(),
-    }).optional())
-    .mutation(async ({ ctx, input }) => {
-      const scope = scopeOf(ctx.identity);
-      const result = await releaseGatesBatch(scope.workspaceId, {
-        memberNo: ctx.identity.memberNo, role: ctx.identity.role, id: ctx.identity.memberId,
-      }, input ?? {});
-      // 围栏激活接线（与单条/旧批量同口径：通过项触发激活）
-      for (const id of result.released) {
-        await activateFenceRuleAfterApproval(scope, id);
-        // 2026-09-24 修复（B-70 复核）：批量放行的关卡此前**不触发续跑**，被放行的线程会一直停在
-        // pending_review，只有人工点"推进"才动——与"批量放行"的产品语义（一次手势放行一批）矛盾。
-        scheduleQuestResumeAfterApproval(scope, id);
-      }
-      return result;
-    }),
-
-  /** B-70 H1 负载仪表：今日裁决量 / 均时长 / 排队与超龄（≤7 件/日、≤30 秒/件的口径来自常量） */
-  loadMetrics: protectedProcedure
-    .input(z.object({ windowDays: z.number().int().min(1).max(90).optional() }).optional())
-    .query(async ({ ctx, input }) => gateLoadMetrics(scopeOf(ctx.identity).workspaceId, input?.windowDays ?? 7)),
 });
 
 /** inspection router（B10/M9：巡检状态条 / 手动巡检 / 一键派单 / 回链） */
@@ -2250,9 +2257,7 @@ async function instanceProfileOf(scope: { tenantId: string; workspaceId: string 
 
 function mapSkillOpsError(err: unknown): Error {
   if (err instanceof SkillOpsError) {
-    const code = err.code === "NOT_FOUND" || err.code === "NO_SNAPSHOT"
-      ? "NOT_FOUND"
-      : err.code === "EXAM_REQUIRED" ? "PRECONDITION_FAILED" : "BAD_REQUEST";
+    const code = err.code === "NOT_FOUND" || err.code === "NO_SNAPSHOT" ? "NOT_FOUND" : "BAD_REQUEST";
     return new TRPCError({ code, message: err.message });
   }
   return err instanceof Error ? err : new Error(String(err));
@@ -2462,30 +2467,6 @@ const nightShiftRouter = router({
 
 /** fence router（F8 起 P5 数据源：规则版本化投影 + 30 天触发聚合 + dry-run 生命周期 F2.4/F2.5） */
 const fenceRouter = router({
-  /**
-   * 生效围栏规则（客户端/执行器瀑布的数据源）：给 dsh 围栏插件与外部执行器用的**最小投影**
-   * （rule_id / level / match）。2026-09-24 新增：P 域实测发现 harness 指向的
-   * `fence.activeRules` 在本仓不存在（404 → 插件把错误体当数组 → 整个工具层不可用），
-   * 现补上该端点；返回体只有判定所需字段，不含规则说明与来源细节。
-   */
-  activeRules: protectedProcedure.query(async ({ ctx }) => {
-    const scope = scopeOf(ctx.identity);
-    const rows = await svcQuery<{ rule_id: string; level: string; match_spec: Record<string, unknown> | null }>(scope.workspaceId,
-      `SELECT rule_id, level, match_spec FROM fence_rules
-        WHERE (workspace_id=$1 OR workspace_id='*') AND status='active'
-        ORDER BY rule_id`,
-      [scope.workspaceId]);
-    return rows.map((r) => ({
-      rule_id: r.rule_id,
-      level: r.level,
-      match: {
-        actions: (r.match_spec?.actions as string[] | undefined) ?? [],
-        object_types: (r.match_spec?.object_types as string[] | undefined) ?? [],
-        when: String(r.match_spec?.when ?? "true"),
-      },
-    }));
-  }),
-
   /** 规则列表（P5E2：级别 pill + 来源 + 30 天触发数；基线 🔒 集团强制 F2.3） */
   rules: protectedProcedure.query(async ({ ctx }) => {
     const scope = scopeOf(ctx.identity);
@@ -3289,19 +3270,6 @@ function withCharterLock<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 const captainRouter = router({
-  /**
-   * B-72 信任账户复核：跑一轮（降档自动收紧自治项、升档建议与补考单进关卡、写快照事件）。
-   * dryRun=true 只算不写（验收/演练）。
-   */
-  trustReview: writeProcedure
-    .input(z.object({ dryRun: z.boolean().optional() }).optional())
-    .mutation(async ({ ctx, input }) => runTrustReview(
-      scopeOf(ctx.identity).workspaceId,
-      { id: ctx.identity.memberNo, type: "human" },
-      { dryRun: input?.dryRun === true },
-    )),
-  /** 最近一次信任快照（晨报同口径） */
-  trustLevels: protectedProcedure.query(async ({ ctx }) => latestTrustSnapshot(scopeOf(ctx.identity).workspaceId)),
   /** 治理状态：宪章 + 模式 + 授权信息 + 待审分层 */
   state: protectedProcedure.query(async ({ ctx }) => {
     const scope = scopeOf(ctx.identity);
@@ -3984,7 +3952,6 @@ export const appRouter = router({
   acquisition: acquisitionRouter,
   // 协作底座（规模化协作设计 §3–§4）：对象读模型/任务契约/交接回执/决策配额/组合看板/数字人叙事
   collaboration: collaborationRouter,
-  arbitration: arbitrationRouter,
   // 租户覆盖层（P26/P27）：实现早已随服务端构建，但此前从未挂载进根路由，
   // 三端 overlay.* 调用全部落到 404。挂载即生效，端点自身仍是受控守卫。
   overlay: overlayRouter,
