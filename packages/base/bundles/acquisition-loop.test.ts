@@ -207,8 +207,12 @@ describe("多领域融合：组合岗位编制裁决", () => {
     const shadowed = composed.shadowed.length;
     expect(keys.length).toBe(declared - shadowed);
     expect(shadowed).toBe(5);
-    // 组合编制随本仓 G 批施工演进（2026-09-24 实测 79 岗；历史值 78 之后的岗位新增未同步此处）
-    expect(keys.length).toBe(79);
+    /**
+     * 组合编制随各包编制演进，2026-09-25 实测 80 岗：`bundles/ai-video/presets/cover-designer.yml`
+     * （封面设计师）落地后，岗位定义 84 → 85、组合去重后 79 → 80；历史：61 → 70 → 72 → 73 → 74 → 75 → 78 → 79 → 80。
+     * 口径变更时与 README「编制与资产统计」区块（`pnpm capabilities` 生成）一起更新。
+     */
+    expect(keys.length).toBe(80);
   });
 
   it("同名岗位按主包声明落到权威归属包", () => {
