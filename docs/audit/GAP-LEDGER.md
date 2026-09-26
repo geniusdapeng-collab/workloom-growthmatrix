@@ -5,19 +5,19 @@
 > **边界**：只优化业务逻辑与行业 Know-How，不改输入输出与字段数据结构（对象字段、五元事件、管线拓扑、围栏级别、DB、API）。
 > **基线**：`WorkLoom-growth@f2ac5dec`（2026-09-26）。机检清单见《Growth 审计范围基线 v1.0》。
 
-> **本仓（workloom-growthmatrix）同步状态（更新于 2026-09-27 · T-2026-0926-0109）**：
-> 本仓 **ai-video 与 geo-growth 两个包都是 `status: stable` 且带 Ed25519 签名**
-> （keyId `ed25519-12613d8b27999511`）；包内资产的任何改动都必须经发布流水线重算摘要并签名。
+> **本仓（workloom-growthmatrix）同步状态（更新于 2026-09-27 · T-2026-0926-0110）**：
+> 本仓 **ai-video / geo-growth / hotel 三个包都是 `status: stable` 且带 Ed25519 签名**
+> （keyId `ed25519-12613d8b27999511`）；包内资产改动必须经发布流水线重算摘要并签名。
 > 已同步（不触碰签名面）：事实红线闸接线（`vendor/supermickey/**`）、只读审计器/验证工具（`scripts/tools/**`）、
-> 红线桥单测（`packages/base/bundles/truth-check-bridge.test.ts`）、本台账。
-> ⏳ 待签名同步：**ai-video 18 个技能 + geo-growth 视觉栈 14 个技能**（父仓 `WorkLoom-growth@0cd283a`）
-> 与两个包的 `bundle.json` 摘要刷新；补齐后本仓达标率与父仓一致（视频 32/32、geo 29/29）。
+> 红线桥单测、本台账。
+> ⏳ 待签名同步：**58 个技能**（ai-video 18 + geo-growth 视觉栈 14 + hotel 30，另含回归测试）
+> → 父仓 `WorkLoom-growth@fa64486`；补齐后本仓三包达标率与父仓一致（91/91）。
 >
 > **待签名落地步骤（由持有签名私钥的会话执行）**：
-> 1. 应用补丁（含技能与回归测试）：`git apply outputs/growthmatrix-待签名-技能补丁.patch`；
-> 2. 刷新摘要并签名：`BUNDLE_SIGNING_PRIVATE_KEY=<pem> BUNDLE_SIGNING_KEY_ID=ed25519-12613d8b27999511 pnpm bundle:release`；
-> 3. 校验：`pnpm bundle:governance` 全绿（两个 stable 包均需签名）；
-> 4. 复跑：`pnpm exec vitest run packages/base/bundles/agent-knowhow.test.ts`（137 项）。
+> 1. `git apply outputs/growthmatrix-待签名-技能补丁.patch`；
+> 2. `BUNDLE_SIGNING_PRIVATE_KEY=<pem> BUNDLE_SIGNING_KEY_ID=ed25519-12613d8b27999511 pnpm bundle:release`；
+> 3. `pnpm bundle:governance` 全绿（三个 stable 包均需签名）；
+> 4. `pnpm exec vitest run packages/base/bundles/agent-knowhow.test.ts`（224 项）。
 
 | ID | 批次 | 单元 | 类型 | 严重度 | 现象 | 根因（文件:行/函数） | 处置 | 回归用例 | 状态 | 证据等级 |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -43,6 +43,8 @@
 | GAP-0020 | B1 | 视频域剩余 S-B 技能 | T9 资产深度 | P1 | 8 个视频技能缺「工艺判据 / 参数边界 / 失败模式」之一：人声分离档位判据、音色授权判定、曲库许可失败、摄影库注入失败、封面三件套机检失败、字体许可失败、字体选型否决、配音参数边界 | `bundles/ai-video/skills/{bgm-vocal-separation,voice-clone-consent,bgm-library-license,cinematography-kb,cover-design,font-license-compliance,font-selection,voice-delivery-spec}/SKILL.md` | **FIXED（T-2026-0926-0108）**：补工艺判据表（含来源）、参数边界与失败模式表；判据取自各技能既有阈值与围栏（G-BGM/G-VOICE/G-SUB/G-KB/G-COL） | `agent-knowhow.test.ts`（S-B 8/8、S-C 7/7、S-A 3/3） | FIXED | A |
 | GAP-0021 | B1 | 审计器区块判定 | T2 工具口径 | P2 | 审计器只取**首个**命中标题的区块，导致同一语义被多节承载（如「四、落盘口径」在「六、工艺判据」之前）时低估指标 | `scripts/tools/agent-knowhow-audit.mts` | **FIXED（T-2026-0926-0108）**：改为「所有命中区块取最大值」+ 量化阈值行/红线表述兜底；视频域达标率随之校正为 **32/32** | 同 GAP-0020 | FIXED | A/B |
 | GAP-0022 | B4 | geo-growth 视觉栈 14 技能 | T9 资产深度 | P1 | 获客系统的成套视觉生产（设计配方/艺术指导/需求分析/评审/寻源/精修/品牌质检/商品海报/短视频封面/变体矩阵/GEO 配图/朋友圈/系列海报/促销横幅）只有"方法 + 边界"，缺可执行判据（G-VIS0–G-VIS6 未落成技能内判据表）、参数边界与失败模式 | `bundles/geo-growth/skills/{compositor-designer,art-direction,design-brief,design-critique,material-scout,image-retouch,brand-guard,product-poster,video-cover,asset-variant-forge,geo-answer-card,moments-post,poster-series,promo-banner}/SKILL.md` | **FIXED（T-2026-0926-0109）**：每个技能补「工艺判据（条件→做法→判据→来源）」「参数边界」「失败模式（症状→检测器→处置）」；判据全部锚定 `fences/geo-growth-visual.yml` 的 G-VIS0–G-VIS6、平台规格表与技能自身既有阈值 | `agent-knowhow.test.ts`（geo 视觉栈 14/14、共 137 项） | FIXED | A |
+| GAP-0023 | B5 | hotel 30 技能 | T9 资产深度 | P1 | hotel 技能采用本仓另一种生产模板（触发条件/输入数据/方法/输出动作/围栏绑定/验收用例），但 22 个技能缺「证据口径」（只有一句"无回执标未核实"），4 个薄技能另缺「前置校验/失败诊断」：回执与留痕不可核对 | `bundles/hotel/skills/*/SKILL.md` | **FIXED（T-2026-0926-0110）**：22 个技能补「证据口径（无回执不算完成）」3 条（产物/审批引用/事件与对账）；`intent-radar`/`coupon-ops`/`hotel-geo-content`/`lead-concierge` 另补前置校验 3 条与失败诊断表 3 行；判据锚定各自围栏（R1/R2/R4/R5/R6/R9/R10/R11/R12/R13/R14/R15/R17/R18/R20/R21/R22/R23/R24/R25/R26） | `agent-knowhow.test.ts`（hotel 30 技能，共 224 项） | FIXED | A |
+| GAP-0024 | B6 | 包外官方技能 12 个 | T9 资产深度 | P2 | `skills/official/**`（release-gate / deal-flow / industry-entry 四件 / cross-platform-review / ripping-reverse / demo-mirror / client-demo-recorder / feedback-insight / component-integration 方法论）缺 Know-How 结构（判据/边界/失败模式或证据口径）；机检 12/12 未达标 | `skills/official/**/SKILL.md` | **PROPOSAL**：这些是**基座共享资产**（9 个订阅仓共用），按仓库路由规则应在 `workloom-im` 完善后随 base-sync 下发；本实验车道不改，避免分叉。已登记提案，待基座轮次处理 | — | PROPOSAL | B（结构机检） |
 
 ## 变更记录
 
@@ -55,3 +57,4 @@
 | 2026-09-27 | T-2026-0926-0107 | 完成 GAP-0018/0019：S-C 纪律型四技能强化 + 审计器等价域补全；视频域 Know-How 达标 **21/32**（S-A 3/3、S-B 11/22、S-C 7/7），回归 504 项全绿 |
 | 2026-09-27 | T-2026-0926-0108 | 完成 GAP-0020/0021：视频域剩余 8 个 S-B 技能补强 + 审计器多区块口径；**视频域 Know-How 达标 32/32（100%）**，全仓 48/103；回归 496 项全绿 |
 | 2026-09-27 | T-2026-0926-0109 | 完成 GAP-0022：geo-growth 视觉栈 14 技能补强；**geo-growth Know-How 达标 29/29（100%）**；回归扩到 32 个技能（137 项断言），全套 196 项相关测试全绿 |
+| 2026-09-27 | T-2026-0926-0110 | 完成 GAP-0023：hotel 30 技能补证据口径（4 个补前置校验+失败诊断）；**hotel Know-How 达标 30/30（100%）**；三个行业包合计 91/91；剩余 12 个未达标全部为基座共享的 `skills/official/**`，已登记 GAP-0024 提案（不在本仓改）；回归 224 项全绿 |
