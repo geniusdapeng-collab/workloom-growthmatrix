@@ -5,6 +5,22 @@
 > **边界**：只优化业务逻辑与行业 Know-How，不改输入输出与字段数据结构（对象字段、五元事件、管线拓扑、围栏级别、DB、API）。
 > **基线**：`WorkLoom-growth@f2ac5dec`（2026-09-26）。机检清单见《Growth 审计范围基线 v1.0》。
 
+> **本仓（workloom-growthmatrix）同步状态（更新于 2026-09-27 · T-2026-0926-0115）**：
+> 本仓 **ai-video / geo-growth / hotel 三个包都是 `status: stable` 且带 Ed25519 签名**
+> （keyId `ed25519-12613d8b27999511`）；包内资产改动必须经发布流水线重算摘要并签名。
+> 已同步（不触碰签名面）：事实红线闸接线、**情报六卡消费侧补齐**（`vendor/supermickey/**`
+> 的 `card-consumers.js` 与 `index.js` 注入方法）、门账本审计、审计/验证工具、消费矩阵文档、
+> 三个回归测试、本台账。
+> ⏳ 待签名同步（父仓 `WorkLoom-growth@e8ffc04`，补丁见 outputs）：
+> ① **58 个技能**；② **考试院题集 52 题**；③ **`voice-bridge/core.mjs` 降级可见性修复**；
+> ④ `bundles/ai-video/connectors/voice-bridge/health-degradation.test.ts`（若测试文件纳入包摘要）；
+> ⑤ 两个技能/题集回归测试。
+>
+> **待签名落地步骤（由持有签名私钥的会话执行）**：
+> 1. `git apply outputs/growthmatrix-待签名-技能补丁.patch`；
+> 2. `BUNDLE_SIGNING_PRIVATE_KEY=<pem> BUNDLE_SIGNING_KEY_ID=ed25519-12613d8b27999511 pnpm bundle:release`；
+> 3. `pnpm bundle:governance` 全绿；4. `pnpm exec vitest run packages/base/bundles`。
+
 | ID | 批次 | 单元 | 类型 | 严重度 | 现象 | 根因（文件:行/函数） | 处置 | 回归用例 | 状态 | 证据等级 |
 |---|---|---|---|---|---|---|---|---|---|---|
 | GAP-0001 | B2 | 营销片 `truth-check` | T1 纸门 | P0 | 事实红线闸在管线里声明「ProductTruthChecker 一票否决」，但全仓机检无任何 require/调用点 | `vendor/.../agents/product-truth-checker.js:117`（仅自引用） | **FIXED（T-2026-0926-0103）**：新增纯函数桥 `engines/truth-check-bridge.js`（档案→带信源 researchNotes→verify）+ 引擎方法 `HyperrealitySystem._runProductTruthCheckGate()`，在**创意主题确认之后、需求洞察之前**执行；命中冲突即 `blocking` 打回创意并落 fatal 错误；`factRedLines` 写回 `metadata._factRedLines` 并注入 PRD「制作约束」；无证据时 `degraded=no-evidence` 显式落账不误阻断 | `packages/base/bundles/truth-check-bridge.test.ts`（6 项）+ `scripts/tools/verify-truth-check-gate.mts`（真实类实例 3/3） | FIXED | A（接线精读）+ A（类级真实运行） |
@@ -33,6 +49,7 @@
 | GAP-0022 | B4 | geo-growth 视觉栈 14 技能 | T9 资产深度 | P1 | 获客系统的成套视觉生产（设计配方/艺术指导/需求分析/评审/寻源/精修/品牌质检/商品海报/短视频封面/变体矩阵/GEO 配图/朋友圈/系列海报/促销横幅）只有"方法 + 边界"，缺可执行判据（G-VIS0–G-VIS6 未落成技能内判据表）、参数边界与失败模式 | `bundles/geo-growth/skills/{compositor-designer,art-direction,design-brief,design-critique,material-scout,image-retouch,brand-guard,product-poster,video-cover,asset-variant-forge,geo-answer-card,moments-post,poster-series,promo-banner}/SKILL.md` | **FIXED（T-2026-0926-0109）**：每个技能补「工艺判据（条件→做法→判据→来源）」「参数边界」「失败模式（症状→检测器→处置）」；判据全部锚定 `fences/geo-growth-visual.yml` 的 G-VIS0–G-VIS6、平台规格表与技能自身既有阈值 | `agent-knowhow.test.ts`（geo 视觉栈 14/14、共 137 项） | FIXED | A |
 | GAP-0023 | B5 | hotel 30 技能 | T9 资产深度 | P1 | hotel 技能采用本仓另一种生产模板（触发条件/输入数据/方法/输出动作/围栏绑定/验收用例），但 22 个技能缺「证据口径」（只有一句"无回执标未核实"），4 个薄技能另缺「前置校验/失败诊断」：回执与留痕不可核对 | `bundles/hotel/skills/*/SKILL.md` | **FIXED（T-2026-0926-0110）**：22 个技能补「证据口径（无回执不算完成）」3 条（产物/审批引用/事件与对账）；`intent-radar`/`coupon-ops`/`hotel-geo-content`/`lead-concierge` 另补前置校验 3 条与失败诊断表 3 行；判据锚定各自围栏（R1/R2/R4/R5/R6/R9/R10/R11/R12/R13/R14/R15/R17/R18/R20/R21/R22/R23/R24/R25/R26） | `agent-knowhow.test.ts`（hotel 30 技能，共 224 项） | FIXED | A |
 | GAP-0024 | B6 | 包外官方技能 12 个 | T9 资产深度 | P2 | `skills/official/**`（release-gate / deal-flow / industry-entry 四件 / cross-platform-review / ripping-reverse / demo-mirror / client-demo-recorder / feedback-insight / component-integration 方法论）缺 Know-How 结构（判据/边界/失败模式或证据口径）；机检 12/12 未达标 | `skills/official/**/SKILL.md` | **PROPOSAL**：这些是**基座共享资产**（9 个订阅仓共用），按仓库路由规则应在 `workloom-im` 完善后随 base-sync 下发；本实验车道不改，避免分叉。已登记提案，待基座轮次处理 | — | PROPOSAL | B（结构机检） |
+| GAP-0026 | B2 | 情报六张摘要卡消费 | T7 孤儿产出 | P0/P1 | 情报五站产出六张卡，但读码确认 **4 张无消费者**：`insight_card`（受众/共识/差评）与 `prd_card`（演示场景/卖点证据/合规红线/钩子候选）从未进入下游提示词；`router_material` 的设计消费者 `MarketingSkillRouter` 本身零引用；`portrait_manifest` 仅被定妆照分支间接引用 | `vendor/.../engines/data-mining-engine/contracts/summary-cards.js`（产出侧）+ `index.js`（消费侧缺失） | **部分 FIXED（T-2026-0926-0115）**：新增 `card-consumers.js` + `_injectDossierEvidence()`，把 insight_card/prd_card 压成有界幂等证据块注入 `_creativeTheme.description`（需求洞察与 PRD 均读该字段）；`portrait_manifest` 待接线、`router_material` 转提案。矩阵见 `docs/audit/DOSSIER-CARD-CONSUMPTION.md` | `verify-dossier-evidence.mts`（真实类实例 3/3）+ `dossier-evidence.test.ts`（6 项） | FIXED（2/4）/ PROPOSAL（2/4） | A |
 
 ## 变更记录
 
@@ -50,3 +67,4 @@
 | 2026-09-27 | T-2026-0926-0112 | 关闭 GAP-0005（门账本只读消费：审计函数 + CLI + 回归）；GAP-0002/0003/0004 经读码判定为"需数据面扩展"→ 转 `proposals/vendor-socialpack-unwired-2026-09-27.md`（含三步接线方案与风险提示） |
 | 2026-09-27 | T-2026-0926-0113 | 自研链静默降级扫描（0 空 catch）并修复唯一静默点（voice-bridge 档案/健康检查降级可见）；vendor 内部兜底转 GAP-0011b 提案 |
 | 2026-09-27 | T-2026-0926-0114 | GAP-0010 口径澄清：10 个"无 preset 绑定"hotel 技能经 `skill-bindings.mts` 与 `segment-defaults/bundle.json` 登记，属可装配能力，非孤儿；台账与实际一致 |
+| 2026-09-27 | T-2026-0926-0115 | 关闭 GAP-0026 的 2/4：insight_card/prd_card 经有界幂等证据块进入下游提示词（真实类实例验证 3/3）；`portrait_manifest` 待接线、`router_material`（MarketingSkillRouter 零引用）转提案；新增消费矩阵文档 |
