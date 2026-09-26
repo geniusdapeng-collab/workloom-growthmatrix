@@ -5,6 +5,15 @@
 > **边界**：只优化业务逻辑与行业 Know-How，不改输入输出与字段数据结构（对象字段、五元事件、管线拓扑、围栏级别、DB、API）。
 > **基线**：`WorkLoom-growth@f2ac5dec`（2026-09-26）。机检清单见《Growth 审计范围基线 v1.0》。
 
+> **本仓（workloom-growthmatrix）同步状态（更新于 2026-09-27 · T-2026-0926-0118）**：
+> ⚠️ 本仓当前**唯一未关闭的治理红灯**：`ai-video：生产发布必须有 Ed25519 签名`。
+> 原因链：另一会话的「口播解说片产品化」提交改动了 ai-video 包资产但未重签 → 本次已修复其
+> 文案/前缀/摘要三处问题（5 项红灯降至 1 项），**签名必须由持有 `BUNDLE_SIGNING_PRIVATE_KEY` 的会话补**：
+> 1. `git apply outputs/growthmatrix-待签名-技能补丁.patch`（含 58 技能 + 52 题 + voice-bridge 修复）；
+> 2. `BUNDLE_SIGNING_PRIVATE_KEY=<pem> BUNDLE_SIGNING_KEY_ID=ed25519-12613d8b27999511 pnpm bundle:release`；
+> 3. `pnpm bundle:governance` 应全绿（ai-video / geo-growth / hotel 三包签名齐备）。
+> geo-growth 与 hotel 的既有签名**未被本次修复破坏**（已核验 keyId 在位）。
+
 | ID | 批次 | 单元 | 类型 | 严重度 | 现象 | 根因（文件:行/函数） | 处置 | 回归用例 | 状态 | 证据等级 |
 |---|---|---|---|---|---|---|---|---|---|---|
 | GAP-0001 | B2 | 营销片 `truth-check` | T1 纸门 | P0 | 事实红线闸在管线里声明「ProductTruthChecker 一票否决」，但全仓机检无任何 require/调用点 | `vendor/.../agents/product-truth-checker.js:117`（仅自引用） | **FIXED（T-2026-0926-0103）**：新增纯函数桥 `engines/truth-check-bridge.js`（档案→带信源 researchNotes→verify）+ 引擎方法 `HyperrealitySystem._runProductTruthCheckGate()`，在**创意主题确认之后、需求洞察之前**执行；命中冲突即 `blocking` 打回创意并落 fatal 错误；`factRedLines` 写回 `metadata._factRedLines` 并注入 PRD「制作约束」；无证据时 `degraded=no-evidence` 显式落账不误阻断 | `packages/base/bundles/truth-check-bridge.test.ts`（6 项）+ `scripts/tools/verify-truth-check-gate.mts`（真实类实例 3/3） | FIXED | A（接线精读）+ A（类级真实运行） |
@@ -37,6 +46,7 @@
 | GAP-0027 | B1/B2 | 门账本覆盖 | T7 孤儿产出 | P0 | 门账本白名单只有叙事片 7 个 step_key：营销片 `g1/g2/g3/g4/g9` 与经营线 `g10-dispatch`/`g12-boost-confirm`/`g13-diff-alert` 全部不在白名单 → 平台与 CLI 两侧都不会按 step_key 记账（营销片关键门在账本里查不到）；`apps/server` 门桥也只映射 G5–G7 | `packages/video-studio/src/gate-ledger.ts`（白名单）+ `apps/server/src/video/gate-ledger-bridge.ts`（映射表） | **FIXED（T-2026-0926-0117）**：白名单扩到 15 个 step_key、门号 union 扩到 G1–G13；门桥补 G1–G4 映射；新增 `gate-ledger-marketing.test.ts`（4 例，含"管线 yml 每个带门 step_key 都在白名单内"的防回归断言） | `gate-ledger-marketing.test.ts` + `gate-ledger-bridge.test.ts`（已更新预期） | FIXED | A |
 | GAP-0028 | B1–B5 | 动作词表口径 | T2 工具口径 | P2 | 新增覆盖矩阵审计发现：preset 的 `tools` 是**岗位能力声明**，与围栏动作词表不是同一套字面值（例：声明 `ads.boost.request` vs canonical `ads.boost`；`archive.write_back` vs `archive`；`shootlist.emit` 由动词段 `emit` 覆盖）。ai-video 80 个声明写动作中 48 个在围栏里无命中（落 `default_level=review` 保守挂起，非绕过） | `bundles/*/presets/*.yml#tools` × `bundles/*/fences/*.yml#match.actions` | **PROPOSAL**：建议把 3 处与 canonical 动作漂移的声明对齐（`ads.boost.request → ads.boost`、`archive.write_back → archive`、`shootlist.emit → shootlist|emit`）；改 `tools` 属契约面，需产品所有者裁决。审计报告见 `docs/audit/DEEP-AUDIT-ROUND2-2026-09-27.md` | `audit-fence-coverage.mts`（可复跑） | PROPOSAL | A/B |
 | GAP-0029 | B1/B4 | 管线门号与围栏细分 | T2 工具口径 | P3 | **两条管线**写 `gate: G10`（`ai-video/account-ops` 与 `geo-growth/ops-rhythm`），围栏为 `G10a–G10d` 四条细分（取严并集），管线侧无同号规则 | `bundles/ai-video/pipelines/account-ops.yml`、`bundles/geo-growth/pipelines/ops-rhythm.yml` vs `fences/ai-video-baseline.yml` | **已缓解 + PROPOSAL**：门账本按总号 `G10` 记账（映射层解决，平台可按 step_key 检索）；建议在两条 yml 的注释注明"总号 = a–d 并集"（改注释不改拓扑） | `gate-ledger-marketing.test.ts`（G10 总号断言）+ `audit-fence-coverage.mts` 机检 | PROPOSAL（低） | A |
+| GAP-0030 | — | **生产事故：三仓 main 治理红灯** | T8 契约破坏 | **P0** | 另一会话的「口播解说片产品化」（`T-2026-0926-0009`）提交后，三仓 `bundle-governance` 全部失败：① `presets/explainer-director.yml` 的 `explainerwrite.deliver` 用户文案混入底层字段名 `final_cut`；② `coverage` 第二条 `eventPrefix: render.` 与 `render-operator` 撞车；③ `integrity.assets` 缺 `presets/explainer-director.yml` 且摘要未刷新；④ growthmatrix 另报 **Ed25519 签名验证失败**（新增 preset 后未重签） | `bundles/ai-video/presets/explainer-director.yml`、`bundles/ai-video/bundle.json` | **FIXED（T-2026-0926-0118，主仓与 growthtest）**：① 文案改为"媒资库成片"（去字段名）；② 前缀改为 `explainer.render.`；③ `bundle-governance --refresh-digests` 刷新摘要并补齐 assets↔provides 一一对应；④ 同步修正 `acquisition-loop.test.ts` 的组合编制口径（79→80，附演化注释）。★ growthmatrix 的签名项**无法在本机修复**（无签名私钥），已按待签名清单登记 | `bundle-governance`（三仓复跑）+ `acquisition-loop.test.ts` + explainer/bundle 测试 697 项 | FIXED（主仓/growthtest）/ OPEN（matrix 签名） | A |
 
 ## 变更记录
 
@@ -56,3 +66,4 @@
 | 2026-09-27 | T-2026-0926-0114 | GAP-0010 口径澄清：10 个"无 preset 绑定"hotel 技能经 `skill-bindings.mts` 与 `segment-defaults/bundle.json` 登记，属可装配能力，非孤儿；台账与实际一致 |
 | 2026-09-27 | T-2026-0926-0115 | 关闭 GAP-0026 的 2/4：insight_card/prd_card 经有界幂等证据块进入下游提示词（真实类实例验证 3/3）；`portrait_manifest` 待接线、`router_material`（MarketingSkillRouter 零引用）转提案；新增消费矩阵文档 |
 | 2026-09-27 | T-2026-0926-0117 | 深度审计第 2 轮：新增围栏覆盖矩阵审计器（复用引擎 `actionMatches` 语义）；关闭 GAP-0027（门账本补营销/经营线 8 个 step_key + 平台桥 G1–G4 映射）；登记 GAP-0028（动作词表口径 → 提案）与 GAP-0029（G10 总号/细分 → 低优先提案）；产出 `DEEP-AUDIT-ROUND2-2026-09-27.md` |
+| 2026-09-27 | T-2026-0926-0118 | 处置 GAP-0030 生产事故：修复 `explainer-director` 文案/前缀/摘要三处问题并同步组合编制口径（79→80）；主仓与 growthtest 治理门禁恢复全绿；growthmatrix 仅剩签名项（需私钥） |
