@@ -5,21 +5,6 @@
 > **边界**：只优化业务逻辑与行业 Know-How，不改输入输出与字段数据结构（对象字段、五元事件、管线拓扑、围栏级别、DB、API）。
 > **基线**：`WorkLoom-growth@f2ac5dec`（2026-09-26）。机检清单见《Growth 审计范围基线 v1.0》。
 
-> **本仓（workloom-growthmatrix）同步状态（更新于 2026-09-27 · T-2026-0926-0112）**：
-> 本仓 **ai-video / geo-growth / hotel 三个包都是 `status: stable` 且带 Ed25519 签名**
-> （keyId `ed25519-12613d8b27999511`）；包内资产改动必须经发布流水线重算摘要并签名。
-> 已同步（不触碰签名面）：事实红线闸接线、门账本审计（`packages/video-studio/**`）、
-> 审计/验证工具（`scripts/tools/**`）、SocialPack 未接线提案、红线桥单测、本台账。
-> ⏳ 待签名同步（父仓 `WorkLoom-growth@85d64cd`，补丁见 outputs）：
-> ① **58 个技能**；② **考试院题集 52 题**（ai-video 23 + hotel 29）与 `provides.evalQuestions` 声明；
-> ③ 两个回归测试文件。补齐后本仓三包达标率与父仓一致（91/91）。
->
-> **待签名落地步骤（由持有签名私钥的会话执行）**：
-> 1. `git apply outputs/growthmatrix-待签名-技能补丁.patch`；
-> 2. `BUNDLE_SIGNING_PRIVATE_KEY=<pem> BUNDLE_SIGNING_KEY_ID=ed25519-12613d8b27999511 pnpm bundle:release`；
-> 3. `pnpm bundle:governance` 全绿；
-> 4. `pnpm exec vitest run packages/base/bundles/agent-knowhow.test.ts packages/base/bundles/eval-questions-coverage.test.ts`。
-
 | ID | 批次 | 单元 | 类型 | 严重度 | 现象 | 根因（文件:行/函数） | 处置 | 回归用例 | 状态 | 证据等级 |
 |---|---|---|---|---|---|---|---|---|---|---|
 | GAP-0001 | B2 | 营销片 `truth-check` | T1 纸门 | P0 | 事实红线闸在管线里声明「ProductTruthChecker 一票否决」，但全仓机检无任何 require/调用点 | `vendor/.../agents/product-truth-checker.js:117`（仅自引用） | **FIXED（T-2026-0926-0103）**：新增纯函数桥 `engines/truth-check-bridge.js`（档案→带信源 researchNotes→verify）+ 引擎方法 `HyperrealitySystem._runProductTruthCheckGate()`，在**创意主题确认之后、需求洞察之前**执行；命中冲突即 `blocking` 打回创意并落 fatal 错误；`factRedLines` 写回 `metadata._factRedLines` 并注入 PRD「制作约束」；无证据时 `degraded=no-evidence` 显式落账不误阻断 | `packages/base/bundles/truth-check-bridge.test.ts`（6 项）+ `scripts/tools/verify-truth-check-gate.mts`（真实类实例 3/3） | FIXED | A（接线精读）+ A（类级真实运行） |
@@ -33,7 +18,8 @@
 | GAP-0009 | B2 | 视频域考题覆盖 | T2 无证据 | P1 | `bundles/ai-video` 无 `eval/`，27 名环节员工零考题覆盖（仅 geo-growth 有 30 题） | `bundles/ai-video/` 缺 `eval/questions.json` | **FIXED（T-2026-0926-0111）**：建 **23 题**题集（G1/G2/G5/G6/G8/G9/G9a/G9b/G10a-d/G11/G12/G13/G14/G15/G16/G-MAT1/G-COL2/G-SUB5/G-VOICE5/G-BGM5/G-DLV1 + 事实红线/无源不入库/明星声线拒绝 3 道技能题），断言与围栏级别严格对齐 | `eval-questions-coverage.test.ts` | FIXED | A |
 | GAP-0025 | B5 | 酒店域考题覆盖 | T2 无证据 | P1 | `bundles/hotel` 无 `eval/`（30 个值守/经营技能零考题覆盖） | `bundles/hotel/` 缺 `eval/questions.json` | **FIXED（T-2026-0926-0111）**：建 **29 题**题集（R1/R2/R3/R4/R5/R6/R7/R8/R9/R10/R11/R12/R13/R14/R15/R16/R17/R18/R19/R20/R21/R22/R23/R24/R25/R26 + 夜审差异/只读体检 2 道技能题） | 同 GAP-0009 | FIXED | A |
 | GAP-0010 | B5 | hotel 技能资产 | T7 孤儿 | P2 | 10 个技能无任何 preset 绑定（`ai-live-assistant`/`content-marketing`/`fast-scan`/`inspection-suite`/`ota-operations`/`overbooking-parity-guard`/`pricing-matrix`/`review-asset-mining`/`safety-compliance`/`staff-scheduler`） | `bundles/hotel/presets/*.yml` 的 `skills` 字段 | 裁定：补绑定（走提案）或登记为可装配能力 | — | OPEN | B |
-| GAP-0011 | B1–B3 | vendor 阶段兜底 | T5 静默降级 | P0/P1 | 既有审计器可扫出 `FIELD_GUARD` 默认模板覆盖、子 Agent 全失败退规则兜底等"看起来成功"的路径；尚未逐条裁定 | `scripts/tools/pipeline-agent-audit.mts` 输出；`vendor/.../field-guard.js` 等 | 逐条判定是否已显式记 `degraded`，未记的按 P0 处置 | — | OPEN | B（待 A 级确认） |
+| GAP-0011 | B1–B3 | 自研链静默降级 | T5 静默降级 | P0 | 扫描自研代码（`packages/video-studio`、`packages/base/{publish-rpa,social-listening,asset-cms}`、`apps/server/src/video`、`bundles/ai-video/connectors`）：**空 catch = 0**；发现 1 处真实静默点——`voice-bridge.health()` 把 `listProfiles` 失败吞成空数组，且 `listProfiles` 把损坏档案静默跳过（只剩 count 差异，看不出来） | `bundles/ai-video/connectors/voice-bridge/core.mjs#listProfiles/health` | **FIXED（T-2026-0926-0113）**：新增 `listProfilesDetailed()` 返回 `{profiles, skipped[{profile_id, reason}]}`；`health()` 透出 `profiles.skipped` 与 `profiles.error`（失败不再伪装成 0 档案） | `bundles/ai-video/connectors/voice-bridge/health-degradation.test.ts`（2 例） | FIXED | A |
+| GAP-0011b | B1–B3 | vendor 内部兜底 | T5 静默降级 | P1 | vendor 引擎内仍有 `FIELD_GUARD` 默认模板覆盖、子 Agent 全失败退规则兜底等"看起来成功"的路径（`pipeline-agent-audit.mts` 可扫出） | `vendor/supermickey/.../field-guard.js` 等（**上游资产**） | **PROPOSAL**：属上游 vendor 资产，改其兜底语义需同步上游与真机回归；本仓已在审计器/技能里要求"降级必须显式"，vendor 侧逐条裁定并入下一轮提案 | — | PROPOSAL | B（待 A 级确认） |
 | GAP-0012 | B1 | 提示词工艺（`shot-prompt-craft`） | T9 资产深度 | P1 | 29 行摘要只有方法叙述，没有 25/30 字段判据表、字符口径边界与失败模式；真机曾因占位符/缺号/字数不足反复打回 | `bundles/ai-video/skills/shot-prompt-craft/SKILL.md` | **FIXED（T-2026-0926-0102）**：补 11 行工艺判据表（含来源）、5 条参数边界、8 条失败模式 | `agent-knowhow.test.ts`（39 项全绿） | FIXED | A |
 | GAP-0013 | B1 | 定妆照纪律（`portrait-studio`） | T9 资产深度 | P1 | 28 行摘要只写了背景干净度结论，没写 clean-background/v1 阈值、角度档位判据与失败处置 | `bundles/ai-video/skills/portrait-studio/SKILL.md` | **FIXED（T-2026-0926-0102）**：补 8 行工艺判据表（含阈值与来源）、5 条参数边界、6 条失败模式 | 同 GAP-0012 | FIXED | A |
 | GAP-0014 | B2 | 发布纪律（`publish-ops`） | T9 资产深度 | P1 | 22 行摘要只写"按平台蓝图过检"，六个平台的文案/话题/定时规格与失败处置不在技能内 | `bundles/ai-video/skills/publish-ops/SKILL.md` | **FIXED（T-2026-0926-0102）**：补六平台规格表（来源：`publish-rpa/adapters/*.ts`）、5 条前置校验、7 条失败诊断、3 条证据口径 | 同 GAP-0012 | FIXED | A |
@@ -62,3 +48,4 @@
 | 2026-09-27 | T-2026-0926-0110 | 完成 GAP-0023：hotel 30 技能补证据口径（4 个补前置校验+失败诊断）；**hotel Know-How 达标 30/30（100%）**；三个行业包合计 91/91；剩余 12 个未达标全部为基座共享的 `skills/official/**`，已登记 GAP-0024 提案（不在本仓改）；回归 224 项全绿 |
 | 2026-09-27 | T-2026-0926-0111 | 完成 GAP-0009/0025：视频域 23 题 + 酒店域 29 题考试院题集（含红线题与 fail-closed 断言），经考试院同源 loader（含完整性摘要与严格 Schema）校验；相关测试 698 项全绿 |
 | 2026-09-27 | T-2026-0926-0112 | 关闭 GAP-0005（门账本只读消费：审计函数 + CLI + 回归）；GAP-0002/0003/0004 经读码判定为"需数据面扩展"→ 转 `proposals/vendor-socialpack-unwired-2026-09-27.md`（含三步接线方案与风险提示） |
+| 2026-09-27 | T-2026-0926-0113 | 自研链静默降级扫描（0 空 catch）并修复唯一静默点（voice-bridge 档案/健康检查降级可见）；vendor 内部兜底转 GAP-0011b 提案 |
