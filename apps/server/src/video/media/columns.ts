@@ -1,7 +1,7 @@
 /**
- * media/columns.ts —— 0047（源仓 0039）媒资列补写（title/tags/prompt/pipeline_kind/duration/宽高/缩略图/source_type）
+ * media/columns.ts —— 0049（源仓 0039）媒资列补写（title/tags/prompt/pipeline_kind/duration/宽高/缩略图/source_type）
  *
- * 为什么要单独一层：`register()` 属基座包（改签名要走 L2→L1→L0 提案），而 0047（源仓 0039）的媒资列必须落库。
+ * 为什么要单独一层：`register()` 属基座包（改签名要走 L2→L1→L0 提案），而 0049（源仓 0039）的媒资列必须落库。
  * 因此走"基座不动、产品层扩展"的最小侵入路径——register 之后由本模块补写。
  *
  * 与 register 的事务关系（规格书 §10 风险条款）：两者**不是**同一事务。代价是理论上存在

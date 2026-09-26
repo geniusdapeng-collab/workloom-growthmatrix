@@ -115,7 +115,7 @@ export async function registerFinalCut(
 }
 
 /**
- * 渲染产物登记（泛化版）：register() 之后补写 0047（源仓 0039）媒资列（title/prompt/pipeline_kind/宽高/画幅）。
+ * 渲染产物登记（泛化版）：register() 之后补写 0049（源仓 0039）媒资列（title/prompt/pipeline_kind/宽高/画幅）。
  * 补写用动态 import 引 `media/register-local` 的列助手（该模块反向依赖本文件的 mediaRoot，
  * 静态相互 import 会形成环；动态 import 在调用期解析，环被打破）。
  */
