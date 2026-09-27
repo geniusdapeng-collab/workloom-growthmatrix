@@ -208,15 +208,16 @@ describe("多领域融合：组合岗位编制裁决", () => {
     expect(keys.length).toBe(declared - shadowed);
     expect(shadowed).toBe(5);
     /**
-     * 组合编制随各包编制演进。本隔离副本（growthmatrix）口径：**81 岗**——
-     * 2026-09-27 装配器实测：`hotel` 包新增 `hotel-ceo` 后，组合去重后 80 → 81
+     * 组合编制随各包编制演进。本隔离副本（growthmatrix）口径：**82 岗**——
+     * 2026-09-27 装配器实测：`hotel` 包新增 `hotel-ceo` 后组合去重后 80 → 81，
+     * 同日 ai-video 新增「开场钩子设计师 hook-designer」（自 growth 点名单向移植）后 81 → 82
      * （历史：61 → 70 → 72 → 73 → 74 → 75 → 78 → 79 → 80 → 81）。
      * 口径变更时与 README「编制与资产统计」区块（`pnpm capabilities` 生成）一起更新。
      *
      * 注：基座仓（WorkLoom-growth）与 growthtest 的合并资产集仍是 80 岗——**各副本按自身资产集复算**，
      * 不把某一副本的数字硬套到另一副本（这条纪律在 r12/r13 的移植里已经踩过一次）。
      */
-    expect(keys.length).toBe(81);
+    expect(keys.length).toBe(82);
   });
 
   it("同名岗位按主包声明落到权威归属包", () => {
