@@ -24,6 +24,11 @@ ALTER TABLE video_projects ADD CONSTRAINT video_projects_kind_check
   CHECK (kind IN ('narrative','marketing','account_ops','explainer'));
 
 -- video_assets.pipeline_kind：0039 内联 CHECK 自动命名 video_assets_pipeline_kind_check
+-- 【执行顺序兼容（本仓 T-2026-0927-0002）】本仓的媒资库迁移落在 0049（growth 仓是 0039），
+-- 而本文件编号在前：全新库跑到这里时 video_assets.pipeline_kind 还不存在 →
+-- 必须**先补列**再收约束（ADD COLUMN IF NOT EXISTS 幂等；已建列时是空操作）。
+-- 不这么做，全新库会以 `column "pipeline_kind" does not exist` 直接失败（db-gate 红）。
+ALTER TABLE video_assets ADD COLUMN IF NOT EXISTS pipeline_kind TEXT;
 ALTER TABLE video_assets DROP CONSTRAINT IF EXISTS video_assets_pipeline_kind_check;
 ALTER TABLE video_assets ADD CONSTRAINT video_assets_pipeline_kind_check
   CHECK (pipeline_kind IN ('narrative','marketing','explainer') OR pipeline_kind IS NULL);

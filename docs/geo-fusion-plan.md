@@ -41,7 +41,7 @@
 
 ### 2.2 员工编制（GEO 双域包自身 14 员 + 2 指挥官）
 
-> **口径说明（2026-09-25 修订·素材用途门与封面设计师落地后复算）**：本节描述的是 `bundles/geo-growth` 包自身的编制——双域 16 岗 + 视觉栈 2 岗 + 获客用增班组 + 本仓 B-09/B-47 下沉的 `creator-partner` / `ip-curator`，本包共 29 个 preset。本产品（骇客帝国实验版）的完整组合编制为三包合并 **80 岗**（各包声明 hotel 16 + ai-video 40 + geo-growth 29，其中 5 处同名遮蔽按主包裁决）；三包 `provides.fences` 逐文件去重后围栏并集 **120 条**（另含 B-62 内部协作模板派生的 G-C01/G-C02/G-C03，本包内不再重复定义）。事实源为 `bundles/geo-growth/bundle.json#composition.presetOwners` 与 `packages/base/bundles/assembly.ts`（装配器实测口径，与 `scripts/suite-hotel.ts`、`scripts/suite-geo.ts` 同源）；岗位与围栏随包演进，引用时以装配器运行结果为准。
+> **口径说明（2026-09-25 修订·素材用途门与封面设计师落地后复算）**：本节描述的是 `bundles/geo-growth` 包自身的编制——双域 16 岗 + 视觉栈 2 岗 + 获客用增班组 + 本仓 B-09/B-47 下沉的 `creator-partner` / `ip-curator`，本包共 29 个 preset。本产品（骇客帝国实验版）的完整组合编制为三包合并 **81 岗**（各包声明 hotel 16 + ai-video 41 + geo-growth 29，其中 5 处同名遮蔽按主包裁决）；三包 `provides.fences` 逐文件去重后围栏并集 **120 条**（另含 B-62 内部协作模板派生的 G-C01/G-C02/G-C03，本包内不再重复定义）。事实源为 `bundles/geo-growth/bundle.json#composition.presetOwners` 与 `packages/base/bundles/assembly.ts`（装配器实测口径，与 `scripts/suite-hotel.ts`、`scripts/suite-geo.ts` 同源）；岗位与围栏随包演进，引用时以装配器运行结果为准。
 
 | 班组 | 员工 | 职责 | 复用/新增 |
 |---|---|---|---|
