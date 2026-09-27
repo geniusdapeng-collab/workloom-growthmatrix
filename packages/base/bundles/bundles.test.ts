@@ -167,14 +167,14 @@ describe.runIf(RUN_DB)("行业装配 PG 集成（F2.10 铁律）", async () => {
       const scope2 = { tenantId, workspaceId: wsId };
       const provision = await provisionComposedWorkforce(app, scope2, "geo-growth", "MEM-FUSION");
       expect(provision.bundleIds).toEqual(["hotel", "ai-video", "geo-growth"]);
-      // 本仓组合编制实测 81 岗（与 acquisition-loop / README 统计块同一口径；岗位新增后需同步）
+      // 本仓组合编制实测 82 岗（与 acquisition-loop / README 统计块同一口径；岗位新增后需同步）
       expect(provision.rosterSize).toBe(82);
       // 每个 preset_key 只由一个包提供（同名按主包裁决）：hotel 16 / ai-video 30 / geo-growth 29
       // （B-07 后 company-ceo 归 geo-growth，hotel 版更名 hotel-ceo，遮蔽从 4 处减到 3 处）
       // B-09/B-47 下沉 creator-partner 与 ip-curator 后遮蔽回到 5 处；
       // 2026-09-22 新增 ai-video「BGM 配乐师」→ 角色总数 74→75
       // 2026-09-25 实测：ai-video 35（封面设计师落地后 34→35）/ geo-growth 29 / hotel 16，遮蔽 5 处
-      // 2026-09-27 实测：ai-video 36（讲解导演 explainer-director 落地后 35→36）→ 组合 81 岗
+      // 2026-09-27 实测：ai-video 37（hook-designer 落地后 36→37）→ 组合 82 岗
       expect(provision.perBundle).toEqual({ hotel: 16, "ai-video": 37, "geo-growth": 29 });
       expect(provision.shadowed.length).toBe(5);
       expect(provision.fenceRules).toBeGreaterThanOrEqual(68);
