@@ -32,7 +32,6 @@ import {
 } from "./ticket.js";
 import { ensureServiceSchema } from "./store.js";
 import { appendEventOn, serviceTx } from "./events.js";
-import { buildConversionTicket, CONVERSION_ACTIONS, type ConversionAction, type ConversionInput } from "./conversion.js";
 
 export const serviceGateway = new Hono();
 
@@ -594,58 +593,6 @@ serviceGateway.post("/tickets", cAuth, async (c) => {
       },
     });
   } catch (err) {
-    return fail(c, err, requestId);
-  }
-});
-
-/**
- * B-52 承接动作：领券 / 留资 / 预约 / 咨询。
- * 四类动作落到承接工单（kind=动作名）+ 五元事件：来源链与脱敏联系方式进 payload，
- * 回执 state=captured；幂等键由 action+payload 派生（重放只标 recorded，不重复落事件）。
- */
-serviceGateway.post("/actions", cAuth, async (c) => {
-  const requestId = randomUUID();
-  try {
-    const a = authOf(c);
-    const body = await bodyOf<{ action: ConversionAction; input: ConversionInput; idempotencyKey?: string }>(c);
-    const isConversionAction = (value: unknown): value is ConversionAction =>
-      typeof value === "string" && (CONVERSION_ACTIONS as readonly string[]).includes(value);
-    if (!isConversionAction(body.action)) {
-      return c.json({ error: `action 须为 ${CONVERSION_ACTIONS.join("/")}` }, 400);
-    }
-    const input = (body.input ?? {}) as ConversionInput;
-    if (JSON.stringify(input).length > 10 * 1024) return c.json({ error: "input 超大（≤10KB）" }, 400);
-    const ticket = buildConversionTicket(body.action, input);
-    const idempotencyKey = body.idempotencyKey
-      ?? `action:${a.cUserId}:${sha256(`${body.action}|${JSON.stringify(ticket.payload)}`).slice(0, 16)}`;
-    const flow = await createTicketFlow({
-      workspaceId: a.workspaceId, cUserId: a.cUserId, channel: a.channel, conversationId: undefined,
-      kind: ticket.kind, title: ticket.title, payload: ticket.payload, idempotencyKey,
-      dept: await projectedDepartmentForTicket(a.workspaceId, ticket.kind),
-    });
-    if (flow.deduped) {
-      return c.json({
-        ticket: serializeTicket(flow.ticket),
-        idempotentReplay: true,
-        receipt: { requestId, state: "recorded", resourceId: flow.ticket.id, idempotentReplay: true, demo: true },
-      });
-    }
-    await pushAcceptedSafely({
-      workspaceId: a.workspaceId, cUserId: a.cUserId,
-      ticketId: flow.ticket.id, title: flow.ticket.title, dept: flow.ticket.dept,
-    });
-    return c.json({
-      ticket: serializeTicket(flow.ticket),
-      receipt: {
-        requestId, state: "captured", resourceId: flow.ticket.id, eventId: flow.eventId, demo: true,
-        delivery: { state: "demo" },
-      },
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "承接动作失败";
-    if (/授权|联系方式|券 ID|期望时间|问题正文|未知承接动作/.test(message)) {
-      return c.json({ error: message }, 400);
-    }
     return fail(c, err, requestId);
   }
 });

@@ -277,66 +277,6 @@ describe.runIf(RUN_DB)("skill-ops PG 集成（P0 分发闭环）", async () => {
     await cleanup(skillId);
   });
 
-  it("B-43 晋升门禁：门禁开启时已装技能升级先过考（未过考零推进，过考后装载）", async () => {
-    const skillId = `skill-dist-gate-${RUN}`;
-    const examId = `evx-gate-${RUN}`;
-    await cleanup(skillId);
-    await qApp(`DELETE FROM eval_exams WHERE id=$1`, [examId]);
-    const prevSetting = await qApp<{ promotion_gate: boolean }>(
-      `SELECT promotion_gate FROM eval_settings WHERE workspace_id=$1`, [scope.workspaceId]);
-
-    const v1 = mkPkg({ skillId, version: "1.0.0" });
-    await syncDistribution(app, gw, scope, {
-      registryUrl: "u", signingKey: KEY, instance, by: "MEM-001", fetcher: fetcherOf([v1]),
-    });
-    await installSkill(app, gw, scope, { skillId, by: "MEM-001" });
-    await qApp(
-      `INSERT INTO eval_settings (workspace_id, promotion_gate) VALUES ($1,true)
-       ON CONFLICT (workspace_id) DO UPDATE SET promotion_gate=true`,
-      [scope.workspaceId],
-    );
-
-    const v2 = mkPkg({
-      skillId, version: "1.1.0",
-      body: "# 收益冲刺 v2\n\n## 触发（何时用）\n每日 07:30\n\n## 步骤\n1. 取数\n2. 算价\n3. 复核\n\n## 边界（什么不做）\n不破保底价",
-    });
-    const blocked = await syncDistribution(app, gw, scope, {
-      registryUrl: "u", signingKey: KEY, instance, by: "MEM-001", fetcher: fetcherOf([v2]),
-    });
-    expect(blocked.loaded).toHaveLength(0);
-    expect(blocked.pending[0]).toMatchObject({ skillId, version: "1.1.0", examRequired: true });
-    expect(String(blocked.pending[0]!.reason)).toContain("promotion gate");
-    // 未过考：技能库版本不推进，未装快照不跟进
-    const ver1 = await qApp(`SELECT version FROM skills WHERE id=$1`, [skillId]);
-    expect(ver1.rows[0]!.version).toBe("1.0.0");
-    const ev = await qApp(
-      `SELECT count(*) AS c FROM biz_events WHERE workspace_id=$1
-        AND payload->'decision'->>'action'='skill.dist.exam_required'`, [scope.workspaceId]);
-    expect(Number(ev.rows[0]!.c)).toBeGreaterThanOrEqual(1);
-
-    // 补一场通过的 on-change 考试 → 重试同步即装载
-    await qApp(
-      `INSERT INTO eval_exams (id, workspace_id, exam_type, trigger_source, status, verdict, red_line_hit, finished_at)
-       VALUES ($1,$2,'on-change',$3,'done','pass',false,now())`,
-      [examId, scope.workspaceId, `test-gate-${RUN}`],
-    );
-    const loaded = await syncDistribution(app, gw, scope, {
-      registryUrl: "u", signingKey: KEY, instance, by: "MEM-001", fetcher: fetcherOf([v2]),
-    });
-    expect(loaded.loaded[0]).toMatchObject({ skillId, version: "1.1.0", tier: "L1" });
-    const ver2 = await qApp(`SELECT version FROM skills WHERE id=$1`, [skillId]);
-    expect(ver2.rows[0]!.version).toBe("1.1.0");
-
-    // 还原门禁与夹具
-    await qApp(`DELETE FROM eval_exams WHERE id=$1`, [examId]);
-    if (prevSetting.rows[0]) {
-      await qApp(`UPDATE eval_settings SET promotion_gate=$2 WHERE workspace_id=$1`, [scope.workspaceId, prevSetting.rows[0].promotion_gate]);
-    } else {
-      await qApp(`DELETE FROM eval_settings WHERE workspace_id=$1`, [scope.workspaceId]);
-    }
-    await cleanup(skillId);
-  });
-
   it("L2 执行面：永不静默——入 staging + 审批提案；未批准装载被拒；批准后装载", async () => {
     const skillId = `skill-dist-l2-${RUN}`;
     await cleanup(skillId);

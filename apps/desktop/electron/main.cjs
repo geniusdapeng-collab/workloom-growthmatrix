@@ -149,10 +149,10 @@ const SPLASH_HTML = ({ message, error = "", reference = "", startedAt = Date.now
     <a href="workloom-action://export">导出诊断</a>
     <a href="workloom-action://exit">安全退出</a>
   </div>` : "";
-  return `data:text/html;charset=utf-8,${encodeURIComponent(`<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WorkLoom 启动</title></head><body>
+  return `data:text/html;charset=utf-8,${encodeURIComponent(`<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(TITLE)} 启动</title></head><body>
   <main aria-live="polite">
-    <div class="brand">WorkLoom <span>织元</span></div>
-    <div class="subtitle">企业数字员工 IM · ${failed ? "启动需要处理" : "正在准备工作区"}</div>
+    <div class="brand">${escapeHtml(TITLE)}</div>
+    <div class="subtitle">经营工作台 · ${failed ? "启动需要处理" : "正在准备工作区"}</div>
     ${failed ? `<div class="failure" role="alert"><strong>本次启动未完成</strong><p>${safeError}</p>${reference ? `<p>支持参考：${escapeHtml(reference)}</p>` : ""}</div>` : `<div role="progressbar" aria-label="正在初始化" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}" aria-valuetext="${escapeHtml(`${progressText}，${message}`)}" class="progress"><i style="width:${percent}%"></i></div>`}
     <p class="stage">${safeMessage}</p>
     ${failed ? "" : `<p class="elapsed"><strong>${progressText}</strong><br>已用时 <span id="elapsed">0 秒</span> · 进度按已完成的启动检查点更新</p>`}
@@ -188,7 +188,7 @@ function showSplash(message, error = "", reference = lastBootstrapReference ?? "
 function diagnosticText() {
   const logDir = path.join(supportDirResolved ?? app.getPath("userData"), "logs");
   const sections = [
-    "WorkLoom 启动诊断",
+    `${TITLE} 启动诊断`,
     `导出时间：${new Date().toISOString()}`,
     `应用版本：${app.getVersion()}`,
     `系统：${process.platform} ${process.arch}`,
@@ -226,8 +226,8 @@ async function handleSplashAction(action) {
   }
   if (action === "export") {
     const options = {
-      title: "导出 WorkLoom 启动诊断",
-      defaultPath: path.join(app.getPath("documents"), `WorkLoom-启动诊断-${Date.now()}.txt`),
+      title: `导出 ${TITLE} 启动诊断`,
+      defaultPath: path.join(app.getPath("documents"), `${TITLE}-启动诊断-${Date.now()}.txt`),
       filters: [{ name: "文本诊断", extensions: ["txt"] }],
     };
     const result = splash
@@ -521,7 +521,7 @@ async function runRenderSmoke() {
   if (!switchedStage) throw new Error(`无法切换到舞台视图：${JSON.stringify(report)}`);
   report.reportStage = await captureProductScene(reportStageScene, "stage");
   saveReport();
-  console.log(`WorkLoom 渲染冒烟通过：${JSON.stringify(report)}`);
+  console.log(`${TITLE} 渲染冒烟通过：${JSON.stringify(report)}`);
 }
 
 /* ---------- 系统托盘 ---------- */
@@ -534,7 +534,7 @@ function createTray() {
     { label: "全屏 / 退出全屏", click: () => { if (win) { win.show(); win.setFullScreen(!win.isFullScreen()); } } },
     { label: "恢复默认窗口与布局", click: resetWindowAndLayout },
     { type: "separator" },
-    { label: "退出 WorkLoom（停止全部服务）", click: () => { quitting = true; app.quit(); } },
+    { label: `退出 ${TITLE}（停止全部服务）`, click: () => { quitting = true; app.quit(); } },
   ]));
   tray.on("click", () => { if (win) { win.isVisible() ? win.focus() : win.show(); } });
 }
@@ -593,7 +593,7 @@ app.whenReady().then(async () => {
       lastBootstrapError = message;
       lastBootstrapReference = `启动-${Date.now().toString(36).toUpperCase()}`;
       if (APP_SMOKE || RENDER_SMOKE) {
-        console.error(`WorkLoom 启动失败：${message}\n日志目录：${path.join(supportDir, "logs")}`);
+        console.error(`${TITLE} 启动失败：${message}\n日志目录：${path.join(supportDir, "logs")}`);
         app.exit(1);
       } else {
         showSplash("请处理后重试，或导出诊断交给技术支持。", publicStartupError(message), lastBootstrapReference);
@@ -618,7 +618,7 @@ app.whenReady().then(async () => {
         handle = null;
         app.exit(0);
       } catch (error) {
-        console.error(`WorkLoom 渲染冒烟失败：${error instanceof Error ? error.stack : String(error)}`);
+        console.error(`${TITLE} 渲染冒烟失败：${error instanceof Error ? error.stack : String(error)}`);
         quitting = true;
         if (handle) await handle.stop().catch(() => undefined);
         handle = null;

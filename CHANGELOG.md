@@ -1,38 +1,65 @@
 # Changelog
 
-## [loomball] - 2026-09-27 · 织球 LoomBall：AI 班组状态可视化（T-2026-0926-0002）
+## [loomball] - 2026-09-27 · 织球 LoomBall：AI 班组状态可视化（T-2026-0926-0019）
 
-> 点名单向移植自 `workloom-ai/workloom-growth` 的 T-2026-0926-0019（隔离副本车道：基座/上游改动都不双向同步）。
 > 一只球把「班组此刻在干什么」变得看得见：名册 / 织伴 / 任务页三处接入，全部由**真实信号**驱动
 > （事件账本最近动作、待审批单、围栏阻断、夜班窗口、run 注册表）；开关一关全体回退。
 
-- `apps/web/src/vendor/loomball/**`：上游 grok-ball（MIT）原样入库（`PINNED` 锁 commit + `LICENSE` + `NOTICE.md`），
-  适配层捕获后删除上游兼容门面 `window.GrokBall`，业务代码零上游商标字样（`provenance.test.ts` 闸门）；
-- `apps/web/src/components/loomball/**`：`LoomBall.tsx` / `agent-emotion.ts`（状态→表情唯一事实源，与文字 chip 同源）/
-  `useStableEmotion.ts`（1.5s 驻留 + 出错立即报丧并驻留 6s）/ 自定义工作状态 `50 渲染中 / 51 待审批 / 52 夜班值守`；
-- 三处接入：名册员工卡 44px 织球（忙碌/待审批常驻动画，其余静态 + hover 激活）、织伴小角落态（mini 圆球 = 班组状态眼，
-  紧凑态旁挂 40px）、任务页标题行线程状态球（`pending_review` = 待人审）；
-- 服务端真实信号：`roster.list` 增 LATERAL 只读投影（最近动作+时间 / 待审批数 / 近 1h 围栏阻断数）、
-  新增只读聚合 `video.studio.active`（run 注册表 + approvals）——不新增表、不改任何写路径；
-- 回退开关：`VITE_LOOMBALL=0` 全部回退（不创建实例、不注册表情、不挂监听、不启动 rAF）；
-- 登记与文档：`oss-components.json` + `docs/OPEN_SOURCE_COMPONENTS.md`、`docs/loomball.md`、`.env.example`。
+- 新增 vendor 适配层 `apps/web/src/vendor/loomball/**`：上游 grok-ball（MIT）**原样**入库
+  （`PINNED` 锁 commit + `LICENSE` + `NOTICE.md` 署名与去商标声明）；适配层捕获后删除上游兼容门面
+  `window.GrokBall`，业务代码零上游商标字样（`provenance.test.ts` 闸门）；
+- 新增组件层 `apps/web/src/components/loomball/**`：`LoomBall.tsx`（品牌皮肤/尺寸推眼倍/live 与 hover
+  激活/注视跟随/`prefers-reduced-motion` 静态）、`agent-emotion.ts`（状态→表情**唯一事实源**，与文字
+  chip 同源）、`useStableEmotion.ts`（1.5s 最小驻留 + 出错立即报丧并驻留 6s）、`emotions-workloom.ts`
+  （自定义工作状态 `50 渲染中 / 51 待审批 / 52 夜班值守`，完整声明式配置）；
+- 服务端补真实信号：`roster.list` 增 LATERAL 三投影（最近动作+时间 / 待审批数 / 近 1h 围栏阻断数）、
+  新增只读聚合 `video.studio.active`（run 注册表 + approvals 表）——不新增表、不改任何写路径；
+- 三处接入：名册员工卡（44px，忙碌/待审批常驻动画，其余静态 + hover 激活；状态 chip 与球同源）、
+  织伴小角落态（mini 圆球 = 班组状态眼，紧凑态旁挂 40px）、任务页标题行（`pending_review`=待人审）；
+- 开关与回退：`VITE_LOOMBALL=1` 默认开、`=0` 全部回退（等尺寸空盒/海报球/不渲染），零实例零监听零帧循环；
+- 登记与文档：`oss-components.json`（weekly 扫描、永不自动升级）、`docs/loomball.md`（映射表/三接入面/
+  防抖与性能/运维回退/真机清单）、`.env.example` 登记开关；
+- 真机证据（本地 PG17 + 79 岗种子 + 真实网关事件）：名册 79 球静态渲染 3s 采样 76 帧（仅 2 球常驻动画）、
+  hover 激活 `0→1`、注入真实事件后 渲染师=50 渲染中 / 情报官·采集=40 检索资料、待审批 3 单=51、
+  夜班窗口 31 岗=52、任务页完成态=33；`VITE_LOOMBALL=0` 生产构建三处全回退。
 
 ## [intel-search-api] - 2026-09-25 · 情报检索通道加固：API 检索源（T-2026-0925-0003）
 
-- 引擎链新增 `api` 通道并置顶：`TAVILY_API_KEY` 或 `WL_SEARCH_API_URL`+`WL_SEARCH_API_KEY` 配好即启用；
-  未配置静默跳过，保留 HTML 三引擎链；限流 403/429 进 15 分钟熔断冷却；失败按缺站（不编造）。
-- 单测 +4（Tavily 解析 / 通用网关鉴权 / 限流熔断 / 未配置静默）。
+- 引擎链新增 `api` 通道并置顶：`TAVILY_API_KEY`（Tavily 协议）或 `WL_SEARCH_API_URL`+`WL_SEARCH_API_KEY`
+  （通用 JSON 网关，Bearer 鉴权）配好即自动启用；未配置静默跳过，保留 HTML 三引擎链（baidu-m/so360/bing）；
+- 结果数组/字段名多形态兼容（`results / items / data[] / data.items[]`；`snippet|content|description|summary`）；
+- 限流（403/429）与 HTML 通道同口径进 15 分钟熔断冷却，缓存复用，失败按缺站（不编造）；
+- 单测 +4（Tavily 解析/通用网关鉴权/限流熔断/未配置静默），`apps/server` 用例 12/12 通过。
 
-## [experiment-0.1.0] - 2026-09-21 · 分叉为 growth-matrix 实验仓并更名「骇客帝国」
+## [video-routing-dossier] - 2026-09-25 · 视频管线自动化分流 + 商品情报档案激活（T-2026-0925-0002）
 
-> 本仓 `workloom-ai/workloom-growthmatrix` 由 `workloom-ai/WorkLoom-growth@a6dc89a` 完整复制而来（含 git 历史），作为**激进改造实验车道**独立演进；「黑客帝国」与「骇客帝国」指同一个项目。
+> 营销片/叙事片自动分流（不确定就问用户，不猜不提）；商品情报档案从「只出任务书」变为可用的真实档案链路；
+> 真机跑批暴露并修复 7 类宿主/引擎缺陷（含"AI 监制只看到 600 字摘录"这一系统性误杀根因）。
 
-- 产品更名 **骇客帝国**：README 标题与正文、`product.manifest.json#displayName`、桌面 `productName` / `shortcutName`、acceptance profile、系统概览 / 演示剧本 / 视觉工位手册 / GEO 融合方案 / 门店店长使用指南 / C 端演示页等文档与演示页文案统一更新；
-- 产品身份修正：`repository` → `workloom-ai/workloom-growthmatrix`（`product.manifest.json`、`acceptance/profile.json`、`.workloom-runtime-deps/metadata.json`、`oss-components.json`、`docs/OPEN_SOURCE_COMPONENTS.md`）；`release.artifactPrefix` 与 `displayName` 对齐（`scripts/unsigned-desktop-release.test.mjs` 断言 `artifactPrefix === displayName`）；
-- 仓库链接修正：官网演示页（`apps/site/index.html` / `en.html`）的 GitHub 死链改为本仓 CNB 地址；
-- 生成物刷新：`docs/capabilities.auto.*` 与 README 能力区块随 `package.json#description` 重新生成，`.workloom-runtime-deps/metadata.json` 输入摘要随身份变更重算；
-- 机器身份保持不变：`productId=workloom-ai-growth`、`packageName=workloom-ai-acquisition`、`appId=com.geniusdapeng.workloomgrowth`、`portOffset=420`、`demoWorkspaceSlug=geo-growth`（等舰队纳管时统一确认）；
-- 实验纪律：实验语义不下发、不覆盖、不回流；验证成功的通用能力必须先走提案任务卡（L2→L1→L0）才进基座。
+### 自动化分流（新增）
+
+- `packages/video-studio/src/pipeline-router.ts`：显式声明 → 规则打分 → 商品锚点 → LLM 仲裁（`pipeline-route`，L1+规则兜底）→ **不确定即澄清**；
+  营销片缺商品名同样先问（情报五站以商品为锚）；`stripRoutingDirective` 清掉分流行指令、`buildPipelineIntent` 写入需求口径；
+- `threads.dispatch` / `video.studio.start` 接线：澄清落 `video.route.clarify`、判定落 `video.route.standard`（含 pipeline/via/confidence/product/signals）。
+
+### 商品情报档案激活
+
+- 新增 `apps/server/src/video/data-mining-executor.ts`：多引擎检索（baidu-m/so360/bing）+ 限速熔断 + 磁盘缓存 +
+  可预置真实来源 + **URL 白名单**（防幻觉链接）+ 相关性过滤 + 失败半量重试 → 仍失败即缺站；
+- vendor 引擎修复：A4 独立来源定级（修「提及次数=来源数」的 confidence 虚高）、信封链校验、档案落盘原子化与根目录、
+  A3 查询矩阵键兼容、检索词去重复品牌。
+
+### 宿主门与创意链路修复
+
+- 门内容落盘送审（`writeGateArtifact`）：监制不再只看到 600 字摘录；
+- AI 监制打回 → **有上限自动重跑**（`VM_PRODUCER_RETRY`，默认 1 次）；
+- 创意主题：营销 Brief + 情报摘要卡进生成输入、类型词表补社媒营销语汇、LLM 提取强制 JSON、Brief 口径（时长/画幅/平台）统一 + 基调护栏；
+- G3 确认单补「需求契约（角色/场景/道具/动作）+ 受众/风险结论摘要」。
+
+### 跑批工具与文档
+
+- 新增 `scripts/tools/data-pipeline-run.mts`：不提交渲染的完整数据管线跑批（产物与 `video.studio.start` 同形，可直接接 `pipeline-audit`）；
+- 新增 `docs/video-pipeline-routing-and-dossier-2026-09-25.md`：分流口径、激活链、逐环节审计证据、遗留项与回滚开关。
 
 ## [base-sync-1.12.0] - 2026-09-02 · 基座同步：技能保鲜环 P1（自动同步 + 上行回流 + 官方运营台）
 

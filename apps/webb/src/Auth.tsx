@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AsyncState, Button, Card } from "@workloom/ui";
 import { enterGuest, savedWorkspace, setSession, trpc } from "./lib/trpc";
 import { safeMessage } from "./lib/useResource";
+import { PRODUCT_NAME } from "./lib/product";
 
 export function Auth({ onReady }: { onReady: () => void }) {
   const [workspace, setWorkspace] = useState(savedWorkspace());
@@ -58,7 +59,7 @@ export function Auth({ onReady }: { onReady: () => void }) {
     <main className="auth-page" data-workloom-client="b-mobile">
       <Card className="auth-card">
         <p className="eyebrow">B 端移动工作台</p>
-        <h1>登录 WorkLoom</h1>
+        <h1>登录 {PRODUCT_NAME}</h1>
         <p className="muted">任务、夜班交接和经营结果会使用与 PC 相同的工作区数据。</p>
         <label>工作区识别码<input value={workspace} disabled={Boolean(busy)} onChange={(event) => setWorkspace(event.target.value)} autoComplete="organization" /></label>
         <label>手机号<input value={phone} disabled={Boolean(busy)} onChange={(event) => setPhone(event.target.value)} inputMode="tel" autoComplete="tel" /></label>

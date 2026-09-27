@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { Button } from "@workloom/ui";
 import { trpc, setToken, setRefreshToken } from "../../lib/trpc";
 import { versionText } from "../../lib/display";
+import { PRODUCT_NAME } from "../../lib/product";
 import { activationBundleSystemText } from "./systemText";
 
 interface ActivationBundle {
@@ -107,7 +108,7 @@ export default function Activate() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-lg min-w-0 flex-col justify-center px-4 py-10 sm:px-6">
-      <h1 className="mb-1 break-words text-2xl font-bold">注册开通 WorkLoom</h1>
+      <h1 className="mb-1 break-words text-2xl font-bold">注册开通 {PRODUCT_NAME}</h1>
       <p className="mb-6 break-words text-sm leading-relaxed text-neutral-400">创建企业与第一个工作区，再由配置引导完成真实模型、组织与围栏装配。</p>
       <div className="min-w-0 space-y-3">
         <input className={inp} placeholder="您的称呼（如：王经理）" value={form.displayName} onChange={set("displayName")} />

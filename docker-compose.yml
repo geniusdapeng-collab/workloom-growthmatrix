@@ -19,23 +19,5 @@ services:
       retries: 20
     restart: unless-stopped
 
-  # B-31：内嵌/本地 NATS JetStream（EVENT_BUS=nats 时使用；缺省 EVENT_BUS=memory 不依赖）
-  nats:
-    image: nats:2.11.4
-    container_name: workloom-im-nats
-    command: ["-js", "-m", "8222", "-sd", "/data"]
-    ports:
-      - "4222:4222"   # NATS 客户端
-      - "8222:8222"   # 监控端口
-    volumes:
-      - natsdata:/data
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8222/healthz"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-    restart: unless-stopped
-
 volumes:
   pgdata:
-  natsdata:

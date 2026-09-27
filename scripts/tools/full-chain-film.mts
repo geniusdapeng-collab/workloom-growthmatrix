@@ -17,6 +17,13 @@
  *     [--aspect 9:16] [--resolution 1080p] [--fps 30] [--max-attempts 2] \
  *     [--keys-file ~/.workloom/live.env] [--brief <brief.json>] [--no-resume] [--dry-run]
  *
+ * 封面平台化与知识库（2026-09-27）：
+ *   [--cover-platform douyin|kuaishou|xiaohongshu|wechat-channels|bilibili|tiktok|youtube|instagram-reels]
+ *                                 # 缺省沿用 --platform（历史默认"抖音/快手"→抖音口径，回归基线）
+ *   [--theme 知识科普|美食|旅行风光|…]   # 缺省从片名 + brief.goal 启发式匹配（匹配不到不注入）
+ *   [--account chen-zhuo]           # 账号视觉锤档案（bundles/ai-video/library/account-profiles/<id>.yml）
+ *   [--no-cover-kb]                 # 关闭封面知识库注入（退化为平台化之前的设计提示词）
+ *
  * 阶段日志：`<work-dir>/logs/stages.jsonl`（逐条：stage/shotId/invoked/ok/degraded/cached/verdict）
  * 阶段汇总：`<work-dir>/logs/stages.json`
  */
@@ -28,13 +35,16 @@ import {
 import { homedir } from "node:os";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
+import YAML from "yaml";
 import {
   applyMicromotion, appendGateEvent, assessVariantDistinctness, auditContinuity, buildDeliveryManifest, buildGateEvent,
   assessMotionRichness, buildCoverDesignPrompt, buildMaterialMotionPrompt, buildPlatePrompt, buildRevisionPlan, buildRevisionReport, buildVariantPlan,
-  buildMaterialScenePrompt, assessReferenceIndependence, decidePlateCache, MATERIAL_MOTION_POLICY, MATERIAL_RAW_MOTION_POLICY, MATERIAL_SCENE_POLICY_VERSION,
+  buildMaterialScenePrompt, assessReferenceIndependence, decidePlateCache, plateRequestSha256, MATERIAL_MOTION_POLICY, MATERIAL_RAW_MOTION_POLICY, MATERIAL_SCENE_POLICY_VERSION,
   isDoubledNarration, speechAcceptance,
+  termPronunciationCheck,
   REFERENCE_INDEPENDENCE_POLICY,
   coverDeterministicChecks, coverPrefersNightBackground, COVER_FONTS, COVER_LOWER_BAND_SAFE_AREA, COVER_REVIEW_RUBRIC, COVER_SAFE_AREA,
+  getCoverSpec, isKnownCoverPlatform, COVER_PLATFORM_IDS,
   fallbackCoverPlan, findAngleFile, MATERIAL_POLICY_STATEMENT, MATERIAL_POLICY_VERSION, assessMaterialReuse,
   assertMaterialGenerationProvenance, parseCoverPlan, prepareShotPrompt, readMaterialSpec, resolveProducerLlm, reviewStage,
   buildSfxArgs, cutTimesFromShots, planCutSfxDetailed, CUT_SFX_POLICY, planHookSfx, HOOK_SFX_POLICY,
@@ -45,7 +55,8 @@ import {
   environmentDefects, expandShotWithBible, summarizeDefects, validateSceneBible, spaceSummary,
   openingHookChecks, summarizeHookChecks, validateHookCard, defaultHookSfx, hookWindowFor, HOOK_TYPE_LABELS, HOOK_WINDOW_SEC,
   deviceDefects, summarizeDeviceDefects, DEVICE_POLICY_VERSION, DEVICE_POLICY_VERIFIED_AT, allowedModelSummary,
-  type CoverDesignInput, type CoverMeasurements, type CoverPlan, type GateCheck, type GateEvent, type PipelineGateStepKey,
+  type CoverAccountProfile, type CoverDesignInput, type CoverMeasurements, type CoverPlan,
+  type CoverPlatformSpec, type GateCheck, type GateEvent, type PipelineGateStepKey,
   type DeviceCategory, type DeviceDefect, type EnvDefect, type HookCard, type PlatePromptShot, type ProducerVerdict, type SceneBible
 } from "../../packages/video-studio/src/index.js";
 
@@ -122,6 +133,28 @@ const COVER_ARCHETYPE: "person-led" | "subject-led" =
   ["subject", "scenery", "object", "product"].includes(COVER_HERO) ? "subject-led" : "person-led";
 /** 人物满幅 + 无小图 + 文字下移安全带（person-solo 专属口径） */
 const COVER_LOWER_BAND_TEXT = COVER_HERO === "person-solo";
+/**
+ * 封面平台（2026-09-27 平台化）：
+ *   `--cover-platform` 显式指定封面平台（`douyin|kuaishou|xiaohongshu|wechat-channels|bilibili|tiktok|youtube|instagram-reels`，
+ *   也接受"抖音/小红书"这类中文别名）；缺省沿用 `--platform`（历史默认值"抖音/快手"→抖音口径）。
+ *   平台规格（画幅/画布/安全区/标题带/字数上限）来自 `packages/video-studio/src/cover-platforms.ts`——
+ *   封面侧唯一事实源；**抖音默认路径与平台化之前逐像素一致**（有单测锁死）。
+ */
+const COVER_PLATFORM_ARG = arg("--cover-platform", "");
+if (COVER_PLATFORM_ARG && !isKnownCoverPlatform(COVER_PLATFORM_ARG)) {
+  throw new Error(`--cover-platform 未知平台：${COVER_PLATFORM_ARG}（可选：${COVER_PLATFORM_IDS.join(" / ")}，或中文别名 抖音/快手/小红书/视频号/B站）`);
+}
+/** 封面知识库（cover-kb）注入开关：默认开启（`--no-cover-kb` 关闭，退化为平台化之前的行为） */
+const COVER_KB_ENABLED = !flag("--no-cover-kb");
+const COVER_KB_DIR = resolve(arg("--cover-kb-dir", join(REPO_ROOT, "bundles/ai-video/library/cover-kb")));
+/**
+ * 封面题材（`--theme`）：进 cover-kb 的题材映射（theme → 版式/字级/配色）。
+ * 缺省从片名 + brief.goal 启发式匹配 THEME-001 题材表；匹配不到就**不注入题材条目**（不硬凑）。
+ */
+const COVER_THEME_ARG = arg("--theme", "");
+/** 账号定位档案（`--account <id>`）：读 `bundles/ai-video/library/account-profiles/<id>.yml`，注入视觉锤约束 */
+const COVER_ACCOUNT_ARG = arg("--account", "");
+const COVER_ACCOUNT_DIR = resolve(arg("--account-dir", join(REPO_ROOT, "bundles/ai-video/library/account-profiles")));
 /**
  * 逐刀转场总损耗（秒）与**成片目标时长**（同一口径，compose 校验与终审都用它）：
  * 15 刀 × 0.16s = 2.4s 会被 xfade 吃掉，目标应是"分镜总时长 − 损耗"，而不是分镜总时长。
@@ -846,7 +879,12 @@ if (envAuditInScope && envHardTotal > 0 && !envAccepted) {
  */
 const PLATFORM = arg("--platform", "抖音/快手");
 const hookCard: HookCard | null = shotlist.hook ?? null;
-const hookChecks = openingHookChecks({ shots, hook: hookCard, platform: PLATFORM });
+/**
+ * 钩子判据必须看**整片**镜头卡，而不是 `--only` 过滤后的子集（2026-09-27 真机 v2 发现）：
+ * 单镜补渲（`--stages plates --only CF-05`）时，兑现镜 CF-03 不在子集里 → 误报"兑现镜不存在"，
+ * 把一次正常的补渲判成硬失败。首镜与兑现镜都是**片级**概念，口径应为完整 shotlist.shots。
+ */
+const hookChecks = openingHookChecks({ shots: shotlist.shots, hook: hookCard, platform: PLATFORM });
 const hookSummary = summarizeHookChecks(hookChecks);
 /**
  * 钩子音效三条开关口径：显式关（`--no-hook-sfx`）> 显式开（`--hook-sfx`）> 有钩子卡即开。
@@ -910,13 +948,13 @@ const CUT_GRID: number[] = (() => {
  * 相关环节按"生成镜/素材镜"分流，否则 G7 会因为"素材镜没有文生关键帧"而误判缺件。
  */
 const isMaterialShot = (shot: ShotCard): boolean => String((shot as Record<string, unknown>).photo ?? "").trim().length > 0;
-const generatedShots = shots.filter((shot) => !isMaterialShot(shot));
-const materialShots = shots.filter((shot) => isMaterialShot(shot));
+const generatedShots = (): ShotCard[] => shots.filter((shot) => !isMaterialShot(shot));
+const materialShots = (): ShotCard[] => shots.filter((shot) => isMaterialShot(shot));
 /**
  * 素材用途**在开跑前先验一遍**（fail-fast）：缺声明/写成静态直出用途时当场停，
  * 不等到出片阶段才发现"这一镜本来就不该这么做"。错误信息里带规则原文。
  */
-for (const shot of materialShots) {
+for (const shot of materialShots()) {
   try {
     readMaterialSpec(shot as unknown as Record<string, unknown>);
   } catch (err) {
@@ -1205,33 +1243,27 @@ function plateMetaFile(shotId: string): string {
   return join(PLATE_DIR, `${shotId}.plate-meta.json`);
 }
 
-function readPlateMeta(shotId: string): { promptSha256?: string; anchorMode?: string; model?: string; at?: string } | null {
+function readPlateMeta(shotId: string): import("../../packages/video-studio/src/plate-cache.js").PlateCacheMeta | null {
   const file = plateMetaFile(shotId);
   if (!existsSync(file)) return null;
   try {
-    return JSON.parse(readFileSync(file, "utf8")) as { promptSha256?: string; anchorMode?: string; model?: string; at?: string };
+    return JSON.parse(readFileSync(file, "utf8")) as import("../../packages/video-studio/src/plate-cache.js").PlateCacheMeta;
   } catch {
     return null;
   }
 }
 
-function writePlateMeta(shotId: string, promptText: string, anchorMode: string): void {
+function writePlateMeta(shotId: string, promptText: string, anchorMode: string, basePrompt: string, requestSha256: string, artifactFile: string): void {
   const payload = {
-    promptSha256: createHash("sha256").update(promptText).digest("hex"),
+    promptSha256: createHash("sha256").update(basePrompt).digest("hex"),
+    submittedPromptSha256: createHash("sha256").update(promptText).digest("hex"),
+    requestSha256,
+    artifactSha256: createHash("sha256").update(readFileSync(artifactFile)).digest("hex"),
     anchorMode,
     model: IMAGE_MODEL,
     at: stamp()
   };
   writeFileSync(plateMetaFile(shotId), `${JSON.stringify(payload, null, 2)}\n`, "utf8");
-}
-
-/** 当前提示词文件的 sha256（提示词还没产出时返回 null，视为缓存不可用） */
-function promptSha256(shotId: string): string | null {
-  const file = join(PROMPT_DIR, `${shotId}.txt`);
-  if (!existsSync(file)) return null;
-  const text = readFileSync(file, "utf8").trim();
-  if (!text) return null;
-  return createHash("sha256").update(text).digest("hex");
 }
 
 /** 本镜最近一次关键帧裁决是否为放行（被驳回过的产物不得被缓存复用洗白） */
@@ -1354,7 +1386,15 @@ function buildSrt(): string {
       }
     }
     if (current.trim()) wrapped.push(current.trim());
-    return wrapped.slice(0, 2).join("\n");
+    /**
+     * 标点口径（2026-09-25 工位判据 / 2026-09-27 真机修复）：交付字幕**不带标点**，
+     * 数字内的 `. : - /` 保留。此前这里只按标点折行、却把标点一并写进 SRT，
+     * 烧录模式的 "标点体检" 必然 fail（字幕工位按落盘 SRT 判），母版终审被判 score=0。
+     * 折行仍按标点语义分段，落盘前逐行剔除标点，与旁挂模式工位的清洗口径一致。
+     */
+    const stripCuePunctuation = (line: string): string =>
+      line.replace(/[，。！？；、,.!?;:："“”'‘’（）()【】《》—…·]/g, "").replace(/\s{2,}/g, " ").trim();
+    return wrapped.slice(0, 2).map(stripCuePunctuation).filter(Boolean).join("\n");
   };
   shots.forEach((shot, index) => {
     const duration = Number(shot.duration ?? 5);
@@ -1549,7 +1589,7 @@ if (STAGES.has("micromotion")) {
   const started = Date.now();
   const traces: Array<Record<string, unknown>> = [];
   let empty = 0;
-  for (const shot of generatedShots) {
+  for (const shot of generatedShots()) {
     const { card, trace } = applyMicromotion(shot as unknown as Record<string, unknown>);
     traces.push(trace as unknown as Record<string, unknown>);
     if (trace.applied.length === 0 && !trace.skipped) empty += 1;
@@ -1593,6 +1633,10 @@ if (STAGES.has("micromotion")) {
   }
   log(`微动作增强：${shots.length} 镜 × 5 路（面部/身体/眼神/呼吸/融合）已并入 action${verdict ? `，监制${verdict.approved ? "放行" : "打回"}` : "（未启用 LLM 复评）"}`);
 }
+
+/** 后续审核与生成共享这份当前镜头快照；每次替换镜头卡后均从 shots 重建视图。 */
+const CURRENT_SHOTS_FILE = join(WORK_DIR, `shotlist-current-${PROJECT}.json`);
+writeFileSync(CURRENT_SHOTS_FILE, `${JSON.stringify({ projectId: PROJECT, shots }, null, 2)}\n`, "utf8");
 
 /* ---------- ② 脚本 + 提示词交付闸（监制：prompt） ---------- */
 if (STAGES.has("spec")) {
@@ -1690,8 +1734,15 @@ if (STAGES.has("spec")) {
      * 命中时给监制与设计者一个明确建议：改"正面走近"或去掉指物。
      */
     const sceneText = `${shot.scene ?? ""} ${shot.sceneDescription ?? ""}`;
-    const priorRisk = /指|挥|递|捧|端/.test(actionText)
-      && /桥|栏杆|船|河|水|岸/.test(sceneText)
+    /**
+     * 判据收紧（2026-09-27 真机 v2 首轮打回）：早先「指」与「水」两处都太宽——
+     * ・「指」把**拇指/手指**这类正常手部描述算成"指物"；
+     * ・「水」把**水磨石/水泥/水杯**这类材质与器物算成"水岸"。
+     * 于是「水磨石地面 + 拇指滑动 + 看向镜头」这种完全正常的口播镜被判成高危构图先验，
+     * 监制据此打回（score 62）。现在只认真正的指物动作与真正的水体/桥栏语义。
+     */
+    const priorRisk = /指(物|向|点|着|了指)|挥(手|动)?示意|递(物|出)|捧起|端(起|着)/.test(actionText)
+      && /(水岸|水面|水边|河水|江水|江面|河面|湖面|湖边|海边|岸边|桥|栏杆|船)/.test(sceneText)
       && /面向镜头|看向镜头|正对镜头|正脸|眼神交流/.test(actionText);
     checks.push({
       id: `prior-risk:${shot.shotId}`, pass: !priorRisk, hard: false,
@@ -1743,7 +1794,7 @@ if (STAGES.has("spec")) {
    * 把空载体送给监制必然判"无正文"打回；而素材镜的把关门是 **G-MAT1**。
    * 因此这里显式跳过 G6 并留痕（via=skip），既不静默放行，也不让监制去判不适用的载体。
    */
-  if (materialShots.length === shots.length) {
+  if (materialShots().length === shots.length) {
     log(`ℹ️ 全片 ${shots.length} 镜均为素材镜：文生提示词门（G6）不适用，按 skip 留痕（素材镜由 G-MAT1 把关）`);
     record({
       stage: "prompt-package", shotId: null, invoked: false, ok: true, cached: false, degraded: false, attempt: 1, ms: 0,
@@ -1769,11 +1820,11 @@ if (STAGES.has("spec")) {
     artifacts: [
       { path: join(PROMPT_DIR, "spec-report.json"), kind: "json" },
       /** 只送**生成镜**的提示词；真实素材段没有提示词文件（硬塞路径会让监制读到空文件） */
-      ...generatedShots.map((s) => ({ path: join(PROMPT_DIR, `${s.shotId}.txt`), kind: "text" as const }))
+      ...generatedShots().map((s) => ({ path: join(PROMPT_DIR, `${s.shotId}.txt`), kind: "text" as const }))
     ],
     deterministic: checks,
     context: {
-      title: shotlist.title, shots: generatedShots.length, materialShots: materialShots.map((s) => s.shotId), rateFail,
+      title: shotlist.title, shots: generatedShots().length, materialShots: materialShots().map((s) => s.shotId), rateFail,
       /** 节拍预算：只报数不拦（监制可据情权衡，不作 PASS/FAIL） */
       motionBudget: motionBudgetNotes,
       poseContradictionRule: "同一镜「面向镜头」与「转身/侧身/背身」互斥；「桥/栏杆/船/河 + 指物 + 正面」属高漂移先验，建议改正面走近或删指物",
@@ -1868,12 +1919,23 @@ if (STAGES.has("plates")) {
      */
     const cachedPlateExists = existsSync(plate);
     const cachedMeta = readPlateMeta(shot.shotId);
-    const currentPromptSha = promptSha256(shot.shotId);
+    const basePlatePrompt = platePrompt(shot, lead?.name ?? "主角", lead?.appearanceText ?? "");
+    const anchors = plateAnchorMode === "real"
+      ? ([portraitRefs[0], portraitRefs[1], venueRefs[0]].filter(Boolean) as string[])
+      : venueRefs.slice(0, 1);
+    const imageSize = ENV.SEEDREAM_SIZE ?? "2K";
+    const currentPromptSha = createHash("sha256").update(basePlatePrompt).digest("hex");
+    const currentRequestSha = plateRequestSha256({
+      prompt: basePlatePrompt, model: IMAGE_MODEL, anchorMode: plateAnchorMode, size: imageSize,
+      referenceSha256: anchors.map((file) => createHash("sha256").update(readFileSync(file)).digest("hex"))
+    });
     const cacheDecision = decidePlateCache({
       exists: cachedPlateExists,
       sizeBytes: cachedPlateExists ? statSync(plate).size : 0,
       meta: cachedMeta,
       currentPromptSha256: currentPromptSha,
+      currentRequestSha256: currentRequestSha,
+      currentArtifactSha256: cachedPlateExists ? createHash("sha256").update(readFileSync(plate)).digest("hex") : null,
       anchorMode: plateAnchorMode,
       lastApproved: lastKeyframeApproved(readStageHistory(), shot.shotId)
     });
@@ -1906,18 +1968,15 @@ if (STAGES.has("plates")) {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && !approved; attempt += 1) {
       const started = Date.now();
       try {
-        const prompt = platePrompt(shot, lead?.name ?? "主角", lead?.appearanceText ?? "")
+        const prompt = basePlatePrompt
           /**
            * 关键帧重试同样"带变更"：把上一轮监制的具体问题写进去（原来只有一句泛泛的"构图更准"）。
            */
           + (attempt > 1 ? `\n${retryInstruction(plateVerdict, attempt, MAX_ATTEMPTS)}` : "");
-        const anchors = plateAnchorMode === "real"
-          ? ([portraitRefs[0], portraitRefs[1], venueRefs[0]].filter(Boolean) as string[])
-          : (venueRefs.slice(0, 1) as string[]);
         if (plateAnchorMode === "real" && attempt === 1) {
           log(`  ⚠ ${shot.shotId} 关键帧挂了真人锚点：产物会被 Seedance 隐私校验拒（仅适合做档案资产）`);
         }
-        const url = await arkImage(prompt, anchors, ENV.SEEDREAM_SIZE ?? "2K");
+        const url = await arkImage(prompt, anchors, imageSize);
         saveHostedUrl(shot.shotId, url);
         await download(url, plate);
         const info = probe(plate);
@@ -1939,7 +1998,7 @@ if (STAGES.has("plates")) {
           attempt, ms: Date.now() - started, artifact: plate, evidence: info, verdict
         });
         /** 放行才写指纹：被驳回的图不写元文件，下一轮必然重出（缓存失效判据 ② 的物证） */
-        if (verdict.approved) writePlateMeta(shot.shotId, prompt, plateAnchorMode);
+        if (verdict.approved) writePlateMeta(shot.shotId, prompt, plateAnchorMode, basePlatePrompt, currentRequestSha, plate);
         approved = verdict.approved;
         if (!approved) plateVerdict = verdict;
         if (!approved) log(`↻ 关键帧 ${shot.shotId} 第 ${attempt} 次未过监制：${verdict.reason}`);
@@ -2436,7 +2495,7 @@ function applyCameraMovePunchCut(input: string, output: string, options: {
 
 if (STAGES.has("material-gen")) {
   const [pw, ph] = RESOLUTION === "1080p" ? (ASPECT === "9:16" ? [1080, 1920] : [1920, 1080]) : [720, 1280];
-  for (const shot of materialShots) {
+  for (const shot of materialShots()) {
     const shotStarted = Date.now();
     const card = shot as Record<string, unknown>;
     const spec = readMaterialSpec(card);
@@ -2831,7 +2890,7 @@ if (STAGES.has("material-gen")) {
       });
     }
   }
-  if (materialShots.length > 0) log(`素材镜：${materialShots.length} 镜（生成输入 → 生成式镜头，禁止静态直出）`);
+  if (materialShots().length > 0) log(`素材镜：${materialShots().length} 镜（生成输入 → 生成式镜头，禁止静态直出）`);
 }
 
 
@@ -2846,16 +2905,37 @@ if (STAGES.has("videos")) {
    */
   const gateHistory = readStageHistory();
   /** 素材镜不产出文生关键帧，G7 的提示词/关键帧判据只对**生成镜**成立（素材镜由 G-MAT1 门管） */
-  const promptReady = generatedShots.every((s) => {
+  const promptReady = generatedShots().every((s) => {
     const file = join(PROMPT_DIR, `${s.shotId}.txt`);
     return existsSync(file) && readFileSync(file, "utf8").trim().length >= 1200;
   });
-  const plateReady = generatedShots.every((s) => {
+  const plateReady = generatedShots().every((s) => {
     const plate = join(PLATE_DIR, `${s.shotId}-plate.png`);
     return existsSync(plate) && statSync(plate).size > 50_000;
   });
   const promptApproved = historyApproved(gateHistory, "prompt-review") || historyApproved(records, "prompt-review");
-  const plateApproved = generatedShots.every((s) => gateHistory.some((r) => r.stage === "keyframe" && r.shotId === s.shotId && r.ok));
+  /**
+   * 关键帧放行判据（2026-09-27 真机 v2 修正）：**放行必须晚于磁盘上这一版关键帧**。
+   *
+   * 事故：某镜在上一轮被放行（历史里有 ok 记录），本轮提示词变更 → 关键帧缓存失效 → 重渲 3 次全部被打回，
+   * 但失败产物**覆盖了磁盘上的文件名**；G7 只看历史里的 ok 记录 → 误判"已放行"，
+   * 于是用一版**从未被放行的关键帧**去渲染视频（最贵的环节）。判据改为"该镜存在 ok 记录且记录时间 ≥ 关键帧文件 mtime"。
+   */
+  const plateApprovedDetail = generatedShots().map((s) => {
+    const plate = join(PLATE_DIR, `${s.shotId}-plate.png`);
+    if (!existsSync(plate)) return { shotId: s.shotId, ok: false, reason: "缺关键帧文件" };
+    const mtime = statSync(plate).mtimeMs;
+    const approval = [...gateHistory, ...records]
+      .filter((r) => r.stage === "keyframe" && r.shotId === s.shotId && r.ok)
+      .map((r) => Date.parse(r.at))
+      .filter((t) => Number.isFinite(t))
+      .sort((a, b) => b - a)[0];
+    if (approval === undefined) return { shotId: s.shotId, ok: false, reason: "无放行记录" };
+    return approval >= mtime
+      ? { shotId: s.shotId, ok: true, reason: `放行时间晚于关键帧（${new Date(approval).toISOString().slice(11, 19)} ≥ ${new Date(mtime).toISOString().slice(11, 19)}）` }
+      : { shotId: s.shotId, ok: false, reason: `关键帧在放行之后被重渲（${new Date(mtime).toISOString().slice(11, 19)} > 放行 ${new Date(approval).toISOString().slice(11, 19)}）——必须重新过监制` };
+  });
+  const plateApproved = plateApprovedDetail.every((entry) => entry.ok);
   /**
    * 素材镜就绪判据（2026-09-25 口径修订）：**不是"有文件就行"**，而是要求
    * ① 片段在盘上；② G-MAT1 的 **verify 事件**存在（证明做过生成溯源 + 复用度实测 + 监制评审）。
@@ -2878,25 +2958,30 @@ if (STAGES.has("videos")) {
     return r.stage === "gate" && gateStepKeyOf(row) === "material-generate"
       && gateModeOf(row) === "verify" && gateShotIdsOf(row).includes(shotId) && r.ok;
   });
-  const materialReady = materialShots.every((s) => {
+  const materialReady = materialShots().every((s) => {
     const clip = join(CLIP_DIR, `${s.shotId}.mp4`);
     return existsSync(clip) && statSync(clip).size > 100_000 && materialGateVerified(s.shotId);
   });
-  const micromotionReady = !STAGES.has("micromotion") || generatedShots.every((s) => String(s.action ?? "").includes("【微动作】"))
+  const micromotionReady = !STAGES.has("micromotion") || generatedShots().every((s) => String(s.action ?? "").includes("【微动作】"))
     || gateHistory.some((r) => r.stage === "micromotion" && r.ok);
   const g7 = recordGate({
     stepKey: "g7-preproduction",
     sourceStage: "keyframe",
     shotIds: shots.map((s) => s.shotId),
     checks: [
-      { id: "prompt-files", pass: promptReady, hard: true, detail: promptReady ? `${generatedShots.length} 个生成镜提示词齐备且 ≥1200 字（另有 ${materialShots.length} 个素材镜走 material-gen 的动效提示词）` : "有生成镜缺提示词或字数不足 1200" },
-      { id: "plate-files", pass: plateReady, hard: true, detail: plateReady ? `${generatedShots.length} 个生成镜关键帧齐备（>50KB）` : "有生成镜关键帧缺失或过小" },
+      { id: "prompt-files", pass: promptReady, hard: true, detail: promptReady ? `${generatedShots().length} 个生成镜提示词齐备且 ≥1200 字（另有 ${materialShots().length} 个素材镜走 material-gen 的动效提示词）` : "有生成镜缺提示词或字数不足 1200" },
+      { id: "plate-files", pass: plateReady, hard: true, detail: plateReady ? `${generatedShots().length} 个生成镜关键帧齐备（>50KB）` : "有生成镜关键帧缺失或过小" },
       { id: "prompt-approved", pass: promptApproved, hard: true, detail: promptApproved ? "提示词环节有放行裁决（历史/本轮）" : "提示词环节无放行裁决" },
-      { id: "plates-approved", pass: plateApproved, hard: true, detail: plateApproved ? "每镜关键帧均有放行裁决" : "有镜头关键帧未放行" },
+      {
+        id: "plates-approved", pass: plateApproved, hard: true,
+        detail: plateApproved
+          ? `每镜关键帧均有**晚于该文件**的放行裁决（${plateApprovedDetail.filter((e) => e.ok).length}/${generatedShots().length}）`
+          : `有镜头关键帧缺少有效放行：${plateApprovedDetail.filter((e) => !e.ok).map((e) => `${e.shotId}（${e.reason}）`).join("；")}`
+      },
       {
         id: "material-segments", pass: materialReady, hard: true,
         detail: materialReady
-          ? `${materialShots.length} 个素材镜已产出且过 G-MAT1（生成溯源 + 非静态直出 + 保真评审）`
+          ? `${materialShots().length} 个素材镜已产出且过 G-MAT1（生成溯源 + 非静态直出 + 保真评审）`
           : `有素材镜未产出或未过 G-MAT1（素材只作生成输入，禁止静态直出）`
       },
       /**
@@ -3239,6 +3324,14 @@ interface SpeechReport {
   segments: number | null;
   transcript: string | null;
   detail: string;
+  /**
+   * 术语级核查：读错/缺失的受保护术语（如「数字 CEO」被读成「数字 CBO」）。
+   *
+   * 真机事故（2026-09-27 VID-GROWTH-SALES02）：模型自带音频把 CEO 读成 CBO、种草读成监口，
+   * 整句 ASR 相似度 0.96 / 0.85 全部高于 0.45 下限 → 旧判据放行。单个术语读错会被整句
+   * 相似度稀释，因此这里单独留一个字段：非空即代表**必须重配这一镜人声**。
+   */
+  termMissing: string[] | null;
 }
 
 /**
@@ -3249,13 +3342,13 @@ interface SpeechReport {
 function checkSpeech(file: string, expectText: string): SpeechReport {
   const res = runCli(VOICE_CLI, ["verify", "--in", file, "--expect-text", expectText, "--min-match", "0", "--no-strict"]);
   if (!res.ok) {
-    return { ok: false, matchRatio: null, activeRatio: null, segments: null, transcript: null, detail: `配音工位调用失败：${res.out.slice(-200)}` };
+    return { ok: false, matchRatio: null, activeRatio: null, segments: null, transcript: null, termMissing: null, detail: `配音工位调用失败：${res.out.slice(-200)}` };
   }
   let checked: Record<string, unknown> = {};
   try {
     checked = ((JSON.parse(res.out) as { result?: { checked?: Record<string, unknown> } }).result?.checked) ?? {};
   } catch {
-    return { ok: false, matchRatio: null, activeRatio: null, segments: null, transcript: null, detail: `核验输出不是 JSON：${res.out.slice(-120)}` };
+    return { ok: false, matchRatio: null, activeRatio: null, segments: null, transcript: null, termMissing: null, detail: `核验输出不是 JSON：${res.out.slice(-120)}` };
   }
   const num = (value: unknown): number | null => (typeof value === "number" && Number.isFinite(value) ? value : null);
   const matchRatio = num(checked.match_ratio);
@@ -3268,12 +3361,20 @@ function checkSpeech(file: string, expectText: string): SpeechReport {
    * 同一句被说两遍（真机 VID-GR01 第 1 镜：匹配 1.000 / 活动度 0.228 → 转写变成两句重复）。
    */
   const verdict = speechAcceptance({ matchRatio, activeRatio, matchMin: SPEECH_MATCH_MIN, activeMin: SPEECH_ACTIVE_MIN });
-  const ok = verdict.ok;
+  /**
+   * 术语级核查（2026-09-27 真机事故修复）：整句相似度会稀释单点读错——
+   * 「数字 CEO」被模型读成「数字 CBO」时 match_ratio 仍有 0.96，`speechAcceptance` 会放行。
+   * 因此再跑一道**逐术语 fail-closed** 的判据：台词里出现的受保护术语必须在转写里核到
+   * （本体或登记过的同音变体），否则这一镜人声判不可用 → 走"用克隆音色替换人声"那条路。
+   */
+  const terms = termPronunciationCheck({ transcript, expectedText: expectText });
+  const ok = verdict.ok && terms.ok;
   const detail = `人声活动度 ${activeRatio === null ? "未测到" : activeRatio.toFixed(3)}（下限 ${SPEECH_ACTIVE_MIN}）`
     + ` · 台词匹配 ${matchRatio === null ? "未测到" : matchRatio.toFixed(3)}（下限 ${SPEECH_MATCH_MIN}）`
     + ` · 语音段 ${segments ?? "?"} · 转写 ${transcript === null ? "无" : `「${transcript.slice(0, 40)}」`}`
-    + `｜判据：${verdict.reason}`;
-  return { ok, matchRatio, activeRatio, segments, transcript, detail };
+    + `｜判据：${verdict.reason}`
+    + `｜术语：${terms.detail}`;
+  return { ok, matchRatio, activeRatio, segments, transcript, termMissing: terms.missing, detail };
 }
 
 /** 配音产物路径（旁白混入后的镜头段；原片只读，不覆盖 `<shotId>.mp4`） */
@@ -3407,11 +3508,19 @@ if (STAGES.has("voice")) {
         });
         continue;
       }
-      log(`  ⚠ ${shot.shotId} 人声核查未过（${before.detail.slice(0, 90)}）→ 补旁白（音色 ${NARRATION_PROFILE}）`);
+      /**
+       * 术语读错（如 CEO→CBO）与"没人声"是两种缺陷，处置也不同：
+       *   · 没人声 → `keep-dialogue` 叠旁白（保留现场声，压低原声）；
+       *   · 术语读错 → 原声里那个错音**必须消失**，所以用 `replace-bed` 直接换掉这一镜人声
+       *     （2026-09-27 真机：CF-04/CF-05 用 replace-bed 重配后 ASR 转写恢复为 CEO / 种草）。
+       */
+      const termBroken = (before.termMissing ?? []).length > 0;
+      const dubPolicy = termBroken ? "replace-bed" : "keep-dialogue";
+      log(`  ⚠ ${shot.shotId} 人声核查未过（${before.detail.slice(0, 90)}）→ ${termBroken ? `术语读错（${(before.termMissing ?? []).join("/")}）→ 用克隆音色替换该镜人声` : "补旁白"}（音色 ${NARRATION_PROFILE}）`);
       const out = voicedFile(shot.shotId);
       const dub = runCli(VOICE_CLI, [
         "dub", "--in", raw, "--out", out, "--profile", NARRATION_PROFILE,
-        "--text", text, "--policy", "keep-dialogue", "--lufs", "-16"
+        "--text", text, "--policy", dubPolicy, "--lufs", "-16"
       ]);
       const produced = existsSync(out);
       const after = produced ? checkSpeech(out, text) : before;
@@ -3429,20 +3538,20 @@ if (STAGES.has("voice")) {
       const ttsTextSha256 = createHash("sha256").update(text).digest("hex").slice(0, 16);
       narrationCoverage.push({
         shotId: shot.shotId, speaker, text, ok,
-        source: ok ? "tts-narration" : (doubled ? "tts-doubled-fallback" : "tts-failed"),
+        source: ok ? (termBroken ? "tts-term-replaced" : "tts-narration") : (doubled ? "tts-doubled-fallback" : "tts-failed"),
         detail: ok
           ? after.detail
           : (doubled
             ? `补旁白出现重复播报（同一句两次）→ 已放弃配音产物并回退原片：${after.detail}`
-            : `补旁白${produced ? "后仍未通过" : "未产出"}：${after.detail}`)
+            : `${termBroken ? "术语替换" : "补旁白"}${produced ? "后仍未通过" : "未产出"}：${after.detail}`)
       });
       record({
         stage: "voice", shotId: shot.shotId, invoked: true, ok, cached: false, degraded: !ok, attempt: 1,
         ms: Date.now() - shotStarted, artifact: produced && !doubled ? out : null,
         evidence: {
-          source: "tts-narration", profile: NARRATION_PROFILE, policy: "keep-dialogue", doubled,
+          source: termBroken ? "tts-term-replaced" : "tts-narration", profile: NARRATION_PROFILE, policy: dubPolicy, doubled,
           ttsTextSha256, ttsText: text,
-          before: { matchRatio: before.matchRatio, activeRatio: before.activeRatio, transcript: before.transcript },
+          before: { matchRatio: before.matchRatio, activeRatio: before.activeRatio, transcript: before.transcript, termMissing: before.termMissing },
           after: { matchRatio: after.matchRatio, activeRatio: after.activeRatio, transcript: after.transcript },
           toolOutput: dub.out.slice(-300)
         },
@@ -4328,13 +4437,17 @@ function grayRaw(file: string): Buffer {
 /**
  * 墨迹包围盒 + 遮挡区墨迹比例（对两图之差的灰度图做统计）。
  * 阈值 26 是"肉眼可辨的改动"量级：编码噪声（JPEG/PNG 重编码）远低于它，避免把噪声当字。
+ *
+ * `bottomReservedRatio` 由调用方按**平台规格**传入（2026-09-27 平台化）：
+ * 抖音 12% / 快手·TikTok 17% / 小红书 17% / 视频号 16% / IG 15% / B站 9% / YouTube 8%。
  */
-function inkMetrics(diffFile: string, width: number, height: number, threshold = 26): {
+function inkMetrics(diffFile: string, width: number, height: number,
+  bottomReservedRatio = COVER_SAFE_AREA.bottomReservedRatio, threshold = 26): {
   top: number; bottom: number; left: number; right: number; bottomBandInkRatio: number;
 } {
   const raw = grayRaw(diffFile);
   let top = height; let bottom = -1; let left = width; let right = -1;
-  const bottomStart = Math.round(height * (1 - COVER_SAFE_AREA.bottomReservedRatio));
+  const bottomStart = Math.round(height * (1 - bottomReservedRatio));
   let bottomBandInk = 0;
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
@@ -4397,10 +4510,28 @@ async function callCoverDesigner(designInput: CoverDesignInput): Promise<string>
 if (STAGES.has("cover") && existsSync(colored)) {
   const started = Date.now();
   const platform = arg("--platform", "抖音/快手");
+  /**
+   * 平台规格（唯一事实源：`packages/video-studio/src/cover-platforms.ts`）：
+   * 画幅/画布/安全区/标题带/字数上限/英文词数全从这里取；
+   * `--cover-platform` 缺省沿用 `--platform`（"抖音/快手"→抖音），因此**默认路径与平台化之前一致**。
+   */
+  const coverSpec: CoverPlatformSpec = getCoverSpec(COVER_PLATFORM_ARG || platform);
   const coverPng = join(OUT_DIR, `${PROJECT}-cover.png`);
   const coverDir = join(POST_DIR, "cover");
   mkdirSync(coverDir, { recursive: true });
-  const CW = 1080; const CH = 1920;
+  const { width: CW, height: CH } = coverSpec.canvas;
+  /** 平台安全区（机检口径；person-solo 的下带文字另有一套上下限，底部遮挡仍按平台） */
+  const coverSafeArea = {
+    topMinRatio: coverSpec.safeArea.topMinRatio,
+    titleBottomMaxRatio: coverSpec.titleBand.bottomMaxRatio,
+    bottomReservedRatio: coverSpec.safeArea.bottomReservedRatio
+  };
+  const coverSafeAreaForLayout = COVER_LOWER_BAND_TEXT
+    ? { ...COVER_LOWER_BAND_SAFE_AREA, bottomReservedRatio: coverSpec.safeArea.bottomReservedRatio }
+    : coverSafeArea;
+  log(`封面平台：${coverSpec.name}（${coverSpec.id}｜${coverSpec.ratio} ${CW}×${CH}｜标题带 `
+    + `${(coverSafeAreaForLayout.topMinRatio * 100).toFixed(0)}%–${(coverSafeAreaForLayout.titleBottomMaxRatio * 100).toFixed(0)}%｜`
+    + `底部遮挡 ${(coverSafeArea.bottomReservedRatio * 100).toFixed(0)}%）`);
   const shotAt = (shotId: string): number => {
     const index = shots.findIndex((s) => s.shotId === shotId);
     /**
@@ -4411,17 +4542,112 @@ if (STAGES.has("cover") && existsSync(colored)) {
     return CUT_GRID[index - 1] ?? shots.slice(0, index).reduce((sum, s) => sum + Number(s.duration ?? 5), 0);
   };
   const personShots = shots.filter((s) => String(s.character ?? "").length > 0);
+  const coverBrief = BRIEF_FILE && existsSync(abs(BRIEF_FILE))
+    ? (JSON.parse(readFileSync(abs(BRIEF_FILE), "utf8")) as CoverDesignInput["brief"])
+    : null;
+  /**
+   * 封面知识库 / 账号档案（2026-09-27）：
+   *   · KB 注入（cover-kb）：平台规格走**代码**（coverSpec），经验与判据来自 KB（≤3 条，带 trace）；
+   *   · 账号档案（account-profiles/*.yml）：视觉锤四件套（字体/色板/版式/角标）+ 钩子偏好 + 禁区；
+   *   · 两者都关/都没配时，提示词与校验行为退化为平台化之前（仍按平台出画幅）。
+   */
+  const coverBridgePath = join(REPO_ROOT, "bundles/ai-video/connectors/cover-kb-bridge/core.mjs");
+  const needCoverBridge = COVER_KB_ENABLED || Boolean(COVER_ACCOUNT_ARG);
+  const coverBridge = needCoverBridge && existsSync(coverBridgePath)
+    ? await import(coverBridgePath) as {
+      loadKb: (dir: string) => unknown;
+      kbStatus: (kb: unknown) => { ok: boolean; topics: number; mappingRows: number; paramRows: number; missingTopics: Array<{ id: string }>; untrackedTopics: string[] };
+      inferTheme: (kb: unknown, text: string) => { theme: string; matched: string[] } | null;
+      normalizeAccountProfile: (raw: unknown) => { profile: CoverAccountProfile; accountType: string | null; hookBias: string[]; notes: string[] };
+      enrichCoverHints: (kb: unknown, options: Record<string, unknown>) => {
+        hints: string[]; trace: Array<{ kbId: string; section: string; reason: string }>;
+        fallback: boolean; source?: string; notes?: string[]; conflicts?: string[];
+      };
+    }
+    : null;
+  /** 账号档案（视觉锤） */
+  let accountProfile: CoverAccountProfile | null = null;
+  const accountNotes: string[] = [];
+  if (COVER_ACCOUNT_ARG) {
+    if (!coverBridge) throw new Error(`账号档案需要 cover-kb 连接器：${coverBridgePath} 不存在`);
+    const accountFile = /\.ya?ml$/i.test(COVER_ACCOUNT_ARG)
+      ? abs(COVER_ACCOUNT_ARG)
+      : join(COVER_ACCOUNT_DIR, `${COVER_ACCOUNT_ARG}.yml`);
+    /**
+     * 档案缺失**不静默降级**：显式指定的账号读不到，就是拿不到视觉锤约束——
+     * 宁可让调用方发现路径写错，也不要用"无档案"的默认行为冒充"账号一致性已生效"。
+     */
+    if (!existsSync(accountFile)) {
+      throw new Error(`--account 档案不存在：${accountFile}（目录 ${COVER_ACCOUNT_DIR}）`);
+    }
+    const normalized = coverBridge.normalizeAccountProfile(YAML.parse(readFileSync(accountFile, "utf8")));
+    accountProfile = normalized.profile;
+    accountNotes.push(...normalized.notes);
+    log(`封面账号档案：${accountProfile.account_id}${accountProfile.display_name ? `（${accountProfile.display_name}）` : ""}`
+      + `｜账号类型 ${normalized.accountType ?? "未识别"}｜视觉锤字体 ${accountProfile.visual_hammer?.fontId ?? "-"}`
+      + `｜钩子偏好 ${normalized.hookBias.join("/") || "-"}｜strict ${accountProfile.strict === true ? "on" : "off"}`
+      + `${accountNotes.length > 0 ? `｜⚠ ${accountNotes.join("；")}` : ""}`);
+  }
+  /** 知识库注入载荷（≤3 条 + trace） */
+  const coverKb: {
+    applied: boolean; source: string; hints: string[]; trace: Array<Record<string, unknown>>;
+    notes: string[]; conflicts: string[]; theme: string; topics: number;
+  } = { applied: false, source: "none", hints: [], trace: [], notes: [], conflicts: [], theme: "", topics: 0 };
+  if (COVER_KB_ENABLED) {
+    if (!coverBridge || !existsSync(COVER_KB_DIR)) {
+      coverKb.notes.push(`封面知识库或连接器缺失（bridge=${existsSync(coverBridgePath)}｜kb=${existsSync(COVER_KB_DIR)}）`);
+      log(`  ⚠ 封面知识库不可用 → 本次不注入（不静默：已记入 cover 阶段证据）`);
+    } else {
+      const kb = coverBridge.loadKb(COVER_KB_DIR);
+      const status = coverBridge.kbStatus(kb);
+      coverKb.topics = status.topics;
+      if (!status.ok) {
+        coverKb.notes.push(`KB 不完整：缺篇 ${status.missingTopics.map((t) => t.id).join("/") || "无"}｜未登记 ${status.untrackedTopics.join("/") || "无"}`);
+        log(`  ⚠ 封面知识库自检未过：${coverKb.notes[coverKb.notes.length - 1]}（仍继续，但已留痕）`);
+      }
+      const inferred = COVER_THEME_ARG ? null : coverBridge.inferTheme(kb, `${shotlist.title ?? ""} ${coverBrief?.goal ?? ""}`);
+      const theme = COVER_THEME_ARG || inferred?.theme || "";
+      const payload = coverBridge.enrichCoverHints(kb, {
+        platformId: coverSpec.id,
+        spec: coverSpec,
+        theme,
+        accountType: accountProfile?.account_type ?? null,
+        hookBias: Array.isArray(accountProfile?.hook_bias) ? accountProfile.hook_bias : []
+      });
+      coverKb.applied = !payload.fallback;
+      coverKb.source = payload.source ?? "kb";
+      coverKb.hints = payload.hints;
+      coverKb.trace = payload.trace as unknown as Array<Record<string, unknown>>;
+      coverKb.notes.push(...(payload.notes ?? []));
+      coverKb.conflicts.push(...(payload.conflicts ?? []));
+      coverKb.theme = theme;
+      const traceDir = join(WORK_DIR, "cover-kb");
+      mkdirSync(traceDir, { recursive: true });
+      const traceFile = join(traceDir, `${PROJECT}.json`);
+      writeFileSync(traceFile, `${JSON.stringify({
+        at: stamp(), projectId: PROJECT, platformId: coverSpec.id, platformLabel: COVER_PLATFORM_ARG || platform,
+        theme, accountId: accountProfile?.account_id ?? null, accountNotes,
+        hints: coverKb.hints, trace: coverKb.trace, notes: coverKb.notes, conflicts: coverKb.conflicts,
+        kbDir: COVER_KB_DIR, kbTopics: status.topics, spec: coverSpec
+      }, null, 2)}\n`, "utf8");
+      log(`封面知识库：${status.topics} 篇｜题材 ${theme || "未匹配（不硬凑）"}｜注入 ${coverKb.hints.length} 条`
+        + `${coverKb.conflicts.length > 0 ? `｜⚠ 矛盾闸 ${coverKb.conflicts.length} 条（以代码规格为准）` : ""}`
+        + `｜trace → ${traceFile}`);
+    }
+  }
   const designInput: CoverDesignInput = {
     title: shotlist.title,
     /** 真实成片时长（扣转场后的目标）：标题里的"XX 秒"必须与它一致（真机：写 48 秒而片子 51s → 打回） */
     durationSeconds: expectedMasterSeconds,
     /** 版式交办给设计师（2026-09-26）：物体为主 / 人物为主二选一，渲染与监制都按它判 */
     archetype: COVER_ARCHETYPE,
-    platform,
-    brief: BRIEF_FILE && existsSync(abs(BRIEF_FILE))
-      ? (JSON.parse(readFileSync(abs(BRIEF_FILE), "utf8")) as CoverDesignInput["brief"])
-      : null,
+    /** 平台标签用调用方原文（缺省"抖音/快手"→抖音口径），规格由 cover-platforms.ts 解析 */
+    platform: COVER_PLATFORM_ARG || platform,
+    brief: coverBrief,
     character: lead ? { id: lead.id, name: lead.name } : null,
+    /** 知识库注入载荷（≤3 条）与账号视觉锤（可空）——两者为空时提示词与历史逐字一致 */
+    ...(coverKb.hints.length > 0 ? { kbHints: coverKb.hints } : {}),
+    ...(accountProfile ? { accountProfile } : {}),
     shots: shots.map((s) => ({
       shotId: s.shotId,
       scene: String(s.scene ?? ""),
@@ -4748,17 +4974,37 @@ if (STAGES.has("cover") && existsSync(colored)) {
    */
   const scrimTop = COVER_LOWER_BAND_TEXT ? Math.round(CH * 0.50) : 0;
   const scrimHeight = Math.round(CH * (COVER_LOWER_BAND_TEXT ? 0.40 : 0.46));
-  const scrimBands = 14;
+  /**
+   * 层数（2026-09-27）：上带维持 14 层（历史真机口径，逐像素不变）；
+   * 下带（person-solo）用 28 层——三角剖面在中段最亮，14 层在 1080 高上每层约 31px，
+   * 肉眼能看到阶梯状条带（真实监制反馈"可见横向色带"），加密到 28 层（约 15px）后不可辨。
+   */
+  const scrimBands = COVER_LOWER_BAND_TEXT ? 28 : 14;
   const bandHeight = Math.max(2, Math.round(scrimHeight / scrimBands));
   const scrimFilters = Array.from({ length: scrimBands }, (_, index) => {
-    const alpha = 0.40 * (COVER_LOWER_BAND_TEXT ? index / (scrimBands - 1) : 1 - index / (scrimBands - 1));
+    /**
+     * 透明度剖面（2026-09-27 真机修正）：
+     *   · 上带（默认）= 上深下浅（0.40 → 0）：顶端在画面外，只有下端渐隐，无可见边；
+     *   · 下带（person-solo）= **三角剖面**（两端 0、中间 0.40）：原来的"上浅下深"会在
+     *     画面内留下一条硬边——真实监制打回原话："标题带下沿（约 80.6%）可见一条硬边
+     *     压暗矩形分界线横切人物胸口，属于明显的贴图/蒙版残留痕迹"。
+     */
+    const t = index / (scrimBands - 1);
+    const alpha = 0.40 * (COVER_LOWER_BAND_TEXT ? 1 - Math.abs(2 * t - 1) : 1 - t);
     const y = scrimTop + index * bandHeight;
     return `drawbox=x=0:y=${y}:w=${CW}:h=${bandHeight}:color=black@${alpha.toFixed(3)}:t=fill`;
   });
   const bgOnly = join(coverDir, "bg-only.png");
   run(FFMPEG, ["-y", "-i", bgFrameA, "-vf", [
     `scale=${CW}:${CH}:force_original_aspect_ratio=increase`,
-    `crop=${CW}:${CH}`,
+    /**
+     * 取帧裁切（2026-09-27 平台化）：竖版画幅仍居中裁切（抖音路径逐像素不变）；
+     * 横版平台（B站/YouTube）从竖屏镜头帧里取 16:9 时**偏上取景**（人脸/主体通常在上中部），
+     * 避免居中裁切把人物头部切掉。偏置系数 0.38 = 从可用高度 38% 处起裁。
+     */
+    coverSpec.orientation === "horizontal"
+      ? `crop=${CW}:${CH}:(iw-${CW})/2:(ih-${CH})*0.38`
+      : `crop=${CW}:${CH}`,
     /** 轻调色：保持片子本身的光线气质（暖调画面不要被压成冷雾——监制二次复核点名的第 5 条） */
     "eq=contrast=1.05:saturation=1.06",
     "colorbalance=rm=0.04:bm=-0.03",
@@ -4854,10 +5100,11 @@ if (STAGES.has("cover") && existsSync(colored)) {
     Math.round(headSizeDesired * 0.6),
     Math.min(headSizeDesired, Math.floor(availableWidth / longestLineEm))
   );
-  /** 文字带起点：person-solo 下移到面部下方安全带（58%），其余版式保持顶部安全区 */
-  const accentY = COVER_LOWER_BAND_TEXT
-    ? Math.round(CH * COVER_LOWER_BAND_SAFE_AREA.topMinRatio)
-    : Math.round(CH * COVER_SAFE_AREA.topMinRatio);
+  /**
+   * 文字带起点：person-solo 下移到面部下方安全带（52%），其余版式保持**平台**顶部安全区
+   * （2026-09-27 平台化：抖音 6% / 小红书 7% / YouTube 5%，来自 cover-platforms.ts）。
+   */
+  const accentY = Math.round(CH * coverSafeAreaForLayout.topMinRatio);
   const accentH = Math.max(8, Math.round(CH * 0.006));
   const titleY = accentY + Math.round(headSize * 0.42);
   const lineGap = Math.round(headSize * 0.12);
@@ -4913,9 +5160,9 @@ if (STAGES.has("cover") && existsSync(colored)) {
   const coverInfo = probe(coverPng);
   const diffFile = join(coverDir, "text-diff.png");
   imageDiff(coverPng, bgPerson, diffFile);
-  const ink = inkMetrics(diffFile, CW, CH);
-  /** 标题带测量区随版式移动（person-solo 量下带，其余量上带） */
-  const coverSafeAreaForCheck = COVER_LOWER_BAND_TEXT ? COVER_LOWER_BAND_SAFE_AREA : COVER_SAFE_AREA;
+  const ink = inkMetrics(diffFile, CW, CH, coverSafeArea.bottomReservedRatio);
+  /** 标题带测量区随版式移动（person-solo 量下带，其余量上带）；上下限取平台规格 */
+  const coverSafeAreaForCheck = coverSafeAreaForLayout;
   const titleBand = {
     x: 0,
     y: Math.round(CH * coverSafeAreaForCheck.topMinRatio),
@@ -4955,7 +5202,20 @@ if (STAGES.has("cover") && existsSync(colored)) {
    * 2026-09-26 产品所有者口径：封面只有两种主视觉，要么人物为主、要么物体（景物/商品/动物）为主；
    * 没有人物层不是缺陷，而是版式选择。
    */
-  const checks = coverDeterministicChecks(measurements, coverSafeAreaForCheck)
+  /**
+   * 机检口径（2026-09-27 平台化）：画幅与安全区都按平台——把"平台规格 + 当前版式的安全区"
+   * 合成一个规格对象传进去，`cover-produced`（画幅）与 `safe-area`（标题带/遮挡区）同时生效。
+   */
+  const coverCheckSpec: CoverPlatformSpec = {
+    ...coverSpec,
+    safeArea: {
+      ...coverSpec.safeArea,
+      topMinRatio: coverSafeAreaForCheck.topMinRatio,
+      bottomReservedRatio: coverSafeAreaForCheck.bottomReservedRatio
+    },
+    titleBand: { topRatio: coverSafeAreaForCheck.topMinRatio, bottomMaxRatio: coverSafeAreaForCheck.titleBottomMaxRatio }
+  };
+  const checks = coverDeterministicChecks(measurements, coverCheckSpec)
     .filter((check) => insetEnabled || check.id !== "person-layer");
   /**
    * 底图清晰度（硬闸，2026-09-25 二次复核新增）：监制抓到的"地标糊到不可辨识"应当由机检拦住，
@@ -4989,7 +5249,33 @@ if (STAGES.has("cover") && existsSync(colored)) {
     context: {
       designVia, plan: { ...plan, source: designVia }, rationale: plan.rationale,
       designRaw: designNote, measurements,
-      safeArea: COVER_SAFE_AREA,
+      safeArea: coverSafeAreaForCheck,
+      /** 平台口径（2026-09-27）：监制按**本片平台**的画幅/安全区/文案调性判，不套 9:16 世界观 */
+      platform: {
+        id: coverSpec.id, name: coverSpec.name, ratio: coverSpec.ratio, canvas: coverSpec.canvas,
+        copyTone: coverSpec.copyTone, hookStyles: coverSpec.hookStyles, notes: coverSpec.notes,
+        headlineLimit: coverSpec.language === "en" ? `${coverSpec.headlineMaxChars} words` : `${coverSpec.headlineMaxChars} chars`
+      },
+      /** 知识库与账号档案（可溯源：监制能看到每条注入来自哪一篇） */
+      coverKnowledge: (coverKb.applied || accountProfile)
+        ? { hints: coverKb.hints, trace: coverKb.trace, theme: coverKb.theme, accountId: accountProfile?.account_id ?? null }
+        : null,
+      /**
+       * 账号视觉锤（2026-09-27 真机）：监制只看 KB 清单时，会把"账号锁定的字体/色板"判成
+       * "偏离题材建议"（真机原话："配色偏离封面知识库：THEME-001 要求 zcool-qingke + #00C2A8，
+       * 实际用了 smiley-sans + #FFD166，同账号视觉锤未锁定"）。这里把优先级写清楚：
+       * **账号视觉锤 > 题材建议 > 平台通用建议**，只有平台规格不可违背。
+       */
+      accountVisualHammer: accountProfile?.visual_hammer
+        ? {
+          accountId: accountProfile.account_id,
+          fontId: accountProfile.visual_hammer.fontId ?? null,
+          palette: accountProfile.visual_hammer.palette ?? [],
+          badgeSeries: accountProfile.visual_hammer.badge_series ?? null,
+          priority: "账号视觉锤 > 题材建议 > 平台通用建议；字体/色板以账号视觉锤为准，题材配色仅作无账号档案时的兜底"
+        }
+        : null,
+      accountWarnings: plan.warnings ?? [],
       /** 版式（2026-09-26）：监制按 archetype 判，不再一律要求"主角人物必须在场" */
       archetype: COVER_ARCHETYPE,
       discipline: COVER_ARCHETYPE === "subject-led"
@@ -4997,7 +5283,10 @@ if (STAGES.has("cover") && existsSync(colored)) {
           + "**人物缺席不是缺陷**（禁止要求补人物卡/人物竖带，那会让两种主视觉打架）。"
           + "文字落进底部平台遮挡区、标题与底图同色看不清、主体被裁掉/糊到不可辨识，算不合格。"
         : "本片封面版式是**人物为主（person-led）**：人物是唯一主视觉（占画面高 ≥55%），背景只作点缀；"
-          + "人物缺席、或人物过小沦为贴图，算不合格。文字落进底部遮挡区或标题看不清同样不合格。"
+          + "人物缺席、或人物过小沦为贴图，算不合格。文字落进底部遮挡区或标题看不清同样不合格。",
+      disciplinePlatform: `本片封面平台是 ${coverSpec.name}（${coverSpec.ratio} ${coverSpec.canvas.width}×${coverSpec.canvas.height}）：`
+        + `文案调性「${coverSpec.copyTone}」；平台偏好的钩子风格 ${coverSpec.hookStyles.join("/")}；${coverSpec.notes}。`
+        + `标题上限：${coverSpec.language === "en" ? `英文 ≤${coverSpec.headlineMaxChars} 词` : `中文 ≤${coverSpec.headlineMaxChars} 字`}。`
     },
     env: ENV, allowFallbackApprove: ALLOW_FALLBACK_APPROVE, log
   });
@@ -5014,6 +5303,26 @@ if (STAGES.has("cover") && existsSync(colored)) {
       background: { shotId: bgShot.shotId, atSec: bgAt, source: "colored（未烧字幕母版）" },
       backgroundPick: { sharpness: bgPick.sharpness, floor: COVER_MIN_SHARPNESS, substituted: bgSubstituted, plannedShotId: plan.background.shotId },
       headline: { text: plan.headline, fontId: plan.typography.fontId, sizePx: headSize, subSizePx: subSizeDraw },
+      /** 平台口径证据（2026-09-27）：出的是哪个平台的封面、机检按哪套安全区判 */
+      coverPlatform: {
+        id: coverSpec.id, label: COVER_PLATFORM_ARG || platform, ratio: coverSpec.ratio,
+        canvas: coverSpec.canvas, safeArea: coverSafeAreaForCheck,
+        headlineLimit: coverSpec.language === "en" ? `${coverSpec.headlineMaxChars} words` : `${coverSpec.headlineMaxChars} chars`
+      },
+      /** 封面知识库注入证据：hints 与 trace 一一对应（无 trace 视为未注入） */
+      coverKb: {
+        enabled: COVER_KB_ENABLED, applied: coverKb.applied, source: coverKb.source,
+        topics: coverKb.topics, theme: coverKb.theme, hints: coverKb.hints, trace: coverKb.trace,
+        notes: coverKb.notes, conflicts: coverKb.conflicts
+      },
+      /** 账号视觉锤证据（含 warn 级偏离记录） */
+      accountProfile: accountProfile
+        ? {
+          accountId: accountProfile.account_id, strict: accountProfile.strict === true,
+          fontId: accountProfile.visual_hammer?.fontId ?? null,
+          hookBias: accountProfile.hook_bias ?? [], notes: accountNotes, warnings: plan.warnings ?? []
+        }
+        : null,
       person: {
         shotId: personShot?.shotId ?? null, atSec: plan.person.atSec ?? null,
         card: { x: cardX, y: cardY, w: cardW, h: cardH, border: cardBorder },
@@ -5275,7 +5584,7 @@ if (!subtitleSidecar && SUBTITLE_MODE !== "burn") {
   ) || null;
   const materialGateEvents = [...history, ...records].filter((r) => r.stage === "gate"
     && gateStepKeyOf(r as unknown as Record<string, unknown>) === "material-generate");
-  const materialPolicyFails = materialShots.filter((s) => !materialGateEvents.some((r) => {
+  const materialPolicyFails = materialShots().filter((s) => !materialGateEvents.some((r) => {
     const row = r as unknown as Record<string, unknown>;
     return gateModeOf(row) === "verify" && gateShotIdsOf(row).includes(s.shotId) && r.ok;
   }));
@@ -5442,10 +5751,10 @@ if (!subtitleSidecar && SUBTITLE_MODE !== "burn") {
          * 绝不静默通过。
          */
         pass: materialPolicyFails.length === 0 || ACCEPT_REJECTED.includes("material-usage-policy"),
-        detail: materialShots.length === 0
+        detail: materialShots().length === 0
           ? "本片无素材镜（无实拍素材入片）"
           : materialPolicyFails.length === 0
-            ? `${materialShots.length} 个素材镜均过 G-MAT1（生成溯源 + 非静态直出 + 保真评审；${MATERIAL_POLICY_VERSION}）`
+            ? `${materialShots().length} 个素材镜均过 G-MAT1（生成溯源 + 非静态直出 + 保真评审；${MATERIAL_POLICY_VERSION}）`
             : `以下素材镜缺 G-MAT1 验证记录：${materialPolicyFails.map((s) => s.shotId).join("、")}（素材不得直接静态展示）`
               + (ACCEPT_REJECTED.includes("material-usage-policy")
                 ? "；**已显式放行**（复用既有渲染素材重剪，原始渲染记录在既有工作区，未重渲，见 material-reuse-acknowledge 记录）"
@@ -5490,7 +5799,7 @@ if (!subtitleSidecar && SUBTITLE_MODE !== "burn") {
     context: {
       stageSummary, stages: [...STAGES],
       narration: coverage.map((entry) => `${entry.shotId}（${entry.speaker}）：${entry.ok ? "有人声" : "缺人声"}`),
-      materialPolicy: { version: MATERIAL_POLICY_VERSION, statement: MATERIAL_POLICY_STATEMENT, shots: materialShots.map((s) => s.shotId) }
+      materialPolicy: { version: MATERIAL_POLICY_VERSION, statement: MATERIAL_POLICY_STATEMENT, shots: materialShots().map((s) => s.shotId) }
     },
     env: ENV, allowFallbackApprove: ALLOW_FALLBACK_APPROVE, log
   });

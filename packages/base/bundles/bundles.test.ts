@@ -9,7 +9,7 @@ import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { canonicalBundleArtifactPayload, parseBundleManifest } from "@workloom/industry-contract";
+import { canonicalBundleArtifactPayload } from "@workloom/industry-contract";
 import {
   BundleError, REGISTERED_PAGES, computeAssembly, listProfileSlugs, scaffoldDraft, removeDraft,
 } from "./assembly.js";
@@ -125,7 +125,7 @@ describe.runIf(RUN_DB)("行业装配 PG 集成（F2.10 铁律）", async () => {
    * （酒店经营 + 内容生产 + GEO 分发），围栏取组合并集，同名岗位按主包裁决留痕。
    * 这条用例独立建工作区，避免污染演示租户（ws-yunqi）。
    */
-  it("融合装配：组合主包激活 = 三包编制齐装（82 岗）+ 围栏并集 + 遮蔽留痕", async () => {
+  it("融合装配：组合主包激活 = 三包编制齐装（81 岗）+ 围栏并集 + 遮蔽留痕", async () => {
     const { provisionComposedWorkforce } = await import("./assembly.js");
     const suffix = Date.now().toString(36);
     const wsId = `ws-fusion-${suffix}`;
@@ -167,32 +167,31 @@ describe.runIf(RUN_DB)("行业装配 PG 集成（F2.10 铁律）", async () => {
       const scope2 = { tenantId, workspaceId: wsId };
       const provision = await provisionComposedWorkforce(app, scope2, "geo-growth", "MEM-FUSION");
       expect(provision.bundleIds).toEqual(["hotel", "ai-video", "geo-growth"]);
-      // 本仓组合编制实测 82 岗（与 acquisition-loop / README 统计块同一口径；岗位新增后需同步）
-      expect(provision.rosterSize).toBe(82);
-      // 每个 preset_key 只由一个包提供（同名按主包裁决）：hotel 16 / ai-video 30 / geo-growth 29
-      // （B-07 后 company-ceo 归 geo-growth，hotel 版更名 hotel-ceo，遮蔽从 4 处减到 3 处）
-      // B-09/B-47 下沉 creator-partner 与 ip-curator 后遮蔽回到 5 处；
-      // 2026-09-22 新增 ai-video「BGM 配乐师」→ 角色总数 74→75
-      // 2026-09-25 实测：ai-video 35（封面设计师落地后 34→35）/ geo-growth 29 / hotel 16，遮蔽 5 处
-      // 2026-09-27 实测：ai-video 37（hook-designer 落地后 36→37）→ 组合 82 岗
-      expect(provision.perBundle).toEqual({ hotel: 16, "ai-video": 37, "geo-growth": 29 });
-      expect(provision.shadowed.length).toBe(5);
+      expect(provision.rosterSize).toBe(81);
+      // 每个 preset_key 只由一个包提供（同名按主包裁决）：hotel 16 / ai-video 39 / geo-growth 26
+      // 口径随各包编制演进（2026-09-24 新增 ai-video「摄影指导 cinematographer」→ 78 岗；
+      // 2026-09-25 新增 ai-video「封面设计师 cover-designer」→ 79 岗；
+      // 2026-09-26 新增 ai-video「口播编导 explainer-director」（口播解说片产品化）→ 80 岗；
+      // 2026-09-27 新增 ai-video「开场钩子设计师 hook-designer」（短平台前 3 秒钩子）→ 81 岗）；
+      // 数量以装配器实测为准，改包即需同步此处（历史值：76 → 77 → 78 → 79 → 80 → 81）
+      expect(provision.perBundle).toEqual({ hotel: 16, "ai-video": 39, "geo-growth": 26 });
+      expect(provision.shadowed.length).toBe(4);
       expect(provision.fenceRules).toBeGreaterThanOrEqual(68);
 
       const profile = await computeAssembly(app, scope2, "geo-growth");
       expect(profile.checks.map((c) => c.ok)).toEqual([true, true, true, true, true, true]);
       expect(profile.canActivate).toBe(true);
-      expect(profile.agents.length).toBe(82);
+      expect(profile.agents.length).toBe(81);
 
       const activated = await activateBundle(app, gw, scope2, "geo-growth", "MEM-FUSION");
-      expect(activated.composition.rosterSize).toBe(82);
+      expect(activated.composition.rosterSize).toBe(81);
       const ev = await qScope<{ payload: { decision: { after: { composition?: { bundles?: string[]; rosterSize?: number } } } } }>(
         `SELECT payload FROM biz_events WHERE workspace_id=$1 AND payload->'decision'->>'action'='bundle.activate'
           ORDER BY seq DESC LIMIT 1`,
         [wsId],
       );
       expect(ev.rows[0]!.payload.decision.after.composition?.bundles).toEqual(["hotel", "ai-video", "geo-growth"]);
-      expect(ev.rows[0]!.payload.decision.after.composition?.rosterSize).toBe(82);
+      expect(ev.rows[0]!.payload.decision.after.composition?.rosterSize).toBe(81);
     } finally {
       await qScope(`DELETE FROM agents WHERE workspace_id=$1`, [wsId]).catch(() => undefined);
       await qScope(`DELETE FROM fence_rules WHERE workspace_id=$1`, [wsId]).catch(() => undefined);
@@ -228,10 +227,8 @@ describe.runIf(RUN_DB)("行业装配 PG 集成（F2.10 铁律）", async () => {
     bj.name = "@workloom/copycat"; bj.workloom.industry = "copycat"; bj.workloom.status = "draft";
     // 手改清单后必须重算完整性摘要：改了内容却不更新摘要 = 平台应当拒绝的篡改
     // （真实路径由 createBundleDraft/bundle:governance --refresh-digests 生成摘要）
-    // 摘要必须与装载端同口径：先经契约解析（补齐默认值）再算规范形，
-    // 否则新增的契约默认字段会让"手改后重算的摘要"与装载端不一致。
     bj.integrity.digest = createHash("sha256")
-      .update(canonicalBundleArtifactPayload(parseBundleManifest(bj)))
+      .update(canonicalBundleArtifactPayload(bj, bj.integrity.assets ?? {}))
       .digest("hex");
     writeFileSync(bjPath, `${JSON.stringify(bj, null, 2)}\n`, "utf-8");
 

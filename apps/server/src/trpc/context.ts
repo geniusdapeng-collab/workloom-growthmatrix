@@ -23,9 +23,6 @@ import {
   resolveAuthoritativeClientAccess,
   type BaseActionPermission,
 } from "../service/access-authority.js";
-import { AgentActorError, resolveAgentActor } from "../service/agent-actor.js";
-import { parseAgentChannel, type AgentChannelParse } from "./agent-channel.js";
-import type { ActorInfo } from "@workloom/base/workdata";
 
 export interface TrpcContext {
   /** 已验签会话；伙伴与成员严格分域。 */
@@ -34,19 +31,16 @@ export interface TrpcContext {
   partnerIdentity: PartnerSessionIdentity | null;
   /** 原始请求头（P0-1 通道验签 x-channel-* / 服务间密钥 x-workloom-key 读取面） */
   headers: Headers;
-  /** B-38：agent/system 通道解析结果（未配置密钥时为 unconfigured，通道整体关闭） */
-  agentChannel: AgentChannelParse;
 }
 
 export async function createContext(req: Request): Promise<TrpcContext> {
-  const agentChannel = parseAgentChannel(req.headers);
   const auth = req.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) return { session: null, identity: null, partnerIdentity: null, headers: req.headers, agentChannel };
+  if (!auth?.startsWith("Bearer ")) return { session: null, identity: null, partnerIdentity: null, headers: req.headers };
   const session = await verifySessionToken(auth.slice(7));
-  if (!session) return { session: null, identity: null, partnerIdentity: null, headers: req.headers, agentChannel };
+  if (!session) return { session: null, identity: null, partnerIdentity: null, headers: req.headers };
   return session.kind === "partner"
-    ? { session, identity: null, partnerIdentity: session, headers: req.headers, agentChannel }
-    : { session, identity: session, partnerIdentity: null, headers: req.headers, agentChannel };
+    ? { session, identity: null, partnerIdentity: session, headers: req.headers }
+    : { session, identity: session, partnerIdentity: null, headers: req.headers };
 }
 
 const t = initTRPC.context<TrpcContext>().create();
@@ -141,44 +135,6 @@ export const actionProcedure = (permission: BaseActionPermission) =>
 
 /** 通用写操作仍需显式 workspace.write；不再仅按角色粗粒度放行。 */
 export const writeProcedure = actionProcedure("workspace.write");
-
-/**
- * agent/system 写路径守卫（B-38）：
- *  - 需要 agent 通道头 + 共享密钥（未配置密钥时通道关闭，401）；
- *  - 与人身份会话互斥：同一请求不允许同时携带成员 JWT 与 agent 头（归因唯一，防身份混用）；
- *  - 身份事实（status/readonly/fence_bindings/high_risk）回库刷新，客户端声明不采信；
- *  - 名册不可用/停产/只读 → 401/403 拒绝，绝不降级成 human actor。
- */
-export const agentProcedure = t.procedure.use(async ({ ctx, next }) => {
-  if (!ctx.agentChannel.ok) {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: ctx.agentChannel.reason });
-  }
-  if (ctx.identity) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "agent 通道不与人身份会话混用（归因唯一性）" });
-  }
-  let resolved: Awaited<ReturnType<typeof resolveAgentActor>>;
-  try {
-    resolved = await resolveAgentActor(
-      { principal: ctx.agentChannel.principal, workspaceId: ctx.agentChannel.workspaceId },
-      { write: true },
-    );
-  } catch (error) {
-    if (error instanceof AgentActorError) {
-      throw new TRPCError({
-        code: error.code === "NOT_FOUND" || error.code === "WORKSPACE" ? "UNAUTHORIZED" : "FORBIDDEN",
-        message: error.message,
-      });
-    }
-    throw error;
-  }
-  return next({
-    ctx: {
-      ...ctx,
-      agent: resolved.actor as ActorInfo & { version: string },
-      agentScope: { tenantId: resolved.tenantId, workspaceId: resolved.workspaceId },
-    },
-  });
-});
 
 /**
  * 行业能力读权限守卫：权限必须来自当前工作区已通过签名、兼容性与投影校验的

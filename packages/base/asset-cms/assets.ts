@@ -47,11 +47,6 @@ export interface AssetRow {
   sha256: string;
   meta: Record<string, unknown>;
   publish_at: string | null;
-  /** B-28：AI 生成内容标识（显式 + 生成模型 + 隐式标识清单） */
-  ai_generated: boolean;
-  ai_label: string | null;
-  generator_model: string | null;
-  label_manifest_uri: string | null;
   status: string;
   created_by: string;
   created_at: string;
@@ -71,7 +66,7 @@ export interface AssetRow {
 
 export class AssetError extends Error {
   constructor(
-    public readonly code: "NOT_FOUND" | "BAD_KIND" | "BAD_LICENSE_RISK" | "PARENT_KIND_MISMATCH" | "BAD_AI_LABEL",
+    public readonly code: "NOT_FOUND" | "BAD_KIND" | "BAD_LICENSE_RISK" | "PARENT_KIND_MISMATCH",
     message: string,
   ) {
     super(message);
@@ -117,14 +112,6 @@ export interface RegisterAssetInput {
   meta?: Record<string, unknown>;
   /** 初始状态（素材默认 registered；成片由 cms 置 draft） */
   status?: string;
-  /** B-28：是否 AI 生成（true 时必须给生成模型与隐式标识清单） */
-  aiGenerated?: boolean;
-  /** 显式标识文案（缺省「AI 生成」） */
-  aiLabel?: string;
-  /** 生成模型编号（如 doubao-seedream-4.0 / seedance-2.5） */
-  generatorModel?: string;
-  /** 隐式标识清单 URI（PNG 元数据 / ffmpeg metadata / 角标证据） */
-  labelManifestUri?: string;
   by: string;
 }
 
@@ -145,14 +132,6 @@ export async function register(
   const licenseRisk = input.licenseRisk ?? "unknown";
   if (!LICENSE_RISKS.includes(licenseRisk)) {
     throw new AssetError("BAD_LICENSE_RISK", `非法授权风险级别「${licenseRisk}」`);
-  }
-  // B-28：AI 生成素材必须带生成模型与隐式标识清单（无标识不得入库）
-  const aiGenerated = input.aiGenerated === true;
-  if (aiGenerated && !input.generatorModel?.trim()) {
-    throw new AssetError("BAD_AI_LABEL", "AI 生成素材必须提供 generatorModel（生成模型编号）");
-  }
-  if (aiGenerated && !input.labelManifestUri?.trim()) {
-    throw new AssetError("BAD_AI_LABEL", "AI 生成素材必须提供 labelManifestUri（隐式标识清单）");
   }
   const client = await app.connect();
   try {
@@ -191,17 +170,14 @@ export async function register(
     const ins = await client.query<AssetRow>(
       `INSERT INTO video_assets
          (id, workspace_id, project_id, chain_id, kind, version, parent_id,
-          source_url, provenance, license_risk, hero_image_id, sha256, meta, status, created_by,
-          ai_generated, ai_label, generator_model, label_manifest_uri)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+          source_url, provenance, license_risk, hero_image_id, sha256, meta, status, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
        RETURNING *`,
       [
         input.id, scope.workspaceId, input.projectId ?? null, chainId, input.kind, version,
         input.parentId ?? null, input.sourceUrl, JSON.stringify(input.provenance ?? {}),
         licenseRisk, input.heroImageId ?? null, input.sha256,
         JSON.stringify(input.meta ?? {}), input.status ?? "registered", input.by,
-        aiGenerated, input.aiLabel?.trim() || (aiGenerated ? "AI 生成" : null),
-        input.generatorModel?.trim() || null, input.labelManifestUri?.trim() || null,
       ],
     );
     // D16（#1/A）：素材行与事件同一事务同一 COMMIT

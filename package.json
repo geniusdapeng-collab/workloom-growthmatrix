@@ -1,5 +1,5 @@
 {
-  "name": "workloom-ai-acquisition",
+  "name": "workloom-growthmatrix",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -24,25 +24,16 @@
     "doctor": "bash scripts/doctor.sh",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
-"test:scripts": "vitest run --no-file-parallelism scripts/bundle-governance.test.ts scripts/suite-fixture-preflight.test.ts scripts/verify-client-foundation-extensions.test.ts scripts/geo-fusion-plan-doc-sync.test.ts scripts/tools/publish-worker.test.mts bundles/ai-video/connectors/color-bridge/core.test.ts bundles/ai-video/connectors/color-bridge/executor.test.ts bundles/ai-video/connectors/bgm-bridge/verify-message.test.ts bundles/ai-video/connectors/bgm-bridge/genre-mismatch.test.ts bundles/ai-video/connectors/bgm-bridge/recipes-expansion.test.ts bundles/ai-video/connectors/bgm-bridge/tonality-context.test.ts bundles/ai-video/library/luts/luts.test.ts packages/base/bundles/internal-collaboration.test.ts packages/base/bundles/onboarding-pack.test.ts packages/base/captain/action-card.test.ts packages/base/fence-engine/collaboration-fence.test.ts scripts/stats-sync.test.ts packages/base/review-console/batch-release.test.ts bundles/ai-video/connectors/subtitle-bridge/punctuation.test.ts bundles/ai-video/connectors/cine-kb-bridge/audit-round3.test.ts",
+    "test:scripts": "vitest run scripts/tools/video-request-regression.test.ts scripts/bundle-governance.test.ts scripts/suite-fixture-preflight.test.ts scripts/verify-client-foundation-extensions.test.ts scripts/geo-fusion-plan-doc-sync.test.ts bundles/ai-video/connectors/bgm-bridge/verify-message.test.ts bundles/ai-video/connectors/bgm-bridge/genre-mismatch.test.ts bundles/ai-video/connectors/bgm-bridge/recipes-expansion.test.ts bundles/ai-video/connectors/bgm-bridge/tonality-context.test.ts bundles/ai-video/connectors/color-bridge/core.test.ts bundles/ai-video/library/luts/luts.test.ts bundles/ai-video/connectors/subtitle-bridge/punctuation.test.ts bundles/ai-video/connectors/cine-kb-bridge/audit-round3.test.ts",
     "db:verify-chain": "tsx --env-file=.env scripts/verify-chain.ts",
     "suite": "TOOL_UNVERIFIED_RATE=0 tsx --env-file=.env scripts/suite.ts",
     "db:seed:video": "tsx --env-file=.env scripts/seed-video.ts",
     "db:seed:geo": "tsx --env-file=.env scripts/seed-geo.ts",
     "onboarding": "tsx --env-file=.env scripts/onboarding.mts",
     "acceptance:onboarding": "tsx --env-file=.env scripts/acceptance/onboarding.mts",
-    "acceptance:collab": "tsx --env-file=.env scripts/acceptance/collab-loop.mts",
-    "acceptance:growth-assets": "tsx --env-file=.env scripts/acceptance/growth-assets.mts",
-    "acceptance:goal-loop": "tsx --env-file=.env scripts/acceptance/goal-loop.mts",
-    "acceptance:questline": "tsx --env-file=.env scripts/acceptance/questline.mts",
-    "acceptance:gates": "tsx --env-file=.env scripts/acceptance/gates.mts",
-    "drill:backup": "tsx --env-file=.env scripts/backup-drill.mts",
-    "scan:rls": "node scripts/ci/verify-rls-guc.mjs",
-    "scan:event-freeze": "tsx scripts/tools/event-freeze.mts --strict",
     "scan:fences": "tsx scripts/tools/fence-alias-scan.mts",
     "metrics": "tsx --env-file=.env scripts/metrics.mts",
     "scan:knowhow": "tsx scripts/tools/knowhow-depth.mts",
-    "matrix:gap": "tsx scripts/tools/matrix-gap.mts",
     "c-layer": "tsx --env-file=.env scripts/c-layer/evaluate.mts",
     "acceptance:scale-s8": "tsx --env-file=.env scripts/acceptance/scale-s8.mts",
     "connectors:check": "tsx --env-file=.env scripts/connectors-check.mts",
@@ -112,5 +103,5 @@
     "yaml": "2.9.0",
     "yaml-governance": "npm:yaml@2.9.0"
   },
-  "description": "骇客帝国 · 短视频社媒营销 × GEO × 获客五环 × 行业运营（首垂直：酒店）"
+  "description": "Growthmatrix·骇客帝国 · 企业增长与内容运营隔离实验副本"
 }

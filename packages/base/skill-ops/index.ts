@@ -7,7 +7,6 @@
  *               静默策略 · 接收器（拉取/staging/装载/回滚）· 全事件化。
  */
 export * from "./types.js";
-export * from "./config.js";
 export * from "./signature.js";
 export * from "./targeting.js";
 export * from "./tier.js";

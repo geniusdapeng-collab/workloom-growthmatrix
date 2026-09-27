@@ -21,9 +21,7 @@ interface Scope { tenantId: string; workspaceId: string }
 
 export class SkillOpsError extends Error {
   constructor(
-    public readonly code:
-      | "DISABLED" | "NOT_FOUND" | "BAD_STATE" | "NOT_APPROVED" | "NO_SNAPSHOT" | "REGISTRY_UNREACHABLE"
-      | "EXAM_REQUIRED",
+    public readonly code: "DISABLED" | "NOT_FOUND" | "BAD_STATE" | "NOT_APPROVED" | "NO_SNAPSHOT" | "REGISTRY_UNREACHABLE",
     message: string,
   ) {
     super(message);
@@ -80,32 +78,6 @@ const defaultFetcher: ManifestFetcher = async (url) => {
 
 /* ---------- 装载（事务内：快照 → 技能库 upsert → 已装快照跟进 → 事件） ---------- */
 
-/**
- * 晋升门禁（B-43「岗位升级先过考」）：工作区打开 eval_settings.promotion_gate 时，
- * **已装技能**的版本升级必须先有一次通过的 on-change 考试（24 小时内、未触红线）。
- * 新技能首装不拦（仍走 installSkill 的「安装即绑定围栏」原流程）；门禁关闭时零额外开销。
- */
-async function promotionGateBlockReason(
-  client: pg.PoolClient, scope: Scope, isInstalledUpgrade: boolean,
-): Promise<string | null> {
-  if (!isInstalledUpgrade) return null;
-  const settings = await client.query<{ promotion_gate: boolean }>(
-    `SELECT promotion_gate FROM eval_settings WHERE workspace_id=$1`,
-    [scope.workspaceId],
-  );
-  if (!settings.rows[0]?.promotion_gate) return null;
-  const passed = await client.query(
-    `SELECT 1 FROM eval_exams
-      WHERE workspace_id=$1 AND exam_type='on-change' AND status='done'
-        AND verdict='pass' AND red_line_hit=false
-        AND finished_at > now() - interval '24 hours'
-      LIMIT 1`,
-    [scope.workspaceId],
-  );
-  if ((passed.rowCount ?? 0) > 0) return null;
-  return "promotion gate：已装技能升级需先通过 on-change 考试（24 小时内、无红线）";
-}
-
 async function loadPackageInTx(
   client: pg.PoolClient, scope: Scope, pkg: SkillPackage, tier: string, by: EventActor, checks: StagingCheck[],
 ): Promise<{ upgraded: boolean; previousVersion: string | null }> {
@@ -116,11 +88,6 @@ async function loadPackageInTx(
      WHERE s.id=$1`,
     [pkg.skillId, scope.workspaceId]);
   const prev = cur.rows[0] ?? null;
-  const installedVersion = typeof prev?.installed_version === "string" ? prev.installed_version : null;
-  const isInstalledUpgrade = Boolean(installedVersion && compareVersions(installedVersion, pkg.version) < 0);
-  // 门禁必须在任何写入（快照/技能库/事件）之前判定：不过考 = 零写入、零版本推进。
-  const gateReason = await promotionGateBlockReason(client, scope, isInstalledUpgrade);
-  if (gateReason) throw new SkillOpsError("EXAM_REQUIRED", gateReason);
   const snapId = `snap-${pkg.skillId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
   await client.query(
     `INSERT INTO skill_dist_snapshots (id, skill_id, workspace_id, skill_row, install_row, reason)
@@ -167,13 +134,7 @@ export interface SyncResult {
   manifestVersion?: string;
   matched: number;
   loaded: Array<{ skillId: string; version: string; tier: string }>;
-  pending: Array<{
-    skillId: string; version: string; tier: string; stagingId: string;
-    approvalId?: string;
-    /** 晋升门禁（B-43）等导致的待办原因；examRequired=true 表示需先过 on-change 考试 */
-    reason?: string;
-    examRequired?: boolean;
-  }>;
+  pending: Array<{ skillId: string; version: string; tier: string; stagingId: string; approvalId?: string }>;
   rejected: Array<{ skillId: string; version: string; reasons: string[] }>;
   skipped: Array<{ skillId: string; reason: string }>;
 }
@@ -298,20 +259,6 @@ export async function syncDistribution(
         [stagingId, pkg.skillId, scope.workspaceId, staging.tier, JSON.stringify(pkg), JSON.stringify(staging.checks)]);
     } catch (err) {
       await client.query("ROLLBACK").catch(() => undefined);
-      // B-43 晋升门禁：升级未过考 → 不装载、不推进版本；入 staging 待考，事件留痕后可重试
-      if (err instanceof SkillOpsError && err.code === "EXAM_REQUIRED") {
-        await upsertStaging(app, scope, { stagingId, pkg, tier: staging.tier, checks: staging.checks, status: "pending" });
-        await emit(gateway, scope, actor, {
-          action: "skill.dist.exam_required",
-          after: { skillId: pkg.skillId, name: pkg.name, version: pkg.version, stagingId, tier: staging.tier, reason: err.message },
-          basis: ["晋升门禁（B-43）：已装技能升级先过 on-change 考试，未过考不推进版本"],
-        });
-        result.pending.push({
-          skillId: pkg.skillId, version: pkg.version, tier: staging.tier, stagingId,
-          reason: err.message, examRequired: true,
-        });
-        continue;
-      }
       throw err;
     } finally {
       await client.query("COMMIT").catch(() => undefined);

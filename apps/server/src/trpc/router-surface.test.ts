@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { accessAuthorityDeps } from "../service/access-authority.js";
 import { appRouter } from "./router.js";
-import { AGENT_CHANNEL_OFF } from "./agent-channel.js";
 
 describe("三端访问权威路由面", () => {
   it("挂载 access.me，且匿名请求失败关闭", async () => {
@@ -10,7 +9,6 @@ describe("三端访问权威路由面", () => {
       identity: null,
       partnerIdentity: null,
       headers: new Headers(),
-      agentChannel: AGENT_CHANNEL_OFF,
     });
 
     await expect(caller.access.me()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
@@ -35,7 +33,6 @@ describe("三端访问权威路由面", () => {
         identity: guest,
         partnerIdentity: null,
         headers: new Headers(),
-        agentChannel: AGENT_CHANNEL_OFF,
       });
 
       await expect(caller.onboarding.welcomeStatus()).resolves.toMatchObject({
@@ -53,23 +50,18 @@ describe("三端访问权威路由面", () => {
   });
 
   /**
-   * 回归守卫（T-2026-0925-0007）：
-   * ① `fence.activeRules` 是 dsh 围栏插件的数据源（`packages/runtime/plugins/workloom-fence.plugin.js` 直接 fetch）；
-   *    本仓 2026-09-24 P 域实测过"端点 404 → 插件把错误体当数组遍历 → 工具层整体不可用"，
-   *    端点由 `acdc037` 补过、随后被移植覆盖丢失；
-   * ② `arbitration`（B-39 冲突仲裁数据面）的挂载同样被那次覆盖丢失，文件与服务层一直在。
+   * 回归守卫（T-2026-0925-0007）：`fence.activeRules` 是 dsh 围栏插件的数据源
+   * （`packages/runtime/plugins/workloom-fence.plugin.js` 直接 fetch 该路径）。
+   * 端点缺失时 tRPC 返回 404，插件把错误体当数组遍历 → 工具执行流水线整体不可用
+   * （隔离副本 2026-09-24 P 域实测过这一故障，随后被一次移植覆盖再次丢失）。此处只守"端点必须挂载"。
    */
-  it("挂载围栏数据源端点 fence.activeRules 与仲裁数据面 arbitration（覆盖丢失回归守卫）", () => {
+  it("挂载围栏数据源端点 fence.activeRules（dsh 围栏插件依赖）", () => {
     const caller = appRouter.createCaller({
       session: null,
       identity: null,
       partnerIdentity: null,
       headers: new Headers(),
-      agentChannel: AGENT_CHANNEL_OFF,
     });
     expect(typeof caller.fence.activeRules).toBe("function");
-    expect(typeof caller.arbitration.conflicts.list).toBe("function");
-    expect(typeof caller.arbitration.conflicts.raise).toBe("function");
-    expect(typeof caller.arbitration.agent.conflicts.raise).toBe("function");
   });
 });

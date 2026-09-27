@@ -231,8 +231,8 @@ export async function activateRuleVersion(
     // ① 审批绑定验真（HP-02）：approvalEventId 必须指向本工作区真实的 approval.gesture 事件，
     //    其 after.approvalId 对应的审批行已 approved，且被审事件正是本规则的 fence.rule.propose。
     //    修复前该字段只被原样写库（伪造 event id 也能过），审批与规则行没有绑定关系。
-    const gesture = await client.query<{ proposal_event_id: string; tier: string | null; decided_by: string | null }>(
-      `SELECT a.event_id AS proposal_event_id, a.tier, a.decided_by
+    const gesture = await client.query<{ proposal_event_id: string }>(
+      `SELECT a.event_id AS proposal_event_id
          FROM biz_events g
          JOIN approvals a
            ON a.workspace_id = g.workspace_id
@@ -247,8 +247,6 @@ export async function activateRuleVersion(
     if (!gesture.rows[0]) {
       throw new Error(`审批事件 ${input.approvalEventId} 与围栏变更提案未绑定（伪造/未绑定引用，拒绝激活）`);
     }
-    const approvalTier = gesture.rows[0].tier;
-    const approvalDecider = gesture.rows[0].decided_by;
     // ② 候选行 + 基线单调守卫（HP-02：checkMonotonic 此前只在测试里被调用）
     const cand = await client.query<{
       rule_id: string; name: string; level: RuntimeRule["level"]; is_baseline: boolean;
@@ -272,21 +270,7 @@ export async function activateRuleVersion(
       when: row.match_spec.when ?? "",
     });
     if (!verdict.ok) {
-      /**
-       * 放宽围栏 = 高风险动作（宪章 escalate 清单第一条「围栏规则放宽（任何放宽）」）：
-       * 2026-09-24（B-74 演练）修复——此前任何放宽都被无条件拒绝，导致**收紧后无法回滚到原档**
-       * （演练实测：加严 G-AD1 后回滚被拒）。现在按不变量放开一条合法通道：
-       * 仅当本次变更经 **L4 董事长级** 审批放行（tier=l4_chairman 且已由人裁决）时才允许放宽，
-       * 且留痕（console 审计 + 事件里 tier 可查）；其余一律拒绝（只紧不松的默认纪律不变）。
-       */
-      const isL4Release = approvalTier === "l4_chairman" && Boolean(approvalDecider);
-      if (!isL4Release) {
-        throw new Error(`基线规则只可加严，本次变更被拒：${verdict.violations.map((v) => v.reason).join("；")}（放宽需 L4 董事长级放行）`);
-      }
-      console.warn("[fence] L4 放行：允许放宽基线规则（留痕可审计）", {
-        ruleId: row.rule_id, rowId: input.ruleRowId, approvalTier, decidedBy: approvalDecider,
-        violations: verdict.violations.map((v) => v.reason),
-      });
+      throw new Error(`基线规则只可加严，本次变更被拒：${verdict.violations.map((v) => v.reason).join("；")}`);
     }
     // ③ 版本可追溯（HP-02）：按该 rule_id 历史最大版本递增；同 rule_id 旧 active 行转 rolled_back，
     //    保证"每个 rule_id 同一时刻只有一条 active"（修复前一律 v-next，且旧版永远留在 active 集合里）。

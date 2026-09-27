@@ -7,7 +7,7 @@
  *    「本地文件 → 媒资库」入口，禁止第二条入库路径（规格书 §1.2-3）；
  *  - 大文件不整读进内存：sha256 与拷贝都用流（规格书原稿用 readFileSync，300MB 上限下会翻倍占内存，
  *    实现期改为流式）；
- *  - 0049（源仓 0039）新列（title/tags/prompt/pipeline_kind/duration/宽高/缩略图）由 `applyMediaColumns` 补写：
+ *  - 0039 新列（title/tags/prompt/pipeline_kind/duration/宽高/缩略图）由 `applyMediaColumns` 补写：
  *    `register()` 属基座包（改动要走 L2→L1→L0 提案），本模块走"基座不动、产品层扩展"的最小侵入路径；
  *    补写与 register 不同事务，故失败重试一次再报错，并留下可巡检特征（title 空而 meta.title 在场）。
  */

@@ -42,7 +42,7 @@ def text(s, x, y, w, h, lines):
 # ① 封面
 s = slide()
 text(s, 1, 2.2, 11.3, 3, [
-    (f"{DATA['repo']} · 能力导览", 44, CANDY_MAIN, True, PP_ALIGN.CENTER),
+    (f"{DATA.get('displayName', DATA['repo'])} · 能力导览", 44, CANDY_MAIN, True, PP_ALIGN.CENTER),
     (DATA["description"], 20, CANDY_TEXT, False, PP_ALIGN.CENTER),
     (f"自动生成 · {DATA['generatedAt'][:10]} · 与代码同步", 14, CANDY_SUB, False, PP_ALIGN.CENTER),
 ])

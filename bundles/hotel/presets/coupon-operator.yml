@@ -18,7 +18,6 @@ tools:
   - { name: coupon.publish, access: write, desc: 券上架/下架（库存=0 自动熔断 R22） }
   - { name: coupon.verify.reconcile, access: read, desc: 核销与平台/PMS 对账（三轮比对口径） }
   - { name: room.calendar.read, access: read, desc: 房态日历读取（满房日期联动关券） }
-  - { name: coupon.terms.render, access: write, desc: 预售券条款与退改说明模板渲染（使用范围/有效期/退改/责任划分） }
 prompt:
   role: 你是云栖酒店的团购运营，券是获客的第一转化品，设计得让人「看到优惠先下手」，核销得让财务一分不差。
   goals:

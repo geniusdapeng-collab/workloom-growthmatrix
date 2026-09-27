@@ -20,15 +20,8 @@ import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import YAML from "yaml";
-import {
-  gatewayAppend,
-  gatewayAppendOnClient,
-  registerReadActions,
-  registerWriteActions,
-  SYSTEM_ACTOR_WHITELIST,
-} from "../workdata/gateway.js";
+import { gatewayAppend, gatewayAppendOnClient, registerReadActions, registerWriteActions } from "../workdata/gateway.js";
 import { fenceRulesOf } from "../fence-engine/dsl.js";
-import { applyDeclaredFenceTemplates } from "./internal-collaboration.js";
 import { parseModelPolicy } from "../model-router/policy.js";
 import {
   loadFeedbackEnumsFromBundle,
@@ -51,13 +44,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 /** 仓库 bundles/ 根（packages/base/bundles → 上三级）；测试可用 BUNDLES_ROOT 指到临时目录 */
 export const DEFAULT_BUNDLES_ROOT = join(__dirname, "..", "..", "..", "bundles");
 import { maybeApplyOverlay } from "../overlay/assembly-hook.js";
-import {
-  mergeTriggerDeclarations,
-  parseTriggerDeclarations,
-  triggerGapReport,
-  type ComposedTrigger,
-  type TriggerDeclarationSource,
-} from "./triggers.js";
 
 /**
  * 打包载荷布局（2026-09-20 客户端首启实证）：
@@ -230,16 +216,8 @@ function mergeTrustRing(target: BundleTrustRing, source: BundleTrustRing): void 
 function loadBundleTrustRing(bundleRoot: string): BundleTrustRing {
   const merged: BundleTrustRing = { keys: {}, revoked: new Set() };
   const configuredPath = process.env.BUNDLE_TRUST_PATH?.trim();
-  /**
-   * 信任根定位（2026-09-24 B-76）：显式 `BUNDLE_TRUST_PATH` 优先；未配置时回落到仓库缺省位置
-   * `build/bundle-trust.json`（发布脚本 `--release` 的默认输出）。回落路径仍强制"锚定在 bundles/ 之外"，
-   * 因此不会把可替换的制品目录当信任根——只是省掉每个环境都要记得注入环境变量的坑
-   * （稳定态包在装载期强制验签，缺信任根会整体拒绝装载；此前缺省环境下三包切稳定即全仓测试红）。
-   */
-  const defaultTrustPath = join(dirname(resolve(bundleRoot)), "build", "bundle-trust.json");
-  const trustPath = configuredPath ? resolve(configuredPath) : (existsSync(defaultTrustPath) ? defaultTrustPath : null);
-  if (trustPath) {
-    const trustFile = trustPath;
+  if (configuredPath) {
+    const trustFile = resolve(configuredPath);
     const normalizedBundleRoot = resolve(bundleRoot);
     const rel = relative(normalizedBundleRoot, trustFile);
     if (!rel || (!rel.startsWith("..") && !isAbsolute(rel))) {
@@ -648,47 +626,6 @@ export interface ComposedAssets {
   shadowed: ComposedWorkforce["shadowed"];
 }
 
-/** 组合声明式触发器：合并结果 + 来源版本（供声明的幂等版本落账） */
-export interface ComposedTriggerSet {
-  triggers: ComposedTrigger[];
-  bundleIds: string[];
-  versions: Record<string, string>;
-  /** 被遮蔽（非权威）的同名声明数量 */
-  shadowed: number;
-}
-
-/** 已知数字 CEO 节拍（声明 action.beat 的白名单，与 captain/loop.ts 的节拍集对齐） */
-export const CAPTAIN_BEATS = [
-  "daily", "queue", "deviation", "breaker", "outcome", "hr", "board", "org", "fleet",
-] as const;
-
-/**
- * 组合声明式触发器（主包 + 依赖包）：
- * 依赖包在前、主包在后（与 loadComposedAssets 同序），同名 id 主包优先并留痕。
- * 只读取经完整性门禁的清单与资产；解析失败即抛，不静默丢声明。
- */
-export function loadComposedTriggers(slug: string, root = bundlesRoot()): ComposedTriggerSet {
-  const sources = loadProjectionSources(slug, root);
-  const declarations: TriggerDeclarationSource[] = [];
-  const versions: Record<string, string> = {};
-  for (const { manifest } of sources) {
-    const bundleId = manifest.workloom.industry;
-    versions[bundleId] = manifest.version;
-    for (const assetPath of manifest.workloom.provides.triggers) {
-      const file = verifiedAssetPath(bundleId, assetPath, root);
-      const parsed = parseTriggerDeclarations(readFileSync(file, "utf-8"), `${bundleId}/${assetPath}`);
-      declarations.push({ bundleId, file: parsed });
-    }
-  }
-  const triggers = mergeTriggerDeclarations(declarations);
-  return {
-    triggers,
-    bundleIds: sources.map((source) => source.manifest.workloom.industry),
-    versions,
-    shadowed: triggers.reduce((count, item) => count + item.shadowedBundleIds.length, 0),
-  };
-}
-
 /** 读取某行业包声明的档案 schema（未声明/不可读 → null；内容摘要仍按 provides 校验） */
 function readDeclaredArchiveSchema(bundleId: string, root: string): Record<string, unknown> | null {
   try {
@@ -723,10 +660,7 @@ export function loadComposedAssets(slug: string, root = bundlesRoot()): Composed
        * 客群补丁由落地向导按所选客群单独应用；组合上岗只做单调守卫（更严的补丁保留）。
        */
       if (assetPath.includes("/patches/")) continue;
-      // B-62：围栏包可声明通用规则模板（内部协作 auto / 对外动作 review），装配期按包前缀展开
-      const pack = applyDeclaredFenceTemplates(
-        YAML.parse(readFileSync(verifiedAssetPath(bundleId, assetPath, root), "utf-8")) as FenceYml,
-      );
+      const pack = YAML.parse(readFileSync(verifiedAssetPath(bundleId, assetPath, root), "utf-8")) as FenceYml;
       if (pack?.version) fencePacks.push({ bundleId, pack });
     }
   }
@@ -837,15 +771,6 @@ export interface ComposedProvision {
   perBundle: Record<string, number>;
   fenceRules: number;
   shadowed: ComposedWorkforce["shadowed"];
-  /** 声明式触发器装载统计（B-02） */
-  triggers: number;
-  triggersRetired: number;
-  triggersSkippedCustomer: number;
-  triggerShadowed: number;
-  /** 汇报关系声明数量（B-08；0 表示未声明，按平级处理） */
-  commandChain: number;
-  /** 因退出组合编制而停用的历史岗位数（只增不改：停用不删除） */
-  agentsRetired: number;
 }
 
 /**
@@ -896,39 +821,6 @@ export async function provisionComposedWorkforce(
     void key;
   }
   const mergedRules = mergeComposedFenceRules(composed.fencePacks);
-  const composedTriggers = loadComposedTriggers(slug, root);
-  /**
-   * 汇报关系（B-08）：主包声明 preset → reportsTo，两端都必须在本组合编制内；
-   * 未声明不阻断（平级），声明了写错即拒绝装配（避免组织图悬空）。
-   */
-  const primaryManifest = loadVerifiedBundleManifest(slug, root);
-  const commandChain = primaryManifest.workloom.composition?.commandChain ?? [];
-  const rosterKeys = new Set(composeWorkforce(slug, root).presets.keys());
-  const chainGaps = commandChain.filter(
-    (link) => !rosterKeys.has(link.preset) || !rosterKeys.has(link.reportsTo),
-  );
-  if (chainGaps.length > 0) {
-    throw new BundleError(
-      "ASSEMBLY_CHECK_FAILED",
-      `汇报关系引用未在编岗位：${chainGaps.map((link) => `${link.preset}→${link.reportsTo}`).join("；")}`,
-    );
-  }
-  // 声明必须与编制对账：派遣岗位必须已在组合编制内、beat 必须是已知 CEO 节拍。
-  // 未命中即拒绝装载（fail-closed），不允许"声明了但永远不触发"的幽灵触发器进库。
-  const triggerGaps = triggerGapReport(composedTriggers.triggers, {
-    presetKeys: [...composeWorkforce(slug, root).presets.keys()],
-    beats: [...CAPTAIN_BEATS],
-    systems: [...SYSTEM_ACTOR_WHITELIST],
-  });
-  if (triggerGaps.length > 0) {
-    throw new BundleError(
-      "ASSEMBLY_CHECK_FAILED",
-      `声明式触发器不可装载：${triggerGaps.map((gap) => `${gap.triggerId}（${gap.detail}）`).join("；")}`,
-    );
-  }
-  let triggersRetired = 0;
-  let triggersSkippedCustomer = 0;
-  let agentsRetired = 0;
 
   const manageTransaction = options.manageTransaction ?? typeof (app as pg.Pool).connect === "function";
   const client = manageTransaction
@@ -1028,83 +920,6 @@ export async function provisionComposedWorkforce(
         );
       }
     }
-    /**
-     * 声明式触发器装载（B-02）：按 (workspace_id, declared_id) 幂等 upsert。
-     * 纪律：
-     *  - 落库 id = `<declared_id>-<workspace_id>`（工作区后缀，避免全局主键撞车）；
-     *  - 客户自建（declared_id 为空）永不覆盖：名称冲突时跳过并计数；
-     *  - 退出声明（上一版有、本版无）只禁用不删除，保留审计轨迹。
-     */
-    const declaredIds: string[] = [];
-    for (const item of composedTriggers.triggers) {
-      const declaration = item.declaration;
-      declaredIds.push(declaration.id);
-      const existing = await client.query<{ id: string; source_bundle: string | null }>(
-        `SELECT id, source_bundle FROM triggers WHERE workspace_id=$1 AND declared_id=$2`,
-        [scope.workspaceId, declaration.id],
-      );
-      if (existing.rows[0] && existing.rows[0].source_bundle === null) {
-        triggersSkippedCustomer += 1;
-        continue;
-      }
-      const effectiveId = existing.rows[0]?.id ?? `${declaration.id}-${scope.workspaceId}`;
-      const declaredVersion = `${item.sourceBundleId}@${composedTriggers.versions[item.sourceBundleId] ?? "unknown"}`;
-      await client.query(
-        `INSERT INTO triggers
-           (id, workspace_id, name, kind, schedule, action, enabled, created_by, source_bundle, declared_version, declared_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-         ON CONFLICT (id) DO UPDATE SET
-           name = EXCLUDED.name, kind = EXCLUDED.kind, schedule = EXCLUDED.schedule,
-           action = EXCLUDED.action, enabled = EXCLUDED.enabled, updated_at = now(),
-           source_bundle = EXCLUDED.source_bundle, declared_version = EXCLUDED.declared_version,
-           declared_id = EXCLUDED.declared_id`,
-        [
-          effectiveId, scope.workspaceId, declaration.name, declaration.kind, declaration.schedule,
-          JSON.stringify(declaration.action), declaration.enabled, `system:compose:${by}`,
-          item.sourceBundleId, declaredVersion, declaration.id,
-        ],
-      );
-    }
-    const retired = await client.query(
-      `UPDATE triggers SET enabled=false, updated_at=now()
-        WHERE workspace_id=$1 AND declared_id IS NOT NULL AND source_bundle IS NOT NULL
-          AND enabled=true AND NOT (declared_id = ANY($2::text[]))`,
-      [scope.workspaceId, declaredIds],
-    );
-    triggersRetired = retired.rowCount ?? 0;
-    /**
-     * 编制退场（B-07）：组合装配写入的岗位若已退出权威编制（例如 company-ceo 更名
-     * hotel-ceo 后遗留的旧键），只停用不删除；客户自建岗位（meta 无 composedFrom）不动。
-     */
-    const rosterKeysArr = [...composeWorkforce(slug, root).presets.keys()];
-    const retiredAgents = await client.query(
-      `UPDATE agents SET status='disabled'
-        WHERE workspace_id=$1 AND status='ready'
-          AND meta->'composedFrom'->>'primary'=$2
-          AND NOT (preset_key = ANY($3::text[]))`,
-      [scope.workspaceId, slug, rosterKeysArr],
-    );
-    agentsRetired = retiredAgents.rowCount ?? 0;
-    /**
-     * 同名去重（B-07 暴露的历史缺陷）：seed 脚本历史上用裸 id（agt-<key>）建岗，
-     * 装配器用带工作区后缀的 id，两种创建顺序交错时同一 preset_key 会出现两行。
-     * 处理：同一 (workspace_id, preset_key) 只保留最早的一条组合装配岗（仍在编制内），
-     * 其余组合装配行停用；客户自建（meta 无 composedFrom）不在此列。
-     */
-    const deduped = await client.query(
-      `UPDATE agents a SET status='disabled'
-        WHERE a.workspace_id=$1 AND a.status='ready'
-          AND a.meta->'composedFrom' IS NOT NULL
-          AND a.preset_key = ANY($2::text[])
-          AND EXISTS (
-            SELECT 1 FROM agents b
-            WHERE b.workspace_id=a.workspace_id AND b.preset_key=a.preset_key
-              AND b.status='ready' AND b.meta->'composedFrom' IS NOT NULL
-              AND (b.created_at, b.id) < (a.created_at, a.id)
-          )`,
-      [scope.workspaceId, rosterKeysArr],
-    );
-    agentsRetired += deduped.rowCount ?? 0;
     if (manageTransaction) await client.query("COMMIT");
   } catch (err) {
     if (manageTransaction) await client.query("ROLLBACK").catch(() => undefined);
@@ -1119,12 +934,6 @@ export async function provisionComposedWorkforce(
     perBundle,
     fenceRules: mergedRules.length,
     shadowed: composed.shadowed,
-    triggers: composedTriggers.triggers.length,
-    triggersRetired,
-    triggersSkippedCustomer,
-    triggerShadowed: composedTriggers.shadowed,
-    commandChain: commandChain.length,
-    agentsRetired,
   };
 }
 
@@ -1390,11 +1199,6 @@ interface FenceYml {
   rules?: FenceRuleYml[];
   /** HP-02：出厂包存在两种顶层键——hotel/本仓各行业包用 `rules:`，ai-pm/platform 用 `fences:` */
   fences?: FenceRuleYml[];
-  /**
-   * B-62：通用规则模板声明（装配期按前缀展开为包内规则 id）。
-   * 目前支持 `internal-collaboration`（内部协作 auto / 花钱 review / 对外动作 review）。
-   */
-  templates?: Array<{ name: string; prefix: string }>;
 }
 
 interface UiCasesJson {
@@ -1450,9 +1254,7 @@ function loadBundleDiskAssets(dir: string, slug: string): BundleDiskAssets {
     ? readJson<T>(verifiedAssetPath(slug, assetPath, bundleRoot))
     : null;
   const fenceAssets = provides.fences.map((assetPath) => {
-    const value = applyDeclaredFenceTemplates(
-      YAML.parse(readFileSync(verifiedAssetPath(slug, assetPath, bundleRoot), "utf-8")) as FenceYml,
-    );
+    const value = YAML.parse(readFileSync(verifiedAssetPath(slug, assetPath, bundleRoot), "utf-8")) as FenceYml;
     // HP-02：装配层统一把 `fences:` 形态归一为 `rules:`，后续消费方（覆盖层视图/rebase/计数）只看 rules
     return { assetPath, value: { ...value, rules: fenceRulesOf(value) as FenceYml["rules"] } };
   });
@@ -1599,18 +1401,8 @@ async function computeAssemblyScoped(
       )).rows
     : [];
   const probeFails: string[] = [];
-  // 同名多行（历史退场行 + 在岗行）只保留权威实例：优先 ready，其次任意一行。
-  const canonicalAgentRows = (() => {
-    const byKey = new Map<string, (typeof agentRows)[number]>();
-    for (const row of agentRows) {
-      const existing = byKey.get(row.preset_key);
-      if (!existing || (existing.status !== "ready" && row.status === "ready")) byKey.set(row.preset_key, row);
-    }
-    return [...byKey.values()];
-  })();
   for (const p of presets) {
-    // 同名去重会保留历史行（disabled）供审计：探针只认权威实例（优先 ready）。
-    const a = canonicalAgentRows.find((r) => r.preset_key === p.preset_key);
+    const a = agentRows.find((r) => r.preset_key === p.preset_key);
     if (!a) probeFails.push(`「${p.name ?? p.preset_key}」未注册实例`);
     else if (a.status !== "ready") probeFails.push(`「${a.name} ${a.version}」状态 ${a.status}（invalid/disabled 不可装配 L3.7）`);
   }
@@ -1641,7 +1433,7 @@ async function computeAssemblyScoped(
     : [];
   const activeRules = new Set(fenceRuleRows);
   const fenceFails: string[] = [];
-  const agentsOut: BundleAgentRow[] = canonicalAgentRows.map((a) => {
+  const agentsOut: BundleAgentRow[] = agentRows.map((a) => {
     let fenceOk = true;
     if (!a.readonly) {
       if (!a.fence_bindings || a.fence_bindings.length === 0) {
@@ -1802,10 +1594,6 @@ export async function activateBundle(
             perBundle: composition.perBundle,
             fenceRules: composition.fenceRules,
             shadowed: composition.shadowed,
-            triggers: composition.triggers,
-            triggersRetired: composition.triggersRetired,
-            triggersSkippedCustomer: composition.triggersSkippedCustomer,
-            commandChain: composition.commandChain,
           },
         },
         basis: [

@@ -23,34 +23,7 @@ export const SOCIAL_DOUYIN: ConnectorSpec = {
   mode: "live",
 };
 
-/** B-32：四类真实连接器（PMS / OTA 监测 / 企微客资 / 抖音本地生活核销）。 */
-export const PMS_CONNECTOR: ConnectorSpec = {
-  id: "pms", name: "PMS 房态与订单",
-  auth: ["PMS_URL", "PMS_TOKEN"], timeoutMs: 10_000, maxRetries: 2, rateLimitPerMin: 120,
-  docs: "docs/connectors-mock-exit.md#pms", mode: "live",
-};
-
-export const OTA_MONITOR: ConnectorSpec = {
-  id: "ota-monitor", name: "OTA 价格与评论监测",
-  auth: ["OTA_MONITOR_URL", "OTA_MONITOR_TOKEN"], timeoutMs: 12_000, maxRetries: 2, rateLimitPerMin: 60,
-  docs: "docs/connectors-mock-exit.md#ota", mode: "live",
-};
-
-export const WECOM_CONNECTOR: ConnectorSpec = {
-  id: "wecom", name: "企业微信客资与触达",
-  auth: ["WECOM_URL", "WECOM_TOKEN"], timeoutMs: 10_000, maxRetries: 2, rateLimitPerMin: 120,
-  docs: "docs/connectors-mock-exit.md#wecom", mode: "live",
-};
-
-export const DOUYIN_LOCAL: ConnectorSpec = {
-  id: "douyin-local", name: "抖音本地生活核销",
-  auth: ["DOUYIN_LOCAL_URL", "DOUYIN_LOCAL_TOKEN"], timeoutMs: 10_000, maxRetries: 2, rateLimitPerMin: 120,
-  docs: "docs/connectors-mock-exit.md#douyin-local", mode: "live",
-};
-
-export const CONNECTORS: readonly ConnectorSpec[] = [
-  ADS_GATEWAY, SOCIAL_DOUYIN, PMS_CONNECTOR, OTA_MONITOR, WECOM_CONNECTOR, DOUYIN_LOCAL,
-];
+export const CONNECTORS: readonly ConnectorSpec[] = [ADS_GATEWAY, SOCIAL_DOUYIN];
 
 export function connectorReadiness(ctx?: ConnectorContext): ConnectorHealth[] {
   const e = ctx?.env ?? process.env;

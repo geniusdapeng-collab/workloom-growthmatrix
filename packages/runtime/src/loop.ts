@@ -6,12 +6,12 @@
  *  - 每步：围栏瀑布判定（fence-engine judge 纯函数）→ auto 执行 / review 挂起进审批 /
  *    block 熔断告警（附录 B 全生命周期）
  *  - 每步写五元事件（含回执位 receipt 与 model_trace；decision.step_id 幂等标记）
- *  - replay 断点续跑（E3.3/H-5）：重入时读会话已有事件的 step_id 集合，已完成的步骤跳过，
- *    kill -9 后重放续跑且幂等（不产生重复事件）
+ *  - replay 断点续跑（E3.3/H-5）：重入时读取步骤的最新执行回执，已核实的步骤跳过；
+ *    未核实步骤保持失败待对账，不能当成完成，也不能自动重发可能已有副作用的动作。
  *  - E3.7：工具执行无回执（receipt.synced≠true）→ 标「未核实」，线程不得转 completed
  */
 import type pg from "pg";
-import { judge, judgeViews, type JudgeView, type RuntimeRule } from "@workloom/base/fence-engine";
+import { judge, judgeViews, type JudgeInput, type RuntimeRule } from "@workloom/base/fence-engine";
 import { gatewayAppend, gatewayAppendOnClient, registerWriteActions } from "@workloom/base/workdata";
 
 /** D16（#1/A）：步骤内「事件 + 线程状态」单事务封装（双 GUC 齐备） */
@@ -208,7 +208,11 @@ export interface QuestRunResult {
   blockedBy?: string;
 }
 
-async function existingStepIds(gateway: pg.Pool, scope: { tenantId: string; workspaceId: string }, threadId: string): Promise<Set<string>> {
+async function existingStepReceipts(
+  gateway: pg.Pool,
+  scope: { tenantId: string; workspaceId: string },
+  threadId: string,
+): Promise<{ done: Set<string>; unverified: string[] }> {
   const client = await gateway.connect();
   try {
     // 事务级 RLS 上下文必须在显式事务内设置：autocommit 下 set_config(...,true) 语句结束即失效
@@ -216,21 +220,26 @@ async function existingStepIds(gateway: pg.Pool, scope: { tenantId: string; work
     await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
     await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]);
     const r = await client.query<{ payload: BusinessEvent }>(
-      `SELECT payload FROM biz_events WHERE tenant_id=$1 AND workspace_id=$2 AND session_id=$3`,
+      `SELECT payload FROM biz_events WHERE tenant_id=$1 AND workspace_id=$2 AND session_id=$3 ORDER BY seq`,
       [scope.tenantId, scope.workspaceId, threadId],
     );
-    const set = new Set<string>();
+    const receipts = new Map<string, boolean>();
     for (const row of r.rows) {
       const decision = row.payload.decision as Record<string, unknown>;
       const sid = decision.step_id;
-      // #11 修复：只收录真正执行完成（auto）的步骤，排除 block/review 事件
+      // 只收录执行事件，排除 block/review 事件。
       // block/review 事件的 basis 以「熔断：」或「越围栏挂起：」开头，从未真正执行
-      const basis = Array.isArray(decision.basis) ? decision.basis as string[] : [];
-      const isBlocked = basis.some((b) => b.startsWith("熔断："));
-      const isReview = basis.some((b) => b.startsWith("越围栏挂起："));
-      if (typeof sid === "string" && !isBlocked && !isReview) set.add(sid);
+      const basis = Array.isArray(decision.basis) ? decision.basis : [];
+      const isBlocked = basis.some((b) => typeof b === "string" && b.startsWith("熔断："));
+      const isReview = basis.some((b) => typeof b === "string" && b.startsWith("越围栏挂起："));
+      if (typeof sid === "string" && !isBlocked && !isReview) {
+        receipts.set(sid, row.payload.receipt?.synced === true);
+      }
     }
-    return set;
+    return {
+      done: new Set([...receipts].filter(([, verified]) => verified).map(([sid]) => sid)),
+      unverified: [...receipts].filter(([, verified]) => !verified).map(([sid]) => sid),
+    };
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw err;
@@ -333,9 +342,16 @@ export async function runQuest(
     ?? ((name, params) => executeDeclaredTool(name, params, { allowedTools, simulated }));
   const effectOf = (toolName: string): "read" | "write" =>
     preset.tools.find((tool) => tool.name === toolName)?.access === "read" ? "read" : "write";
-  const done = await existingStepIds(gateway, scope, threadId); // replay 续跑锚点
+  const { done, unverified } = await existingStepReceipts(gateway, scope, threadId);
+  if (unverified.length > 0) {
+    // receipt=false/缺失只说明外部结果未知。自动重发会重复扣费/发布，跳过又会伪称完成。
+    await updateThread(app, scope, threadId, {
+      status: "failed", progress_done: done.size, progress_total: steps.length,
+      error: `步骤 ${unverified.join("/")} 无回执，标「未核实」，对账前不重发`,
+    });
+    return { threadId, status: "failed", stepsDone: done.size, stepsTotal: steps.length, unverified };
+  }
   const approved = await approvedStepIds(app, scope, threadId); // #34 已批准挂起步骤（恢复闭环）
-  const unverified: string[] = [];
   // M3：首个产出事件携带 memory_refs 并写 memory_usage（每线程一次，用量口径=「记忆影响了多少个任务」）
   let prefUsageRecorded = false;
 
@@ -350,7 +366,7 @@ export async function runQuest(
     //           LLM 规划的动作名不能掩盖真正的执行工具（反之亦然）。
     const toolAccess: "read" | "write" =
       preset.tools.find((tool) => tool.name === step.tool)?.access === "read" ? "read" : "write";
-    const views: JudgeView[] = [{
+    const views: JudgeInput[] = [{
       object: { type: step.objectType, id: step.objectId }, action: step.action, effect: toolAccess,
       params: step.params, before: step.before, after: step.after, context: step.context,
     }];
@@ -359,28 +375,6 @@ export async function runQuest(
         object: { type: step.objectType, id: step.objectId }, action: step.tool, effect: toolAccess,
         params: step.params, before: step.before, after: step.after, context: step.context,
       });
-      /**
-       * 第三视图：按**工具名前缀**派生对象视图（与默认规划器 `safeObjectType(tool.name)` 同口径）。
-       * 2026-09-24 修复（P 域实测）：LLM 规划器会自造对象标识（如 geo_article），而围栏规则按
-       * 声明对象（content / geo_content…）与动词族编写 → 语义视图与工具视图都用自造对象类型时必然全不命中，
-       * 写步骤一律落 default review（实测 T-104..T-107 全挂）。补上派生视图后，已声明工具（如 content.*）
-       * 能被对应规则正常命中；未命中任何视图时仍按 default fail-closed。
-       *
-       * 视图角色（2026-09-24 红队复核）：执行真相视图标 `failClosed: true`——工具没被任何规则覆盖时
-       * 必须保留 default 的 fail-closed；语义/自造对象视图只是"标签"，只做加严，不回落 default。
-       */
-      const toolObjectType = safeObjectType(step.tool);
-      const toolView = views[views.length - 1]!;
-      if (toolObjectType === step.objectType) {
-        // 派生对象类型与规划对象一致：工具视图本身就是执行真相视图
-        toolView.failClosed = true;
-      } else {
-        views.push({
-          object: { type: toolObjectType, id: step.objectId }, action: step.tool, effect: toolAccess,
-          params: step.params, before: step.before, after: step.after, context: step.context,
-          failClosed: true,
-        });
-      }
     }
     const verdict = views.length === 1 ? judge(views[0]!, rules, defaultLevel) : judgeViews(views, rules, defaultLevel);
 
@@ -399,7 +393,7 @@ export async function runQuest(
           context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString() },
           object: { type: step.objectType, id: step.objectId },
           decision: {
-            action: step.action, tool: step.tool, step_id: step.stepId, effect: effectOf(step.tool), params: step.params,
+            action: step.action, step_id: step.stepId, effect: effectOf(step.tool), params: step.params,
             basis: [`熔断：${verdict.triggeredBy.join("、")}`],
             ...(prefUsageRecorded ? {} : { memory_refs: preferenceMemoryRefs(prefs) }),
           },
@@ -438,7 +432,7 @@ export async function runQuest(
           context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString() },
           object: { type: step.objectType, id: step.objectId },
           decision: {
-            action: step.action, tool: step.tool, step_id: step.stepId, effect: effectOf(step.tool), params: step.params,
+            action: step.action, step_id: step.stepId, effect: effectOf(step.tool), params: step.params,
             basis: [`越围栏挂起：${verdict.triggeredBy.join("、")}`],
             ...(prefUsageRecorded ? {} : { memory_refs: preferenceMemoryRefs(prefs) }),
           },
@@ -477,16 +471,6 @@ export async function runQuest(
            ON CONFLICT (event_id, channel) DO NOTHING`,
           [aprId, scope.tenantId, scope.workspaceId, ev.eventId,
             JSON.stringify({
-              /**
-               * 关卡事实（2026-09-24 补）：UI/巡检要按"这是不是步骤级人审关卡"筛选，
-               * 而不能按 LLM 自造的动作名猜——实测 `publish_article` 这种自造名不在任何
-               * 命名白名单里，任务页会把**真实待放行**的关卡卡过滤掉（人看不到、放不了行）。
-               * 这里显式落 gate/tool/rule_ids/step_id，前端按 gate=true 判定。
-               */
-              gate: true,
-              tool: step.tool,
-              step_id: step.stepId,
-              rule_ids: verdict.impacts.map((i) => i.rule_id),
               before: step.before ?? null,
               after: step.params,
               action: step.action,
@@ -514,7 +498,7 @@ export async function runQuest(
 
     // auto（或 #34 已批准 review）：执行工具 → 回执校验（E3.7）→ 写事件
     const out = await runTool(step.tool, step.params);
-    const verified = out.receipt.synced === true;
+    const verified = out.receipt?.synced === true;
     if (!verified) unverified.push(step.stepId);
     // D16（#1/A）：执行事件与线程进度同一事务——步骤级原子提交（replay 幂等锚点不漂移）
     await inTx(app, scope, async (c) => {
@@ -528,12 +512,7 @@ export async function runQuest(
         context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString() },
         object: { type: step.objectType, id: step.objectId },
         decision: {
-          /**
-           * `tool`：真正执行的工具名（2026-09-24 红队复核补）。LLM 规划的动作名（action）可以是
-           * 自造词（实测 T-113：action=publish_article 而实际工具是内部的 ai_task.emit），
-           * 只留 action 会让审计误读成"对外发布被自动放行"；工具名入账后判定链可复核。
-           */
-          action: step.action, tool: step.tool, step_id: step.stepId, effect: effectOf(step.tool), params: step.params, before: step.before,
+          action: step.action, step_id: step.stepId, effect: effectOf(step.tool), params: step.params, before: step.before,
           after: { ...(typeof step.after === "object" && step.after !== null ? step.after as Record<string, unknown> : {}), result: out.result },
           basis: approvalRef ? [`经审批 ${approvalRef} 批准执行（E3.3 恢复闭环）`] : undefined,
           ...(prefUsageRecorded ? {} : { memory_refs: preferenceMemoryRefs(prefs) }),
@@ -554,9 +533,13 @@ export async function runQuest(
       }
       await c.query(
         `UPDATE threads SET progress_done=$3, updated_at=now() WHERE id=$1 AND workspace_id=$2`,
-        [threadId, scope.workspaceId, done.size + 1],
+        [threadId, scope.workspaceId, done.size + (verified ? 1 : 0)],
       );
     });
+    if (!verified) {
+      // 后续动作可能依赖该步骤，首次运行也必须停在未核实处，不能只在末尾改状态。
+      break;
+    }
     done.add(step.stepId);
   }
 

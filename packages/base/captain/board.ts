@@ -9,7 +9,6 @@ import type pg from "pg";
 import type { CeoScorecard } from "./scorecard.js";
 import type { AgentScorecard } from "./hr.js";
 import type { Charter } from "./charter.js";
-import { evaluateP2Role, loadP2RolesFromAgents, type P2Evaluation } from "../bundles/p2-ops.js";
 
 interface Scope { tenantId: string; workspaceId: string }
 
@@ -193,106 +192,4 @@ export function proposeHiring(h: OrgHealth): HiringProposal | null {
     };
   }
   return null;
-}
-
-/* ================= B-50：编制周报（P2 运营指标 / 退场条件 / 扩编触发） ================= */
-
-export interface StaffingWeeklyInput {
-  period: string;
-  health: OrgHealth;
-  proposal: HiringProposal | null;
-  p2: P2Evaluation[];
-}
-
-export interface StaffingWeekly {
-  period: string;
-  text: string;
-  needsChairman: boolean;
-}
-
-const P2_STATUS_LABEL: Record<P2Evaluation["status"], string> = {
-  keep: "在营健康",
-  watch: "观察",
-  exit_proposal: "退场提案",
-  no_data: "未取数",
-};
-
-/** 编制周报（纯函数）：覆盖缺口/积压/过载的扩编提案 + P2 条件岗指标与退场提案。 */
-export function composeStaffingWeekly(input: StaffingWeeklyInput): StaffingWeekly {
-  const p2Lines = input.p2.map((p) =>
-    `${p.label}（${p.role}）：${P2_STATUS_LABEL[p.status]}${p.reasons.length > 0 ? `——${p.reasons.join("；")}` : ""}`);
-  const needsChairman = Boolean(input.proposal) || input.p2.some((p) => p.status === "exit_proposal");
-  const lines = [
-    `【编制周报 · ${input.period}】`,
-    `一、编制与负载：在岗 ${input.health.agentCount} 人 · L2 积压 ${input.health.backlog} 件 · 覆盖缺口 ${input.health.uncovered.length} 项 · 过载 ${input.health.overworked.length} 人`,
-    input.proposal
-      ? `二、扩编提案：${input.proposal.reason}；建议岗位「${input.proposal.role}」——${input.proposal.jd.expected}`
-      : "二、扩编提案：本期无（覆盖缺口/积压/过载均未触发阈值）",
-    input.p2.length > 0
-      ? `三、P2 条件岗：${p2Lines.join(" · ")}`
-      : "三、P2 条件岗：本期无声明运营指标（未激活或未声明）",
-    needsChairman
-      ? "四、请董事长裁决：扩编提案与退场提案需 L4 逐单批示，未批示前维持现状"
-      : "四、无需裁决：编制与 P2 指标均在阈值内",
-  ];
-  return { period: input.period, text: lines.join("\n"), needsChairman };
-}
-
-/** 周标识：ISO 周（如 2026-W38），与指标事件的周键一致。 */
-export function isoWeekKey(date: Date): string {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((d.getTime() - yearStart.getTime()) / 86_400_000) + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
-}
-
-/**
- * 从库里汇总编制周报：编制健康度 + P2 条件岗指标序列。
- * 指标序列约定：事件 `payload.decision.after.metrics` 为 `{ 指标键: 数值 }`（B-33 增长日表/B-11 采集写入）。
- * 未取数的 P2 岗如实标「未取数」，不虚报达标。
- */
-export async function gatherStaffingWeekly(app: pg.Pool, scope: Scope, period = isoWeekKey(new Date())): Promise<StaffingWeekly> {
-  const health = await scanOrgHealth(app, scope);
-  const proposal = proposeHiring(health);
-  const c = await app.connect();
-  let defs: ReturnType<typeof loadP2RolesFromAgents> = [];
-  const weekValues = new Map<string, Record<string, number>>();
-  try {
-    await c.query("BEGIN");
-    await c.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
-    await c.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]);
-    const agents = await c.query<{ preset_key: string; meta: unknown }>(
-      `SELECT preset_key, meta FROM agents
-        WHERE workspace_id=$1 AND status='ready' AND meta ? 'ops_metrics'`,
-      [scope.workspaceId],
-    );
-    defs = loadP2RolesFromAgents(agents.rows);
-    const events = await c.query<{ week: string; metrics: Record<string, unknown> | null }>(
-      `SELECT to_char(date_trunc('week', created_at), 'IYYY-"W"IW') AS week,
-              payload->'decision'->'after'->'metrics' AS metrics
-         FROM biz_events
-        WHERE workspace_id=$1 AND created_at > now() - interval '12 weeks'
-          AND payload->'decision'->'after' ? 'metrics'
-        ORDER BY created_at`,
-      [scope.workspaceId],
-    );
-    for (const row of events.rows) {
-      if (!row.metrics || typeof row.metrics !== "object") continue;
-      const bucket = weekValues.get(row.week) ?? {};
-      for (const [key, value] of Object.entries(row.metrics)) {
-        const n = Number(value);
-        if (Number.isFinite(n)) bucket[key] = n;
-      }
-      weekValues.set(row.week, bucket);
-    }
-    await c.query("COMMIT");
-  } catch (err) {
-    await c.query("ROLLBACK").catch(() => undefined);
-    throw err;
-  } finally { c.release(); }
-  const weeks = [...weekValues.entries()].map(([week, values]) => ({ week, values }));
-  const p2 = defs.map((def) => evaluateP2Role(def, weeks));
-  return composeStaffingWeekly({ period, health, proposal, p2 });
 }

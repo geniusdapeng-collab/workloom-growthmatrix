@@ -2,9 +2,7 @@
  * S7 多 Agent 冲突仲裁 · 规则单测（硬边界 / 证据强度 / 归因贡献 / 不可仲裁升级）。
  */
 import { describe, expect, it } from "vitest";
-import {
-  advanceConflictStatus, arbitrate, buildArbitrationRecord, reduceConflictStatus, type Conflict,
-} from "./arbitration.js";
+import { arbitrate, type Conflict } from "./arbitration.js";
 
 const base = (over: Partial<Conflict> = {}): Conflict => ({
   type: "budget",
@@ -64,43 +62,5 @@ describe("S7 仲裁", () => {
       ],
     }));
     expect(r.verdict).toBe("escalate");
-  });
-
-  describe("B-39 对象化读模型", () => {
-    const events = (list: Array<{ action: string; verdict?: string | null }>) =>
-      list.map((e) => ({ action: e.action, after: { verdict: e.verdict ?? null } }));
-
-    it("状态机：raise → arbitrate(grant) → granted；escalate → escalated → resolve → resolved", () => {
-      expect(reduceConflictStatus(events([{ action: "conflict.raise" }])))
-        .toEqual({ status: "raised", verdict: null });
-      expect(reduceConflictStatus(events([{ action: "conflict.raise" }, { action: "conflict.arbitrate", verdict: "grant" }])))
-        .toEqual({ status: "granted", verdict: "grant" });
-      expect(reduceConflictStatus(events([
-        { action: "conflict.raise" }, { action: "conflict.arbitrate", verdict: "escalate" }, { action: "conflict.resolve" },
-      ]))).toEqual({ status: "resolved", verdict: "escalate" });
-    });
-
-    it("不信任事件声明：非法 verdict 一律保守升级；缺 raise 时的 arbitrate 不推进状态", () => {
-      expect(reduceConflictStatus(events([{ action: "conflict.raise" }, { action: "conflict.arbitrate", verdict: "granted" }])))
-        .toEqual({ status: "escalated", verdict: "escalate" });
-      // 缺 raise 的 arbitrate 不推进状态：对象不存在（读模型返回 null，而不是伪造一个已裁决对象）
-      expect(reduceConflictStatus(events([{ action: "conflict.arbitrate", verdict: "grant" }]))).toBeNull();
-      expect(reduceConflictStatus([])).toBeNull();
-    });
-
-    it("非法迁移拒绝：raised 之前不可 resolve；granted 不可再 arbitrate", () => {
-      expect(advanceConflictStatus(null, "resolve")).toMatchObject({ ok: false });
-      expect(advanceConflictStatus("granted", "arbitrate")).toMatchObject({ ok: false });
-      expect(advanceConflictStatus("escalated", "resolve")).toMatchObject({ ok: true });
-    });
-
-    it("buildArbitrationRecord：同一输入同裁决（可复算）", () => {
-      const conflict = base({ involvesMoney: true });
-      const first = buildArbitrationRecord(conflict, events([{ action: "conflict.raise" }]));
-      const second = buildArbitrationRecord(conflict, events([{ action: "conflict.raise" }]));
-      expect(first.status).toBe("raised");
-      expect(first.outcome.verdict).toBe("escalate");
-      expect(first.outcome.memo).toBe(second.outcome.memo);
-    });
   });
 });

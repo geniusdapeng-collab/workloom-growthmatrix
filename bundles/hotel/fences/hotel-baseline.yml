@@ -7,9 +7,6 @@
 #   覆盖任务三七大业务域 67 环节的围栏诉求；阈值与一店一档 approval_matrix / business.floor_price 同源。
 # v3 变更：R1–R16 原样保留；新增 R17–R20（价格倒挂防护/超售防护/差评响应SLA/布草损耗异常），
 #   对应调研流失点：倒挂失控/超售漏售(15%)/差评响应慢(20%)/布草隐性成本；数据源为 OTA 巡检与消耗事件 params 入流。
-# workloom:stats:begin（由 scripts/generate-capabilities.mjs 生成，勿手改）
-# 本包 26 条规则（基线 26 条） · 覆盖对象 19 类 / 动作 37 个
-# workloom:stats:end
 version: hotel-baseline/v4
 default_level: review
 rules:
