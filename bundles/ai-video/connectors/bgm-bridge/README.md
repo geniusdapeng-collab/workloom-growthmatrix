@@ -50,21 +50,80 @@ const toolExecutor = createBgmBridgeExecutor({
 | `bgmwrite.mix` | 写 | 分层混音出片：原声保留策略、侧链让位、卡点对齐、淡入淡出、-14 LUFS 母版 |
 | `bgmwrite.separate` | 写 | 人声分离（demucs/audio-separator → ffmpeg 中心声道近似，质量等级如实标注） |
 | `bgmwrite.best` | 写 | 择优配乐：候选池打分；**允许结论是"这片子不需要配乐"**（不产出文件） |
+| `bgmwrite.tag` | 写 | **曲库打标**：素材目录逐首实测（响度/真峰值/削波/拍速/结构/频谱/静音）→ 多维标签 + 置信度 → 写曲库索引；许可必须先声明（围栏 G-BGM8），低置信交人审（G-BGM9） |
 
 ## 随仓兜底曲库（50 首可商用纯音乐选段）
 
-`bundles/ai-video/library/bgm-library-curated/` 是**兜底曲库**：客户没有自建曲库（`WORKLOOM_BGM_LIBRARY_DIR`）、
-在线曲源也不可用时，配乐链路用它不断档。
+`bundles/ai-video/library/bgm-library-curated/` 是**兜底曲库**：客户没有自建曲库、在线曲源也不可用时，
+配乐链路用它不断档。它由产品所有者提供的可商用纯音乐包（1200 首）经**实测打标 + 精选**生成：
 
-- **来源与许可**：由产品所有者提供的可商用纯音乐包经**实测打标 + 精选**生成（打标/精选流水线在主仓
-  `WorkLoom-growth` 的 `bgmwrite.tag` / `scripts/bgm-curate-library.mjs`；本仓只做分发与检索）。
-  许可登记为 `royalty-free`，来源写在每条索引的 `licenseSource` 里——上游逐首许可未随包提供，**再分发前请复核**；
-- **形态**：每首 60s 选段（优先取能量最饱满的 drop 段中心），线性增益到 -14 LUFS；峰值贴顶的选段按**峰值保护优先**，
-  实际偏差逐首登记在 `excerpt.loudnessDeltaDb` / `excerpt.peakProtected`；AAC 112kbps 44.1kHz 立体声；
-- **检索**：`tracks.json` 是运行时契约（风格族/题材/情绪/BPM 档/能量档/配器/使用场景/结构/响度/许可/置信度），
-  工位用 `bgmread.library` 检索、`bgmwrite.best` 择优；选谁/为何/取了哪一段见 `curation-report.json`；
-- **分布**：11 个风格族各 4-5 首（electronic-pulse / lo-fi-chill / cinematic-build / tension-dark / modern-pop /
-  festive-bright / acoustic-warm / ambient-calm / documentary-bed / corporate-clean / sports-hype）。
+```bash
+# ① 素材包打标（一次跑完，索引落盘；许可必须先声明）
+bgm-cli tag --in ~/Downloads/1200可商用纯音乐 --out ~/.workloom-bgm/library \
+            --license royalty-free --license-note "所有者声明可商用" --concurrency 6
+# ② 精选 N 首进仓（质量分 + 风格族轮转 → 选段 → 线性增益到 -14 LUFS → AAC 112k）
+node scripts/bgm-curate-library.mjs --index ~/.workloom-bgm/library \
+     --out bundles/ai-video/library/bgm-library-curated --count 50 --seconds 60
+```
+
+每首 60s 选段（优先取能量最饱满的 drop 段中心）、**线性增益到 -14 LUFS**（峰值贴顶的选段按**峰值保护优先**，宁可低于 -14 也不压动态/不冒削波风险——偏低多少用 `excerpt.loudnessDeltaDb` 与 `peakProtected` 如实登记）；真峰值目标 ≤-1 dBTP，AAC 交调过冲实测最差 -0.33；索引里带
+风格族/题材/情绪/BPM 档/能量档/配器/使用场景/循环友好度与**逐条置信度**，每个数字都能回溯到
+`curation-report.json` 与工位曲库的 `tag-evidence.json`；许可按所有者声明登记为 `royalty-free`
+（来源目录写在 `licenseSource`，上游逐首许可未随包提供——再分发前请复核）。
+
+## 素材搬家与自动关联（客户单独下载文件夹也能接上）
+
+曲库索引里的路径分两种模式，对应两条完全不同的使用路径：
+
+| 模式 | 谁生成 | 适合什么场景 | 搬走素材后 |
+|---|---|---|---|
+| `absolute`（默认） | `bgm-cli tag` 就地打标（不搬文件） | 工位本机使用，素材原地不动 | 路径会失效 → 用 `rebind` 重绑 |
+| `relative` | `bgm-cli library --pack` 打进素材目录 | **随文件夹分发**：用户下载/解压到任意位置 | 跟着文件夹走，永远有效 |
+
+```bash
+# ① 打标（工位本机索引，绝对路径）
+bgm-cli tag --in ~/Downloads/1200可商用纯音乐 --out ~/.workloom-bgm/library --license royalty-free
+
+# ② 把索引"打进"素材目录，变成相对路径索引 → 整个文件夹可以压缩分发
+bgm-cli library --pack --library ~/.workloom-bgm/library --out ~/Downloads/1200可商用纯音乐
+
+# ③ 素材被挪到别处（索引还在工位）→ 重新绑定
+bgm-cli library --rebind ~/Documents/新位置 --library ~/.workloom-bgm/library --allow-overwrite
+bgm-cli library --rebind <新位置> --verify sha256 --library <索引目录> --allow-overwrite   # 严格模式（按内容哈希核验）
+
+# ④ 看本机有哪些可用曲库（自动发现：Downloads / Documents / Desktop / 外接盘，默认深度 2）
+bgm-cli library --scan
+```
+
+配套的运行时行为：
+
+- **自动发现**：`libraryRoots()` 除三个显式根（客户自建 / 随仓兜底 / 工位本地）外，会自动扫描
+  `~/Downloads`、`~/Documents`、`~/Desktop` 与 `/Volumes/*` 下带 `tracks.json` 的目录，**抽样核验**音频在位后
+  以 `local-discovered` 身份加入（显式配置永远优先，同 id 先到先得）；`WORKLOOM_BGM_SCAN_ROOTS` 可改扫描根，
+  `WORKLOOM_BGM_DISCOVER=0` 可整体关掉。实测一次扫描约 **80ms**，不会拖慢工位；
+- **失效自查**：索引里抽到的文件全不在位时，`inspectLibraryDir` 会给出 `needsRebind` 提示与"疑似被移动"的说明，
+  不装作还能用；
+- **rebind 口径**：按**文件名**匹配，同名多候选时用文件大小（默认 `--verify size`）或 `sha256`（严格模式）定夺，
+  结果如实分三类回报：`matched` / `missing` / `ambiguous`。
+
+## 目录预设（catalog）：欧美流行 / 中国古典 / 影视配乐
+
+```bash
+bgm-cli fetch --prompt "国风古筝，中国古典" --catalog chinese-classical
+bgm-cli fetch --prompt "欧美流行风格，快节奏" --catalog western-pop
+bgm-cli best  --in clip.mp4 --out scored.mp4 --prompt "..." --catalog cinematic-score
+```
+
+| catalog | 含义 | 曲源参数（Jamendo 标签 / Freesound 检索词） |
+|---|---|---|
+| `western-pop` | 欧美流行**风格**（现代流行/电子/舞曲） | pop/dance/electronic · "pop music loop upbeat" |
+| `chinese-classical` | 中国古典/国风（古筝·二胡·琵琶·笛箫） | traditional/chinese/world · "guzheng erhu pipa dizi chinese traditional" |
+| `cinematic-score` | 影视配乐（管弦/氛围/推进） | soundtrack/classical/cinematic · "cinematic orchestral score" |
+
+**版权红线（产品侧已明确记录在 `bgm-library-license` 技能里）**：当下榜单的商业热单、以及任何来源不明的录音，
+都**不能**抓取、不能随开源仓分发、不能直接用于客户商用交付 —— 要么走已授权的商业曲库（自建索引 `generic-http`
+或把已购曲目放进 `WORKLOOM_BGM_LIBRARY_DIR`），要么用同风格的 CC0/CC BY/免版税曲目。中国古典同理：
+曲谱多属公有领域，**录音**仍有表演者权。
 
 ## 选段（外部曲目只取"最合适的那一段"）
 

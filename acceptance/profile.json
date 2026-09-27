@@ -1,7 +1,7 @@
 {
   "schemaVersion": "workloom.acceptance-profile/v2",
   "repo": "workloom-ai/workloom-growthmatrix",
-  "productName": "骇客帝国",
+  "productName": "Growthmatrix·骇客帝国",
   "lane": "industry",
   "primaryBundle": "geo-growth",
   "workspaceId": null,
@@ -99,6 +99,7 @@
       "suite.",
       "suite-",
       "apr-suite-",
+      "apr-e-",
       "T-suite"
     ],
     "windows": [
@@ -127,12 +128,12 @@
     "allowWrites": true,
     "supportDir": null,
     "target": {
-      "apiUrl": "http://127.0.0.1:9207",
-      "pcUrl": "http://127.0.0.1:5593",
-      "bMobileUrl": "http://127.0.0.1:3421",
-      "cMobileUrl": "http://127.0.0.1:3422"
+      "apiUrl": "http://127.0.0.1:9227",
+      "pcUrl": "http://127.0.0.1:5613",
+      "bMobileUrl": null,
+      "cMobileUrl": null
     },
-    "notes": "本仓桌面客户端按 product.manifest.json#desktop.portOffset=420 偏移端口：server 8787+420=9207、web 5173+420=5593、B 端移动 3001+420=3421、C 端 3002+420=3422、PG 5432+420=5852；四端同属一个独立运行时实例（脚本：本会话 work/desktop-runtime-serve.sh + work/mobile-serve.sh），生产实测用 --env client-runtime。"
+    "notes": "本仓桌面客户端按 product.manifest.json#desktop.portOffset=440 偏移端口：server 8787+440=9227、web 5173+440=5613、PG 5432+440=5872；生产实测用 --env client-runtime。"
   },
   "live": {
     "enabled": true,
@@ -287,13 +288,13 @@
         "state_asserts": [
           {
             "http": {
-              "url": "http://127.0.0.1:9207/health",
+              "url": "http://127.0.0.1:9227/health",
               "status": 200
             }
           }
         ]
       }
     ],
-    "notes": "P 域生产实测（本仓口径）：LLM 走 dsh harness（含围栏瀑布 + 哈希链账本）；生图/生视频走火山方舟（seedream-5.0-pro / seedance-2.5）；产品派单走本机客户端 9207。配额：图 ≤8、视频 ≤3 段且各 10–15s、总 ≤45s、LLM ≤40 次/¥120。"
+    "notes": "P 域生产实测（本仓口径）：LLM 走 dsh harness（含围栏瀑布 + 哈希链账本）；生图/生视频走火山方舟（seedream-5.0-pro / seedance-2.5）；产品派单走本机客户端 9227。配额：图 ≤8、视频 ≤3 段且各 10–15s、总 ≤45s、LLM ≤40 次/¥120。"
   }
 }

@@ -14,7 +14,6 @@ import { CommandCard } from "../../components/CommandCard";
 import { actionText, actorText } from "../../lib/display";
 import { SimBanner } from "../../components/SimBanner";
 import { SkillDistBanner } from "../../components/SkillDistBanner";
-import { ActionCardBanner } from "../../components/ActionCardBanner";
 import { FloorView, type FloorPayload, type FloorAgent } from "./Floor";
 import { Stage3D } from "../../components/Stage3D";
 import { Floor3D } from "../../components/Floor3D";
@@ -29,13 +28,13 @@ import { QuestlineOverlay } from "../../components/mate-guide/QuestlineOverlay";
 import { useQuestline } from "../../onboarding/useQuestline";
 import { EMPTY_FACTS, factsFromRecentActions, type QuestFacts } from "../../onboarding/questline";
 import { questlineForBundle } from "../../onboarding/questline.config";
-import { questlineConfigFromPack, type ServerQuestlinePack } from "../../onboarding/questline-from-server";
 import { QuestlineContentProvider } from "../../onboarding/QuestlineContent";
 import { useTheaterDiff } from "../../lib/theaterDiff";
 import { displayNameOf, hydrateAliases, reportTitleOf, selectReporters } from "../../lib/naming";
 import { useNavigate } from "react-router";
 import { useNavigationAccess } from "../../shell/NavigationAccess";
 import { clientChineseText } from "@workloom/ui";
+import { PRODUCT_NAME } from "../../lib/product";
 
 /* ================= 类型 ================= */
 interface Satellite { id: string; presetKey: string; name: string; alias?: string | null; grade: string }
@@ -185,7 +184,7 @@ export default function P0() {
   const { bundle, entries, canAction, subject } = useNavigationAccess();
   const navigate = useNavigate();
   const canDispatch = canAction("task.dispatch");
-  const [wsName, setWsName] = useState("WorkLoom");
+  const [wsName, setWsName] = useState(PRODUCT_NAME);
   const [showWelcome, setShowWelcome] = useState(false);
   const [welcome, setWelcome] = useState<WelcomeState | null>(null);
   const bundleId = bundle?.bundleId ?? null;
@@ -265,49 +264,11 @@ export default function P0() {
   const questlineReady = Boolean(!showWelcome && welcome && welcome.status === "completed");
   // 内容包随当前活动 Bundle 切换（酒店/GEO/短视频各一套）；解析不到就不显示引导，
   // 宁可不引导，也不能把别的行业的岗位与人设塞给客户。
-  /** B-63：在线时内容以 Bundle 为准（服务端下发）；服务端不可达则回落本地包（离线兜底） */
-  const [serverPack, setServerPack] = useState<ServerQuestlinePack | null>(null);
-  useEffect(() => {
-    let stopped = false;
-    void (async () => {
-      try {
-        await ensureDemoLogin();
-        const r = await trpc.onboarding.questline.query() as { pack?: ServerQuestlinePack | null };
-        if (!stopped) setServerPack(r?.pack ?? null);
-      } catch {
-        /* 离线/未登录：保留本地兜底内容包 */
-      }
-    })();
-    return () => { stopped = true; };
-  }, [bundleId]);
-  const questlineContent = useMemo(
-    () => questlineConfigFromPack(serverPack) ?? questlineForBundle(bundleId),
-    [serverPack, bundleId],
-  );
-  /**
-   * B-63 跨端续播：进度落服务端（账号维度）。离线或未登录时 load 返回 null，
-   * 本地 localStorage 照常游玩；一旦联网，服务端更靠前的进度会被采用。
-   */
-  const questlineSync = useMemo(() => ({
-    load: async () => {
-      try {
-        await ensureDemoLogin();
-        const r = await trpc.onboarding.questline.query() as { progress?: import("../../onboarding/questline").ServerQuestProgress };
-        return r?.progress ?? null;
-      } catch {
-        return null;
-      }
-    },
-    advance: async (input: { stage: import("../../onboarding/questline").QuestStageId; outcome: "done" | "skip"; litCards: string[]; lastThreadId: string | null; achievements: string[] }) => {
-      await ensureDemoLogin();
-      await trpc.onboarding.questlineAdvance.mutate(input);
-    },
-  }), []);
+  const questlineContent = useMemo(() => questlineForBundle(bundleId), [bundleId]);
   const questline = useQuestline({
     ready: questlineReady && questlineContent !== null,
     facts: questlineFacts,
     ...(questlineContent ? { content: questlineContent } : {}),
-    sync: questlineSync,
   });
   // M1：等级/XP 以团队页同源（roster 30 天事件投影）为准，避免同一屏出现两个"董事长等级"
   useEffect(() => {
@@ -482,8 +443,6 @@ export default function P0() {
       <SimBanner />
       {/* 技能更新通栏（技能保鲜环：夜班自动更新提示 / L2 待审批引导） */}
       <SkillDistBanner />
-      {/* B-64 首登行动卡通栏：今日待决关卡 / 首日上岗续播 / 待验收交付（事实来自服务端，无待办不渲染） */}
-      <ActionCardBanner />
 
       {/* 舞台 */}
       <main className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center px-4">

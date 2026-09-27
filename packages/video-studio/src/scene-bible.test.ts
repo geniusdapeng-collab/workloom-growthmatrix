@@ -154,7 +154,12 @@ describe("圣经展开", () => {
     };
     const expanded = expandShotWithBible(card, bible);
     expect(expanded.scene).toContain("上海");
-    expect(expanded.scene).toContain("胡桃木");
+    /**
+     * 2026-09-27 口径修正：材质**只进 `props`**（`scene` 只留空间实指 + 本镜自己的场景描述）。
+     * 起因：真机 v2 首轮 prompt 评审打回"道具字段与场景轻度重复"，要求场景只保留可见空间与光线要点。
+     */
+    expect(expanded.scene).not.toContain("胡桃木");
+    expect(expanded.props).toContain("胡桃木");
     expect(expanded.lighting).toContain("5600K");
     expect(expanded.props).toContain("咖啡杯痕");
     expect(expanded.sceneDescription).toContain("使用痕迹");

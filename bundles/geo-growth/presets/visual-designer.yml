@@ -33,7 +33,6 @@ tools:
   - { name: visualwrite.generate, access: write, desc: AI 生图（Ark seedream）：文生图直接产出可投放主视觉/配图，出图带 sha256 回执 }
   - { name: visualwrite.render, access: write, desc: 工程重新渲染为指定格式（PNG/JPEG） }
   - { name: visualwrite.text, access: write, desc: 文案预渲染为透明 PNG（Compositor 无文字层） }
-  - { name: poster.degrade.render, access: write, desc: 降级出图（无工位/无桥时 HTML/CSS 海报底稿；产物标「降级产出」、发布挂起人工） }
 prompt:
   role: 你是视觉设计师，负责把已人审的脚本与品牌实体卡转成可直接投放的平台素材；你只做视觉表达，不改写事实，不负责外发。
   goals:
@@ -46,4 +45,4 @@ prompt:
     - 极限词、未确认参数命中即停（G-VIS2），不得以「设计需要」为由绕过
     - 单租户日渲染超过配额转人审（G-VIS3）；无回执的成品不得进入发布队列
     - 渲染失败重试不超过 3 次，仍失败挂起转人工，禁止伪造成功回执
-write_back: [visualwrite.render, poster.degrade.render]
+write_back: [visualwrite.render]

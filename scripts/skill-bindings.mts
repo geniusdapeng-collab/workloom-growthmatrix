@@ -53,26 +53,16 @@ export const COMPOSED_SKILL_BINDINGS: Record<"ai-video" | "geo-growth", Record<s
     "render-ops": ["G8"],
     "shot-prompt-craft": ["G6"],
     // 后期 BGM 配乐师五件套（2026-09-22）：安装即绑定成片配乐门 G-BGM0..G-BGM5，卸载即撤销。
-    // 调色师四件套（color-*）：SKILL.md 显式声明 G-COL0/G-COL4（正文另提 G-COL1..3），
-    // RDAS matrix SA3_fences 要求「显式声明 ⊆ 绑定」；统一按成片调色门 G-COL0..4 登记。
-    "color-grade": ["G-COL0", "G-COL1", "G-COL2", "G-COL3", "G-COL4"],
-    "color-look-design": ["G-COL0", "G-COL1", "G-COL2", "G-COL3", "G-COL4"],
-    "color-shot-matching": ["G-COL0", "G-COL1", "G-COL2", "G-COL3", "G-COL4"],
-    /**
-     * 交付包与返修套件（2026-09-24 视频「交付包机制」批次 d216a50/0dc431b/f87d231）：
-     * `delivery-package-ops` SKILL.md 显式声明 G-DLV0..G-DLV7、`delivery-revision-ops` 声明 G-DLV4..G-DLV7，
-     * 而绑定表缺这两条 → 注册表落空绑定，RDAS matrix SA3_fences 判「声明未进绑定」（真机实测）。
-     * 按成片交付门口径登记（同调色/BGM/字幕/配音先例）。
-     */
-    "delivery-package-ops": ["G-DLV0", "G-DLV1", "G-DLV2", "G-DLV3", "G-DLV4", "G-DLV5", "G-DLV6", "G-DLV7"],
-    "delivery-revision-ops": ["G-DLV4", "G-DLV5", "G-DLV6", "G-DLV7"],
-    "color-delivery-spec": ["G-COL0", "G-COL1", "G-COL2", "G-COL3", "G-COL4"],
+    // 注：同批的调色师四件套（color-*）未登记在本表（历史遗留，见 docs/bgm-composer-role-design.md §13），
+    // 其围栏目前只经 colorist preset 的 fence_bindings 生效；补登记会把色桥技能并集一次性放宽，故留作独立任务卡。
     "bgm-score-design": ["G-BGM0", "G-BGM1", "G-BGM3", "G-BGM5"],
-    "bgm-audio-layering": ["G-BGM0", "G-BGM2", "G-BGM3", "G-BGM4", "G-BGM5"],
-    "bgm-vocal-separation": ["G-BGM0", "G-BGM3", "G-BGM5"],
-    "bgm-library-license": ["G-BGM0", "G-BGM1", "G-BGM5"],
+    "bgm-audio-layering": ["G-BGM0", "G-BGM2", "G-BGM3", "G-BGM4"],
+    "bgm-vocal-separation": ["G-BGM0", "G-BGM3"],
+    "bgm-library-license": ["G-BGM1", "G-BGM5"],
     "bgm-delivery-spec": ["G-BGM0", "G-BGM1", "G-BGM2", "G-BGM3", "G-BGM4", "G-BGM5"],
     // 后期字幕师五件套（2026-09-23）：安装即绑定标题字幕门 G-SUB0..G-SUB5，卸载即撤销。
+    // 注：字幕与围栏的关系不是"一对一"——选型看到品牌视觉锤与许可，烧录看到覆盖原片与安全区，
+    // 交付规范看全量，所以按技能职责分配绑定，不做并集兜底。
     "font-selection": ["G-SUB0", "G-SUB1", "G-SUB3", "G-SUB5"],
     "subtitle-layout-design": ["G-SUB0", "G-SUB3", "G-SUB6"],
     "caption-burnin-ops": ["G-SUB0", "G-SUB2", "G-SUB3", "G-SUB6"],
@@ -93,8 +83,6 @@ export const COMPOSED_SKILL_BINDINGS: Record<"ai-video" | "geo-growth", Record<s
     "experiment-design": ["G-GROW3", "G-GROW4"],
     "budget-portfolio": ["G-GROW1"],
     "lead-scoring": ["G-GROW6"],
-    // 增长指标技能：数据边界 G-GROW6（脱敏/不出域），B-11 声明。
-    "growth-metrics": ["G-GROW6"],
     "cro-playbook": ["G-GROW2"],
     "live-commerce": ["G-GROW2", "G-GROW4"],
     "growth-review": [],

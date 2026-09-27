@@ -5,7 +5,6 @@
  * 手势回流校准（F4.5）复用 B6 decide 的记忆校准链路；峰谷联动（F4.6）复用 B7 计量口径。
  */
 export * from "./candidates.js";
-export * from "./candidates-extension.js";
 export * from "./scheduler.js";
 export * from "./package.js";
 export * from "./triggers.js";

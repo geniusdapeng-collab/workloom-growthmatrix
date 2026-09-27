@@ -1,6 +1,7 @@
-# 三端客户端基座 · 本仓产品分叉声明（growth 专用）
+# 三端客户端基座 · Growthmatrix·骇客帝国产品分叉声明
 
-> 适用：`workloom-growthmatrix`（骇客帝国 · 实验副本）｜ 首次落地：2026-09-19 ｜ 关联任务：`[T-2026-0919-0006]`
+> 当前适用：`workloom-ai/workloom-growthmatrix`。机制来源：Growth，首次落地 2026-09-19，原任务 `[T-2026-0919-0006]`。
+> 本仓在覆盖后保留该消费门禁与自有路径声明，并实行双向隔离；以下历史背景与原任务编号保留来源事实。
 
 ## 1. 背景：为什么本仓会"门禁失败"
 
@@ -45,11 +46,11 @@
 回归测试：`scripts/verify-client-foundation-extensions.test.ts`（`pnpm test:scripts` 内执行）——
 没有声明时仍报错；有声明时 0 错误；删掉必备入口仍报错；非法声明路径报错。
 
-## 3. 当前状态与残余风险（诚实边界）
+## 3. 来源历史状态与当前隔离边界
 
-- **当前**：`node scripts/verify-client-foundation-consumer.mjs --repo .` 通过
+- **来源仓历史记录**：`node scripts/verify-client-foundation-consumer.mjs --repo .` 通过
   （原先 38 项：20 项受管指纹漂移 + 18 项非白名单；现由 12 条声明路径接管）。
-- **base-sync heartbeat（拉取式同步）**：其验证步骤执行的是**本仓这份门禁**，因此同样通过。
+- **本仓 base-sync heartbeat**：job 已禁用。Growthmatrix 不接收拉取式同步，不能因消费门禁通过而重新启用同步。
 - **基座驱动的一键 UI 升级波次（`sync/ui-upgrade-pr.mjs`）仍会 fail-close**：
   该流程在临时 clone 中会用基座自带（未改造）的门禁与引擎复算，且会覆盖本仓这一份脚本。
   这是**有意的边界**——本仓不改基座代码。届时的两条路径：
@@ -65,4 +66,4 @@
 3. 跑 `pnpm test:scripts` 与 `node scripts/verify-client-foundation-consumer.mjs --repo .`。
 
 **不要**把这些路径写进 `.workloom-client-foundation.json`（那是基座下发的受管 state，
-下一次升级会覆盖），也不要放宽任何"必备入口 / UI 同版"约束。
+本仓将其作为来源冻结记录保留），也不要放宽任何"必备入口 / UI 同版"约束。

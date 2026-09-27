@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WorkLoom 演示导航 · 三端全貌</title>
+<title>Growthmatrix·骇客帝国 演示导航 · 三端全貌</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -12,7 +12,7 @@
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: #4a2b33;
   }
   .wrap { max-width: 960px; margin: 0 auto; }
-  h1 { font-size: 26px; color: #d4002a; }
+  h1 { overflow-wrap: anywhere; font-size: 26px; color: #d4002a; }
   .sub { margin-top: 6px; font-size: 13px; color: #8a4b5a; }
   .runtime {
     margin: 22px 0; padding: 18px; border-radius: 16px; background: #fff;
@@ -42,31 +42,31 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>WorkLoom 演示导航</h1>
-  <div class="sub">三端全貌 · 高保真演示页 · 全部由 <code>pnpm preview:all</code> 一键拉起（Mock 数据模式）</div>
+  <h1>Growthmatrix·骇客帝国 演示导航</h1>
+  <div class="sub">三端入口与历史静态原型 · 原型中的数字、回执和路由仅作示例；运行时由 <code>pnpm preview:all</code> 一键拉起（Mock 数据模式）</div>
 
   <div class="runtime">
     <h2>运行时三端（真实系统 + 模拟数据）</h2>
     <div class="ends">
-      <a class="end" href="http://localhost:3000" target="_blank">
+      <a class="end" href="http://localhost:5613" target="_blank">
         <b>PC 端 · B 端工作台</b>
         <small>经营主页 / 任务中心 / 规则中心 / 装配中心</small>
-        <span class="url">http://localhost:3000</span>
+        <span class="url">http://localhost:5613</span>
       </a>
-      <a class="end" href="http://localhost:3001" target="_blank">
+      <a class="end" href="http://localhost:5615" target="_blank">
         <b>移动端 · B 端（高保真 + 手机壳）</b>
-        <small>本页即 3001；下方案例页均可套手机壳预览</small>
-        <span class="url">http://localhost:3001</span>
+        <small>B 端移动工作台；下方历史案例可套手机壳预览</small>
+        <span class="url">http://localhost:5615</span>
       </a>
-      <a class="end" href="http://localhost:3002" target="_blank">
+      <a class="end" href="http://localhost:5616" target="_blank">
         <b>移动端 · C 端（AI 服务前台 H5）</b>
         <small>小程序入口的 H5 模拟版：对话 / 服务 / 工单 / 我的</small>
-        <span class="url">http://localhost:3002</span>
+        <span class="url">http://localhost:5616</span>
       </a>
     </div>
   </div>
 
-  <h3>📱 高保真演示页（自动发现本目录全部页面）</h3>
+  <h3>📱 历史静态原型（示例数据）（自动发现本目录全部页面）</h3>
   <div id="list" class="grid"><div class="empty">加载中…</div></div>
 </div>
 <script>

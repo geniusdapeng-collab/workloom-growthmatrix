@@ -10,7 +10,6 @@ import {
   checkBudget,
   evalBudget,
   recordCost,
-  videoCostBreakdown,
 } from "./index.js";
 
 /* ================= 内存 mock DB ================= */
@@ -243,35 +242,5 @@ describe("checkBudget 阈值判定", () => {
     const v2 = await checkBudget(app, gateway, scope, { projectId: "VID-404" }, { budget: 100 });
     expect(v2.level).toBe("ok");
     expect(db.events.filter((e) => e.payload.decision.action === "budget.threshold_exceeded").length).toBe(1);
-  });
-});
-
-/* ================= B-53：视频全成本账本 ================= */
-
-describe("B-53 视频全成本账本（单条视频可复算）", () => {
-  it("按成片归集全成本类型：渲染/达人/授权/人工/工具/冲销，输出每分钟成本", () => {
-    const rows = [
-      { id: "c1", costKind: "render" as const, amount: 120, videoId: "va-1", durationSeconds: 30 },
-      { id: "c2", costKind: "creator_fee" as const, amount: 800, videoId: "va-1", durationSeconds: 30 },
-      { id: "c3", costKind: "license" as const, amount: 60, videoId: "va-1", durationSeconds: 30 },
-      { id: "c4", costKind: "labor" as const, amount: 220, videoId: "va-1", durationSeconds: 30 },
-      { id: "c5", costKind: "tools" as const, amount: 40, videoId: "va-1", durationSeconds: 30 },
-      { id: "c6", costKind: "render" as const, amount: -20, videoId: "va-1", durationSeconds: 30, meta: { note: "失败重跑冲销" } },
-      { id: "c7", costKind: "render" as const, amount: 300, episode: "EP-2", durationSeconds: 45 },
-    ] as Array<Parameters<typeof videoCostBreakdown>[0][number] & { meta?: unknown }>;
-    const breakdown = videoCostBreakdown(rows);
-    const va1 = breakdown.find((b) => b.videoId === "va-1");
-    const ep2 = breakdown.find((b) => b.videoId === "EP-2");
-    expect(va1).toMatchObject({ videoId: "va-1", total: 1220, durationSeconds: 30, costPerMinute: 2440, entries: 6 });
-    expect(va1!.byKind.render).toBe(100);
-    expect(va1!.byKind.creator_fee).toBe(800);
-    expect(ep2).toMatchObject({ videoId: "EP-2", total: 300, costPerMinute: 400 });
-  });
-
-  it("确定性复算：同输入同输出；缺时长不臆造每分钟成本；非法金额/类型拒绝", () => {
-    const rows = [{ id: "c1", costKind: "render" as const, amount: 100, projectId: "P-1" }];
-    expect(videoCostBreakdown(rows)).toEqual(videoCostBreakdown(rows));
-    expect(videoCostBreakdown(rows)[0]).toMatchObject({ videoId: "P-1", total: 100, durationSeconds: null, costPerMinute: null });
-    expect(() => videoCostBreakdown([{ id: "x", costKind: "render", amount: Number.NaN }])).toThrow(CostLedgerError);
   });
 });

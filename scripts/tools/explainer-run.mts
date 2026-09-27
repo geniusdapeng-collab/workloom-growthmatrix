@@ -11,7 +11,7 @@
  *     --task-id 验收-陈卓 \
  *     --profile chen-zhuo-film \
  *     --host-portraits bundles/ai-video/library/characters/model-01-chen-zhuo/portraits/v3 \
- *     --brand-product 获客增长系统 \
+ *     --brand-product Growthmatrix·骇客帝国 \
  *     [--shotbook var/shotbook.json] [--llm none|deepseek] [--assets assets.json]
  *     [--render-scope full|changed:s07] [--stop-after-render] [--dry-run]
  *
@@ -164,7 +164,7 @@ async function main(): Promise<void> {
   const taskId = opt("task-id", `run-${Date.now().toString(36)}`)!;
   const profile = opt("profile", process.env.WORKLOOM_VOICE_PROFILE ?? "zh-myvoice")!;
   const aspect = (opt("aspect", "9:16") as "9:16" | "16:9");
-  const brandProduct = opt("brand-product", "WorkLoom 获客增长系统")!;
+  const brandProduct = opt("brand-product", "Growthmatrix·骇客帝国")!;
   const script = ExplainerScriptSchema.parse({ sentences: readScript(resolve(scriptPath)) });
   log(`[cli] 口播稿 ${script.sentences.length} 句 / ${script.sentences.map((s) => s.text.replace(/\s/g, "").length).reduce((a, b) => a + b, 0)} 字`);
 

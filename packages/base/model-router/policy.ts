@@ -134,8 +134,7 @@ export function resolveScene(policy: ModelPolicy, scene: string): ScenePolicy {
 /** 场景最终档位 = 套餐点名覆盖 → 场景默认档经套餐位移；noDowngrade 场景免疫下压 */
 export function resolveTier(policy: ModelPolicy, scene: string, plan: PlanId): Tier3 {
   const sp = resolveScene(policy, scene);
-  // 兼容未声明 plans 的策略（测试/早期包）：缺省 shift=0，避免直接崩溃
-  const ps = policy.plans[plan] ?? policy.plans.standard ?? { defaultShift: 0 as const };
+  const ps = policy.plans[plan] ?? policy.plans.standard;
   const override = ps.tierOverrides?.[scene];
   if (override) return sp.noDowngrade ? (TIER3_ORDER.indexOf(override) < TIER3_ORDER.indexOf(sp.tier) ? sp.tier : override) : override;
   const shifted = shiftTier(sp.tier, ps.defaultShift);

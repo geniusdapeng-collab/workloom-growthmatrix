@@ -2,7 +2,7 @@
 /**
  * knowhow-depth · 行业 knowhow 深度校验器（《GROWTH 深度产品方案》§5.1/§5.3 的门禁化）
  *
- * 对获客用增自研域的 16 个技能逐项校验"五维 + 评测覆盖"：
+ * 对获客用增自研域的 15 个技能逐项校验"五维 + 评测覆盖"：
  *   ① 决策原则 ≥3 条（含阈值/失败关闭语义）；
  *   ② 打法库 ≥3 条（≥1 主线 + ≥2 分支）；
  *   ③ SOP ≥3 步（每步含"回执"与"失败"路径）；
@@ -20,14 +20,13 @@ const ROOT = join(import.meta.dirname, "..", "..");
 const BUNDLE = join(ROOT, "bundles", "geo-growth");
 const JSON_OUT = process.argv.includes("--json");
 
-/** 获客用增自研域 16 技能（双域 6 + 获客用增 10；视觉栈 14 技能属另一册，另行审计） */
+/** 获客用增自研域 15 技能（双域 6 + 获客用增 9；视觉栈 14 技能属另一册，另行审计） */
 const SKILLS = [
   "geo-query-craft", "ai-answer-rewrite", "visibility-monitor",
   "citation-reverse", "entity-consistency-check", "dual-entry-inquiry",
   "budget-portfolio", "experiment-design", "growth-review",
   "incrementality-measurement", "lead-scoring", "lifecycle-growth",
   "live-commerce", "growth-partnership", "cro-playbook",
-  "growth-metrics",
 ];
 
 interface SkillScore {
@@ -101,6 +100,6 @@ else {
       + (s.issues.length ? `  ← ${s.issues.join("；")}` : ""),
     );
   }
-  console.log(failed.length ? `\n✗ ${failed.length} 个技能未达标` : `\n✓ ${SKILLS.length} 技能五维齐全且评测覆盖达标`);
+  console.log(failed.length ? `\n✗ ${failed.length} 个技能未达标` : "\n✓ 15 技能五维齐全且评测覆盖达标");
 }
 process.exit(failed.length === 0 ? 0 : 1);

@@ -14,7 +14,7 @@ import type { RowOutcome, Scene, ShadowReport, ShadowRow } from "./types.js";
 export interface ShadowOptions {
   rows: readonly ShadowRow[];
   scene: Scene;
-  client: Pick<JevClient, "evaluate" | "modelId" | "host">;
+  client: Pick<JevClient, "evaluate" | "modelId" | "providerId" | "host">;
   concurrency?: number;
   maxCostUsd?: number;
   captureRaw?: boolean;
@@ -54,6 +54,7 @@ export async function runShadow(options: ShadowOptions): Promise<ShadowRunResult
   const startedMs = Date.now();
   const outcomes: RowOutcome[] = new Array<RowOutcome>(rows.length);
   const raws: Record<string, unknown> = {};
+  const responseModels = new Set<string>();
   let cursor = 0;
   let inputTokens = 0;
   let done = 0;
@@ -69,6 +70,7 @@ export async function runShadow(options: ShadowOptions): Promise<ShadowRunResult
     try {
       const result = await client.evaluate(request);
       inputTokens += result.inputTokens;
+      if (result.model) responseModels.add(result.model);
       if (options.captureRaw) raws[row.id] = result.raw;
       const decision = scene.decide(result);
       const gate = gateDecision(scene.key, decision);
@@ -120,7 +122,9 @@ export async function runShadow(options: ShadowOptions): Promise<ShadowRunResult
   const report = buildReport({
     scene: scene.key,
     sceneVersion: scene.version,
+    provider: client.providerId,
     model: client.modelId,
+    responseModels: [...responseModels].sort(),
     baseUrlHost: client.host,
     startedAt,
     durationMs: Date.now() - startedMs,

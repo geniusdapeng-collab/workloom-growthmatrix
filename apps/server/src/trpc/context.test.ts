@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import { AGENT_CHANNEL_OFF } from "./agent-channel.js";
 import { signPartnerToken } from "@workloom/base/accounts";
 import type { Identity } from "@workloom/base/tenancy";
 
@@ -64,7 +63,6 @@ describe("会话域隔离", () => {
       identity,
       partnerIdentity: null,
       headers: new Headers(),
-      agentChannel: AGENT_CHANNEL_OFF,
     };
     const testRouter = router({
       mutateGuardrail: actionProcedure("guardrail.manage").mutation(() => "不应到达"),
@@ -91,7 +89,7 @@ describe("会话域隔离", () => {
       plan: "community",
     };
     currentMemberAuthorityMock.mockResolvedValue({ identity, permissions: {} });
-    const context = { session: identity, identity, partnerIdentity: null, headers: new Headers(), agentChannel: AGENT_CHANNEL_OFF };
+    const context = { session: identity, identity, partnerIdentity: null, headers: new Headers() };
     const testRouter = router({
       manageNight: capabilityProcedure("nightShift").query(() => "不应到达"),
     });
@@ -125,7 +123,6 @@ describe("会话域隔离", () => {
       identity,
       partnerIdentity: null,
       headers: new Headers(),
-      agentChannel: AGENT_CHANNEL_OFF,
     };
     const testRouter = router({
       mutate: actionProcedure(action).mutation(() => "不应到达"),
@@ -149,7 +146,7 @@ describe("会话域隔离", () => {
       navigationPermissions: ["today.read"],
       actionPermissions: ["workspace.write"],
     });
-    const context = { session: identity, identity, partnerIdentity: null, headers: new Headers(), agentChannel: AGENT_CHANNEL_OFF };
+    const context = { session: identity, identity, partnerIdentity: null, headers: new Headers() };
     const testRouter = router({
       readDevelopment: navigationPermissionProcedure("ai-pm.development.read").query(() => "不应到达"),
       writeDevelopment: navigationPermissionWriteProcedure("ai-pm.development.read").mutation(() => "不应到达"),
@@ -175,7 +172,7 @@ describe("会话域隔离", () => {
       navigationPermissions: ["ai-pm.development.read"],
       actionPermissions: ["workspace.write"],
     });
-    const context = { session: identity, identity, partnerIdentity: null, headers: new Headers(), agentChannel: AGENT_CHANNEL_OFF };
+    const context = { session: identity, identity, partnerIdentity: null, headers: new Headers() };
     const testRouter = router({
       readDevelopment: navigationPermissionProcedure("ai-pm.development.read").query(() => "已授权"),
     });

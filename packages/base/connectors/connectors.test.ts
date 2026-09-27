@@ -3,10 +3,7 @@
  * 夹具即契约：与 docs/connectors-mock-exit.md 的"mock 退出标准"一一对应。
  */
 import { describe, expect, it } from "vitest";
-import {
-  connectorReadiness, fetchCampaignMetrics, fetchDouyinLocalRedemptions, fetchOtaPrices, fetchOtaReviews,
-  fetchPmsOrders, fetchPostComments, fetchPostMetrics, fetchWecomLeads,
-} from "./index.js";
+import { connectorReadiness, fetchCampaignMetrics, fetchPostComments, fetchPostMetrics } from "./index.js";
 import { ConnectorRequestError, ConnectorUnconfiguredError } from "./types.js";
 
 const ENV_OK = {
@@ -15,17 +12,6 @@ const ENV_OK = {
   DOUYIN_OPEN_URL: "https://open.douyin.example.test",
   DOUYIN_ACCESS_TOKEN: "tok",
   DOUYIN_OPEN_ID: "open-1",
-  PMS_URL: "https://pms.example.test", PMS_TOKEN: "tok",
-  OTA_MONITOR_URL: "https://ota.example.test", OTA_MONITOR_TOKEN: "tok",
-  WECOM_URL: "https://wecom.example.test", WECOM_TOKEN: "tok",
-  DOUYIN_LOCAL_URL: "https://douyin-local.example.test", DOUYIN_LOCAL_TOKEN: "tok",
-} as unknown as NodeJS.ProcessEnv;
-
-const ENV_B32 = {
-  PMS_URL: "https://pms.example.test", PMS_TOKEN: "tok",
-  OTA_MONITOR_URL: "https://ota.example.test", OTA_MONITOR_TOKEN: "tok",
-  WECOM_URL: "https://wecom.example.test", WECOM_TOKEN: "tok",
-  DOUYIN_LOCAL_URL: "https://douyin-local.example.test", DOUYIN_LOCAL_TOKEN: "tok",
 } as unknown as NodeJS.ProcessEnv;
 
 describe("连接器就绪层", () => {
@@ -74,36 +60,5 @@ describe("连接器就绪层", () => {
     }) as unknown as typeof fetch;
     await expect(fetchCampaignMetrics({ from: "a", to: "b" }, { env: ENV_OK, fetchImpl })).rejects.toBeInstanceOf(ConnectorRequestError);
     expect(calls).toBe(1);
-  });
-
-  it("B-32 四类连接器纳入就绪报告：未配置逐项列出缺失键", () => {
-    const health = connectorReadiness({ env: {} as NodeJS.ProcessEnv });
-    const ids = health.map((h) => h.id);
-    expect(ids).toEqual(expect.arrayContaining(["pms", "ota-monitor", "wecom", "douyin-local"]));
-    expect(health.find((h) => h.id === "pms")!.detail).toContain("PMS_URL");
-    expect(connectorReadiness({ env: ENV_B32 }).filter((h) => ["pms", "ota-monitor", "wecom", "douyin-local"].includes(h.id)).every((h) => h.state === "ready")).toBe(true);
-  });
-
-  it("B-32 取数：PMS 订单 / OTA 价格与评论 / 企微客资 / 抖音核销 解析正确", async () => {
-    const fetchImpl = (async (url: string) => {
-      const u = String(url);
-      if (u.includes("/pms/orders")) return new Response(JSON.stringify({ orders: [{ orderId: "o1", roomTypeId: "rt1", checkIn: "2026-09-20", checkOut: "2026-09-21", status: "checked_in", amountFen: 88000 }] }));
-      if (u.includes("/ota/prices")) return new Response(JSON.stringify({ prices: [{ platform: "ctrip", roomTypeId: "rt1", date: "2026-09-22", priceFen: 52000 }] }));
-      if (u.includes("/ota/reviews")) return new Response(JSON.stringify({ reviews: [{ platform: "meituan", reviewId: "rv1", rating: 2, text: "隔音差", createdAt: "2026-09-21" }] }));
-      if (u.includes("/wecom/leads")) return new Response(JSON.stringify({ leads: [{ leadId: "l1", contactMasked: "138****8000", intent: "预约", createdAt: "2026-09-22" }] }));
-      return new Response(JSON.stringify({ redemptions: [{ redemptionId: "r1", couponId: "cpn1", verifiedAt: "2026-09-22T10:00:00+08:00", amountFen: 29900 }] }));
-    }) as unknown as typeof fetch;
-    const range = { from: "2026-09-01", to: "2026-09-30" };
-    expect((await fetchPmsOrders(range, { env: ENV_B32, fetchImpl })).orders[0]).toMatchObject({ orderId: "o1", amountFen: 88000 });
-    expect((await fetchOtaPrices(range, { env: ENV_B32, fetchImpl })).prices[0]).toMatchObject({ platform: "ctrip", priceFen: 52000 });
-    expect((await fetchOtaReviews(range, { env: ENV_B32, fetchImpl })).reviews[0]).toMatchObject({ reviewId: "rv1", rating: 2 });
-    expect((await fetchWecomLeads(range, { env: ENV_B32, fetchImpl })).leads[0]).toMatchObject({ leadId: "l1", contactMasked: "138****8000" });
-    expect((await fetchDouyinLocalRedemptions(range, { env: ENV_B32, fetchImpl })).redemptions[0]).toMatchObject({ redemptionId: "r1", amountFen: 29900 });
-  });
-
-  it("B-32 未配置时 fail-closed（四类连接器一致）", async () => {
-    const range = { from: "a", to: "b" };
-    await expect(fetchPmsOrders(range, { env: {} as NodeJS.ProcessEnv })).rejects.toBeInstanceOf(ConnectorUnconfiguredError);
-    await expect(fetchWecomLeads(range, { env: {} as NodeJS.ProcessEnv })).rejects.toBeInstanceOf(ConnectorUnconfiguredError);
   });
 });

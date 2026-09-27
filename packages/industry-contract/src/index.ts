@@ -249,22 +249,6 @@ const ProvidesSchema = z.object({
   schemas: z.array(BundleAssetPath).default([]),
   ui: z.array(BundleAssetPath).default([]),
   pipelines: z.array(BundleAssetPath).default([]),
-  /**
-   * 自动化触发器声明（v3.1 新增）：随包声明、由装配器合并装载。
-   * 现状：触发器曾硬编码在各仓 seed 脚本，三包节拍无法合并；本槽位把
-   * 「包声明 → 装配合并 → 幂等写库」变成唯一装载路径。
-   */
-  triggers: z.array(BundleAssetPath).default([]),
-  /**
-   * 获客矩阵（v3.1 新增）：内容类型 × 平台 × 目标三角对照的唯一受控数据源。
-   * 单文件承载全量矩阵条目（YAML），由 packages/base/bundles/matrix.ts 校验。
-   */
-  matrix: BundleAssetPath.optional(),
-  /**
-   * 平台规格注册表（v3.1 新增）：发布前尺寸/字数/话题/定时硬校验的事实源，
-   * 条目须带来源与复核日期；未复核条目只允许内部预览。
-   */
-  platformSpecs: BundleAssetPath.optional(),
   library: z.array(BundleAssetPath).default([]),
   segmentDefaults: z.array(BundleAssetPath).default([]),
   connectors: z.array(BundleAssetPath).default([]),
@@ -273,12 +257,6 @@ const ProvidesSchema = z.object({
   feedbackEnums: BundleAssetPath.optional(),
   serviceFront: z.array(BundleAssetPath).default([]),
   evalQuestions: BundleAssetPath.optional(),
-  /**
-   * 首日上岗内容包（B-63，v3.1 新增）：关卡文案/员工卡/目标卡/任务卡/驳回枚举随包分发，
-   * 服务端按工作区活动 Bundle 装载（客户端不再硬编码行业内容）。单文件 YAML，
-   * 由 packages/base/bundles/onboarding.ts 校验并解析 extends 基线。
-   */
-  onboarding: z.array(BundleAssetPath).default([]),
   seeds: z.array(BundleAssetPath).default([]),
 }).strict();
 
@@ -305,16 +283,6 @@ export const BundleCompositionSchema = z.object({
     z.string().regex(/^[a-z][a-z0-9-]{1,79}$/, "岗位标识格式不正确"),
     z.string().regex(/^[a-z0-9][a-z0-9-]{1,31}$/, "行业包标识格式不正确"),
   ).default({}),
-  /**
-   * 汇报关系（v3.1 新增）：preset → 其汇报对象 preset。
-   * 组合产品存在多个指挥岗（公司 CEO / 增长负责人 / 总导演）时，用它显式声明
-   * 「谁向谁交付」；未声明不影响装载，仅表示平级（组合看板据此绘制组织图）。
-   */
-  commandChain: z.array(z.object({
-    preset: z.string().regex(/^[a-z][a-z0-9-]{0,79}$/),
-    reportsTo: z.string().regex(/^[a-z][a-z0-9-]{0,79}$/),
-    role: ChineseDisplayText(40).optional(),
-  }).strict()).max(200).default([]),
 }).strict();
 
 export const BundleManifestSchema = z.object({

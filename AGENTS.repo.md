@@ -1,6 +1,8 @@
-# WorkLoom 获客用增系统 · 本仓专属规则
+# Growthmatrix·骇客帝国 · 本仓专属规则
 
-> 本文件只适用于 workloom-ai/WorkLoom-growth（及其隔离实验副本的对应版本）。
+> 本文件只适用于 `workloom-ai/workloom-growthmatrix`（Growthmatrix·骇客帝国）。
+> 本仓以 Growth 冻结源码完整覆盖，继续双向不同步；不接收基座/其它仓下发，不将本仓改动回流。
+> 项目展示名称与机器身份见 `product.manifest.json`；`geo-growth`、`MEM-G01` 等业务契约标识保留。
 > 开始实质性工作前，必须先完整阅读根级 `AGENTS.md` 与 `WORKLOOM_PRODUCT_CONTEXT.md`；
 > 本文件只补充本仓的运行、验证与目录约定，**不替代、也不放宽**共享安全不变量与产品边界。
 

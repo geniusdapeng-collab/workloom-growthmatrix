@@ -6,4 +6,3 @@
  * 首版仅 inapp 本地回环（D7），外部 IM 连接器进停车场。
  */
 export * from "./approvals.js";
-export * from "./batch-release.js";

@@ -312,7 +312,13 @@ export function expandShotWithBible<T extends EnvShotFields & Record<string, unk
   const next: T = {
     ...shot,
     sceneId: spaceId,
-    scene: joinOr([spaceSummary(bible, spaceId), materialsSummary(bible, 3), shot.scene]),
+    /**
+     * 材质只进 `props`（2026-09-27 真机 v2 首轮 prompt 评审打回）：
+     * 早先 `scene` 与 `props` 各带一份材质清单（3 项 / 5 项），评审指出"道具字段与场景轻度重复"、
+     * 「场景」应只保留本镜可见的空间与光线要点——重复文本会挤占预算、也让模型注意力分散。
+     * 空间实指仍在 `scene`（`space-specificity` 审计的判据），材质与工艺统一在 `props` 一处。
+     */
+    scene: joinOr([spaceSummary(bible, spaceId), shot.scene]),
     sceneDescription: joinOr([shot.envNarrative, shot.sceneDescription, traces ? `使用痕迹：${traces}` : ""]),
     lighting: joinOr([practicalLightsSummary(bible), shot.lighting]),
     props: joinOr([shot.props, `材质与工艺：${materialsSummary(bible, 5)}`, interaction ? `道具交互：${interaction}` : ""]),

@@ -238,14 +238,6 @@ export const api = {
     title: string;
     payload: Record<string, unknown>;
   }) => request<TicketMutationResponse>("/tickets", { method: "POST", body: JSON.stringify(body) }),
-  /** B-52 承接动作：领券/留资/预约/咨询（与线索对象/承接工单打通）。 */
-  submitConversion: (body: {
-    action: "coupon_claim" | "lead_capture" | "appointment" | "consult";
-    input: {
-      contact?: string; name?: string; channel?: string; contentId?: string; entry?: string;
-      couponId?: string; preferredAt?: string; question?: string; consent: boolean;
-    };
-  }) => request<TicketMutationResponse>("/actions", { method: "POST", body: JSON.stringify(body) }),
   tickets: () => request<{ tickets: Ticket[] }>("/tickets"),
   ticketDetail: (id: string) =>
     request<{ ticket: Ticket; timeline: TimelineItem[] }>(`/tickets/${encodeURIComponent(id)}`),

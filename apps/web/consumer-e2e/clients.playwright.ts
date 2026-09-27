@@ -1,4 +1,17 @@
 import { expect, test, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
+
+const product = JSON.parse(readFileSync(new URL("../../../product.manifest.json", import.meta.url), "utf8")) as { displayName: string };
+
+// 本套件只验证消费者 UI。阻断自动登录与会话初始化等后台请求，
+// 防止本机已有服务被用作测试后端；带数据库的业务行为由独立套件验证。
+test.beforeEach(async ({ page }) => {
+  await page.route(/\/(?:trpc|api|c)\//, (route) => route.fulfill({
+    status: 503,
+    contentType: "application/json",
+    body: '{"error":"consumer-ui-test-backend-unavailable"}',
+  }));
+});
 
 interface FirstClientFrame {
   client: string;
@@ -105,11 +118,13 @@ test("B 端 PC：生产登录主入口和首帧不横向溢出", async ({ page }
   for (const width of [1024, 640]) {
     await page.setViewportSize({ width, height: 640 });
     await page.goto("http://127.0.0.1:4310/login");
-    await expect(page.getByRole("heading", { name: "登录 WorkLoom" })).toBeVisible();
+    await expect(page).toHaveTitle(`${product.displayName} · B 端工作台`);
+    await expect(page.getByRole("heading", { name: `登录 ${product.displayName}` })).toBeVisible();
     await page.getByRole("button", { name: "邮箱密码" }).click();
     await expect(page.getByLabel("邮箱")).toBeVisible();
     await expect(page.getByLabel("密码")).toBeVisible();
     await assertClientFrame(page, "b-pc");
+    await page.screenshot({ path: test.info().outputPath(`b-pc-${width}.png`), fullPage: true });
     await assertLongContentAndTextScale(page);
   }
 });
@@ -119,12 +134,17 @@ test("B 端移动：登录主入口和首帧不横向溢出", async ({ page }) =
   for (const width of [360, 320]) {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 800 });
     await page.goto("http://127.0.0.1:4311/");
-    await expect(page.getByRole("heading", { name: "登录 WorkLoom" })).toBeVisible();
+    await expect(page).toHaveTitle(`${product.displayName} · B 端移动工作台`);
+    await expect(page.getByRole("heading", { name: `登录 ${product.displayName}` })).toBeVisible();
+    const manifest = await page.request.get("http://127.0.0.1:4311/manifest.webmanifest");
+    expect(manifest.ok()).toBe(true);
+    expect(await manifest.json()).toMatchObject({ name: product.displayName, short_name: product.displayName });
     await page.getByLabel("工作区识别码").fill("consumer-smoke");
     await page.getByLabel("手机号").fill("13800000000");
     await page.getByLabel("验证码").fill("123456");
     await expect(page.getByRole("button", { name: "登录工作区" })).toBeEnabled();
     await assertClientFrame(page, "b-mobile");
+    await page.screenshot({ path: test.info().outputPath(`b-mobile-${width}.png`), fullPage: true });
     await assertLongContentAndTextScale(page);
   }
 });
@@ -134,6 +154,10 @@ test("C 端移动：服务前台导航主流程和首帧不横向溢出", async 
   for (const width of [360, 320]) {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 800 });
     await page.goto("http://127.0.0.1:4312/");
+    // 初始 HTML 使用产品身份；加载完成后由客户配置接管标题，保留客户品牌。
+    const html = await page.request.get("http://127.0.0.1:4312/");
+    expect(await html.text()).toContain(`<title data-workloom-product-title>${product.displayName} · C 端 AI 服务前台</title>`);
+    await expect(page).toHaveTitle(/ · AI 服务前台$/);
     const navigation = page.getByRole("navigation", { name: "服务前台主导航" });
     await expect(navigation).toBeVisible();
     const tabs = navigation.getByRole("button");
@@ -144,6 +168,7 @@ test("C 端移动：服务前台导航主流程和首帧不横向溢出", async 
     await target.click();
     await expect(target).toHaveAttribute("aria-current", "page");
     await assertClientFrame(page, "c-mobile");
+    await page.screenshot({ path: test.info().outputPath(`c-mobile-${width}.png`), fullPage: true });
     await assertLongContentAndTextScale(page);
   }
 });

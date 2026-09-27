@@ -5,15 +5,6 @@
 > **边界**：只优化业务逻辑与行业 Know-How，不改输入输出与字段数据结构（对象字段、五元事件、管线拓扑、围栏级别、DB、API）。
 > **基线**：`WorkLoom-growth@f2ac5dec`（2026-09-26）。机检清单见《Growth 审计范围基线 v1.0》。
 
-> **本仓（workloom-growthmatrix）同步状态（更新于 2026-09-27 · T-2026-0926-0118）**：
-> ⚠️ 本仓当前**唯一未关闭的治理红灯**：`ai-video：生产发布必须有 Ed25519 签名`。
-> 原因链：另一会话的「口播解说片产品化」提交改动了 ai-video 包资产但未重签 → 本次已修复其
-> 文案/前缀/摘要三处问题（5 项红灯降至 1 项），**签名必须由持有 `BUNDLE_SIGNING_PRIVATE_KEY` 的会话补**：
-> 1. `git apply outputs/growthmatrix-待签名-技能补丁.patch`（含 58 技能 + 52 题 + voice-bridge 修复）；
-> 2. `BUNDLE_SIGNING_PRIVATE_KEY=<pem> BUNDLE_SIGNING_KEY_ID=ed25519-12613d8b27999511 pnpm bundle:release`；
-> 3. `pnpm bundle:governance` 应全绿（ai-video / geo-growth / hotel 三包签名齐备）。
-> geo-growth 与 hotel 的既有签名**未被本次修复破坏**（已核验 keyId 在位）。
-
 | ID | 批次 | 单元 | 类型 | 严重度 | 现象 | 根因（文件:行/函数） | 处置 | 回归用例 | 状态 | 证据等级 |
 |---|---|---|---|---|---|---|---|---|---|---|
 | GAP-0001 | B2 | 营销片 `truth-check` | T1 纸门 | P0 | 事实红线闸在管线里声明「ProductTruthChecker 一票否决」，但全仓机检无任何 require/调用点 | `vendor/.../agents/product-truth-checker.js:117`（仅自引用） | **FIXED（T-2026-0926-0103）**：新增纯函数桥 `engines/truth-check-bridge.js`（档案→带信源 researchNotes→verify）+ 引擎方法 `HyperrealitySystem._runProductTruthCheckGate()`，在**创意主题确认之后、需求洞察之前**执行；命中冲突即 `blocking` 打回创意并落 fatal 错误；`factRedLines` 写回 `metadata._factRedLines` 并注入 PRD「制作约束」；无证据时 `degraded=no-evidence` 显式落账不误阻断 | `packages/base/bundles/truth-check-bridge.test.ts`（6 项）+ `scripts/tools/verify-truth-check-gate.mts`（真实类实例 3/3） | FIXED | A（接线精读）+ A（类级真实运行） |

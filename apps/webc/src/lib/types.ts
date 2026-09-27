@@ -15,7 +15,7 @@ export type ActionState = "idle" | "demo" | "pending" | "failed" | "success";
 
 export interface ActionReceipt {
   requestId: string;
-  state: "accepted" | "recorded" | "bound" | "captured";
+  state: "accepted" | "recorded" | "bound";
   resourceId: string;
   eventId?: string;
   idempotentReplay?: boolean;

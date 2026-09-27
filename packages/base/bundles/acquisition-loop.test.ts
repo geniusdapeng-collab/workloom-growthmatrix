@@ -199,25 +199,18 @@ describe("多领域融合：组合岗位编制裁决", () => {
     /**
      * 先校验不变式：组合编制 = 各包编制之和 − 被遮蔽的同名定义数（每个 preset_key 只留一个权威定义）。
      * 再校验该不变式算出的数量与对外口径（README/装配测试的 76 岗）一致——口径漂移时同时暴露两侧。
-     * 数量本身随各包编制演化（曾从 61 长到 70、72、73、74 —— 2026-09-21 ai-video 新增「调色师」、
-     * 2026-09-22 B-47 版权管理员下沉后遮蔽 4→5 处；2026-09-22 再新增 ai-video「BGM 配乐师」，总数 75），
+     * 数量本身随各包编制演化（曾从 61 长到 70、72、73、74，再到 75 —— 2026-09-23 新增 ai-video「字幕师」，
+     * 同日再新增 ai-video「配音师」，总数 76；2026-09-24 新增 ai-video「制片人／监制」（77）与「摄影指导」（78）），
      * 所以断言读的是算出来的值，而不是让维护者去猜。
+     * 2026-09-25 新增 ai-video「封面设计师」（79）——封面由"抽帧 + 一行字"改成"设计稿 → 合成 → 机检 → 监制"。
+     * 2026-09-27 新增 ai-video「口播解说片导演」（80）——解说片产品化（管线/岗位/技能/媒资目录）。
+     * 2026-09-27 新增 ai-video「开场钩子设计师」（81）——短平台前 3 秒钩子（钩子卡/首镜模板/钩子音效）。
      */
     const declared = VIEWS.reduce((sum, bundle) => sum + bundle.presets.size, 0);
     const shadowed = composed.shadowed.length;
     expect(keys.length).toBe(declared - shadowed);
-    expect(shadowed).toBe(5);
-    /**
-     * 组合编制随各包编制演进。本隔离副本（growthmatrix）口径：**82 岗**——
-     * 2026-09-27 装配器实测：`hotel` 包新增 `hotel-ceo` 后组合去重后 80 → 81，
-     * 同日 ai-video 新增「开场钩子设计师 hook-designer」（自 growth 点名单向移植）后 81 → 82
-     * （历史：61 → 70 → 72 → 73 → 74 → 75 → 78 → 79 → 80 → 81）。
-     * 口径变更时与 README「编制与资产统计」区块（`pnpm capabilities` 生成）一起更新。
-     *
-     * 注：基座仓（WorkLoom-growth）与 growthtest 的合并资产集仍是 80 岗——**各副本按自身资产集复算**，
-     * 不把某一副本的数字硬套到另一副本（这条纪律在 r12/r13 的移植里已经踩过一次）。
-     */
-    expect(keys.length).toBe(82);
+    expect(shadowed).toBe(4);
+    expect(keys.length).toBe(81);
   });
 
   it("同名岗位按主包声明落到权威归属包", () => {
@@ -225,26 +218,22 @@ describe("多领域融合：组合岗位编制裁决", () => {
     expect(ownerOf("ads-optimizer")).toBe("geo-growth");
     expect(ownerOf("publish-operator")).toBe("geo-growth");
     expect(ownerOf("review-analyst")).toBe("geo-growth");
-    // B-07：组合产品的公司 CEO 归获客口径主包（geo-growth）；酒店版更名 hotel-ceo 留在 hotel 包
-    expect(ownerOf("company-ceo")).toBe("geo-growth");
-    expect(ownerOf("hotel-ceo")).toBe("hotel");
-    // B-47：版权管理员下沉主包后，组合权威归 geo-growth（ai-video 同名定义被遮蔽）
-    expect(ownerOf("ip-curator")).toBe("geo-growth");
+    // 酒店获客复合系统的 CEO 席位由行业包（hotel）持有：其职责覆盖酒店经营节拍与获客漏斗复盘
+    expect(ownerOf("company-ceo")).toBe("hotel");
   });
 
   it("被遮蔽的岗位定义逐条留痕（不静默丢弃）", () => {
     const shadows = composed.shadowed.map((s) => `${s.bundleId}:${s.presetKey}→${s.winnerBundleId}`).sort();
     expect(shadows).toEqual([
       "ai-video:ads-optimizer→geo-growth",
-      "ai-video:creator-partner→geo-growth",
-      "ai-video:ip-curator→geo-growth",
       "ai-video:publish-operator→geo-growth",
       "ai-video:review-analyst→geo-growth",
+      "geo-growth:company-ceo→hotel",
     ]);
   });
 
   it("权威岗位的有效围栏是组合并集（被遮蔽定义的边界不丢，且不改写包内文件）", () => {
-    for (const key of ["ads-optimizer", "publish-operator", "review-analyst"]) {
+    for (const key of ["ads-optimizer", "publish-operator", "review-analyst", "company-ceo"]) {
       const winner = composed.presets.get(key)!;
       const loserFences = VIEWS
         .filter((bundle) => bundle.id !== winner.bundleId)
@@ -255,14 +244,10 @@ describe("多领域融合：组合岗位编制裁决", () => {
       expect(winner.shadowedBundleIds.length).toBeGreaterThan(0);
     }
     // 包内文件保持原样：单包装配校验（F2.10 围栏绑定完整）不被组合裁决污染
-    const hotelCeo = VIEWS.find((b) => b.id === "hotel")!.presets.get("hotel-ceo")!.doc.fence_bindings!;
+    const hotelCeo = VIEWS.find((b) => b.id === "hotel")!.presets.get("company-ceo")!.doc.fence_bindings!;
     expect(hotelCeo).toEqual(["R17", "R18", "R19"]);
-    // 指挥权归位后 company-ceo 不再遮蔽：geo 版保留自身边界，hotel 版以 hotel-ceo 独立在编
-    const companyCeo = VIEWS.find((b) => b.id === "geo-growth")!.presets.get("company-ceo")!.doc.fence_bindings!;
-    expect(companyCeo).toEqual(["G17", "G18"]);
     const geoReview = VIEWS.find((b) => b.id === "geo-growth")!.presets.get("review-analyst")!.doc.fence_bindings!;
-    // B-12：增长五栏进战报后，复盘分析师显式绑定 G-GROW6（增长数据只出脱敏聚合、明细不出域）
-    expect(geoReview).toEqual(["G18", "G-GROW6"]);
+    expect(geoReview).toEqual(["G18"]);
   });
 
   it("组合编制覆盖三条管线的全部岗位（跨领域闭环不断岗）", () => {

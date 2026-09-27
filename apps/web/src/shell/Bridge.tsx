@@ -12,7 +12,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { EmergencyBrake, NightStatusPill } from "../components/hud";
 import { SimBanner } from "../components/SimBanner";
 import { SkillDistBanner } from "../components/SkillDistBanner";
-import { ActionCardBanner } from "../components/ActionCardBanner";
 import { COMMON_STATUS_TEXT, dictText, shortId } from "../lib/display";
 
 /** 星野背景（氛围层；永不遮挡信息、不影响 G10 首屏口径——§7 动效纪律） */
@@ -230,7 +229,6 @@ export function Bridge({
           <SimBanner />
           {/* 技能更新通栏（技能保鲜环：夜班自动更新提示） */}
           <SkillDistBanner />
-          <ActionCardBanner />
 
           {/* IM 工作区：用户可折叠、隐藏、拖拽缩放；窄屏降级为抽屉。 */}
           <div className="wl-bridge-grid wl-bridge-grid--managed grid min-h-[640px] min-w-0" style={gridStyle}>

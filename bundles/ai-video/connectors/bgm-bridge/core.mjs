@@ -29,6 +29,7 @@ import {
 import { composeToWav, planComposition } from "./synth.mjs";
 import { analyzePromptBrief, energyCurveFor, scoreTrackAgainstBrief } from "./brief.mjs";
 import { cacheDir as onlineCacheDir, fetchCandidate, listSources, searchOnline } from "./sources.mjs";
+import { defaultScanRoots, discoverLibraries, packLibrary, rebindLibrary, tagLibrary, writeLibrary } from "./tag.mjs";
 
 /** 工位对外错误类型（与 measure 内核同源，统一 code 语义）。 */
 export const BgmError = MeasureError;
@@ -49,6 +50,8 @@ export const BGM_TOOLS = [
   "bgmwrite.mix",
   "bgmwrite.separate",
   "bgmwrite.best",
+  "bgmwrite.tag",
+  "bgmwrite.library",
 ];
 
 const TOOL_SET = new Set(BGM_TOOLS);
@@ -243,15 +246,41 @@ export function libraryRoots(env = process.env) {
   const workbenchHome = (env.WORKLOOM_BGM_HOME ?? "").trim() || path.join(os.homedir(), ".workloom-bgm");
   const candidates = [
     custom ? { dir: path.resolve(custom), kind: "local-custom", label: "客户自建曲库" } : null,
-    { dir: path.resolve(here, "../../library/bgm-library-curated"), kind: "local-curated", label: "随仓精选曲库（12 首）" },
+    { dir: path.resolve(here, "../../library/bgm-library-curated"), kind: "local-curated", label: "随仓兜底曲库（50 首选段）" },
     { dir: path.join(workbenchHome, "library"), kind: "local-workbench", label: "工位本地曲库" },
   ].filter(Boolean);
-  const seen = new Set();
-  return candidates.filter((entry) => {
-    if (seen.has(entry.dir)) return false;
-    seen.add(entry.dir);
-    return true;
-  });
+  const seen = new Set(candidates.map((entry) => entry.dir));
+  const roots = [...candidates];
+  /**
+   * 自动发现（"用户单独下载了素材文件夹，系统自己认出来"）：
+   * 在 Downloads / Documents / Desktop / 外接盘（可用 WORKLOOM_BGM_SCAN_ROOTS 覆盖）里找带 `tracks.json`
+   * 的目录并抽样核验；`WORKLOOM_BGM_DISCOVER=0` 可关掉（极简部署或磁盘挂载慢时用）。
+   * 发现到的库排在显式配置之后（显式配置永远优先），同 id 由 `loadAllLocalTracks` 先到先得。
+   */
+  if ((env.WORKLOOM_BGM_DISCOVER ?? "1") !== "0") {
+    try {
+      for (const found of discoverLibraries({ scanRoots: defaultScanRoots(env) })) {
+        if (seen.has(found.dir) || !found.usable) continue;
+        seen.add(found.dir);
+        roots.push({
+          dir: found.dir,
+          kind: "local-discovered",
+          label: `自动发现的曲库（${found.libraryName}）`,
+          discovered: { tracks: found.tracks, sample: found.sample, needsRebind: found.needsRebind },
+        });
+      }
+    } catch {
+      /* 自动发现失败不阻塞配乐：显式配置的三个根照常工作 */
+    }
+  }
+  const deduped = [];
+  const pushed = new Set();
+  for (const entry of roots) {
+    if (pushed.has(entry.dir)) continue;
+    pushed.add(entry.dir);
+    deduped.push(entry);
+  }
+  return deduped;
 }
 
 /** 许可白名单：只能商用 → true；非商用/禁止演绎 → false；未知 → null（未知一律按"不可商用"处理）。 */
@@ -464,7 +493,7 @@ export function findTracks(query = {}, env = process.env) {
  */
 export async function resolveTrackForBrief({
   brief = null, recipe = null, policy = "online-first", durationSec = null,
-  env = process.env, fetchImpl = fetch, destDir = null, limit = 8,
+  env = process.env, fetchImpl = fetch, destDir = null, limit = 8, catalog = null,
 }) {
   const attempts = [];
   const recipes = loadRecipes().recipes;
@@ -473,7 +502,7 @@ export async function resolveTrackForBrief({
   if (wanted === "online-first" || wanted === "online-only") {
     try {
       const { candidates, attempts: searchAttempts, configuredSources } = await searchOnline({
-        brief, recipe, limit, env, fetchImpl,
+        brief, recipe, limit, env, fetchImpl, catalog,
       });
       attempts.push(...searchAttempts.map((entry) => ({ ...entry, layer: "online" })));
       if (!candidates.length) {
@@ -1856,7 +1885,7 @@ export async function mix({
     : Number.isFinite(duckedInQuiet) && Number.isFinite(roomTone) ? round(duckedInQuiet - roomTone, 2) : null;
   /**
    * 可闻度的**依据来源**写进回执：quiet-window（安静窗口实测）｜room-tone（房间底噪基准）｜none（测不到）。
-   * 下游据此区分「测得偏低」与「测不到」，不再从 null 反推（真机实测：clean-tech 硬切变体全程连续现场声 → none）。
+   * 下游据此区分「测得偏低」与「测不到」，不再从 null 反推（真机实测：硬切变体全程连续现场声 → none）。
    */
   const presenceMeasured = (Number.isFinite(finalInQuiet) && Number.isFinite(sourceInQuiet))
     || (Number.isFinite(duckedInQuiet) && Number.isFinite(roomTone));
@@ -2137,7 +2166,7 @@ export async function best({
   minScore = 92, evidenceDir = null, bins = resolveBinaries(), seed = 0, targetLufs = -14, truePeak = -1.0,
   bpmStrategy = "cut-driven",
   promptText = null, sourcePolicy = "compose-only", destDir = null, env = process.env, fetchImpl = fetch,
-  platform = null, genreMismatchPolicy = null,
+  catalog = null, platform = null, genreMismatchPolicy = null,
 }) {
   const probe = await probeMedia(input, { bins });
   const duration = probe.duration;
@@ -2180,7 +2209,7 @@ export async function best({
     const recipeForSearch = brief?.recipeId ? findRecipes({ recipeId: brief.recipeId }).recipe : null;
     trackResolution = await resolveTrackForBrief({
       brief, recipe: recipeForSearch, policy: sourcePolicy, durationSec: duration,
-      env, fetchImpl, destDir,
+      env, fetchImpl, destDir, catalog,
     });
   }
   const voice = await detectVoiceBandSegments({ input, duration, bins });
@@ -2217,11 +2246,11 @@ export async function best({
     };
   }
 
-  const catalog = findRecipes({ list: true }).items;
-  let pool = catalog;
-  if (Array.isArray(recipeIds) && recipeIds.length) pool = catalog.filter((recipe) => recipeIds.includes(recipe.id));
+  const recipeCatalog = findRecipes({ list: true }).items;
+  let pool = recipeCatalog;
+  if (Array.isArray(recipeIds) && recipeIds.length) pool = recipeCatalog.filter((recipe) => recipeIds.includes(recipe.id));
   else if (effectiveGenre || mood || (brief?.recipeId)) {
-    const filtered = catalog.filter((recipe) => {
+    const filtered = recipeCatalog.filter((recipe) => {
       if (brief?.recipeId && recipe.id === brief.recipeId) return true;
       const genreHit = effectiveGenre ? recipe.genre.includes(String(effectiveGenre)) : false;
       const moodHit = mood ? recipe.mood.includes(String(mood)) : false;
@@ -2579,6 +2608,7 @@ export async function callTool(name, params = {}, { bins = resolveBinaries(), en
       const resolution = await resolveTrackForBrief({
         brief, recipe, policy: params.source_policy ?? "online-first",
         durationSec, env, destDir, limit: optionalNumber(params.limit) ?? 8,
+        catalog: typeof params.catalog === "string" ? params.catalog : null,
       });
       return {
         result: {
@@ -2743,6 +2773,159 @@ export async function callTool(name, params = {}, { bins = resolveBinaries(), en
       };
     }
 
+    /**
+     * 曲库打标（写工具）：把一批本地音乐实测打标成可检索曲库索引。
+     *
+     * 围栏 G-BGM8 的实现在这里落地（两道硬闸）：
+     * ① **许可必须先声明**：`license` 必填且必须落在可商用白名单里（NC/ND/未知一律拒），
+     *    来源不明的音频不许写进曲库；
+     * ② **不许覆盖既有曲库**：目标目录已有 `tracks.json` 时必须显式 `allow_overwrite=true`，
+     *    否则一票否决——避免一次误调用把客户积累的曲库索引冲掉。
+     * 低置信标签不阻断，但会写进索引（`confidence.style=low`）并随回执上报，供人审复核。
+     */
+    case "bgmwrite.tag": {
+      const inputDir = assertPathAllowed(text(params.input_dir, "input_dir"), roots, "input_dir");
+      const outDir = assertPathAllowed(text(params.out_dir, "out_dir"), roots, "out_dir");
+      const license = String(params.license ?? "").trim();
+      if (!license) {
+        throw new BgmError(
+          "曲库打标必须先声明许可（license）：来源不明的音频不许写进曲库（围栏 G-BGM8）",
+          "license_blocked",
+        );
+      }
+      const info = licenseInfo(license);
+      if (info.commercial !== true) {
+        throw new BgmError(
+          `许可「${info.label}」不可商用 → 不允许进曲库（围栏 G-BGM5 / G-BGM8）；可选：${Object.entries(LICENSE_TABLE)
+            .filter(([, entry]) => entry.commercial === true).map(([key]) => key).join(" / ")}`,
+          "license_blocked",
+        );
+      }
+      if (!fs.existsSync(inputDir) || !fs.statSync(inputDir).isDirectory()) {
+        throw new BgmError(`素材目录不存在或不是目录：${inputDir}`, "bad_request");
+      }
+      const indexPath = path.join(outDir, "tracks.json");
+      if (fs.existsSync(indexPath) && params.allow_overwrite !== true) {
+        throw new BgmError(
+          `目标曲库已有索引 ${indexPath}：覆盖既有曲库须显式 allow_overwrite=true（围栏 G-BGM8）`,
+          "overwrite_existing_forbidden",
+        );
+      }
+      const tagged = await tagLibrary({
+        root: inputDir,
+        license: info.key,
+        licenseNote: params.license_note
+          ? String(params.license_note)
+          : `许可 ${info.label}（调用方 ${params.license_source ? String(params.license_source) : "未标注来源"} 声明）`,
+        licenseSource: params.license_source ? String(params.license_source) : null,
+        recursive: params.recursive !== false,
+        maxSeconds: optionalNumber(params.max_seconds) ?? 180,
+        concurrency: optionalNumber(params.concurrency) ?? 4,
+      });
+      const written = writeLibrary({
+        outDir,
+        result: tagged,
+        libraryName: params.library_name ? String(params.library_name) : null,
+        provider: params.provider ? String(params.provider) : "local-tagged",
+        fileMode: params.file_mode === "relative" ? "relative" : "absolute",
+      });
+      const lowConfidence = tagged.tracks
+        .filter((track) => track.confidence?.style === "low")
+        .map((track) => ({ id: track.id, file: track.file, style: track.style, styleConfidence: track.confidence?.style, bpmConfidence: track.bpmConfidence }));
+      return {
+        result: {
+          outDir: written.outDir,
+          files: written.files,
+          counts: tagged.counts,
+          license: { key: info.key, label: info.label, attributionRequired: info.attributionRequired === true },
+          filters: tagged.filters,
+          rejected: tagged.rejected.slice(0, 50),
+          rejectedTotal: tagged.rejected.length,
+          errors: tagged.errors,
+          lowConfidence: lowConfidence.slice(0, 20),
+          lowConfidenceTotal: lowConfidence.length,
+          sample: tagged.tracks.slice(0, 5).map((track) => ({
+            id: track.id, style: track.style, bpm: track.bpm, bpmBucket: track.bpmBucket,
+            energyBucket: track.energyBucket, tags: track.tags,
+          })),
+        },
+        receipt: {
+          synced: true,
+          snapshot_uri: `bgm://library/${path.basename(outDir)}?tracks=${tagged.tracks.length}`,
+          verified_at: new Date().toISOString(),
+          ...(tagged.tracks[0]?.sha256 ? { sha256: tagged.tracks[0].sha256 } : {}),
+        },
+      };
+    }
+
+    /**
+     * 曲库维护（写工具）：`rebind` 搬迁后重绑路径，`pack` 把索引进素材目录（相对路径，随文件夹走）。
+     *
+     * 产品口径：用户单独下载素材文件夹后，两条路都能"接上"——
+     * ① 文件夹里带着 `tracks.json`（`pack` 出来的相对路径索引）→ 自动发现直接可用；
+     * ② 只有绝对路径索引而素材被挪走 → `rebind` 按文件名/大小（可选 sha256）重新绑定。
+     * 覆盖既有索引同样受围栏 G-BGM8 约束（必须显式 allow_overwrite=true）。
+     */
+    case "bgmwrite.library": {
+      const action = text(params.action, "action");
+      const libraryDir = assertPathAllowed(text(params.library_dir, "library_dir"), roots, "library_dir");
+      if (action === "rebind") {
+        const newRoot = assertPathAllowed(text(params.new_root, "new_root"), roots, "new_root");
+        if (params.allow_overwrite !== true) {
+          throw new BgmError(
+            "重新绑定会改写曲库索引（tracks.json）：须显式 allow_overwrite=true（围栏 G-BGM8）",
+            "overwrite_existing_forbidden",
+          );
+        }
+        const report = await rebindLibrary({
+          indexDir: libraryDir,
+          newRoot,
+          verify: params.verify === "sha256" ? "sha256" : "size",
+          dryRun: params.dry_run === true,
+        });
+        return {
+          result: {
+            action, indexDir: libraryDir, oldRoot: report.oldBase, newRoot: report.newRoot,
+            verify: report.verify, dryRun: params.dry_run === true,
+            matched: report.matched, missing: report.missing, ambiguous: report.ambiguous,
+            samples: report.details.slice(0, 10),
+          },
+          receipt: {
+            synced: report.missing === 0,
+            snapshot_uri: `bgm://library/rebind?matched=${report.matched}&missing=${report.missing}`,
+            verified_at: new Date().toISOString(),
+          },
+        };
+      }
+      if (action === "pack") {
+        const destDir = params.dest_dir ? assertPathAllowed(String(params.dest_dir), roots, "dest_dir") : null;
+        const packed = packLibrary({
+          indexDir: libraryDir,
+          destDir,
+          overwrite: params.allow_overwrite === true,
+        });
+        return {
+          result: { action, ...packed },
+          receipt: {
+            synced: true,
+            snapshot_uri: `bgm://library/pack?tracks=${packed.tracks}`,
+            verified_at: new Date().toISOString(),
+          },
+        };
+      }
+      if (action === "inspect" || action === "discover") {
+        return {
+          result: {
+            action,
+            discovered: discoverLibraries({ scanRoots: defaultScanRoots(env) }),
+            roots: libraryRoots(env).map((root) => ({ dir: root.dir, kind: root.kind, label: root.label })),
+          },
+          receipt: { synced: true, verified_at: new Date().toISOString() },
+        };
+      }
+      throw new BgmError(`未知曲库动作：${action}（支持 rebind / pack / inspect）`, "bad_request");
+    }
+
     case "bgmwrite.best": {
       const input = assertPathAllowed(text(params.input_path, "input_path"), roots, "input_path");
       const output = params.output_path ? assertPathAllowed(String(params.output_path), roots, "output_path") : null;
@@ -2762,6 +2945,7 @@ export async function callTool(name, params = {}, { bins = resolveBinaries(), en
         bpmStrategy: params.bpm_strategy === "recipe" ? "recipe" : "cut-driven",
         promptText: params.prompt_text ? String(params.prompt_text) : null,
         sourcePolicy: typeof params.source_policy === "string" ? params.source_policy : "compose-only",
+        catalog: typeof params.catalog === "string" ? params.catalog : null,
         destDir: params.dest_dir ? assertPathAllowed(String(params.dest_dir), roots, "dest_dir") : null,
         platform: params.platform ? String(params.platform) : null,
         genreMismatchPolicy: params.genre_mismatch_policy ? String(params.genre_mismatch_policy) : null,

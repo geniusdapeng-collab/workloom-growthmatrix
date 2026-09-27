@@ -24,7 +24,6 @@ import { safeParseReplayAwareEvent } from "@workloom/base/workdata";
 import { eventHash } from "@workloom/base/workdata";
 // 技能围栏绑定表（与基座 seed.ts 共用同一事实源；见 scripts/skill-bindings.mts）
 import { skillBindingsFor } from "./skill-bindings.mts";
-import { applyDeclaredFenceTemplates } from "@workloom/base/bundles";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, "..");
@@ -101,10 +100,7 @@ function loadFences(): FenceRule[] {
   const rules: FenceRule[] = [];
   for (const assetPath of declared) {
     if (assetPath.includes("/patches/")) continue;
-    // B-62：围栏包可声明通用规则模板（内部协作 auto / 对外动作 review），装载前按包前缀展开
-    const doc = applyDeclaredFenceTemplates(
-      YAML.parse(readFileSync(join(BUNDLE_DIR, assetPath), "utf-8")) as { rules?: FenceRule[]; fences?: FenceRule[]; templates?: Array<{ name: string; prefix: string }> },
-    );
+    const doc = YAML.parse(readFileSync(join(BUNDLE_DIR, assetPath), "utf-8"));
     const version = typeof doc?.version === "string" ? doc.version : FENCE_VERSION;
     for (const rule of (doc?.rules ?? doc?.fences ?? []) as FenceRule[]) {
       rules.push({ ...rule, packVersion: version });
@@ -150,7 +146,7 @@ function loadSkills(): SkillDoc[] {
 /**
  * 组合技能并集（2026-09-20 真机验收修复）：
  * 组合编制（hotel + ai-video + geo-growth）里的酒店/视频岗位引用各自包的 official 技能；
- * 只装本包 30 条技能时，那些岗位被判「技能已声明未装备」（ui 探针 skillsOk=false）。
+ * 只装本包 29 条技能时，那些岗位被判「技能已声明未装备」（ui 探针 skillsOk=false）。
  * 这里按各包 bundle.json 的 provides.skills 逐条落 skills 行 + ws-geo 安装行，
  * 与基座 seed.ts 的组合技能安装同口径（安装快照取 skills 表当前值）。
  */
@@ -424,11 +420,11 @@ async function main() {
   /**
    * 组合编制上岗（2026-09-20 真机验收修复）：
    * geo-growth 的 bundle.json 声明 composition（hotel + ai-video 依赖，presetOwners 含 company-ceo 等），
-   * 权威花名册 = 装配器 composeWorkforce 的运行结果（数字以装配器实测为准，含同名遮蔽裁决）。此前 seed 只落本包岗位，
-   * 与基座 seed.ts（ws-yunqi 已按组合编制上岗）口径不一致——RDAS L1 矩阵因此判 0/组合编制。
+   * 权威花名册 = 装配器 composeWorkforce 的运行结果（2026-09-24 实测 78 岗，含同名遮蔽裁决）。此前 seed 只落本包 27 岗，
+   * 与基座 seed.ts（ws-yunqi 已按组合编制上岗，2026-09-24 实测 78 岗）口径不一致——RDAS L1 矩阵因此判 0/组合编制。
    * 这里与基座同口径补齐；围栏按组合并集落库（只紧不松，不滚动客户已收紧的规则）。
    */
-  const { provisionComposedWorkforce, applyDeclaredFenceTemplates } = await import("@workloom/base/bundles");
+  const { provisionComposedWorkforce } = await import("@workloom/base/bundles");
   const composed = await provisionComposedWorkforce(
     { query: (sql: string, params?: unknown[]) => owner.query(sql, params as never[]) },
     { tenantId: TENANT_ID, workspaceId: WS_ID },
@@ -556,24 +552,32 @@ async function main() {
   );
   console.log("✓ 装配台账登记（bundle_installs）");
 
-  /**
-   * 自动化触发器（B-06 起声明式装载，不在 seed 硬编码）：
-   * 14 条声明位于 `bundles/geo-growth/triggers.yml`，由上面的
-   * provisionComposedWorkforce 幂等写入（落库 id = `<declared_id>-<workspace_id>`）。
-   * seed 只做校验与回显，保证种子工作区与声明不漂移。
-   */
-  const declaredTriggers = await q(
-    `SELECT count(*)::int AS n FROM triggers WHERE workspace_id=$1 AND declared_id IS NOT NULL AND enabled=true`,
-    [WS_ID],
-  );
-  // 退场：历史硬编码触发器（declared_id 为空、seed 创建）统一禁用，避免与声明式触发器双跑。
-  await q(
-    `UPDATE triggers SET enabled=false, updated_at=now()
-      WHERE workspace_id=$1 AND declared_id IS NULL AND enabled=true
-        AND created_by IN ('system:seed','MEM-001')`,
-    [WS_ID],
-  );
-  console.log(`✓ 声明式触发器 ×${declaredTriggers.rows[0]?.n ?? 0}（随 geo-growth 包装载）`);
+  // 自动化触发器（4 条主干管线节拍 + CEO Loop）
+  const triggers = [
+    { id: "tg-geo-intel-0700", name: "情报站每日 07:00 刷新", kind: "cron", schedule: "0 7 * * *", action: { dispatch: "geo-researcher", template: "intel.collect" } },
+    { id: "tg-geo-morning-0830", name: "清晨决策包 08:30", kind: "cron", schedule: "30 8 * * *", action: { dispatch: "company-ceo", template: "decision.pack" } },
+    { id: "tg-geo-metrics-2h", name: "社媒指标每 2 小时采集", kind: "cron", schedule: "7 */2 * * *", action: { dispatch: "data-board-officer", template: "metrics.collect" } },
+    { id: "tg-geo-comments-30m", name: "评论私信每 30 分钟分流", kind: "cron", schedule: "*/30 * * * *", action: { dispatch: "private-domain-operator", template: "comments.ingest" } },
+    { id: "tg-geo-visibility-brand", name: "能见度品牌词日频采集", kind: "cron", schedule: "0 21 * * *", action: { dispatch: "visibility-watcher", template: "visibility.collect.brand" } },
+    { id: "tg-geo-visibility-full", name: "能见度全量 query 集周频采集", kind: "cron", schedule: "0 9 * * 1", action: { dispatch: "visibility-watcher", template: "visibility.collect.full" } },
+    { id: "tg-geo-battle-report", name: "周一全网存在感战报", kind: "cron", schedule: "0 9 * * 1", action: { dispatch: "review-analyst", template: "report.weekly" } },
+    { id: "tg-geo-backtest-monthly", name: "月度决策回测", kind: "cron", schedule: "0 10 1 * *", action: { dispatch: "review-analyst", template: "backtest.run" } },
+    { id: "tg-geo-entity-patrol", name: "实体一致性夜班巡检", kind: "cron", schedule: "0 2 * * *", action: { dispatch: "entity-inspector", template: "entity.scan" } },
+    { id: "tg-geo-fleet-weekly", name: "集团CEO 交付人效看板", kind: "cron", schedule: "0 18 * * 5", action: { dispatch: "group-ceo", template: "fleet.scoreboard" } },
+    // 数字CEO 节拍（D21：CEO Loop；调度器消费前经治理守卫校验 charter.mode）
+    { id: "tg-geo-ceo-brief-0830", name: "公司CEO 晨报 08:30", kind: "cron", schedule: "30 8 * * *", action: { beat: "daily" } },
+    { id: "tg-geo-ceo-queue-2h", name: "公司CEO 裁决巡检 2h", kind: "cron", schedule: "7 */2 * * *", action: { beat: "queue" } },
+    { id: "tg-geo-ceo-deviation", name: "公司CEO 目标偏差扫描", kind: "cron", schedule: "15 */4 * * *", action: { beat: "deviation" } },
+    { id: "tg-geo-ceo-breaker", name: "公司CEO 自治熔断巡检", kind: "cron", schedule: "45 23 * * *", action: { beat: "breaker" } },
+  ];
+  for (const t of triggers) {
+    await q(
+      `INSERT INTO triggers (id, workspace_id, name, kind, schedule, action, enabled, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,true,'system:seed') ON CONFLICT (id) DO NOTHING`,
+      [t.id, WS_ID, t.name, t.kind, t.schedule, JSON.stringify(t.action)],
+    );
+  }
+  console.log(`✓ 自动化触发器 ×${triggers.length}（4 条主干管线节拍 + CEO Loop）`);
 
   /* ================= 运行态剧本（双域演示运行态） ================= */
 
@@ -609,7 +613,6 @@ async function main() {
 
   // —— 账号指标时序（近 7 天 × 2 社媒账号） ——
   const metricRows: unknown[][] = [];
-  const growthRows: unknown[][] = [];
   // 真实感曲线（买单人视角）：非整数、有周末波峰、有日际抖动；伪随机种子固定保证复跑一致
   const jitter = (seed: number) => { const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
   for (let d = 7; d >= 1; d--) {
@@ -617,32 +620,9 @@ async function main() {
     const dow = day.getDay();
     const weekend = dow === 0 || dow === 6 ? 1.31 : 1.0;
     const base = Math.round((7980 + (7 - d) * 2137) * weekend * (0.88 + jitter(d * 7 + 1) * 0.27));
-    const tkLikes = Math.round(base * (0.038 + jitter(d * 7 + 2) * 0.011));
-    const tkComments = Math.round(base * (0.015 + jitter(d * 7 + 3) * 0.006));
-    const tkShares = Math.round(base * (0.009 + jitter(d * 7 + 4) * 0.004));
-    const tkConversions = Math.round(1 + (7 - d) * 0.9 + jitter(d * 7 + 5) * 3);
-    metricRows.push([WS_ID, "tiktok", "@RuikeLaser", null, day.toISOString(), base, tkLikes, tkComments, tkShares, tkConversions]);
+    metricRows.push([WS_ID, "tiktok", "@RuikeLaser", null, day.toISOString(), base, Math.round(base * (0.038 + jitter(d * 7 + 2) * 0.011)), Math.round(base * (0.015 + jitter(d * 7 + 3) * 0.006)), Math.round(base * (0.009 + jitter(d * 7 + 4) * 0.004)), Math.round(1 + (7 - d) * 0.9 + jitter(d * 7 + 5) * 3)]);
     const yb = Math.round(base * (0.31 + jitter(d * 7 + 6) * 0.09));
-    const ybLikes = Math.round(yb * 0.026);
-    const ybComments = Math.round(yb * 0.008);
-    const ybShares = Math.round(yb * 0.013);
-    const ybConversions = Math.round((1 + (7 - d) * 0.5) * (0.8 + jitter(d * 7 + 7) * 0.5));
-    metricRows.push([WS_ID, "youtube", "@RuikeLaserOfficial", null, day.toISOString(), yb, ybLikes, ybComments, ybShares, ybConversions]);
-    // B-33 增长日表（五项日聚合；与 account_metrics 同日对齐）
-    const dayKey = day.toISOString().slice(0, 10);
-    const growthOf = (platform: string, account: string, likes: number, comments: number, shares: number, conversions: number, dayIndex: number) => [
-      `agd-${platform}-${account.replace(/[^a-zA-Z0-9]/g, "")}-${dayKey}`,
-      WS_ID, platform, account, dayKey,
-      Math.round(conversions * 12 + jitter(dayIndex * 7 + 9) * 40),
-      likes + comments + shares,
-      Math.round(conversions * 1.6),
-      Math.round(conversions * 0.6),
-      Math.round(conversions * 0.4),
-      Math.round(conversions * 0.25),
-      "mock",
-    ];
-    growthRows.push(growthOf("tiktok", "@RuikeLaser", tkLikes, tkComments, tkShares, tkConversions, d));
-    growthRows.push(growthOf("youtube", "@RuikeLaserOfficial", ybLikes, ybComments, ybShares, ybConversions, d));
+    metricRows.push([WS_ID, "youtube", "@RuikeLaserOfficial", null, day.toISOString(), yb, Math.round(yb * 0.026), Math.round(yb * 0.008), Math.round(yb * 0.013), Math.round((1 + (7 - d) * 0.5) * (0.8 + jitter(d * 7 + 7) * 0.5))]);
   }
   for (const m of metricRows) {
     await q(
@@ -653,17 +633,6 @@ async function main() {
     );
   }
   console.log(`✓ 账号指标时序 ×${metricRows.length}（7 天 × 2 账号）`);
-  for (const g of growthRows) {
-    await q(
-      `INSERT INTO account_growth_daily
-         (id, workspace_id, platform, account_id, day, fans_delta, interactions, private_adds,
-          wakeup_conversions, repurchase_count, referral_count, source)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-       ON CONFLICT (workspace_id, platform, account_id, day) DO NOTHING`,
-      g as never,
-    );
-  }
-  console.log(`✓ 增长日表 ×${growthRows.length}（五项日聚合，growth_daily 视图可查）`);
 
   // —— 评论样本（夸赞自动回/咨询待审/负面告警） ——
   const cmts = [

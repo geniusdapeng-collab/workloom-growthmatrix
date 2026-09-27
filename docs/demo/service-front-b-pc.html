@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WorkLoom · 云栖酒店 — 服务前台 B 端 PC 演示（镜像 P22 + Bridge）</title>
+<title>Growthmatrix·骇客帝国 · 云栖酒店 — 服务前台 B 端 PC 演示（镜像 P22 + Bridge）</title>
 <style>
 /* ===== 设计令牌：B 端 tokens.css 色板 + 统一暗金 #ff2442（C 端同族） ===== */
 :root{
@@ -129,6 +129,7 @@ tr:hover td{background:rgba(255,228,236,.7)}
 .tl-ev .dot{position:absolute;left:-5px;top:4px;width:8px;height:8px;border-radius:99px;background:var(--ink3)}
 .tl-ev:last-child .dot{background:var(--holo);animation:wl-pulse 1.6s infinite}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:80;border-radius:99px;border:1px solid var(--gline);background:var(--bg800);padding:8px 18px;font-size:12px;color:var(--goldhi);box-shadow:0 8px 30px rgba(0,0,0,.5);animation:fadeUp .25s both}
+.abar{flex-wrap:wrap}.logo{min-width:0}.logo .name{overflow-wrap:anywhere}.logo .diamond{flex-shrink:0}
 </style>
 </head>
 <body>
@@ -144,7 +145,7 @@ tr:hover td{background:rgba(255,228,236,.7)}
 
   <!-- 顶栏（apps/web/src/shell/Bridge.tsx 镜像） -->
   <header class="abar">
-    <div class="logo"><span class="diamond"></span><span class="name">WorkLoom</span></div>
+    <div class="logo"><span class="diamond"></span><span class="name">Growthmatrix·骇客帝国</span></div>
     <span style="font-size:12px;color:var(--ink3)">企业 Agent IM · <b style="color:var(--ink2)">云栖酒店</b></span>
     <span style="flex:1"></span>
     <a class="navlink" style="border-color:var(--gline);color:var(--gold)">🛎 服务前台</a>
@@ -152,7 +153,7 @@ tr:hover td{background:rgba(255,228,236,.7)}
     <button class="night-pill" onclick="toast('进入夜班团队频道（P9）')"><span class="dot pulse"></span><b style="color:var(--holo)">夜班团队 · 巡航中</b><span class="mono" style="font-size:10px;color:var(--ink3)">22:00–08:00 · ×4</span></button>
     <button class="brake" onclick="toast('紧急制动需二次确认（P9 落地，演示态不触发）')">⛔ 紧急制动</button>
   </header>
-  <div class="sim-banner">⚠ 模拟数据横幅（D24）：当前为演示工作区投影 · 数据全部来自 scripts/seed.ts「AI 服务前台」段 + scripts/eval 评测报告 · 落地向导可接入真实数据</div>
+  <div class="sim-banner">历史静态原型 · 数字、回执与路由仅作示例，不代表当前版本运行结果。</div>
 
   <div class="cols">
     <!-- 左栏（P22 left 镜像） -->

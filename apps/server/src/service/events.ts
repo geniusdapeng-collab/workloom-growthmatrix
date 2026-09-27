@@ -10,13 +10,6 @@ import { gatewayAppendOnClient, type ActorInfo } from "@workloom/base/workdata";
 
 export interface ServiceScope { tenantId: string; workspaceId: string }
 
-/**
- * B-38：服务层 actor 允许携带 `version`（agent 归因必需，IM.5）。
- * - agent actor 缺 version → 写入前直接拒绝（防止"无名 agent"污染归因链）；
- * - human / system 不受影响（保持既有调用点零改动）。
- */
-export type ServiceActor = ActorInfo & { version?: string };
-
 /** 在 RLS 上下文事务内执行（解析 tenantId 一并交给回调） */
 export async function serviceTx<T>(
   workspaceId: string,
@@ -58,14 +51,11 @@ export async function svcQuery<T extends Record<string, unknown> = Record<string
 export async function appendEventOn(
   client: pg.PoolClient,
   scope: ServiceScope,
-  actor: ServiceActor,
+  actor: ActorInfo,
   draft: { objectType: string; objectId: string; action: string; after?: unknown; channel?: string },
 ): Promise<{ eventId: string }> {
-  if (actor.type === "agent" && !actor.version) {
-    throw new Error(`agent actor「${actor.id}」缺少 version：agent 归因必需（IM.5），拒绝写入`);
-  }
   const ev = await gatewayAppendOnClient(client, { ...scope, actor }, {
-    who: { type: actor.type, id: actor.id, ...(actor.version ? { version: actor.version } : {}) },
+    who: { type: actor.type, id: actor.id },
     context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString(), channel: draft.channel ?? "inapp" },
     object: { type: draft.objectType, id: draft.objectId },
     decision: { action: draft.action, after: draft.after },

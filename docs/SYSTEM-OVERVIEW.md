@@ -1,14 +1,14 @@
-# 骇客帝国 · 系统详解（给 AI Coding Agent）
+# Growthmatrix·骇客帝国 · 系统详解（给 AI Coding Agent）
 
 > 这份文档回答一个问题：**这套系统到底是什么、怎么运转、你该怎样在其中工作。**
 > 阅读顺序建议：本文（认知）→ AGENTS.md（行动入口）→ docs/capability-map.md（全量能力清单）。
-> 适用仓库：workloom-growthmatrix（骇客帝国 · 实验副本）。workloom-im / workloom-hotel / hyperreality-system 共享同一底座，差异见文末。
+> 当前仓库：`workloom-ai/workloom-growthmatrix`。本文随 Growth 源码复制，文末跨仓关系和历史统计为来源说明；当前身份及入口以根 README 为准。
 
 ---
 
 ## 1. 一句话定位
 
-**骇客帝国是一套面向 B 端商家的「AI 获客经营系统」**：以短视频社媒营销 × GEO（生成式引擎优化）双引擎触达客户，以「获客五环」（意图洞察→双域触达→四路承接→线索转化→归因复盘）闭环经营，每一环可度量到钱。首个深度垂直行业是**酒店**，底座支持按 Bundle 复制到各行业。
+**Growthmatrix·骇客帝国是一套面向 B 端商家的「AI 获客经营系统」**：以短视频社媒营销 × GEO（生成式引擎优化）双引擎触达客户，以「获客五环」（意图洞察→双域触达→四路承接→线索转化→归因复盘）闭环经营，每一环可度量到钱。首个深度垂直行业是**酒店**，底座支持按 Bundle 复制到各行业。
 
 它不是 demo 玩具：有完整的多租户底座、围栏安全体系、人审机制、事件溯源和 400+ 条场景测试。
 
@@ -117,7 +117,7 @@ pnpm capabilities:check                    # 能力产物与代码同步校验
 
 | 仓 | 定位 | 与主仓差异 |
 |---|---|---|
-| **workloom**（本仓） | 获客系统主仓 | 全量：geo-growth + ai-video + hotel 获客域 + publish-rpa |
+| **workloom**（来源主仓） | 获客系统主仓 | 全量：geo-growth + ai-video + hotel 获客域 + publish-rpa |
 | workloom-im | IM 底座仓 | 无 geo/video/publish-rpa； bundles/hotel 基础版 |
 | workloom-hotel | 酒店垂直仓 | + 数字孪生演示（demo:twin 系列） |
 | hyperreality-system | 视频制作仓 | ai-video + video-studio + publish-rpa；无 geo-growth |

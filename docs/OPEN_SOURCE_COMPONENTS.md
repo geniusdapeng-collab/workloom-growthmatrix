@@ -1,10 +1,10 @@
-# WorkLoom 开源组件清单 · workloom-ai-growth
+# WorkLoom 开源组件清单 · workloom-ai-growthmatrix
 
 <!-- 自动生成，请勿手改：node scripts/oss-inventory.mjs --write -->
 
 > 生成器：`scripts/oss-inventory.mjs`（离线事实）＋ `scripts/oss-watch.sh`（上游最新版本）
 > 仓库：workloom-ai/workloom-growthmatrix ｜ 最近一次上游扫描：2026-09-19T10:10:43.000Z
-> 统计：登记组件 103 个 ｜ npm 直接依赖 163 个 ｜ Python 依赖 5 个 ｜ 容器镜像 3 个
+> 统计：登记组件 98 个 ｜ npm 直接依赖 163 个 ｜ Python 依赖 5 个 ｜ 容器镜像 2 个
 
 ## 0. 维护机制（四件事）
 
@@ -59,7 +59,7 @@
 | 36 | three-stdlib | [github.com/pmndrs/three-stdlib](https://github.com/pmndrs/three-stdlib) · MIT | 2.36.1 | 2.36.1 | 运行时 | apps/web | three 官方 examples 的 TS 移植；与 three 主版本对齐 |
 | 37 | pixi.js | [github.com/pixijs/pixijs](https://github.com/pixijs/pixijs) · MIT | 6.5.10 | **8.21.0** ⬆ | 运行时 | apps/web（数字人/2D 舞台） | 当前锁 v6 线（pixi-live2d-display 兼容上限）；升级 v7/v8 必须同步替换 live2d 显示层 |
 | 38 | pixi-live2d-display | [github.com/guansss/pixi-live2d-display](https://github.com/guansss/pixi-live2d-display) · MIT | 0.4.0 | 0.4.0 | 运行时 | apps/web（Live2D 数字人） | 0.4.0 仅支持 pixi v6 线；升级前先确认上游是否已适配 pixi v7+，否则锁版不动 |
-| 39 | grok-ball（织球 LoomBall 上游引擎） | [github.com/tycoding/grok-ball](https://github.com/tycoding/grok-ball) · MIT | 1.0.0 | —（未扫描） | 运行时 | apps/web/src/vendor/loomball（单文件 SVG 表情球引擎，118KB，零运行依赖，随仓 vendor + PINNED 锁 commit） | AI 班组状态可视化引擎：用 emotionId 表达岗位/班组工作状态（T-2026-0926-0002，点名单向移植自 workloom-growth T-2026-0926-0019）。产品内命名「织球 LoomBall」，上游兼容门面已在适配层删除（见 vendor/loomball/NOTICE.md）；升级走评审 + 重跑织球四份单测 + 三接入面真机走查，永不自动升级 |
+| 39 | grok-ball（织球 LoomBall 上游引擎） | [github.com/tycoding/grok-ball](https://github.com/tycoding/grok-ball) · MIT | 1.0.0 | —（未扫描） | 运行时 | apps/web/src/vendor/loomball（单文件 SVG 表情球引擎，118KB，零运行依赖，随仓 vendor + PINNED 锁 commit） | AI 班组状态可视化引擎：用 emotionId 表达岗位/班组工作状态（T-2026-0926-0019）。产品内命名「织球 LoomBall」，上游兼容门面已在适配层删除（见 vendor/loomball/NOTICE.md）；升级走评审 + 重跑织球四份单测 + 三接入面真机走查，永不自动升级 |
 | 40 | Electron | [github.com/electron/electron](https://github.com/electron/electron) · MIT | 44.1.1 | **44.4.2** ⬆ | 运行时 | apps/desktop | 桌面壳（正式产品形态）；升级必须过打包载荷校验、真实窗口响应式与托盘/夜班行为验收 |
 | 41 | electron-builder | [github.com/electron-userland/electron-builder](https://github.com/electron-userland/electron-builder) · MIT | 26.15.3 | 26.15.3 | 开发/构建 | apps/desktop（打包/签名） | 安装包与签名链路；升级后过 app:pack / app:dist 与发布资产校验 |
 | 42 | Playwright | [github.com/microsoft/playwright](https://github.com/microsoft/playwright) · Apache-2.0 | 1.63.0 | 1.63.0 | 开发/构建 | 三端 E2E（apps/*）、packages/base/computer-use/toolkit（Python 版，随工具链安装） | E2E 与 computer-use 浏览器驱动共用；升级必须重建 Linux 视觉基线（CNB ui-gate 在同一镜像内跑）；Python 侧版本由 toolkit/requirements.txt 约束 |
@@ -85,7 +85,7 @@
 | 62 | browser-use | [github.com/browser-use/browser-use](https://github.com/browser-use/browser-use) · MIT | 停车场（L4 冷启动探索，规划位） | 0.13.10 | 停车场（已选型未引入） | 浏览器自动化分层执行面（L4 探索） | 只用于新平台冷启动，探明后必须固化为 L3 剧本；不得直接进生产主路径 |
 | 63 | Skyvern | [github.com/Skyvern-AI/skyvern](https://github.com/Skyvern-AI/skyvern) · AGPL-3.0 | 停车场（视觉抗改版降级路径，规划位） | 1.0.48 | 停车场（已选型未引入） | 浏览器自动化（视觉驱动降级路径） | ⚠ AGPL-3.0：只允许独立进程形态，禁止链接进分发包；启用前过法务与出站声明 |
 | 64 | computer-use（vendored 工具箱） | [github.com/anthropics/anthropic-quickstarts](https://github.com/anthropics/anthropic-quickstarts) · MIT | repo-vendored-2026-08 | —（未扫描） | 运行时 | packages/base/computer-use（三层感知：CDP/AXTree/截图） | vendored 进仓并本地加固；上游为参考实现（无版本号），升级=人工比对；生产部署纪律见 docs/computer-use-production.md；publish-rpa 的 BrowserDriver 上游 |
-| 65 | SRT Whiteboard Animation（手绘白板渲染器，vendored） | [github.com/geeklee/srt-whiteboard-animation](https://github.com/geeklee/srt-whiteboard-animation) · MIT | vendor-696a724 | —（未扫描） | 运行时 | vendor/srt-whiteboard（scripts/：parse_srt / render_stream_whiteboard / stream_render / merge_scenes / render_annotation_preview / prepare_env）、apps/server/src/video/whiteboard（引擎桥 + 编排：provider/router/srt/narration/lineart/annotate/mux）、scripts/whiteboard/lineart_tools.py（本仓扩展：sketch / analyze / check / hand） | 字幕驱动的手绘白板渲染器：本地确定性 CPU 渲染、零 API 依赖、MIT 可商用。Python 依赖闭包见 vendor/srt-whiteboard/requirements.txt，venv 由 scripts/tools/whiteboard-env-install.mts 幂等安装、不入库 |
+| 65 | SRT Whiteboard Animation（手绘白板渲染器，vendored） | [github.com/geeklee/srt-whiteboard-animation](https://github.com/geeklee/srt-whiteboard-animation) · MIT | vendor-696a724 | —（未扫描） | 运行时 | vendor/srt-whiteboard（scripts/：parse_srt / render_stream_whiteboard / stream_render / merge_scenes / render_annotation_preview / prepare_env）、apps/server/src/video/whiteboard（引擎桥 + 编排：provider/router/srt/narration/lineart/annotate/mux）、scripts/whiteboard/lineart_tools.py（本仓扩展：sketch / analyze / check / hand） | 字幕驱动的手绘白板渲染器：本地确定性 CPU 渲染、零 API 依赖、无授权闸门（MIT 可商用）。随仓携带上游源码 + 执笔手素材（本仓改用自有中性素材 assets/whiteboard/drawing-hand-workloom.png，不用上游带作者标识的 drawing-hand.png）。运行时 Python 依赖闭包见 vendor/srt-whiteboard/requirements.txt（opencv-python/numpy/av/Pillow，全部宽松许可），venv 由 scripts/tools/whiteboard-env-install.mts 幂等安装、不入库。升级=人工比对上游 + 重跑官方样例与全链路出片（流程见 vendor/srt-whiteboard/PINNED.md） |
 | 66 | BrowserAct 技能包 | [github.com/browser-act/skills](https://github.com/browser-act/skills) · MIT | 观察项（技能市场执行面技能，L2 审批安装） | —（未扫描） | 观察项 | skills/registry/browser-act（执行面技能·可选） | freemium 云依赖（stealth/代理/打码付费）：适配纪律 proxyMode=custom-only、凭据留在客户本机、出站 api.browseract.com 全声明；未进入默认运行时 |
 | 67 | Tencent BrowserSkill | [github.com/Tencent/BrowserSkill](https://github.com/Tencent/BrowserSkill) · MIT | 观察项（2026-08-26 评估：Borrow 协议可借鉴） | cli-v0.3.0 | 观察项 | 浏览器桥接对照组（publish-rpa 权限模型参照） | 只作对照评估，暂不入运行时；publish-rpa 真机发布的权限模型参照对象 |
 | 68 | Scrapling | [github.com/D4Vinci/Scrapling](https://github.com/D4Vinci/Scrapling) · BSD-3-Clause | 观察项（技能市场执行面技能） | v0.4.15 | 观察项 | skills/registry/scrapling-collector（纯本地零出站） | 纯本地零出站采集技能；经 skill:forge 集成，随技能市场分发 |
@@ -119,11 +119,6 @@
 | 96 | python-audio-separator（人声分离·可选引擎） | [github.com/nomadkaraoke/python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) · MIT | v0.47.0（2026-08-27，活跃维护，推荐档位 A 引擎） | v0.47.0（2026-08-27，GitHub Releases） | external-optional | bundles/ai-video/connectors/bgm-bridge/kit/ffmpeg-pin.json#optionalEngines（登记 + 降级路径）、Mac 配乐工位（外部安装，不随仓分发；WORKLOOM_BGM_DEMUCS 指定可执行文件） | UVR 模型族（MDX/VR/Demucs 系）的 CLI/Python 封装，是配乐工位「档位 A」深度学习分离的首选引擎（活跃维护、MIT）。未安装时工位按档位 B（ffmpeg 中心声道近似）执行并如实标注 quality=approximate；安装与否不影响作曲/混音主链路。 |
 | 97 | Demucs（人声分离·可选引擎） | [github.com/facebookresearch/demucs](https://github.com/facebookresearch/demucs) · MIT | v4.0.1（2023-09-07，上游仓库已归档） | v4.0.1（2023-09-07；仓库已归档） | external-optional | bundles/ai-video/connectors/bgm-bridge/kit/ffmpeg-pin.json#optionalEngines（登记 + 降级路径）、Mac 配乐工位（外部安装，不随仓分发） | htdemucs 两轨分离（vocals / no_vocals），MIT；**上游仓库已归档（2026-09-22 核验，最后推送 2024-04，最新发布 v4.0.1 / 2023-09）**，故只作兼容引擎保留，推荐改用 python-audio-separator。工位不内置其模型权重，也不随产品分发。 |
 | 98 | MusicGen / AudioCraft（评估后不采用） | [github.com/facebookresearch/audiocraft](https://github.com/facebookresearch/audiocraft) · 代码 MIT；**模型权重 CC-BY-NC 4.0（禁止商用）** | 未引入 | v1.3.0（2024-05-02） | evaluated-not-adopted | bundles/ai-video/skills/bgm-library-license/SKILL.md（许可陷阱条款）、bundles/ai-video/library/bgm-library/README.md（曲库对比表） | 文本生成音乐（MusicGen / MAGNeT / JASCO）与音频编解码（EnCodec）。**权重为 CC-BY-NC 4.0，输出不可直接用于商用交付**，因此配乐工位的默认路径是自算作曲（synth.mjs），而非该模型；仅在客户另行取得授权或纯研究场景才可评估接入。许可结论来自官方 README 的 License 段（2026-09-22 核验）。 |
-| 99 | font-library v1.1（字幕工位字体库：思源/Noto 系列） | [github.com/adobe-fonts/source-han-sans](https://github.com/adobe-fonts/source-han-sans) · SIL OFL 1.1 | 未引入 | Source Han Sans 2.004（release 分支，实测直链逐字节一致） | 素材/资产 | bundles/ai-video/library/font-catalog（打标档案 + 许可 + 逐文件 sha256）、bundles/ai-video/connectors/subtitle-bridge/kit（fonts-pin.json 引脚 + install-fonts.sh 安装）、Mac 字幕工位 ~/.workloom-subtitle/fonts（运行时字体，不进仓库） | 字幕工位字体：思源黑体/思源宋体（Source Han Sans/Serif CN、Noto Sans/Serif SC）。仓库只保存档案（打标/许可/sha256）与引脚，不携带字体二进制；安装走 kit/install-fonts.sh（--from-dir 离线导入或 --download 已核验直链），逐文件 sha256 校验并把 LICENSES.md 一并落盘（OFL 再分发要求）。本能力不做子集化（OFL 修改后再发布需改名）。升级必须重跑 kit/selftest.sh 与 runtime-smoke.mts。 |
-| 100 | 霞鹜文楷 LXGW WenKai（字幕工位字体） | [github.com/lxgw/LxgwWenKai](https://github.com/lxgw/LxgwWenKai) · SIL OFL 1.1 | 未引入 | v1.522（GitHub Releases，实测直链逐字节一致） | 素材/资产 | bundles/ai-video/library/font-catalog/font_db.json#fonts（lxgw-wen-kai）、Mac 字幕工位 ~/.workloom-subtitle/fonts/cn（运行时字体，不进仓库） | 知识区字幕首选（楷体/印刷体，艺术气息 5、粗细 2）。受控下载 release 资产 LXGWWenKai-Regular.ttf 并核验 sha256；未核验前不得用 --download。 |
-| 101 | 得意黑 Smiley Sans（字幕工位字体） | [github.com/atelier-anchor/smiley-sans](https://github.com/atelier-anchor/smiley-sans) · SIL OFL 1.1 | 未引入 | v2.0.1（GitHub Releases，实测摘包后逐字节一致） | 素材/资产 | bundles/ai-video/library/font-catalog/font_db.json#fonts（smiley-sans-oblique）、Mac 字幕工位 ~/.workloom-subtitle/fonts/cn（运行时字体，不进仓库） | 现代倾斜标题体（对标造字工房悦黑系列）。release 资产为 zip，安装脚本按 zipMember 取 SmileySans-Oblique.ttf 后再校验 sha256。 |
-| 102 | Google Fonts 字体组（字幕工位字体：ZCOOL 系列/马善政/志莽行书/流建毛草/龙藏体 + 15 款英文字体） | [github.com/google/fonts](https://github.com/google/fonts) · SIL OFL 1.1（站酷系列为站酷免费商用授权，Google Fonts 以 OFL-1.1 发布） | 未引入 | google/fonts main（滚动分支；逐文件 sha256 已核验部分见 fonts-pin.json#upstream.verifiedAt） | 素材/资产 | bundles/ai-video/library/font-catalog/font_db.json#fonts（25 款：中文 9 + 英文 16）、Mac 字幕工位 ~/.workloom-subtitle/fonts（运行时字体，不进仓库） | ZCOOL 快乐体/庆科黄油体/小薇、马善政毛笔楷书、志莽行书、流建毛草、龙藏体 + Inter/Montserrat/Playfair Display/Oswald/Cinzel/Dancing Script/Roboto/Bebas Neue/Anton/Archivo Black/Lobster/Pacifico/Bangers/Caveat/Poppins（Regular/Bold）。上游为 google/fonts main 分支 raw 直链，逐文件 sha256 核验结果写进 fonts-pin.json；未核验条目不得用 --download（走 --from-dir）。 |
-| 103 | FFmpeg + libass（字幕工位内核） | [github.com/FFmpeg/FFmpeg](https://github.com/FFmpeg/FFmpeg) · LGPL-2.1-or-later（libass 为 ISC；本工位使用本机 ffmpeg 构建，不随产品分发） | 未引入 | ffmpeg 6.0（工位实装自报）/ n8.0（上游）。仓内不 pin 版本：跟随工位安装，自检时如实上报版本号 | 随包二进制 | bundles/ai-video/connectors/subtitle-bridge（core/measure/cli/server/executor）、Mac 字幕工位（运行时二进制，不进仓库；WORKLOOM_SUBTITLE_FFMPEG_PATH 指定） | 字幕烧录内核：ass/subtitles（libass）+ bbox（文字墨迹实测）+ signalstats/edgedetect（画面可读性）+ crop。工位自检（kit/selftest.sh）会校验 ass 滤镜与编码器；缺 libass 直接判工位不可用，不做降级渲染。 |
 
 ## 2. 全量直接依赖（本仓事实，含上游最新）
 
@@ -305,11 +300,10 @@
 | `Pillow` | 12.3.0 | ==12.3.0 | vendor/srt-whiteboard/requirements.txt | —（未扫描） |
 | `playwright` | >=1.40.0（下限声明） | >=1.40.0 | packages/base/computer-use/toolkit/requirements.txt | 1.46.0 |
 
-### 2.3 容器镜像（3 个）
+### 2.3 容器镜像（2 个）
 
 | 镜像 | 出现位置 |
 |---|---|
-| `nats:2.11.4` | docker-compose.yml#nats |
 | `node:24.19.0-bookworm` | .cnb.yml |
 | `pgvector/pgvector:pg17` | .cnb.yml、docker-compose.yml#postgres |
 

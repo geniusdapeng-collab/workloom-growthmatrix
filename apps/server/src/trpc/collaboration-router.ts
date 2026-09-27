@@ -3,7 +3,7 @@
  * 纪律：全部走 RLS 上下文（service 层）；写动作落五元事件（contract.* / receipt.record）。
  */
 import { z } from "zod";
-import { agentProcedure, protectedProcedure, router, scopeOf, writeProcedure } from "./context.js";
+import { protectedProcedure, router, scopeOf, writeProcedure } from "./context.js";
 import {
   advanceContract, createContract, decisionPacket, fleetNarrative, getContract,
   listContracts, listReceipts, objectChanges, objectState, portfolioSummary, recordReceipt,
@@ -70,44 +70,4 @@ export const collaborationRouter = router({
   portfolio: protectedProcedure.query(async ({ ctx }) => portfolioSummary(scopeOf(ctx.identity).workspaceId)),
   /** 数字人单一叙事：组合看板 + 决策包 */
   narrative: protectedProcedure.query(async ({ ctx }) => fleetNarrative(scopeOf(ctx.identity).workspaceId)),
-  /**
-   * B-38 agent/system 写路径：数字员工与白名单系统组件经 agent 通道（共享密钥 + 名册校验）
-   * 写契约与回执。事件 who.type 落 agent/system（不再冒充人类成员）；围栏绑定取自名册，
-   * 网关三段瀑布照常判定（未声明围栏的 agent 写动作被拒）。
-   */
-  agent: router({
-    contracts: router({
-      create: agentProcedure
-        .input(z.object({
-          title: z.string().trim().min(1).max(200),
-          goal: z.string().trim().min(1).max(2000),
-          assigneePreset: z.string().trim().min(1).max(120),
-          verifierPreset: z.string().trim().min(1).max(120),
-          successCriteria: z.array(z.string().trim().min(1).max(300)).min(1).max(20),
-          budgetAmount: z.number().nonnegative().optional(),
-          currency: z.string().trim().min(1).max(8).optional(),
-          deadline: z.string().trim().max(40).nullable().optional(),
-          mode: z.enum(["m1_single", "m2_pipeline", "m3_blackboard", "m4_contract", "m5_campaign"]),
-        }))
-        .mutation(async ({ ctx, input }) => createContract(ctx.agentScope.workspaceId, ctx.agent, input)),
-      advance: agentProcedure
-        .input(z.object({
-          id: z.string().trim().min(1).max(120),
-          action: z.enum(["offer", "accept", "start", "deliver", "verify", "settle", "cancel"]),
-        }))
-        .mutation(async ({ ctx, input }) => advanceContract(ctx.agentScope.workspaceId, ctx.agent, input.id, input.action)),
-    }),
-    receipts: router({
-      record: agentProcedure
-        .input(z.object({
-          contractId: z.string().trim().min(1).max(120),
-          from: z.string().trim().min(1).max(120),
-          to: z.string().trim().min(1).max(120),
-          summary: z.string().trim().min(1).max(1000),
-          evidence: z.array(z.string().trim().min(1).max(300)).max(50).optional(),
-          qualityFlags: z.array(z.string().trim().min(1).max(80)).max(20).optional(),
-        }))
-        .mutation(async ({ ctx, input }) => recordReceipt(ctx.agentScope.workspaceId, ctx.agent, input)),
-    }),
-  }),
 });
