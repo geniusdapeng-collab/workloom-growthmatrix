@@ -31,6 +31,7 @@
         "presets/director.yml",
         "presets/distribution-operator.yml",
         "presets/field-inspector.yml",
+        "presets/hook-designer.yml",
         "presets/insight-analyst.yml",
         "presets/intel-binder.yml",
         "presets/intel-collector.yml",
@@ -89,6 +90,7 @@
         "skills/font-selection/SKILL.md",
         "skills/jenny-loom-research/SKILL.md",
         "skills/marketing-brief-parser/SKILL.md",
+        "skills/opening-hook-craft/SKILL.md",
         "skills/portrait-studio/SKILL.md",
         "skills/producer-gate-review/SKILL.md",
         "skills/publish-ops/SKILL.md",
@@ -690,7 +692,7 @@
   },
   "integrity": {
     "algorithm": "sha256",
-    "digest": "c88f7a1d2b8b7825cce5c1bfd4d6a2a691da9b8ce23fedb448ac3b626fce01d0",
+    "digest": "f9c197ed28e8672c24074e284555d381106d49046b2999f4d0faf0f4f289e955",
     "assets": {
       "connectors/bgm-bridge/cli.mjs": "d9f8b241c96dda5bce8a801ae0a6f0c29602d61d28497c74b0c91f62f0c94e21",
       "connectors/bgm-bridge/core.mjs": "c542f0e2880d595155b507e2c45bba8a3a45b8f7d51a0bd6fe9f1e9d146c71e7",
@@ -710,7 +712,7 @@
       "connectors/post-bridge/server-adapter.mts": "80780fbfef049f3690bdd14b591d59cd4e8ddfba6e9854344601a4ffb5073d48",
       "connectors/post-bridge/server.mjs": "5cf52a2b58fe4ad20118f1c02fe44ded25649d6c5d4a6911c4f9f1f36a2fcb1f",
       "connectors/subtitle-bridge/cli.mjs": "461e17a7de4458a5cef1198c22ec5fdcc720924adb433152a171139dfbd3e178",
-      "connectors/subtitle-bridge/core.mjs": "41e3c7ba36a3ea5657ac40fdecb0e8b12a4d4533e71af6d7276ebb436efb35fd",
+      "connectors/subtitle-bridge/core.mjs": "9c357129f24b509d2f8a7522fa7c4603add901beb252ec056df8e1da8df07be5",
       "connectors/subtitle-bridge/executor.ts": "ae5ad37e44a4407a2f6bc53499ac9adc7d4caeeed38d4b20ad2a358296c1deb1",
       "connectors/subtitle-bridge/kit/fonts-pin.json": "b3b19159777af663168dee1cb94e5c607e7875b96522d4b37de3627826987ce4",
       "connectors/subtitle-bridge/kit/install-fonts.sh": "2faf221c1431b9b35311d1721606d496664af9e2f451bd35b2a3af0f63e8ddcc",
@@ -1075,8 +1077,8 @@
       "library/templates/live-script-template.md": "1855ef6a161b435d20d99c345c35a74e1d98f6647fbb866cdc88a8b6a8cef93c",
       "library/templates/project-config-template.json": "d236841a1713bb0a664ba8b7cb6c50a481676e18986e076ee92c63af0475e398",
       "library/templates/prompt-v4-template.md": "0ec087e88bb119e2fce6233e1eaf4a1b7d44d23ae418fc220e3f542f302c7536",
-      "library/templates/scene-card-template.md": "1db045140ae41be4b3f32e1c08967b74d0fb2a7101a567e0c8054b2bd47ac8b1",
-      "library/templates/shot-card-v4-template.md": "46cd261292b95725f59576069131b9a772ef8b5c7a2cdf55bbbaf2117b0bad87",
+      "library/templates/scene-card-template.md": "7ea2445d4c5da1346bb18d8a2ccf55cd357cb0916a3d008877c071ead28aa8f5",
+      "library/templates/shot-card-v4-template.md": "715c63dd3b73b8e385c4deb92de65f3c60287130b9b0af496d491293b52b9f7c",
       "library/typography-recipes/recipes.json": "08009f8e2b1884c2d7c04b65e724c08ab45cbdd9c2576a135966065690953601",
       "model-policy.yml": "280be41a77f9a67e548aed1a3f1f4b358815ddb712707e61898188ddaeb9d40c",
       "onboarding/questline.yml": "96aad8de5bbad4e80906c4d8d5130f8932cb028820688605dee6f50d2aa66ca2",
@@ -1103,6 +1105,7 @@
       "presets/distribution-operator.yml": "64cb2950a4ffb5d6cd9014404d8964bb5d667fa0703a1d34299049d4ff932a4e",
       "presets/explainer-director.yml": "a1586c23ad2cf5303d19b6381b55678086765d387834431d4a583ff341dc5f37",
       "presets/field-inspector.yml": "6d472d55b25f2c5129ad018cf14cb764eef25bcd020e00d226e1bd568fcad05e",
+      "presets/hook-designer.yml": "c0943751b44d0fd1bc95039ca415208f0771c1993c33c83c97292e59a6eca693",
       "presets/insight-analyst.yml": "e9889db8a6992de9cdb9b42d938edfad419e1dbaebe6643a46f52a0335c94183",
       "presets/intel-binder.yml": "b6fa870dc45a0996963d4ed6ccce4fd829fe921f03f0bfc2b14bd4c30b376844",
       "presets/intel-collector.yml": "4ef715261b008ad664cb40a53d1c922c2a94b6be6659f77d63aef4ba4f36fa98",
@@ -1150,11 +1153,12 @@
       "skills/font-selection/SKILL.md": "d7377d79b9621568375218c86c19fdb75c3e4ce7a4176e71d20661039398f9e5",
       "skills/jenny-loom-research/SKILL.md": "d7eab8f47705713a9127fe6c108d7eeb4f8d15ed137feee09f4172a42900c922",
       "skills/marketing-brief-parser/SKILL.md": "eb209b6a96b78cd175be5ee2ee60bc7348e5a623c2afd2e89294e117b7b2bcfa",
+      "skills/opening-hook-craft/SKILL.md": "467251cfa16ab5be4078d0367c5b5d0d257d9ac8ba9d0eb2d1c161848a44fc21",
       "skills/portrait-studio/SKILL.md": "9ad3d41ae558a5255e577ea16248b4a581eb4062a30cc3ba5a17e2321e6a63b6",
-      "skills/producer-gate-review/SKILL.md": "a95e62bfd93fa4ba9313c76faf0743edb9c77819c4d141a6ecc50206ad17dc4f",
+      "skills/producer-gate-review/SKILL.md": "2ec6e5617fc09fc97db7207b2ef2f640e2ae1345ecc91ef070e25fb6866c6023",
       "skills/publish-ops/SKILL.md": "dd929d5ea42af3672a773dda05c13a26027780f6d682e532ef8c83fe9fe2a36c",
       "skills/render-ops/SKILL.md": "05108411ffc7d6e63ed01b8deb67d56df34faf3d26fb1196cf0a3822e7aae6a5",
-      "skills/shot-prompt-craft/SKILL.md": "bed3f7154a9a91e6e741b3961d6bc1172a14fbb3f45206d4e504fca3ef6d10cb",
+      "skills/shot-prompt-craft/SKILL.md": "cc08aae3e37f2e70d5caf57b29739245c734240c6598f18c7be7a21773a8df47",
       "skills/subtitle-delivery-spec/SKILL.md": "c12f16c7353c35ee3f75a800e15a6ef35e1556c872eb7e6b2c7fc06078f9cfe2",
       "skills/subtitle-layout-design/SKILL.md": "dc203d2686272ec1c52b2f4b362c06059ef74aa2434a127de2b8967770685d2f",
       "skills/talkcraft-ops/SKILL.md": "9bfa7996abbe2f56478b48eb074e456a130de3e7cb7282bc1d576bfa9f7b0ff6",
@@ -1168,7 +1172,7 @@
     "signature": {
       "algorithm": "ed25519",
       "keyId": "ed25519-12613d8b27999511",
-      "value": "Dhjw//gi1KxDRSp92SnSl3HgiibJENuJD4/uoXbVPvSAQTOrzLP+wwKdLCUgOo8LTsvKYb8JCdOnD8nMk7+VDw=="
+      "value": "qmHaz95fbYQhkieuygrJe5X1Oh6+b2HvN3OKvzD9fsOGvW9I0SlAAxsKxEppMp8WjUomo09tvbPfLETcr8HKBA=="
     }
   }
 }

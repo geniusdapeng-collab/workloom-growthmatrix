@@ -216,7 +216,7 @@ describe("多领域融合：组合岗位编制裁决", () => {
      * 注：基座仓（WorkLoom-growth）与 growthtest 的合并资产集仍是 80 岗——**各副本按自身资产集复算**，
      * 不把某一副本的数字硬套到另一副本（这条纪律在 r12/r13 的移植里已经踩过一次）。
      */
-    expect(keys.length).toBe(81);
+    expect(keys.length).toBe(82);
   });
 
   it("同名岗位按主包声明落到权威归属包", () => {
