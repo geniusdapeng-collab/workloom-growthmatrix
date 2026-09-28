@@ -13,7 +13,6 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { sharedLayoutPixels } from "../lib/useAskRail";
-import { PRODUCT_NAME } from "../lib/product";
 import { useNavigationAccess } from "./NavigationAccess";
 
 type NavMode = "expanded" | "collapsed" | "hidden";
@@ -276,7 +275,7 @@ export function SideNav({ entries: providedEntries }: { entries?: readonly Navig
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="inline-block h-4 w-4 shrink-0 rotate-45 rounded gold-grad shadow-[0_0_14px_rgba(255,160,60,.6)]" />
           <div className="min-w-0 flex-1 leading-tight">
-            <div className="break-words bg-gradient-to-r from-gold to-gold2 bg-clip-text text-[14px] font-black leading-snug text-transparent">{PRODUCT_NAME}</div>
+            <div className="bg-gradient-to-r from-gold to-gold2 bg-clip-text text-[14px] font-black tracking-wider text-transparent">WorkLoom</div>
             <div className="break-words text-body text-ink3">企业数字员工即时协作</div>
           </div>
           {mobile && (

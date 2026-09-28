@@ -119,6 +119,4 @@ WorkLoom 是“一个基座、一个运营中枢、N 个行业自主经营系统
 
 ## 本仓专属规则
 
-本仓为 **Growthmatrix·骇客帝国**（`workloom-ai/workloom-growthmatrix`），实行双向隔离。上方共享受控区块与根级全景/开发协议是从 Growth 复制时冻结的来源快照，不接收持续下发，也不回流。不得对本仓执行 provision、fanout 或 base-sync；冻结来源与机器身份见 `.workloom-isolation.json`。
-
 请把本仓独有的职责、命令、验证要求与例外写入根级 AGENTS.repo.md 或更近层级的 AGENTS.md / AGENTS.override.md；不得修改上方受控区块来放宽公共安全不变量。

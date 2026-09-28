@@ -40,12 +40,14 @@ import { SubmissionError } from "./gen/submission-ledger.js";
 import { canonicalRenderJson } from "./gen/compiled-request.js";
 import { loadQualifiedRenderInput } from "./production-authority.js";
 import { productionRouter } from "./production-router.js";
+import { filmRouter } from "./film-router.js";
 import { createPublishTask, executePublishTask, fenceOverrideEnabled } from "./gen/publish.js";
 import { mediaUrl } from "./gen/ingest.js";
 /** PollReport 类型再导出（web 端 AppRouter 类型可移植性，TS2883） */
 export type { PollReport } from "./render-poller.js";
 import { dealRouter } from "./deal.js";
 import { getRun, startRun, startVideoProjectRun, summarizeWorkspaceRuns, StudioWorkerError } from "./studio-worker.js";
+import { resolveScenePolicyForIntent, ScenePolicyRouteError } from "./scene-policy-routing.js";
 import { makeStageArchive } from "./archive-host.js";
 import { readArchiveSummary, resumeProject, scanStaleRunsOnStartup } from "./archive-resume.js";
 import { applyRouteToMetadata, buildPipelineIntent, routeVideoPipeline } from "@hyperreality/video-studio";
@@ -139,6 +141,16 @@ function renderScriptRethrow(err: unknown): never {
   if (err instanceof RenderScriptError) {
     throw new TRPCError({
       code: err.code === "NOT_FOUND" ? "NOT_FOUND" : "BAD_REQUEST",
+      message: err.message,
+    });
+  }
+  throw err;
+}
+
+function scenePolicyRethrow(err: unknown): never {
+  if (err instanceof ScenePolicyRouteError) {
+    throw new TRPCError({
+      code: err.kind === "catalog" ? "PRECONDITION_FAILED" : "BAD_REQUEST",
       message: err.message,
     });
   }
@@ -479,15 +491,23 @@ const studioRouter = router({
             via: decision.via,
           };
         }
-        const runId = startRun(scope, {
-          projectId: input.projectId,
-          intent: buildPipelineIntent(input.intent, {
-            durationSec: 30,
-            aspectRatio: decision.route === "marketing" ? "9:16" : undefined,
-          }),
-          metadata: applyRouteToMetadata(input.metadata, decision),
-          isMarketing: decision.route === "marketing",
-        });
+        let runId: string;
+        try {
+          const selectedScenePolicy = resolveScenePolicyForIntent(input.intent, input.metadata);
+          runId = startRun(scope, {
+            projectId: input.projectId,
+            rawIntent: input.intent,
+            intent: buildPipelineIntent(input.intent, {
+              durationSec: 30,
+              aspectRatio: decision.route === "marketing" ? "9:16" : undefined,
+            }),
+            metadata: applyRouteToMetadata(input.metadata, decision),
+            isMarketing: decision.route === "marketing",
+            selectedScenePolicy,
+          });
+        } catch (err) {
+          scenePolicyRethrow(err);
+        }
         return { kind: "routed" as const, runId, projectId: input.projectId, pipeline: decision.route };
       }
 
@@ -535,6 +555,8 @@ const studioRouter = router({
       try {
         // 与「右栏派活识别出视频目标」共用同一条标准管线入口（studio-worker#startVideoProjectRun）
         const started = await startVideoProjectRun(scope, {
+          rawIntent: input.intent,
+          customerMetadata: input.metadata ?? null,
           intent: buildPipelineIntent(input.intent, {
             durationSec: 30,
             aspectRatio: decision.route === "marketing" ? "9:16" : undefined,
@@ -552,6 +574,7 @@ const studioRouter = router({
           via: decision.via,
         };
       } catch (err) {
+        if (err instanceof ScenePolicyRouteError) scenePolicyRethrow(err);
         if (err instanceof StudioWorkerError && err.code === "LLM_MISSING") {
           throw new TRPCError({ code: "PRECONDITION_FAILED", message: err.message });
         }
@@ -613,13 +636,36 @@ const studioRouter = router({
       `SELECT count(*)::text AS n FROM approvals WHERE workspace_id=$1 AND status='pending'`,
       [scope.workspaceId],
     );
+    /**
+     * X-01（第四轮实测，P0）：状态眼此前只认**进程内视频 run 注册表**——quest/agent/ask 的
+     * 线程域完全不在投影里，于是"对话框派了活、右下角球一直待机"，且服务端重启后连视频 run 也归零。
+     * 这里把线程域（与 approvals 同级的只读 SQL）并入活跃信号；注册表只保留视频管线的深水信息。
+     */
+    const threadRows = await scopedQuery<{ running: string; pending: string; failed: string }>(
+      getAppPool(),
+      scope,
+      `SELECT count(*) FILTER (WHERE status='running')::text AS running,
+              count(*) FILTER (WHERE status='pending_review')::text AS pending,
+              count(*) FILTER (WHERE status='failed' AND updated_at > now() - interval '15 minutes')::text AS failed
+         FROM threads WHERE workspace_id=$1`,
+      [scope.workspaceId],
+    );
+    const threadRunning = Number(threadRows[0]?.running ?? 0);
+    const threadPendingReview = Number(threadRows[0]?.pending ?? 0);
+    const threadFailedRecent = Number(threadRows[0]?.failed ?? 0);
     return {
-      activeRuns: summary.running + summary.awaitingApproval,
-      running: summary.running,
+      activeRuns: summary.running + summary.awaitingApproval + threadRunning,
+      running: summary.running + threadRunning,
       awaitingApproval: summary.awaitingApproval,
       pendingApprovals: Number(rows[0]?.n ?? 0),
-      failedRecent: summary.failedRecent,
+      failedRecent: summary.failedRecent + threadFailedRecent,
       activeRunIds: summary.activeRunIds,
+      /** 线程域明细（quest/agent/ask）：织伴状态眼与"班组在忙什么"同源 */
+      threads: {
+        running: threadRunning,
+        pendingReview: threadPendingReview,
+        failedRecent: threadFailedRecent,
+      },
     };
   }),
 
@@ -639,13 +685,17 @@ const studioRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const scope = scopeOf(ctx.identity);
-      return resumeProject(scope, {
-        projectId: input.projectId,
-        fromStage: input.fromStage,
-        intent: input.intent,
-        startRun: (runInput) => startRun(scope, runInput),
-        actor: { id: ctx.identity.memberNo, type: "human" },
-      });
+      try {
+        return await resumeProject(scope, {
+          projectId: input.projectId,
+          fromStage: input.fromStage,
+          intent: input.intent,
+          startRun: (runInput) => startRun(scope, runInput),
+          actor: { id: ctx.identity.memberNo, type: "human" },
+        });
+      } catch (err) {
+        scenePolicyRethrow(err);
+      }
     }),
 
   /** 档案只读视图（任务详情页「制片档案」标签数据源）：manifest + 台账 + 最近 20 条事件 + 关联发现 */
@@ -1324,6 +1374,8 @@ const genRouter = router({
 export const videoRouter = router({
   studio: studioRouter,
   production: productionRouter,
+  /** 固定影片工位（T-2026-0927-0039）：公开 full-chain 入口只提作业与读状态，外呼在服务通道内留账。 */
+  film: filmRouter,
   cms: cmsRouter,
   render: renderRouter,
   gen: genRouter,

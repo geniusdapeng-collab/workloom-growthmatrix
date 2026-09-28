@@ -42,7 +42,7 @@
 - **普通路径**：同一文件被两个 open PR 同时修改 → 后到者拒（`LOCK_OVERLAP_MODE=warn` 可临时降级为告警）。
 - 检测由 `scripts/ci/verify-lock-conflict.mjs` 在 PR 流水线自动执行，无需手工维护锁表；脚本按「PR 编号 / 分支名 / 源分支提交 SHA」三重排除自身 PR。
 - 冲突处置：排队等待先到者合并；紧急任务转人工调度。
-- **事件语义（2026-09-27 修订）**：拦截只发生在 **PR 事件**（先到先得，后到者排队）；**push 事件**（main 上的合并提交）下重叠降级为**提醒**——合并已经发生，门禁拦不住任何东西，若仍判红则每次并发合并都会把 main 打红（实测：`workloom-growth` #211 合入后，因在途 #206/#209 同改 `bundles/ai-video/bundle.json` 被判红，同一内容 PR 门禁全绿）。需要 push 也按 fail 处理时用 `LOCK_OVERLAP_MODE=fail` 或 `--strict`。
+- **事件语义（2026-09-27 修订）**：拦截只发生在 **PR 事件**（先到先得，后到者排队）；**push 事件**（main 上的合并提交）下重叠降级为**提醒**——合并已经发生，门禁拦不住任何东西，若仍判红则每次并发合并都会把 main 打红（实测：`workloom-growthmatrix` #211 合入后，因在途 #206/#209 同改 `bundles/ai-video/bundle.json` 被判红，同一内容 PR 门禁全绿）。需要 push 也按 fail 处理时用 `LOCK_OVERLAP_MODE=fail` 或 `--strict`。
 
 ## 5. 提交规范（放宽版）
 
@@ -92,7 +92,7 @@ CNB 每仓**最多 10 个标签**（实测：创建第 11 个返回 201 但不�
 
 ## 10. 实验车道（fox / growth 等深度定制仓）
 
-问题：`workroom-fox` 与 `WorkLoom-growth` 在共享壳之上做了**深度游戏化定制**（fox：3D 汇报舞台 + 实景商业游戏 M2-a；growth：hud/star-ring/P0 的经营游戏化）。这些**不是基座能力**，如果强行与基座保持一致，会被两类机制抹掉或卡死：
+问题：`workroom-fox` 与 `WorkLoom-growthmatrix` 在共享壳之上做了**深度游戏化定制**（fox：3D 汇报舞台 + 实景商业游戏 M2-a；growth：hud/star-ring/P0 的经营游戏化）。这些**不是基座能力**，如果强行与基座保持一致，会被两类机制抹掉或卡死：
 
 1. **普通 base-sync**：若实验路径落在 `include` 内，同步会覆盖；
 2. **三端客户端基座升级**：受管根 `apps/{web,webb,webc}` 内的差异，只要不在 `allowedIndustryExtensionPaths` 白名单里，就会被判 `ILLEGAL_INDUSTRY_APP_PATH` / `MANAGED_FILE_MODIFIED` 并 **fail-close**（升级被拒）。
@@ -151,8 +151,8 @@ CNB 每仓**最多 10 个标签**（实测：创建第 11 个返回 201 但不�
 
 ## 11. 隔离副本车道（isolated：双向不同步，2026-09-22 新增）
 
-**背景**：`workloom-growthtest`（AI超增长·实验版）与 `workloom-growthmatrix`（骇客帝国·实验版）是 2026-09-21 从
-`WorkLoom-growth@a6dc89a` 完整复制出来的**激进改造实验副本**，内容暂时与基座拆分：基座内容不直接同步进这两仓，
+**背景**：`workloom-growthmatrixtest`（AI超增长·实验版）与 `workloom-growthmatrix`（骇客帝国·实验版）是 2026-09-21 从
+`WorkLoom-growthmatrix@a6dc89a` 完整复制出来的**激进改造实验副本**，内容暂时与基座拆分：基座内容不直接同步进这两仓，
 这两仓的内容也不直接回流基座（产品所有者 2026-09-22 明确指令）。
 
 **与 §10 实验车道的区别**：实验车道仍在同步队列内（拿基座资产、只是实验路径受护栏保护）；隔离副本**完全不在同步队列内**，
@@ -167,10 +167,10 @@ CNB 每仓**最多 10 个标签**（实测：创建第 11 个返回 201 但不�
 
 ```json
 {
-  "repo": "workloom-ai/workloom-growthtest",
+  "repo": "workloom-ai/workloom-growthmatrixtest",
   "lane": "isolated",
   "syncPolicy": "none-in-none-out",
-  "copiedFrom": "workloom-ai/WorkLoom-growth@a6dc89a",
+  "copiedFrom": "workloom-ai/WorkLoom-growthmatrix@a6dc89a",
   "isolatedSince": "2026-09-21",
   "declaredBy": "product-owner",
   "declaredAt": "2026-09-22",
@@ -267,7 +267,7 @@ node scripts/tools/experiment-guard.mjs [--check]
 2. 协议资产副本 + `.cnb.yml` 协议门禁 stage；
 3. 本仓写入 `sync/child-repos.json`（舰队清单），后续 base-sync 波次照常覆盖。
 
-> 注意：新仓若与既有仓同 `productId`（例如 `WorkLoom-growth` 与 `workloom` 都是 `workloom-ai-acquisition`），说明它是同一产品的第二实例或副本——纳管只保证协议一致，**产品身份（productId/端口/演示工作区）需要人确认后统一**。
+> 注意：新仓若与既有仓同 `productId`（例如 `WorkLoom-growthmatrix` 与 `workloom` 都是 `workloom-ai-acquisition`），说明它是同一产品的第二实例或副本——纳管只保证协议一致，**产品身份（productId/端口/演示工作区）需要人确认后统一**。
 
 > 补充（2026-09-22）：若新仓是**有意与基座拆分的隔离副本**（如 growthtest / growthmatrix），不要纳管——按 §11 写入 `isolatedRepos` 并保持双向不同步；只有产品所有者明确要求回到受控舰队时才重新纳管。
 

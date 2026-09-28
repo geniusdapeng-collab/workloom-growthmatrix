@@ -255,9 +255,9 @@ await probeRoutes(page, [
 {
   const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: "zh-CN" });
   await mobileContext.addInitScript(({ token, workspaceSlug }) => {
-    sessionStorage.setItem("workloom:workloom-ai-growthmatrix:b-mobile:access-token", token);
-    localStorage.setItem("workloom:workloom-ai-growthmatrix:b-mobile:workspace", workspaceSlug);
-    localStorage.removeItem("workloom:workloom-ai-growthmatrix:b-mobile:guest");
+    sessionStorage.setItem("workloom:workloom-ai-acquisition:b-mobile:access-token", token);
+    localStorage.setItem("workloom:workloom-ai-acquisition:b-mobile:workspace", workspaceSlug);
+    localStorage.removeItem("workloom:workloom-ai-acquisition:b-mobile:guest");
   }, { token: report.token = await (async () => {
     const res = await page.request.post(`${API}/trpc/auth.loginAs`, { data: { workspaceSlug: WORKSPACE_SLUG, memberNo: MEMBER_NO } });
     return (await res.json())?.result?.data?.token;

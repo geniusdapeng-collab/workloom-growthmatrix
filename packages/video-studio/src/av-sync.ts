@@ -33,6 +33,12 @@ export const AV_SYNC_POLICY: AvSyncPolicy = {
   monotonicRatio: 0.6,
 };
 
+/** A film shorter than three shots must still measure every available shot. */
+export function avSyncPolicyForClipCount(clipCount: number): AvSyncPolicy {
+  if (!Number.isInteger(clipCount) || clipCount < 1) throw new Error("AV_SYNC_INVALID_CLIP_COUNT");
+  return { ...AV_SYNC_POLICY, minMeasurable: Math.min(AV_SYNC_POLICY.minMeasurable, clipCount) };
+}
+
 export interface AvSyncSample {
   shotId: string;
   /** 在成片里的序号（从 0 起），用于判漂移方向 */
@@ -204,9 +210,8 @@ export function verifyAvSyncEvidence(
   if (!Number.isInteger(expected.clipCount) || expected.clipCount < 1 || report.clipCount !== expected.clipCount) {
     return fail("音画报告镜头数量与当前分镜不一致");
   }
-  // The composer lowers only the measurable-window count for films shorter than three shots.
-  const effectivePolicy = { ...AV_SYNC_POLICY, minMeasurable: Math.min(AV_SYNC_POLICY.minMeasurable, expected.clipCount) };
-  if (JSON.stringify(report.policy) !== JSON.stringify(effectivePolicy)) return fail("音画报告使用的判据不是当前版本");
+  const policy = avSyncPolicyForClipCount(expected.clipCount);
+  if (JSON.stringify(report.policy) !== JSON.stringify(policy)) return fail("音画报告使用的判据不是当前版本");
   if (!Array.isArray(report.samples) || report.samples.length !== expected.clipCount) {
     return fail("音画报告缺少逐镜测量样本");
   }
@@ -220,14 +225,14 @@ export function verifyAvSyncEvidence(
     }
     indexes.add(sample.index);
   }
-  const measured = evaluateAvSync(report.samples, effectivePolicy);
+  const measured = evaluateAvSync(report.samples, policy);
   if (report.ok !== measured.ok || report.measured !== measured.measured
     || report.maxAbsLagMs !== measured.maxAbsLagMs || report.driftMs !== measured.driftMs
     || JSON.stringify(report.violations) !== JSON.stringify(measured.violations)) {
     return fail("音画报告结论与逐镜实测值不一致");
   }
   if (measured.ok) return { ok: true, detail: `当前母版 ${measured.measured} 镜音画实测通过`, measured: measured.measured };
-  if (expected.allowMeasuredDrift && measured.measured >= effectivePolicy.minMeasurable) {
+  if (expected.allowMeasuredDrift && measured.measured >= policy.minMeasurable) {
     return { ok: true, detail: `显式带瑕疵放行：${measured.violations.join("；")}`, measured: measured.measured };
   }
   return { ok: false, detail: measured.violations.join("；") || "音画实测未通过", measured: measured.measured };
