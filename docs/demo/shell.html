@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>手机壳预览 · Growthmatrix·骇客帝国</title>
+<title>手机壳预览 · WorkLoom</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -39,13 +39,13 @@
     <span id="name">加载中…</span>
   </div>
   <div class="phone"><iframe id="f" title="mobile-preview"></iframe></div>
-  <div class="tip">历史静态原型 · 示例数据 · 移动端容器模拟（390×872）· 仅用于预览，不代表真实小程序审核样式</div>
+  <div class="tip">移动端容器模拟（390×872）· 仅用于预览，不代表真实小程序审核样式</div>
 <script>
   const p = new URLSearchParams(location.search);
   const page = p.get("page") || "hotel-guest-app.html";
   document.getElementById("f").src = "./" + page;
   document.getElementById("name").textContent = page;
-  document.title = "Growthmatrix·骇客帝国 · " + page + " · 手机壳预览";
+  document.title = page + " · 手机壳预览";
 </script>
 </body>
 </html>

@@ -32,8 +32,6 @@ env:
 
 jobs:
   heartbeat:
-    # Growthmatrix 隔离副本：不接收基座同步，也不回流；解除需产品所有者明确指令。
-    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   AV_SYNC_POLICY,
+  avSyncPolicyForClipCount,
   buildCutAudioStep,
   candidateSyncWindows,
   crossCorrelationLag,
@@ -115,12 +116,12 @@ describe("verifyAvSyncEvidence", () => {
     expect(verifyAvSyncEvidence({ ...report(), ok: false }, expected).ok).toBe(false);
   });
 
-  it("两镜短片按合成器的两窗口判据复核", () => {
-    const pair = samples.slice(0, 2);
-    const policy = { ...AV_SYNC_POLICY, minMeasurable: 2 };
-    const evidence = { ...evaluateAvSync(pair, policy), output, outputSha256, clipCount: 2, policy };
-    expect(verifyAvSyncEvidence(evidence, { output, outputSha256, clipCount: 2 }).ok).toBe(true);
-    expect(verifyAvSyncEvidence({ ...evidence, policy: AV_SYNC_POLICY }, { output, outputSha256, clipCount: 2 }).ok).toBe(false);
+  it("两镜片采用两镜可测策略，仍须两镜都实测", () => {
+    const two = samples.slice(0, 2);
+    const short = { ...evaluateAvSync(two, avSyncPolicyForClipCount(2)), output, outputSha256,
+      clipCount: 2, policy: avSyncPolicyForClipCount(2) };
+    expect(verifyAvSyncEvidence(short, { ...expected, clipCount: 2 }).ok).toBe(true);
+    expect(verifyAvSyncEvidence({ ...short, samples: two.slice(0, 1) }, { ...expected, clipCount: 2 }).ok).toBe(false);
   });
 
   it("未测偏移不准借显式放行；已测超阈值必须显式声明", () => {

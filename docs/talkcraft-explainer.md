@@ -9,7 +9,7 @@
 
 一条独立的视频生产线：**一份口播稿 + 一条配音 → 字级对齐的图文动效解说片**。
 它把 [video-talkcraft](https://github.com/Vincentwei1021/video-talkcraft) 的动效资产（108 张配方卡）
-与确定性工具链，接进 Growthmatrix·骇客帝国既有的「提交 → 轮询 → 入库 → 制片档案 → 监制门 → 交付」链路。
+与确定性工具链，接进 Growth 既有的「提交 → 轮询 → 入库 → 制片档案 → 监制门 → 交付」链路。
 
 链路位置（与既有两条线并列）：
 
@@ -81,7 +81,7 @@ pnpm explainer:run -- \
   --task-id 验收-陈卓 \
   --profile chen-zhuo-film \
   --host-portraits bundles/ai-video/library/characters/model-01-chen-zhuo/portraits/v3 \
-  --brand-product "Growthmatrix·骇客帝国"
+  --brand-product "WorkLoom 获客增长系统"
 ```
 
 与服务端**共用同一条 pipeline**（`apps/server/src/video/explainer/pipeline.ts`），

@@ -21,13 +21,13 @@
  *     [--keep-temp] [--json]
  */
 import { execFileSync } from "node:child_process";
+import { createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
-  AV_SYNC_POLICY,
+  avSyncPolicyForClipCount,
   buildCutAudioStep,
   candidateSyncWindows,
   crossCorrelationLag,
@@ -75,6 +75,12 @@ function readAllPcm(file: string, sampleRate: number): Float32Array {
   );
   const view = new Float32Array(buf.buffer, buf.byteOffset, Math.floor(buf.byteLength / 4));
   return view.slice();
+}
+
+async function sha256File(file: string): Promise<string> {
+  const digest = createHash("sha256");
+  for await (const chunk of createReadStream(file)) digest.update(chunk);
+  return digest.digest("hex");
 }
 
 export function probeDuration(file: string): number {
@@ -218,7 +224,7 @@ if (transition && transitionDuration > 0) {
   let offset = 0;
   const steps: string[] = [];
   for (let index = 1; index < normalized.length; index += 1) {
-    // --transition-at 表示第 N 镜的入点（从 1 起）；循环 index 为从 0 起的镜号。
+    // --transition-at is the entering shot's 1-based number, not the zero-based input index.
     const useTransition = transitionAt.length === 0 || transitionAt.includes(index + 1);
     /** 硬切走 concat；0 秒 xfade 会在混合刀口上提前切走上一镜。 */
     const overlap = useTransition ? transitionDuration : 0;
@@ -350,9 +356,9 @@ const shotStarts: number[] = [];
   for (let index = 0; index < normalized.length; index += 1) {
     shotStarts.push(cursor);
     if (index < normalized.length - 1) {
-      const nextCut = index + 2;
+      const enteringShot = index + 2;
       const useTransition = Boolean(transition && transitionDuration > 0)
-        && (transitionAt.length === 0 || transitionAt.includes(nextCut));
+        && (transitionAt.length === 0 || transitionAt.includes(enteringShot));
       cursor += shotDurations[index]! - (useTransition ? transitionDuration : 0);
     }
   }
@@ -415,8 +421,7 @@ for (let index = 0; index < normalized.length; index += 1) {
     correlation: Number(best.correlation.toFixed(3)),
   });
 }
-// 短片只有两镜时最多可测两个窗口；要求每镜都可测，仍保留逐镜偏移及首末漂移硬闸。
-const avPolicy = { ...AV_SYNC_POLICY, minMeasurable: Math.min(AV_SYNC_POLICY.minMeasurable, normalized.length) };
+const avPolicy = avSyncPolicyForClipCount(normalized.length);
 const avReport = evaluateAvSync(avSamples, avPolicy);
 const avReportPath = join(dirname(out), `${basename(out).replace(/\.mp4$/i, "")}.av-sync.json`);
 writeFileSync(avReportPath, `${JSON.stringify({
@@ -427,7 +432,7 @@ writeFileSync(avReportPath, `${JSON.stringify({
   clipCount: normalized.length,
   retimeFactor,
   output: out,
-  outputSha256: createHash("sha256").update(readFileSync(out)).digest("hex"),
+  outputSha256: await sha256File(out),
 }, null, 2)}\n`, "utf8");
 console.log(`  ③-1 ${describeAvSync(avReport)}`);
 console.log(`       报告：${avReportPath}`);

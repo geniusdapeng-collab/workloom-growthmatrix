@@ -352,9 +352,9 @@ try {
 try {
   const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: "zh-CN" });
   await mobileContext.addInitScript(({ token, slug }) => {
-    sessionStorage.setItem("workloom:workloom-ai-growthmatrix:b-mobile:access-token", token);
-    localStorage.setItem("workloom:workloom-ai-growthmatrix:b-mobile:workspace", slug);
-    localStorage.removeItem("workloom:workloom-ai-growthmatrix:b-mobile:guest");
+    sessionStorage.setItem("workloom:workloom-ai-acquisition:b-mobile:access-token", token);
+    localStorage.setItem("workloom:workloom-ai-acquisition:b-mobile:workspace", slug);
+    localStorage.removeItem("workloom:workloom-ai-acquisition:b-mobile:guest");
   }, { token: PC_TOKEN, slug: WORKSPACE_SLUG });
   const mobilePage = await mobileContext.newPage();
   await mobilePage.goto(`${MB}/tasks`, { waitUntil: "domcontentloaded" });
@@ -621,7 +621,7 @@ REPORT.totals = {
 };
 
 const md = [];
-md.push("# Growthmatrix·骇客帝国 体验验收（5 类人 × 关键旅程 × 8 维度）");
+md.push("# GROWTH 体验验收（5 类人 × 关键旅程 × 8 维度）");
 md.push("");
 md.push(`- 生成时间：${REPORT.at}`);
 md.push(`- 走查通过：${REPORT.totals.passed}/${REPORT.totals.checks}；问题 ${REPORT.totals.issues}`);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Growthmatrix·骇客帝国 · PC 端演示</title>
+<title>视频经理 HyperReality · PC 端演示</title>
 <style>
 /* ===== 设计令牌：逐值镜像 apps/web/src/styles/tokens.css（§2.1 色板 / §3 字体 / §4.1 布局） ===== */
 :root{
@@ -442,7 +442,6 @@ table.ftab{width:100%;border-collapse:collapse;font-size:12px}
 
 /* AskRail 定稿：PC 单一入口为右侧通栏，旧悬浮球入口隐藏（交互收敛 D35） */
 .star-ring{display:none !important}
-.abar{flex-wrap:wrap}.logo{min-width:0}.logo .nm{overflow-wrap:anywhere}.logo svg{flex-shrink:0}
 </style>
 </head>
 <body>
@@ -450,7 +449,7 @@ table.ftab{width:100%;border-collapse:collapse;font-size:12px}
 
 <!-- ===== 演示导航（非产品界面：每个 Tab 对应一条真实路由） ===== -->
 <nav class="demo-nav">
-  <span class="dn-tag">历史静态原型 · 示例数据与路由</span>
+  <span class="dn-tag">DEMO NAV · 对应真实路由</span>
   <button class="dtab on" data-v="p0">P0 经营主页<span class="rt">/p0</span></button>
   <button class="dtab" data-v="p1">P1 工作台<span class="rt">/p1</span></button>
   <button class="dtab" data-v="p2">P2 任务页<span class="rt">/p2/T-101</span></button>
@@ -478,9 +477,9 @@ table.ftab{width:100%;border-collapse:collapse;font-size:12px}
         <path d="M6.4 4.9l2 2.2M10.6 4.5l2 2.2M14.8 4l2 2.2" stroke="#7a5410" stroke-width="1.1"/>
         <path d="M10.2 11.4v5.6l4.8-2.8z" fill="#ffffff"/>
       </svg>
-      <span class="nm">Growthmatrix·骇客帝国</span>
+      <span class="nm">视频经理</span>
     </div>
-    <span class="ws">Growthmatrix·骇客帝国 · <b>视频创作工作室</b></span>
+    <span class="ws">HyperReality · <b>视频创作工作室</b></span>
     <!-- LiveTicker 公司实况条（镜像 hud/LiveTicker.tsx：biz_events 投影 10s 轮询 · 断线 Mock 兜底 · 点击下钻 P0 经营主页） -->
     <button class="live-ticker" onclick="gotoV('p0')" title="公司实况 · 点击下钻 P0 经营主页">
       <span class="lt-dot"></span><span class="lt-tag">实况</span>

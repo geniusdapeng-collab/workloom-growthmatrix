@@ -77,36 +77,36 @@ describe("服务前台行业适配器契约", () => {
   });
 
   it("受控注册表只登记已审核的行业前台（获客用增 + 酒店试点），不含通用默认适配器", () => {
-    expect(registeredBusinessAdapterIds()).toEqual(["geo-growth.service-front-v1", "hotel.service-front-v1"]);
+    expect(registeredBusinessAdapterIds()).toEqual(["geo-growthmatrix.service-front-v1", "hotel.service-front-v1"]);
   });
 
-  it("跨 Bundle 伪造 adapterId 一律失败关闭（geo-growth 不得选择酒店实现）", () => {
-    // 安全不变量：受控目录按 bundleId 授权适配器。geo-growth 只能选择自己的
-    // geo-growth.service-front-v1；即使投影里写了 hotel.service-front-v1 也判 adapter-untrusted，
+  it("跨 Bundle 伪造 adapterId 一律失败关闭（geo-growthmatrix 不得选择酒店实现）", () => {
+    // 安全不变量：受控目录按 bundleId 授权适配器。geo-growthmatrix 只能选择自己的
+    // geo-growthmatrix.service-front-v1；即使投影里写了 hotel.service-front-v1 也判 adapter-untrusted，
     // 从而不会读到酒店订单/会员。
     const result = bindBusinessAdapter({
-      workspaceBundleId: "geo-growth",
-      activeInstalls: [{ id: "bi-geo", bundleId: "geo-growth" }],
-    }, () => projectionAs("geo-growth", {
+      workspaceBundleId: "geo-growthmatrix",
+      activeInstalls: [{ id: "bi-geo", bundleId: "geo-growthmatrix" }],
+    }, () => projectionAs("geo-growthmatrix", {
       ...hotelProjection.ui.serviceFront,
       adapterId: "hotel.service-front-v1",
     }));
-    expect(result).toMatchObject({ state: "adapter-untrusted", adapter: null, bundleId: "geo-growth" });
+    expect(result).toMatchObject({ state: "adapter-untrusted", adapter: null, bundleId: "geo-growthmatrix" });
   });
 
-  it("获客用增（geo-growth）由自己的 adapterId 显式启用产品前台", () => {
+  it("获客用增（geo-growthmatrix）由自己的 adapterId 显式启用产品前台", () => {
     const result = bindBusinessAdapter({
-      workspaceBundleId: "geo-growth",
-      activeInstalls: [{ id: "bi-geo", bundleId: "geo-growth" }],
-    }, () => projectionAs("geo-growth", {
+      workspaceBundleId: "geo-growthmatrix",
+      activeInstalls: [{ id: "bi-geo", bundleId: "geo-growthmatrix" }],
+    }, () => projectionAs("geo-growthmatrix", {
       ...hotelProjection.ui.serviceFront,
-      adapterId: "geo-growth.service-front-v1",
+      adapterId: "geo-growthmatrix.service-front-v1",
     }));
     expect(result).toMatchObject({
       state: "ready",
-      bundleId: "geo-growth",
+      bundleId: "geo-growthmatrix",
       installId: "bi-geo",
-      adapter: { id: "geo-growth.service-front-v1" },
+      adapter: { id: "geo-growthmatrix.service-front-v1" },
     });
     expect(result.adapter?.kbLexicon?.synonyms).toContainEqual(["增长", "获客"]);
   });

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { publishUhdDelivery } from "./uhd-delivery.js";
 
 const temporary: string[] = [];
@@ -11,94 +11,86 @@ const sha = (value: string) => createHash("sha256").update(value).digest("hex");
 
 function fixture() {
   const dir = mkdtempSync(join(tmpdir(), "uhd-publish-")); temporary.push(dir);
-  const stagingDir = join(dir, ".uhd-staging", "source-a");
-  const officialRoot = join(dir, "uhd"), publicDir = join(officialRoot, "versions", "release-a");
-  const latestFile = join(officialRoot, "latest.json");
-  mkdirSync(stagingDir, { recursive: true }); mkdirSync(officialRoot);
-  writeFileSync(join(officialRoot, "old-master.mp4"), "last approved release");
-  writeFileSync(join(officialRoot, "cover.png"), "old approved cover");
-  writeFileSync(join(officialRoot, "softsub.mp4"), "old approved soft subtitles");
-  writeFileSync(latestFile, '{"publicDir":"old-generation"}\n');
-  writeFileSync(join(stagingDir, "master.mp4"), "new reviewed master");
-  writeFileSync(join(stagingDir, "variant.mp4"), "new measured variant");
-  writeFileSync(join(stagingDir, "cover.png"), "new reviewed cover");
-  writeFileSync(join(stagingDir, "softsub.mp4"), "new verified soft subtitles");
+  const stagingDir = join(dir, ".uhd-staging", "run-new"), publicRoot = join(dir, "uhd");
+  const previous = join(publicRoot, "releases", "run-old");
+  const releaseId = "run-new", releaseDir = join(publicRoot, "releases", releaseId);
+  mkdirSync(stagingDir, { recursive: true }); mkdirSync(previous, { recursive: true });
+  writeFileSync(join(previous, "master.mp4"), "last approved release");
+  writeFileSync(join(publicRoot, "current.json"), JSON.stringify({ releaseId: "run-old", releaseDir: previous }));
+  writeFileSync(join(publicRoot, "legacy-flat.mp4"), "existing legacy public file");
+  const contents: Record<string, string> = {
+    "master.mp4": "new reviewed master", "variant.mp4": "new measured variant",
+    "cover.png": "approved cover", "softsub.mp4": "approved soft subtitle", "subtitles/zh.srt": "approved sidecar",
+  };
+  for (const [name, value] of Object.entries(contents)) {
+    mkdirSync(dirname(join(stagingDir, name)), { recursive: true });
+    writeFileSync(join(stagingDir, name), value);
+  }
   const manifestName = "delivery-manifest.json";
+  const assetHashes = Object.entries(contents).map(([name, value]) => ({ path: join(releaseDir, name), sha256: sha(value) }));
   writeFileSync(join(stagingDir, manifestName), JSON.stringify({
-    deliverable: { path: join(publicDir, "master.mp4"), sha256: sha("new reviewed master") },
-    variants: [{ path: join(publicDir, "variant.mp4"), sha256: sha("new measured variant") }],
-    assetSha256: [
-      { path: join(publicDir, "master.mp4"), sha256: sha("new reviewed master") },
-      { path: join(publicDir, "variant.mp4"), sha256: sha("new measured variant") },
-      { path: join(publicDir, "cover.png"), sha256: sha("new reviewed cover") },
-      { path: join(publicDir, "softsub.mp4"), sha256: sha("new verified soft subtitles") },
-    ],
+    deliverable: { path: join(releaseDir, "master.mp4"), sha256: sha(contents["master.mp4"]!) },
+    variants: [{ path: join(releaseDir, "variant.mp4"), sha256: sha(contents["variant.mp4"]!) }],
+    cover: { path: join(releaseDir, "cover.png") },
+    subtitles: { sidecarDir: join(releaseDir, "subtitles"), softsub: join(releaseDir, "softsub.mp4") },
+    assets: assetHashes,
   }));
-  return { stagingDir, officialRoot, publicDir, latestFile, manifestName,
-    assets: ["master.mp4", "variant.mp4", "cover.png", "softsub.mp4", manifestName] };
+  return { stagingDir, publicRoot, releaseId, releaseDir, manifestName,
+    assets: [...Object.keys(contents), manifestName] };
 }
 
-describe("UHD package publication", () => {
-  it("闸门未通过时不能将任何候选文件放进正式目录", async () => {
+describe("UHD immutable release publication", () => {
+  it("闸门未通过时旧 current、cover/softsub 和正式版本均不变", async () => {
     const input = fixture();
+    const pointer = readFileSync(join(input.publicRoot, "current.json"), "utf8");
     await expect(publishUhdDelivery({ ...input, approved: false })).rejects.toThrow("GATE_NOT_APPROVED");
-    expect(readFileSync(join(input.officialRoot, "old-master.mp4"), "utf8")).toBe("last approved release");
-    expect(readFileSync(join(input.officialRoot, "cover.png"), "utf8")).toBe("old approved cover");
-    expect(readFileSync(join(input.officialRoot, "softsub.mp4"), "utf8")).toBe("old approved soft subtitles");
-    expect(readFileSync(input.latestFile, "utf8")).toBe('{"publicDir":"old-generation"}\n');
-    expect(existsSync(input.publicDir)).toBe(false);
+    expect(readFileSync(join(input.publicRoot, "current.json"), "utf8")).toBe(pointer);
+    expect(existsSync(input.releaseDir)).toBe(false);
+    expect(existsSync(join(input.publicRoot, "cover.png"))).toBe(false);
+    expect(existsSync(join(input.publicRoot, "softsub.mp4"))).toBe(false);
   });
 
-  it("全闸通过后以一代目录发布母版、变体和清单", async () => {
+  it("全闸通过后新增不可变版本，并单次替换 current 指针", async () => {
     const input = fixture();
     const result = await publishUhdDelivery({ ...input, approved: true });
-    expect(result.files).toBe(5);
-    expect(readFileSync(join(input.publicDir, "master.mp4"), "utf8")).toBe("new reviewed master");
-    expect(readFileSync(join(input.publicDir, "variant.mp4"), "utf8")).toBe("new measured variant");
-    expect(readFileSync(join(input.publicDir, "cover.png"), "utf8")).toBe("new reviewed cover");
-    expect(readFileSync(join(input.publicDir, "softsub.mp4"), "utf8")).toBe("new verified soft subtitles");
-    expect(readFileSync(join(input.officialRoot, "old-master.mp4"), "utf8")).toBe("last approved release");
-    expect(existsSync(join(input.stagingDir, "master.mp4"))).toBe(true);
-    expect(JSON.parse(readFileSync(input.latestFile, "utf8")).publicDir).toBe(input.publicDir);
+    expect(result.files).toBe(6);
+    expect(JSON.parse(readFileSync(result.currentFile, "utf8")).releaseDir).toBe(input.releaseDir);
+    for (const name of ["master.mp4", "variant.mp4", "cover.png", "softsub.mp4", "subtitles/zh.srt", input.manifestName]) {
+      expect(existsSync(join(input.releaseDir, name))).toBe(true);
+    }
+    expect(readFileSync(join(input.publicRoot, "releases", "run-old", "master.mp4"), "utf8")).toBe("last approved release");
+    expect(readFileSync(join(input.publicRoot, "legacy-flat.mp4"), "utf8")).toBe("existing legacy public file");
   });
 
-  it("清单摘要伪绿时保持上一代目录完整", async () => {
-    const input = fixture();
-    const manifest = JSON.parse(readFileSync(join(input.stagingDir, input.manifestName), "utf8"));
-    manifest.variants[0].sha256 = sha("another variant");
-    writeFileSync(join(input.stagingDir, input.manifestName), JSON.stringify(manifest));
-    await expect(publishUhdDelivery({ ...input, approved: true })).rejects.toThrow("MANIFEST_DIGEST_MISMATCH");
-    expect(readFileSync(join(input.officialRoot, "old-master.mp4"), "utf8")).toBe("last approved release");
-    expect(readFileSync(join(input.officialRoot, "cover.png"), "utf8")).toBe("old approved cover");
-    expect(readFileSync(join(input.officialRoot, "softsub.mp4"), "utf8")).toBe("old approved soft subtitles");
-    expect(readFileSync(input.latestFile, "utf8")).toBe('{"publicDir":"old-generation"}\n');
-    expect(existsSync(input.publicDir)).toBe(false);
+  it("主封面、软字幕或字幕的摘要被篡改时旧 current 保持原样", async () => {
+    for (const name of ["cover.png", "softsub.mp4", "subtitles/zh.srt"]) {
+      const input = fixture();
+      const pointer = readFileSync(join(input.publicRoot, "current.json"), "utf8");
+      writeFileSync(join(input.stagingDir, name), "tampered bytes");
+      await expect(publishUhdDelivery({ ...input, approved: true })).rejects.toThrow("MANIFEST_DIGEST_MISMATCH");
+      expect(readFileSync(join(input.publicRoot, "current.json"), "utf8")).toBe(pointer);
+      expect(existsSync(input.releaseDir)).toBe(false);
+    }
   });
 
-  it("候选封面或软字幕摘要不符时保留旧正式文件", async () => {
+  it("新版本目录 rename 成功但 current 指针 rename 失败时旧 current 无空窗", async () => {
     const input = fixture();
-    writeFileSync(join(input.stagingDir, "cover.png"), "cover changed after review");
-    await expect(publishUhdDelivery({ ...input, approved: true })).rejects.toThrow("MANIFEST_DIGEST_MISMATCH");
-    expect(readFileSync(join(input.officialRoot, "cover.png"), "utf8")).toBe("old approved cover");
-    expect(readFileSync(join(input.officialRoot, "softsub.mp4"), "utf8")).toBe("old approved soft subtitles");
-    expect(readFileSync(input.latestFile, "utf8")).toBe('{"publicDir":"old-generation"}\n');
-  });
-
-  it("latest 指针替换失败时不宣称发布，旧指针与旧素材均不变", async () => {
-    const input = fixture();
-    await expect(publishUhdDelivery({ ...input, approved: true }, (from, to) => {
-      if (to === input.latestFile) throw new Error("pointer write failure");
+    const pointer = readFileSync(join(input.publicRoot, "current.json"), "utf8");
+    let calls = 0;
+    const failPointerMove = ((from: string, to: string) => {
+      calls += 1;
+      if (calls === 2) throw new Error("injected pointer rename failure");
       renameSync(from, to);
-    })).rejects.toThrow("pointer write failure");
-    expect(readFileSync(input.latestFile, "utf8")).toBe('{"publicDir":"old-generation"}\n');
-    expect(readFileSync(join(input.officialRoot, "cover.png"), "utf8")).toBe("old approved cover");
-    expect(readFileSync(join(input.officialRoot, "softsub.mp4"), "utf8")).toBe("old approved soft subtitles");
-    expect(existsSync(input.publicDir)).toBe(false);
+    }) as typeof renameSync;
+    await expect(publishUhdDelivery({ ...input, approved: true }, failPointerMove)).rejects.toThrow("injected pointer rename failure");
+    expect(readFileSync(join(input.publicRoot, "current.json"), "utf8")).toBe(pointer);
+    expect(readFileSync(join(input.publicRoot, "releases", "run-old", "master.mp4"), "utf8")).toBe("last approved release");
+    expect(existsSync(input.releaseDir)).toBe(false);
   });
 
   it("相对路径越界在复制前拒绝", async () => {
     const input = fixture();
     await expect(publishUhdDelivery({ ...input, assets: [...input.assets, "../escape"], approved: true })).rejects.toThrow("UNSAFE_PATH");
-    expect(existsSync(join(input.officialRoot, "old-master.mp4"))).toBe(true);
+    expect(JSON.parse(readFileSync(join(input.publicRoot, "current.json"), "utf8")).releaseId).toBe("run-old");
   });
 });

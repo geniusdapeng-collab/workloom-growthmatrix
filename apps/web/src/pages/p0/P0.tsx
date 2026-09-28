@@ -34,7 +34,6 @@ import { displayNameOf, hydrateAliases, reportTitleOf, selectReporters } from ".
 import { useNavigate } from "react-router";
 import { useNavigationAccess } from "../../shell/NavigationAccess";
 import { clientChineseText } from "@workloom/ui";
-import { PRODUCT_NAME } from "../../lib/product";
 
 /* ================= 类型 ================= */
 interface Satellite { id: string; presetKey: string; name: string; alias?: string | null; grade: string }
@@ -184,7 +183,7 @@ export default function P0() {
   const { bundle, entries, canAction, subject } = useNavigationAccess();
   const navigate = useNavigate();
   const canDispatch = canAction("task.dispatch");
-  const [wsName, setWsName] = useState(PRODUCT_NAME);
+  const [wsName, setWsName] = useState("WorkLoom");
   const [showWelcome, setShowWelcome] = useState(false);
   const [welcome, setWelcome] = useState<WelcomeState | null>(null);
   const bundleId = bundle?.bundleId ?? null;

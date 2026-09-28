@@ -10,7 +10,6 @@
  */
 import { useEffect, useState, type ReactNode } from "react";
 import { Icon } from "@workloom/ui";
-import { PRODUCT_NAME } from "../lib/product";
 
 type GateState = "probing" | "down" | "up";
 
@@ -89,7 +88,7 @@ function GuidePage() {
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ marginBottom: 8, color: "#d6dce4" }}><Icon name="star" size={40} /></div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: "#e8ebef", margin: "0 0 8px" }}>
-            {PRODUCT_NAME} 环境未就绪
+            WorkLoom 环境未就绪
           </h1>
           <p style={{ fontSize: 14, color: "#9aa2ac", margin: 0, lineHeight: 1.7 }}>
             前端页面已启动，但连不上后端服务（<code>localhost:8787</code>）。<br />
@@ -145,7 +144,7 @@ function ServiceUnavailablePage() {
     >
       <div style={{ maxWidth: 520, width: "100%" }}>
         <div style={{ marginBottom: 12, color: "#d6dce4" }}><Icon name="warning" size={36} /></div>
-        <h1 style={{ margin: "0 0 10px", fontSize: 22, overflowWrap: "anywhere" }}>{PRODUCT_NAME} 服务暂时无法连接</h1>
+        <h1 style={{ margin: "0 0 10px", fontSize: 22 }}>WorkLoom 服务暂时无法连接</h1>
         <p style={{ margin: 0, color: "#9aa2ac", fontSize: 14, lineHeight: 1.8 }}>
           系统正在自动重新连接。当前页面没有把连接失败显示成空数据，也没有执行任何业务操作；若长时间未恢复，请联系管理员。
         </p>
@@ -177,7 +176,7 @@ export function BackendGate({ children }: { children: ReactNode }) {
         background: "#0e1013", color: "#9aa2ac", fontSize: 14,
         fontFamily: "-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif",
       }}>
-        正在连接 {PRODUCT_NAME} 服务…
+        正在连接 WorkLoom 服务…
       </div>
     );
   }

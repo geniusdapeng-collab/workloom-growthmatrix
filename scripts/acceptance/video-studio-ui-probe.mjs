@@ -36,7 +36,7 @@ const TOKEN_KEY = "workloom:workloom-ai-growthmatrix:b-pc:access-token";
 const login = await fetch(`${API}/trpc/auth.loginAs`, {
   method: "POST",
   headers: { "content-type": "application/json" },
-  body: JSON.stringify({ workspaceSlug: "geo-growth", memberNo: "MEM-G01" }),
+  body: JSON.stringify({ workspaceSlug: "geo-growthmatrix", memberNo: "MEM-G01" }),
 }).then((r) => r.json());
 const token = login?.result?.data?.token;
 if (!token) {

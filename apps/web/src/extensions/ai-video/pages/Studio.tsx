@@ -14,7 +14,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { ensureDemoLogin, trpc } from "../../../lib/trpc";
-import { PRODUCT_NAME } from "../../../lib/product";
 import { Bridge } from "../../../shell/Bridge";
 import { BannerAlert, EmptyState, Skeleton } from "../../../components/hud";
 
@@ -237,8 +236,8 @@ export default function Studio() {
         accountId: publishAccount,
         assetId: job.asset_id ?? undefined,
         videoPath: job.local_path ?? job.playUrl ?? job.result_url ?? "",
-        caption: publishCaption || `${PRODUCT_NAME} 生成 · ${job.script_key ?? job.id}`,
-        tags: [PRODUCT_NAME, "AI视频"],
+        caption: publishCaption || `WorkLoom 生成 · ${job.script_key ?? job.id}`,
+        tags: ["WorkLoom", "AI视频"],
       }) as unknown as { taskId: string; level: string };
       const run = await trpc.video.publish.run.mutate({ taskId: created.taskId }) as unknown as {
         kind: string; level?: string; driver: string; overrideUsed: boolean; receipt?: { synced?: boolean };
