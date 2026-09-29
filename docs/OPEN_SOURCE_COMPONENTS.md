@@ -3,7 +3,7 @@
 <!-- 自动生成，请勿手改：node scripts/oss-inventory.mjs --write -->
 
 > 生成器：`scripts/oss-inventory.mjs`（离线事实）＋ `scripts/oss-watch.sh`（上游最新版本）
-> 仓库：workloom-ai/workloom-Growthmatrix ｜ 最近一次上游扫描：2026-09-28T17:13:25.000Z
+> 仓库：workloom-ai/workloom-growthmatrix ｜ 最近一次上游扫描：2026-09-29T12:20:03.000Z
 > 统计：登记组件 98 个 ｜ npm 直接依赖 163 个 ｜ Python 依赖 5 个 ｜ 容器镜像 2 个
 
 ## 0. 维护机制（四件事）
