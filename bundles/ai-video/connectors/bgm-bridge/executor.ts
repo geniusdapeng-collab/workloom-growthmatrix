@@ -69,6 +69,10 @@ export const BGM_BRIDGE_TOOLS = [
   "bgmwrite.mix",
   "bgmwrite.separate",
   "bgmwrite.best",
+  // 本体（core.mjs BGM_TOOLS）已实现、客户端此前漏登记的两个曲库工具——
+  // 漏登记等于「工位能做、客户端不放行」，由 scripts/check-tool-declarations.mts 守护（TOOL-DECL-01）
+  "bgmwrite.tag",
+  "bgmwrite.library",
 ] as const;
 
 const TOOL_SET: ReadonlySet<string> = new Set(BGM_BRIDGE_TOOLS);

@@ -21,6 +21,30 @@ import { generateBriefing, buildMemo, type BriefingKind } from "./briefing.js";
 export interface Scope { tenantId: string; workspaceId: string }
 
 /**
+ * 最近一次日汇总里的**全部数值指标**（行业无关）。
+ *
+ * 背景（2026-09-29 审计实证）：熔断节拍与回测节拍此前各自从 `store.daily.summary` 里写死取
+ * `occ`/`adr`——酒店专用指标名。增长行业（有效询盘数、AI 引用率等）即使灌了指标也读不到，
+ * 于是「KPI 跌破下限自动收紧自治带」「命中率回测」在非酒店行业永远空转。
+ * 现在统一走这里：原样返回所有数值字段，消费方按自己的键名（宪章 kpi_floor / 决策预期 metric）取数。
+ */
+export async function latestNumericKpi(c: pg.PoolClient, scope: Scope): Promise<Record<string, number>> {
+  const r = await c.query<{ payload: Record<string, unknown> }>(
+    `SELECT payload FROM biz_events WHERE workspace_id=$1 AND payload->'decision'->>'action'='store.daily.summary'
+     ORDER BY seq DESC LIMIT 1`,
+    [scope.workspaceId],
+  );
+  const after = ((r.rows[0]?.payload?.decision as Record<string, unknown> | undefined)?.after ?? {}) as Record<string, unknown>;
+  const out: Record<string, number> = {};
+  for (const [key, value] of Object.entries(after)) {
+    if (value === null || typeof value === "object") continue;
+    const n = typeof value === "number" ? value : Number(value);
+    if (Number.isFinite(n)) out[key] = n;
+  }
+  return out;
+}
+
+/**
  * CEO 节拍的归因主体（actor）必须带**本工作区 company-ceo 岗位声明的围栏绑定**。
  *
  * 网关段①（F2.10）会拒绝「未声明 fence_bindings 的 Agent 发起写类动作」，而 CEO 节拍
@@ -335,16 +359,9 @@ export async function runBreakerBeat(
   let charter = await loadCharter(app, scope);
   charter = await applyExpiryIfDue(app, scope, charter);
   if (!canExecute(charter.mode)) return { tripped: false, tightened: false, skipped: `${charter.mode}：熔断器仅在执行态生效` };
-  const kpi = await inTx(app, scope, async (c) => {
-    const r = await c.query<{ payload: Record<string, unknown> }>(
-      `SELECT payload FROM biz_events WHERE workspace_id=$1 AND payload->'decision'->>'action'='store.daily.summary'
-       ORDER BY seq DESC LIMIT 1`,
-      [scope.workspaceId],
-    );
-    const after = ((r.rows[0]?.payload?.decision as Record<string, unknown> | undefined)?.after ?? {}) as Record<string, unknown>;
-    return { occ: Number(after.occ ?? NaN), adr: Number(after.adr ?? NaN) };
-  });
-  const verdict = evalCircuitBreaker(charter, kpi as Record<string, number>);
+  // 行业无关：把日汇总里的全部数值指标交给宪章 kpi_floor 按名匹配（不再写死 occ/adr）
+  const kpi = await inTx(app, scope, (c) => latestNumericKpi(c, scope));
+  const verdict = evalCircuitBreaker(charter, kpi);
   if (!verdict.tripped || verdict.alreadyTightened) {
     return { tripped: verdict.tripped, tightened: verdict.alreadyTightened };
   }
@@ -395,24 +412,20 @@ export async function runOutcomeReviewBeat(
       [scope.workspaceId],
     )).rows;
     if (due.length === 0) return { reviewed: 0, hits: 0 };
-    // 最新 KPI
-    const kpi = await c.query<{ payload: Record<string, unknown> }>(
-      `SELECT payload FROM biz_events WHERE workspace_id=$1 AND payload->'decision'->>'action'='store.daily.summary'
-       ORDER BY seq DESC LIMIT 1`,
-      [scope.workspaceId],
-    );
-    const after = ((kpi.rows[0]?.payload?.decision as Record<string, unknown> | undefined)?.after ?? {}) as Record<string, unknown>;
-    const latest = { occ: Number(after.occ ?? 0) };
+    // 最新 KPI（行业无关：按决策预期的 metric 名取数，取不到再回落 occ）
+    const metrics = await latestNumericKpi(c, scope);
     let hits = 0;
     for (const row of due) {
       const params = ((row.payload.decision as Record<string, unknown>)?.params ?? {}) as Record<string, unknown>;
       const expected = (params.expected ?? {}) as ExpectedOutcome;
-      const verdict = judgeOutcome(expected.target ?? 0.7, latest.occ);
+      const metricName = typeof expected.metric === "string" && expected.metric.length > 0 ? expected.metric : "occ";
+      const actual = metrics[metricName] ?? metrics.occ ?? 0;
+      const verdict = judgeOutcome(expected.target ?? 0.7, actual);
       if (verdict === "命中") hits++;
       await emitCeoEvent(c, scope, "decision.outcome", {
-        params: { ref_decision: row.event_id, verdict, expected_target: expected.target, actual: latest.occ, dry_run: dryRun },
-        after: { verdict, comment: `预期 ${expected.target} / 实际 ${latest.occ}（${verdict}）` },
-        basis: [`决策日记回测：${row.event_id} 到期对账（命中≥95% / 偏离≥80% / 打脸<80%）`],
+        params: { ref_decision: row.event_id, verdict, expected_target: expected.target, actual, metric: metricName, dry_run: dryRun },
+        after: { verdict, comment: `预期 ${expected.target} / 实际 ${actual}（${verdict}，指标 ${metricName}）` },
+        basis: [`决策日记回测：${row.event_id} 到期对账（命中≥95% / 偏离≥80% / 打脸<80%）`, `取数指标：${metricName}（来自决策预期，行业无关）`],
       });
     }
     return { reviewed: due.length, hits };

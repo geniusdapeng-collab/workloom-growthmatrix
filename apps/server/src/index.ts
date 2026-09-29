@@ -30,6 +30,7 @@ import { changesSince, applyPush, syncEnabled, verifyDeviceRequest } from "./vid
 import { scopedQuery } from "./video/gen/db.js";
 import { mediaUrl } from "./video/gen/ingest.js";
 import { startThreadScheduler } from "./runtime/scheduler.js";
+import { startBeatsScheduler } from "./runtime/beats-scheduler.js";
 import { gatewayAppend } from "@workloom/base/workdata";
 import { registerBundleAskFacts } from "./runtime/ask-facts-loader.js";
 import { registerAskKbSearch } from "@workloom/runtime";
@@ -349,6 +350,12 @@ serve({ fetch: app.fetch, port, hostname: host }, (info) => {
    * 永远不会被执行。启动时顺带把崩溃遗留的 running 线程转 paused（可续跑）。
    */
   startThreadScheduler();
+  /**
+   * BEATS-01：节拍调度器——没有它，数字 CEO 的十二个节拍与管线声明的 cron 只有手动入口，
+   * 「无人操作时系统仍在经营」不成立。默认关闭（WORKLOOM_BEATS_ENABLED=0），灰度开启；
+   * 幂等与多副本安全由 triggers/trigger_fires + advisory 锁保证（重启同分钟不重复）。
+   */
+  startBeatsScheduler();
   /**
    * GR-19：装载各行业 ask 事实面（geo-growthmatrix 等）——不装的话，右侧对话框问领域问题只会得到
    * 底座通用事实（实测"问什么都是没有相关记录"）。失败不阻塞启动（回落通用事实面）。

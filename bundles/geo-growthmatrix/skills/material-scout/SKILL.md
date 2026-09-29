@@ -1,7 +1,7 @@
 ---
 name: material-scout
 version: 1.0.0
-description: 素材寻源工艺：客户没有图时，从全球免费/开源图库检索合规素材（免 key 通道优先），核对授权与署名、下载入库并产出候选清单。
+description: 素材寻源工艺：客户没有图时，对给定候选来源（客户实拍、检索通道候选清单、客户指定图库）核对授权与署名、下载入库并产出候选清单。
 ---
 
 # 素材寻源（Material Scout）
@@ -16,13 +16,13 @@ description: 素材寻源工艺：客户没有图时，从全球免费/开源图
 | 优先级 | 来源 | 授权 | 检索方式 |
 |---|---|---|---|
 | 1 | 客户实拍/视频抽帧 | 客户授权 | 本地素材库 |
-| 2 | Wikimedia Commons / Openverse / The Met | CC0/PD 无义务；CC-BY 需署名 | **免 key API**（`visualread.search_stock`） |
+| 2 | Wikimedia Commons / Openverse / The Met | CC0/PD 无义务；CC-BY 需署名 | 免 key API（检索通道取候选 URL，**岗位内检索工具未接线**，见 §缺口） |
 | 3 | Unsplash / Pexels | 免费商用、无需署名 | CDN 已知 ID 直连；官方 API 可选 key |
 | 4 | Pixabay / Smithsonian / NYPL / Europeana / Flickr Commons | 免费商用/公共领域（逐图核对） | 需免费 key；配置后可用 |
 | 5 | StockSnap / Burst / Kaboompics / Rawpixel / unDraw / Openclipart | CC0 / 免费商用 | 站点检索（curated），人工挑选后 `fetch_stock` |
 
 ## 方法
-1. **先搜后挑**：`visualread.search_stock` 用英文关键词（如 `pour over coffee barista`），`limit 8-12`，记录每个候选的 `license/attribution/source_page/尺寸`；
+1. **先搜后挑**：候选清单由检索通道或客户提供（英文关键词如 `pour over coffee barista`，每条记录 `license/attribution/source_page/尺寸`）；本岗位不自行抓取站点；
 2. **筛选标准**：长边 ≥1600px、无平台水印、无文字水印、无未授权可识别人像、风格匹配 art-direction；
 3. **授权核对**：CC0/PD 直接可用；CC-BY/CC-BY-SA 必须在成品或档案保留署名与来源页；
 4. **入库**：`visualwrite.fetch_stock` 下载到租户 `assets/`，自动生成 `.license.json`（含 sha256、来源、授权、署名）；
@@ -36,6 +36,11 @@ description: 素材寻源工艺：客户没有图时，从全球免费/开源图
 - 不伪造来源、不删水印、不把 CC-BY 素材当 CC0 用；
 - 图库解决"通用场景"，**产品本体仍应由客户实拍**——涉及产品细节时先向客户要图。
 
+## 缺口（显式登记，不假装已具备）
+- **岗位内图库检索未接线**：原声明 `visualread.search_stock`（Wikimedia Commons / Openverse / The Met 免 key API）在视觉工位桥白名单中不存在，
+  调用必被拒绝（软失败 → 无回执），故已从岗位工具面移除；候选来源改由检索通道或客户提供。
+- 恢复条件：工位桥或行业连接器实现 `search_stock`（返回授权/署名/尺寸/来源页）并纳入桥白名单后，方可在岗位声明中恢复该工具。
+
 ## 工艺判据（条件 → 做法 → 判据 → 来源）
 
 | 条件 | 做法 | 判据 | 来源 |
@@ -45,6 +50,7 @@ description: 素材寻源工艺：客户没有图时，从全球免费/开源图
 | 筛选 | 长边 ≥1600px、无水印、无可识别人像、风格匹配 art-direction | 四项任一不满足即剔除 | KB:本套件 §方法 2 |
 | 授权核对 | CC0/PD 直接可用；CC-BY/CC-BY-SA 必须保留署名与来源页 | 缺署名的候选不得交付 | KB:本套件 §方法 3 |
 | 入库 | `visualwrite.fetch_stock` + 自动生成 `.license.json`（含 sha256/来源/授权/署名） | 无 sidecar 不得进配方 | KB:本套件 §方法 4 |
+| 候选来源 | 检索通道候选清单或客户指定来源 | 本岗位不自行抓取；无候选来源时报缺口而非编造 | KB:本套件 §缺口 |
 | 候选数量 | 每次至少 3 个候选、2 个可用 | 不足即继续检索或如实报缺口 | KB:本套件 §方法 5 |
 | 产品本体 | 必须客户实拍 | 涉及产品细节用图库图 → 判不合格 | KB:本套件 §边界 |
 

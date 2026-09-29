@@ -20,7 +20,7 @@ WorkLoom GrowthMatrix 面向企业增长与内容运营团队，把目标、数�
 | 企业负责人、项目负责人 | 看清任务交给谁、交付什么、哪里待决定 | 工作台、任务线程、协作契约与组合看板组织交接和状态 | 看板和事件存在不等于营收归因已接通；演示订单不能当实际收入 |
 | 增长策略与渠道运营人员 | 同一选题用于社媒内容与 GEO，并积累可复用作业规范 | `geo-growthmatrix` 声明岗位、技能、围栏和管线，复用视频与视觉制作能力 | query 采集、能见度监测、线索评分和分发等专用工具仍需逐项接线与验收 |
 
-本仓身份是 `workloom-ai-growthmatrix`，角色为 `industry`，默认行业包为 `geo-growthmatrix`，属于 WorkLoom 的实验车道。它与 `workloom-growthmatrixtest`、`workloom-growthmatrix` 两个隔离副本是不同实例；不把其它仓库的实验能力合并算入本仓。酒店包是组合依赖和垂直业务样例，不代表这里已经接通真实 PMS、OTA、支付或所有酒店经营数据。来源：[product.manifest.json](product.manifest.json)、[主包 manifest](bundles/geo-growthmatrix/bundle.json)。
+本仓身份是 `workloom-ai-growthmatrix`，角色为 `industry`，默认行业包为 `geo-growthmatrix`，仓库为 `workloom-ai/WorkLoom-growthmatrix`（CNB 自述：**骇客帝国 · 实验版**）。它是 WorkLoom 的**隔离实验副本**：基座内容不自动下发到本仓，本仓改动也不自动回流基座；同为隔离副本的是 `workloom-growthtest`，实验车道 `WorkLoom-growth` 是另一条独立线——三者互为不同实例，不把其它仓库的实验能力合并算入本仓。酒店包是组合依赖和垂直业务样例，不代表这里已经接通真实 PMS、OTA、支付或所有酒店经营数据。来源：[product.manifest.json](product.manifest.json)、[主包 manifest](bundles/geo-growthmatrix/bundle.json)。
 
 ## 功能状态：代码做到哪里
 
@@ -103,7 +103,7 @@ NATS/Redis 的事件总线库可在源码中找到，但当前主业务入口未
 同名岗位由主包 `composition.presetOwners` 裁决：`ads-optimizer`、`publish-operator`、`review-analyst` 归 `geo-growthmatrix`，`company-ceo` 归 `hotel`。下方数量从 manifest 和岗位标识自动派生，避免手工维护另一套总数。当前三包均为 `candidate`；稳定包签名校验能力的存在不能变成“这些候选包已经完成生产验收”的结论。
 
 <!-- CAPABILITIES:BEGIN -->
-<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（2026-09-27），请勿手改；重跑 pnpm capabilities 更新 -->
+<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（2026-09-29），请勿手改；重跑 pnpm capabilities 更新 -->
 
 ## 代码与资产速览（自动生成）
 
@@ -118,7 +118,7 @@ NATS/Redis 的事件总线库可在源码中找到，但当前主业务入口未
 - ✅ **验证与维护命令**：环境安装脚本 · 主测试套件 · GEO 域套件 · 酒店域套件 · 发布门禁 · 五元事件验链 等 8 项
 - 📚 **演示与说明资产**：静态演示原型 ×12 · 官网静态页面 · official 技能目录 ×9 · 历史能力导览 PPT · 模拟数据说明
 
-本仓 manifest 共声明 **85 条岗位定义、94 项技能路径、11 条管线**；岗位按 `preset_key` 去重为 **81 个不同标识**。实际组合以主包与装配器为准。
+本仓 manifest 共声明 **88 条岗位定义、94 项技能路径、12 条管线**；岗位按 `preset_key` 去重为 **84 个不同标识**。实际组合以主包与装配器为准。
 
 完整来源与边界见 [自动导览](docs/capabilities.auto.md) 和 [机器清单](docs/capabilities.auto.json)；首次体验按下文“快速开始”准备隔离环境。
 <!-- CAPABILITIES:END -->

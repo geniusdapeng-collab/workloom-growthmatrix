@@ -65,6 +65,29 @@ function assert(cond: unknown, msg: string): asserts cond {
 }
 const eq = <T>(a: T, b: T, msg: string) => assert(a === b, `${msg}（期望 ${JSON.stringify(b)}，实际 ${JSON.stringify(a)}）`);
 
+/**
+ * 数据态守卫（RDAS 已知坑 #3；2026-09-29 本机双向复现）。
+ *
+ * 现象：`profiles.archive.dataMode` 残留 `real` 时，未接线的行业工具（pms.price.* / review.reply…）
+ * 会以 `connector-required + 未核实` 收尾，Quest 线程直接 failed；
+ * 首当其冲的是 O-02/O-07/O-08/O-12/R-10/H-09 六例（全部假设「种子即模拟态」）。
+ *
+ * 纪律：开跑前复位并**显式告警**（不静默吞掉上一次运行的中断痕迹）；只动标签位，事件账本 append-only 不变。
+ */
+async function ensureSimulatedDataMode(reason: string): Promise<void> {
+  const dm = await qApp<{ data_mode: string | null }>(
+    `SELECT archive->>'dataMode' AS data_mode FROM profiles WHERE workspace_id=$1`,
+    [scope.workspaceId],
+  );
+  const value = dm.rows[0]?.data_mode ?? null;
+  if (value === "simulated") return;
+  console.warn(`⚠️ 数据态守卫（${reason}）：dataMode=${value ?? "(缺失)"} 非模拟态 → 复位为 simulated（事件保留）`);
+  await qApp(
+    `UPDATE profiles SET archive=jsonb_set(archive,'{dataMode}','"simulated"'::jsonb), updated_at=now() WHERE workspace_id=$1`,
+    [scope.workspaceId],
+  );
+}
+
 async function qApp<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<pg.QueryResult<T>> {
   const c = await app.connect();
   try {
@@ -2734,17 +2757,22 @@ h2("onboarding 经营主体写入 + 启用真实模式（横幅熄灭）→ 复�
   eq(business.name, "云栖酒店", "向导字段写入 business");
   assert(business.price_bands, "行业档案价带保留（一店一档不被向导覆盖）");
   eq(business.floor_price, 380, "保底价保留（与 R2 同源）");
-  const { data: act } = await api<{ result?: { data?: { dataMode?: string } } }>("/trpc/onboarding.activateRealMode", { method: "POST", token: tokenOwner });
-  eq(act.result?.data?.dataMode, "real", "真实模式激活");
-  const { data: st } = await api<{ result?: { data?: { dataMode?: string } } }>("/trpc/onboarding.status", { token: tokenOwner });
-  eq(st.result?.data?.dataMode, "real", "status 反映 real（横幅熄灭条件达成）");
-  const ev = await qApp<{ n: string }>(
-    `SELECT count(*)::text AS n FROM biz_events WHERE workspace_id=$1 AND payload->'decision'->>'action'='onboarding.real_mode_activated'`,
-    [scope.workspaceId],
-  );
-  assert(Number(ev.rows[0]!.n) >= 1, "切换留痕");
-  // 复位：套件出口保持种子模拟态（事件保留，append-only 纪律）
-  await qApp(`UPDATE profiles SET archive=jsonb_set(archive,'{dataMode}','"simulated"'::jsonb) WHERE workspace_id=$1`, [scope.workspaceId]);
+  // 复位放 finally：任何断言失败/中断也必须复位——dataMode 残留 real 会让下一次运行连红六例
+  // （O-02/O-07/O-08/O-12/R-10/H-09；RDAS 已知坑 #3，2026-09-29 双向复现）。
+  try {
+    const { data: act } = await api<{ result?: { data?: { dataMode?: string } } }>("/trpc/onboarding.activateRealMode", { method: "POST", token: tokenOwner });
+    eq(act.result?.data?.dataMode, "real", "真实模式激活");
+    const { data: st } = await api<{ result?: { data?: { dataMode?: string } } }>("/trpc/onboarding.status", { token: tokenOwner });
+    eq(st.result?.data?.dataMode, "real", "status 反映 real（横幅熄灭条件达成）");
+    const ev = await qApp<{ n: string }>(
+      `SELECT count(*)::text AS n FROM biz_events WHERE workspace_id=$1 AND payload->'decision'->>'action'='onboarding.real_mode_activated'`,
+      [scope.workspaceId],
+    );
+    assert(Number(ev.rows[0]!.n) >= 1, "切换留痕");
+  } finally {
+    // 套件出口保持种子模拟态（事件保留，append-only 纪律）
+    await qApp(`UPDATE profiles SET archive=jsonb_set(archive,'{dataMode}','"simulated"'::jsonb), updated_at=now() WHERE workspace_id=$1`, [scope.workspaceId]);
+  }
 });
 
 /* ---- D26 大版本融合 E2E：LLM 装配×节拍 / 开箱运行态 / 真实模式融合 / P21 互洽 / 降级链 ---- */
@@ -2785,12 +2813,16 @@ h2("融合·开箱运行态（种子即重度使用：卫星/实况/职场/请�
 });
 h2("融合·activateRealMode 后剧场/职场不受影响（模式切换纯标签）", async () => {
   const before = await api<{ result?: { data?: { satellites?: unknown[] } } }>("/trpc/captain.theater", { token: tokenOwner });
-  await api("/trpc/onboarding.activateRealMode", { method: "POST", token: tokenOwner });
-  const { data: st } = await api<{ result?: { data?: { dataMode?: string } } }>("/trpc/onboarding.status", { token: tokenOwner });
-  eq(st.result?.data?.dataMode, "real", "切换生效");
-  const after = await api<{ result?: { data?: { satellites?: unknown[] } } }>("/trpc/captain.theater", { token: tokenOwner });
-  eq((after.data.result?.data?.satellites ?? []).length, (before.data.result?.data?.satellites ?? []).length, "剧场数据面稳定");
-  await qApp(`UPDATE profiles SET archive=jsonb_set(archive,'{dataMode}','"simulated"'::jsonb) WHERE workspace_id=$1`, [scope.workspaceId]);
+  try {
+    await api("/trpc/onboarding.activateRealMode", { method: "POST", token: tokenOwner });
+    const { data: st } = await api<{ result?: { data?: { dataMode?: string } } }>("/trpc/onboarding.status", { token: tokenOwner });
+    eq(st.result?.data?.dataMode, "real", "切换生效");
+    const after = await api<{ result?: { data?: { satellites?: unknown[] } } }>("/trpc/captain.theater", { token: tokenOwner });
+    eq((after.data.result?.data?.satellites ?? []).length, (before.data.result?.data?.satellites ?? []).length, "剧场数据面稳定");
+  } finally {
+    // 同上：异常安全复位，避免污染后续运行
+    await qApp(`UPDATE profiles SET archive=jsonb_set(archive,'{dataMode}','"simulated"'::jsonb), updated_at=now() WHERE workspace_id=$1`, [scope.workspaceId]);
+  }
 });
 h2("融合·P21 三端点互洽（state/theater/chairmanQueue/scorecard）", async () => {
   const [state, theater, queue, score] = await Promise.all([
@@ -3935,6 +3967,9 @@ await qApp(
   [scope.workspaceId],
 );
 
+// 主用例段开跑前必须先守数据态：O-02/O-07/O-08/O-12/R-10/H-09 全部假设「种子即模拟态」，
+// 上一次运行若在 activateRealMode 用例中途中断（或被 C 端演示流程改写），这里不复位就会连红六例。
+await ensureSimulatedDataMode("主用例开跑前");
 const svcPassed = await runCases(cases, "服务层用例");
 
 console.log("▸ 启动 HTTP E2E 段（spawn server）……");
@@ -3965,6 +4000,8 @@ try {
   tokenOwner = await login("MEM-001");
   tokenManager = await login("MEM-002");
   tokenReadonly = await login("MEM-003");
+  // E2E 段开跑前再守一道（主用例段已守过一次；E2E 自身也会翻转/复位 dataMode）
+  await ensureSimulatedDataMode("E2E 段开跑前");
   defineE2E();
   await runCases(e2eCases, "HTTP E2E 用例");
 } finally {

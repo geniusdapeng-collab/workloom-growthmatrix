@@ -33,9 +33,9 @@ const FAIL_ON_ERROR = args.has("--fail-on-error");
 function loadDefaultPrimaryBundle(): string {
   try {
     const manifest = JSON.parse(readFileSync(join(REPO_ROOT, "product.manifest.json"), "utf-8"));
-    return manifest.defaultBundle ?? "geo-growthmatrix";
+    return manifest.defaultBundle ?? "geo-growth";
   } catch {
-    return "geo-growthmatrix";
+    return "geo-growth";
   }
 }
 

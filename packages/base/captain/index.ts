@@ -2,6 +2,7 @@ export * from "./charter.js";
 export * from "./router.js";
 export * from "./briefing.js";
 export * from "./loop.js";
+export * from "./goals.js";
 export * from "./onboarding.js";
 export * from "./trust.js";
 export * from "./arbitration.js";

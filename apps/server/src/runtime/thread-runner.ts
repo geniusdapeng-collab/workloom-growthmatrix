@@ -16,7 +16,7 @@ import { getAppPool, getGatewayPool } from "@workloom/db";
 import { bundlesRoot } from "@workloom/base/bundles";
 import { assemblePreset, runQuest, type QuestRunResult } from "@workloom/runtime";
 import { llmCall } from "../service/llm.js";
-import { acquisitionQuestPlanner } from "../industry/hotel/acquisition-planner.js";
+import { industryPlannerFor } from "../industry/registry.js";
 import { loadDeploymentToolExecutor, describeToolCoverage } from "./tool-executor.js";
 import { preferredDispatchPresets } from "./dispatch-routing.js";
 
@@ -226,6 +226,9 @@ export async function runQuestForThread(scope: Scope, input: ThreadQuestInput): 
   const warnings = await questCoverageWarnings(scope, presetKey, input.goal);
   // GR-13：把本工作区 bundle 的对象枚举交给规划器（围栏词表由 runQuest 内部按 active 规则注入）
   const planVocabulary = await loadObjectVocabulary(scope);
+  // IND-REG-01：按工作区行业选规划器——此前对所有行业注入酒店规划器（增长目标翻译不出增长步骤）
+  const industry = await industryOfWorkspace(scope);
+  const fallbackPlanner = industryPlannerFor(industry, input.goal);
   const result = await runQuest(getAppPool(), getGatewayPool(), scope, {
     threadId: input.threadId,
     goal: input.goal,
@@ -234,7 +237,7 @@ export async function runQuestForThread(scope: Scope, input: ThreadQuestInput): 
     ...(input.replan ? { replan: true, ...(input.replanReason ? { replanReason: input.replanReason } : {}) } : {}),
     // 视觉目标关掉 LLM 规划（空参步骤到桥侧必 bad_request），走行业确定性直译
     ...(visualGoal ? {} : { llmCall: llmCall("quest-plan") }),
-    fallbackPlanner: acquisitionQuestPlanner(input.goal),
+    ...(fallbackPlanner ? { fallbackPlanner } : {}),
     ...(toolExecutor ? { toolExecutor } : {}),
     ...(planVocabulary.objectTypes.length ? { planVocabulary } : {}),
   });
@@ -263,7 +266,7 @@ async function loadObjectVocabulary(scope: Scope): Promise<{ objectTypes: string
 
 /** 工作区行业（进程级缓存：派遣/续跑/调度器会反复问到，工作区行业极少变） */
 const industryCache = new Map<string, string | null>();
-async function industryOfWorkspace(scope: Scope): Promise<string | null> {
+export async function industryOfWorkspace(scope: Scope): Promise<string | null> {
   const cached = industryCache.get(scope.workspaceId);
   if (cached !== undefined) return cached;
   const client = await getAppPool().connect();

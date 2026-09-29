@@ -1,0 +1,40 @@
+# 内容日历管线 · 图文日更的排产与回收（BEATS-01/GOAL-KPI-01 的业务落点）
+# 背景：矩阵已备（13 类物料 × 14 渠道 × 5 类目标），但此前没有"排产"这一步——
+# 出图靠人点，产能无配额、无节奏、无归因挂点，日更目标无法被自动化兑现。
+# 口径：以目标（有效询盘/蓄水量）反推配额 → 素材清点 → 排产 → 派单 → 回执与指标回收 → 偏差对账。
+quest: content-calendar
+name: 内容日历管线（图文日更排产）
+version: v1
+description: 目标配额 → 素材清点 → 排期（日期×平台×物料类型×主目标）→ 派单 → 发布回执与指标回收 → 目标偏差对账
+schedule: daily
+steps:
+  - step_key: goal-read
+    name: 读取当前目标与配额口径
+    owner: content-calendar-officer
+    outputs: [content_calendar]        # 目标（metric/target/period）来自 goals.set；无目标则不排产（不猜）
+  - step_key: material-inventory
+    name: 素材清点（可用原图/视频与授权状态）
+    owner: material-scout
+    outputs: [material_inventory]      # 无授权或分辨率不足的素材不进候选；缺素材时如实报缺口
+  - step_key: schedule
+    name: 生成 7 天排期（日期×平台×物料类型×主目标×责任岗位）
+    owner: content-calendar-officer
+    outputs: [content_calendar]        # 配额按平台产能与 G9b 日发熔断上限取小；获客类优先于蓄水类
+  - step_key: dispatch
+    name: 按排期派单（视觉工位/AI 生图）
+    owner: production-planner
+    outputs: [shoot_list, visual_asset]
+  - step_key: publish-receipt
+    name: 发布回执回收（真实平台证据）
+    owner: publish-operator
+    gate: G9
+    outputs: [publish_task]            # dry-run 不计入；回执缺平台证据即未核实
+  - step_key: metrics-collect
+    name: 指标回收（曝光/互动/私信/询盘）
+    owner: data-board-officer
+    outputs: [account_metric]          # 经 metrics.ingest 落 metric.daily + store.daily.summary
+  - step_key: goal-reconcile
+    name: 目标偏差对账（偏差节拍据此立项）
+    owner: review-analyst
+    outputs: [battle_report]           # goals.refresh → deviation_pt；|偏差|≥5pt 触发偏差专项
+
