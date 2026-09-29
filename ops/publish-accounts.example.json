@@ -1,0 +1,56 @@
+{
+  "schema": "workloom.publish-accounts/v1",
+  "note": "复制为 ops/publish-accounts.json 后按实填写（该文件已 gitignore，不入库）。登录态由用户本人在桌面客户端完成，系统只记录「哪个平台账号已登录、何时核验、证据在哪」。env-tier 门禁在 client-runtime / deployed 档位要求至少 1 个 state=logged-in 且 verifiedAt 在 30 天内。",
+  "operator": "（填写维护人成员号，例如 MEM-G01）",
+  "updatedAt": "2026-09-29T00:00:00.000Z",
+  "accounts": [
+    {
+      "platform": "douyin",
+      "accountId": "（抖音账号标识，例如 douyin-主号）",
+      "state": "logged-out",
+      "verifiedAt": null,
+      "evidenceUri": "（核验证据：截图或工作台页面归档 URI）",
+      "notes": "登录在桌面客户端完成；发布走 publish-rpa 桌面驱动（PUBLISH_DRIVER=desktop）"
+    },
+    {
+      "platform": "xiaohongshu",
+      "accountId": "（小红书账号标识）",
+      "state": "logged-out",
+      "verifiedAt": null,
+      "evidenceUri": "",
+      "notes": "图文主阵地，优先级最高"
+    },
+    {
+      "platform": "bilibili",
+      "accountId": "（B 站账号标识）",
+      "state": "logged-out",
+      "verifiedAt": null,
+      "evidenceUri": "",
+      "notes": ""
+    },
+    {
+      "platform": "youtube",
+      "accountId": "（YouTube 频道标识）",
+      "state": "logged-out",
+      "verifiedAt": null,
+      "evidenceUri": "",
+      "notes": "海外矩阵用，需网络与合规前置"
+    },
+    {
+      "platform": "shipinhao",
+      "accountId": "（视频号账号标识）",
+      "state": "logged-out",
+      "verifiedAt": null,
+      "evidenceUri": "",
+      "notes": "适配器为占位壳，接线前不得声明可发布"
+    },
+    {
+      "platform": "tiktok",
+      "accountId": "（TikTok 账号标识）",
+      "state": "logged-out",
+      "verifiedAt": null,
+      "evidenceUri": "",
+      "notes": "适配器为占位壳，接线前不得声明可发布"
+    }
+  ]
+}

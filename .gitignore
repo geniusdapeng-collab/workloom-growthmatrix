@@ -76,3 +76,6 @@ vendor/supermickey/deliverables/
 vendor/supermickey/hyperreality-system/skills/*/usage-stats.jsonl
 # 工位本地工具链（ffmpeg/ffprobe 等受控下载的二进制，绝不进仓；见 kit/ffmpeg-pin.json）
 .workloom-tools/
+# 平台账号登录声明（MC-010）：登录态是机器本地状态（凭据只存本机，由用户在桌面客户端完成），
+# 仓库只保留 ops/publish-accounts.example.json 模板；真实声明不入库。
+ops/publish-accounts.json

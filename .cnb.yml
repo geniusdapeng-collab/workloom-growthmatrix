@@ -47,6 +47,40 @@
         # 背景：新下载项目的开发者与 AI Agent 常以为"仓库里没有人物资产"而重复建档（T-2026-0925-0004/0006）。
         node scripts/verify-builtin-character-assets.mjs
 
+    - name: 受控改名与同步契约（MC-008：受控资产零漂移 + 差异登记有效性）
+      script: |
+        set -eu
+        # ① 受控只读资产摘要逐项复算（漂移必须为 0）+ ② 策略自洽 + ③ 差异保留登记有效；
+        # 同步操作（拉到上游树时）追加：node scripts/ci/verify-sync-contract.mjs --source <上游工作树> --strict
+        pnpm sync:verify
+        node --test scripts/ci/controlled-rename.test.mjs
+
+    - name: 环境档位门禁（MC-010：不得用本机预览冒充真实档位）
+      script: |
+        set -eu
+        # CI 属本机预览档位（env.LLM_PROVIDER=mock）：显式声明 local-preview，
+        # 一旦有人在 CI 里改成真实档位声明，缺凭据/缺桌面驱动/缺登录声明会立即红灯。
+        node scripts/ci/env-tier.mjs --tier local-preview
+        node --test scripts/ci/env-tier.test.mjs
+
+    - name: UI 消费门禁与 C 端壳契约（MC-011 / MC-012）
+      script: |
+        set -eu
+        # ① 行业仓 UI 消费门禁：三端实际消费 @workloom/ui 稳定制品（含治理指纹——门禁脚本
+        #    与 .workloom-ui-governance.json 记录的 SHA-256 必须一致，行业仓不得私改门禁）。
+        node scripts/verify-ui-consumer.mjs --require-governance-state
+        # ② 三端客户端基座消费门禁：受管指纹零漂移；实验车道声明路径（lane=experiment +
+        #    industryExtensionPaths）按协议 §10.3 豁免，必备入口 / UI 同版仍强制。
+        node scripts/verify-client-foundation-consumer.mjs
+        # ③ 门禁规则单测 + C 端壳布局契约：`.phone-shell` 不得声明 display/flex（共享壳 grid 才是
+        #    三段式唯一事实源；此前被覆盖导致底栏悬停在 y=391、390×844 下 46% 空白）。
+        #    注：基座 `scripts/verify-ui-consumer.test.mjs` 依赖 `sync/ui-lockfile-integrity.mjs`
+        #    （隔离副本不随仓 sync 工具链），未引入；本步以「实跑两道门禁 + 以下回归」替代。
+        node --test scripts/ui-governance-rules.test.mjs
+        ./node_modules/.bin/vitest run scripts/verify-client-foundation-extensions.test.ts scripts/check-webc-shell-contract.test.ts
+        # 真机几何（底栏贴底）不在 CI 跑——CNB 镜像无浏览器内核；本机/验收档用
+        #   node scripts/check-shell-layout.mjs --build --viewport 390x844,430x932
+
     - name: 三端生产构建
       script: |
         set -eu
@@ -117,6 +151,18 @@
         pnpm db:seed
         pnpm db:seed
         pnpm db:verify-chain
+
+    - name: 发布回执可核验门禁（MC-010：无证据不得记为已发布）
+      script: |
+        set -eu
+        set -a
+        while IFS= read -r line; do
+          case "$line" in ''|\#*) continue ;; esac
+          export "$line"
+        done < .env
+        set +a
+        # 扫描 status='succeeded' 的发布任务：回执必须含平台帖 ID/URL，且不得是 dry-run 演练回执。
+        pnpm publish:evidence
 
 # DEF-P1-0015 债务已清偿（2026-09-18 审计）：typecheck 全仓零错误、ui-contract 通过、
 # 真库用例与全场景套件全绿，故 test-gate 转为必需门禁（不再 allowFailure）。

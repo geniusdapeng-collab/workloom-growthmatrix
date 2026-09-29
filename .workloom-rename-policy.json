@@ -1,0 +1,246 @@
+{
+  "schema": "workloom.rename-policy/v1",
+  "generatedAt": "2026-09-29T12:30:00.000Z",
+  "identity": {
+    "repository": "workloom-ai/WorkLoom-growthmatrix",
+    "upstreamRepository": "workloom-ai/WorkLoom-growth",
+    "upstreamRef": "2b2ff15",
+    "lane": "isolated-copy",
+    "note": "隔离实验车道：整仓同步来自上游 WorkLoom-growth，本仓身份/命名在同步时由受控改名器改写；公共根因仍按舰队纪律在基座 workloom-im 修复后再下发。"
+  },
+  "contract": {
+    "statement": "同步后本仓与上游的每一处差异必须落在三类之一：①受控改名规则可完全复现；②已登记的差异保留项（declaredDiffs）；③受控只读资产（protectedAssets，必须与上游逐字节一致）。三类之外的差异一律视为未登记漂移，同步操作（--strict）必须失败。",
+    "protectedAssetsSource": ".workloom-base-sync.json#requiredRootAssetsSha256",
+    "excludedPaths": [
+      "**/node_modules/**",
+      ".git/**",
+      "outputs/**",
+      "release/**",
+      ".pnpm-store/**",
+      "apps/*/dist/**",
+      "apps/*/build/**",
+      "packages/*/dist/**",
+      "services/*/dist/**",
+      "**/.next/**",
+      "**/coverage/**",
+      "**/*.tsbuildinfo"
+    ],
+    "verificationCommands": [
+      "node scripts/ci/verify-sync-contract.mjs --source <上游仓工作树> --strict",
+      "node scripts/ci/controlled-rename.mjs classify --source <上游仓工作树> --target . --strict",
+      "node scripts/ci/controlled-rename.mjs plan --source <上游仓工作树> --target . --json"
+    ]
+  },
+  "rules": [
+    {
+      "id": "content.repo-slug-cnb",
+      "kind": "content",
+      "match": "workloom-ai\\/WorkLoom-growth(?!matrix)",
+      "replace": "workloom-ai/WorkLoom-growthmatrix",
+      "scope": ["**/*"],
+      "evidence": "上游 references 链接与站点文案中的 CNB 仓 slug 改写（含 //cnb.cool/workloom-ai/WorkLoom-growth 与 //github.com 旧址）"
+    },
+    {
+      "id": "content.repo-slug-lower",
+      "kind": "content",
+      "match": "workloom-ai\\/workloom-growth(?!matrix)",
+      "replace": "workloom-ai/workloom-growthmatrix",
+      "scope": ["**/*"],
+      "evidence": "小写仓 slug（README_EN / 文档内引用）"
+    },
+    {
+      "id": "content.product-name",
+      "kind": "content",
+      "match": "WorkLoom-growth(?!matrix)",
+      "replace": "WorkLoom-growthmatrix",
+      "scope": ["**/*"],
+      "evidence": "产品显示名与仓库标题"
+    },
+    {
+      "id": "content.package-scope",
+      "kind": "content",
+      "match": "workloom-ai-growth(?!matrix)",
+      "replace": "workloom-ai-growthmatrix",
+      "scope": ["**/*"],
+      "evidence": "包命名空间与依赖标识"
+    },
+    {
+      "id": "content.package-name",
+      "kind": "content",
+      "match": "workloom-growth(?!matrix)",
+      "replace": "workloom-growthmatrix",
+      "scope": ["**/*"],
+      "evidence": "包名、运行器标签（workloom-growth-desktop-macos/windows）、示例目录名"
+    },
+    {
+      "id": "content.industry-bundle",
+      "kind": "content",
+      "match": "geo-growth(?!matrix)",
+      "replace": "geo-growthmatrix",
+      "scope": ["**/*"],
+      "evidence": "行业包目录/标识（bundles/geo-growth、apps/server/src/industry/geo-growth、geo-growth-baseline 围栏、service-front 投影 id）；业务域词 growth-lead / growth-review / id:growth 不改"
+    },
+    {
+      "id": "path.bundle-dir",
+      "kind": "path",
+      "match": "(^|\\/)bundles\\/geo-growth\\/",
+      "replace": "$1bundles/geo-growthmatrix/",
+      "evidence": "行业包目录改名（bundles/geo-growth → bundles/geo-growthmatrix）"
+    },
+    {
+      "id": "path.industry-and-bundle-ids",
+      "kind": "path",
+      "match": "(^|\\/)geo-growth(?!matrix)",
+      "replace": "$1geo-growthmatrix",
+      "evidence": "其余行业标识路径段（apps/server/src/industry/geo-growth/**、样例目录等）"
+    },
+    {
+      "id": "path.package-dir",
+      "kind": "path",
+      "match": "(^|\\/)workloom-growth(?!matrix)",
+      "replace": "$1workloom-growthmatrix",
+      "evidence": "包名目录与模板示例目录（bundles/ai-video/library/templates/sales-pitch-5ring/examples/workloom-growth/**）"
+    }
+  ],
+  "declaredDiffs": [
+    {
+      "reason": "T-2026-0929-0001 · F-01 工具声明错配修复：素材寻源岗移除未接线工具 visualread.search_stock，并把缺口显式登记进技能",
+      "task": "T-2026-0929-0001",
+      "kind": "modified",
+      "paths": [
+        "bundles/geo-growthmatrix/presets/material-scout.yml",
+        "bundles/geo-growthmatrix/skills/material-scout/SKILL.md"
+      ]
+    },
+    {
+      "reason": "T-2026-0929-0001 · F-04 新增三岗（内容排期官/达人库管理员/成本核算员）+ 编制口径同步：bundle 预设清单顺序与条目变化",
+      "task": "T-2026-0929-0001",
+      "kind": "modified",
+      "paths": ["bundles/geo-growthmatrix/bundle.json"]
+    },
+    {
+      "reason": "T-2026-0929-0001 · A 组点火与事实源接线：节拍调度器挂载、目标/指标 tRPC、行业规划器注册（server 与 captain 侧改动）",
+      "task": "T-2026-0929-0001",
+      "kind": "modified",
+      "paths": [
+        "apps/server/src/index.ts",
+        "apps/server/src/runtime/thread-runner.ts",
+        "apps/server/src/trpc/router.ts",
+        "packages/base/captain/index.ts",
+        "packages/base/captain/loop.ts"
+      ]
+    },
+    {
+      "reason": "T-2026-0929-0001 · E-01 OSS 清单与扫描状态刷新（gen 产物，禁止手改）",
+      "task": "T-2026-0929-0001",
+      "kind": "modified",
+      "paths": [
+        ".oss-watch-state.json",
+        "oss-components.json",
+        "docs/OPEN_SOURCE_COMPONENTS.md",
+        "docs/oss-update-plan.md"
+      ]
+    },
+    {
+      "reason": "T-2026-0929-0001 · E-02 C 端投影摘要重生成（service-front 投影）",
+      "task": "T-2026-0929-0001",
+      "kind": "modified",
+      "paths": ["apps/webc/public/industry/service-front.config.json"]
+    },
+    {
+      "reason": "T-2026-0929-0001 · E-03 套件数据态自愈：开跑前自愈 + 翻转改 try/finally",
+      "task": "T-2026-0929-0001",
+      "kind": "modified",
+      "paths": ["scripts/suite.ts"]
+    },
+    {
+      "reason": "T-2026-0929-0001 · E-04 身份句纠正与站点旧品牌清理",
+      "task": "T-2026-0929-0001",
+      "kind": "modified",
+      "paths": ["README.md", "apps/site/index.html", "apps/site/en.html"]
+    },
+    {
+      "reason": "T-2026-0929-0001 · F-01/F-02 治理与工具声明守护：静态门禁新增阶段、bundle 脚本、bgm 桥白名单补齐",
+      "task": "T-2026-0929-0001",
+      "kind": "modified",
+      "paths": [
+        ".cnb.yml",
+        "package.json",
+        "bundles/ai-video/connectors/bgm-bridge/executor.ts"
+      ]
+    },
+    {
+      "reason": "T-2026-0929-0001 · bundle 摘要与能力清单刷新（生成器产物）",
+      "task": "T-2026-0929-0001",
+      "kind": "modified",
+      "paths": [
+        "bundles/ai-video/bundle.json",
+        "bundles/hotel/bundle.json",
+        "docs/capabilities.auto.json",
+        "docs/capabilities.auto.md",
+        "docs/geo-fusion-plan.md"
+      ]
+    },
+    {
+      "reason": "T-2026-0929-0001 · 测试契约同步（行业包治理与围栏别名回归）",
+      "task": "T-2026-0929-0001",
+      "kind": "modified",
+      "paths": [
+        "packages/base/bundles/acquisition-loop.test.ts",
+        "packages/base/bundles/bundles.test.ts"
+      ]
+    },
+    {
+      "reason": "T-2026-0929-0001 · 上轮新增文件（上游不存在）：A-01 节拍调度器、A-04/A-05 目标与指标事实源、A-06 行业规划器注册与 geo-growthmatrix planner、B-01 内容日历管线与三岗、F-02 工具声明守护",
+      "task": "T-2026-0929-0001",
+      "kind": "added",
+      "paths": [
+        "apps/server/src/industry/geo-growthmatrix/planner.ts",
+        "apps/server/src/industry/registry.test.ts",
+        "apps/server/src/industry/registry.ts",
+        "apps/server/src/runtime/beats-scheduler.test.ts",
+        "apps/server/src/runtime/beats-scheduler.ts",
+        "apps/server/src/trpc/goals-router.ts",
+        "packages/base/captain/goals.test.ts",
+        "packages/base/captain/goals.ts",
+        "bundles/geo-growthmatrix/pipelines/content-calendar.yml",
+        "bundles/geo-growthmatrix/presets/content-calendar-officer.yml",
+        "bundles/geo-growthmatrix/presets/cost-controller.yml",
+        "bundles/geo-growthmatrix/presets/creator-librarian.yml",
+        "scripts/check-tool-declarations.mts",
+        "scripts/check-tool-declarations.test.ts"
+      ]
+    }
+  ],
+  "measuredBaseline": {
+    "method": "git ls-tree -r 2b2ff15（workloom-growth）vs HEAD（workloom-growthmatrix）逐文件内容比对 + 规则复现",
+    "upstreamFiles": 2935,
+    "targetFiles": 2949,
+    "pathMovedFiles": 105,
+    "pathExplainedByRules": 102,
+    "samePathContentDiffs": 141,
+    "samePathExplainedByRules": 117,
+    "residualDeclaredDiffs": 27,
+    "targetOnlyNewFiles": 14,
+    "measuredAt": "2026-09-29T12:30:00.000Z",
+    "verifiedClassification": {
+      "command": "node scripts/ci/controlled-rename.mjs classify --source <workloom-growth@2b2ff15 工作树> --target <workloom-growthmatrix@HEAD 工作树> --strict",
+      "sourceFiles": 2935,
+      "identical": 2715,
+      "renameExplained": 159,
+      "declaredPreserved": 27,
+      "protectedIdentical": 34,
+      "unexplained": 0,
+      "protectedDrift": 0,
+      "missing": 0,
+      "undeclaredNewFiles": 0,
+      "reproducibleRatio": "2935/2935",
+      "verifiedAt": "2026-09-29T12:52:00.000Z"
+    },
+    "idempotence": {
+      "command": "node scripts/ci/controlled-rename.mjs apply --source <上游> --target <已同步副本> --write && diff -r <已同步副本> <副本>",
+      "result": "对已同步树再次执行受控同步，逐字节差异为 0（受控资产原字节、登记差异保留、其余按规则改写）",
+      "verifiedAt": "2026-09-29T12:52:00.000Z"
+    }
+  }
+}
