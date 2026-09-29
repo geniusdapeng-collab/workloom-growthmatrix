@@ -103,6 +103,9 @@ pnpm connectors:check
 pnpm acceptance:live --keys-file ~/.workloom/live.env --env client-runtime
 pnpm acceptance:live --keys-file ~/.workloom/live.env --env client-runtime --require-live
 
+# 单任务复跑（模型网关链路，MC-015；端点方言回归见 §8）
+node scripts/acceptance/live.mjs --env client-runtime --keys-file ~/.workloom/live.env --tasks LLM-G1 --require-live
+
 # 结构回归（与档位无关，始终应通过）
 pnpm suite && pnpm release:gate
 ```
@@ -121,3 +124,58 @@ pnpm suite && pnpm release:gate
 - `--selftest` 与 dry-run 报告一律标注「非生产实测证据」；
 - 任何「已发布」结论必须能指到 `publish_tasks.receipt` 里的平台帖 ID/URL；
 - 本文件是就绪说明，不是能力承诺；状态变更以命令输出为准（`--json` 可归档）。
+
+## 8. 模型端点「方言」与 P 域 LLM-G1（MC-015，2026-09-29）
+
+### 8.1 现象与根因（A 级）
+
+`LLM-G1`（`chain: model-gateway`）在本机实测里长期 `failed / 调用失败：HTTP 404：`（空体）。
+根因不是客户端运行时未安装，而是**端点方言错配**：封存凭据里两个变量分属两种协议面，
+而基座 `scripts/acceptance/lib/live/providers.mjs#resolveLiveModels` 对 `dsh-harness` 与
+`model-gateway` 用了同一套 base 解析，于是把 Anthropic 兼容根交给了 OpenAI 兼容调用。
+
+| 变量 | 值 | 方言 | 链路 |
+|---|---|---|---|
+| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com/anthropic` | Anthropic 兼容（Messages 协议） | `dsh-harness` |
+| `LLM_BASE_URL` | `https://api.deepseek.com` | OpenAI 兼容（`/chat/completions`） | `model-gateway` |
+
+```
+POST https://api.deepseek.com/anthropic/chat/completions  → 404（空体）   # 修复前 LLM-G1 打的就是这条
+POST https://api.deepseek.com/chat/completions            → 200（model=deepseek-flash）
+```
+
+### 8.2 本仓修法（声明层，不动受控只读资产）
+
+`scripts/acceptance/live.mjs`、`.../lib/live/providers.mjs` 属基座受控只读资产
+（`.workloom-base-sync.json#requiredRootAssetsSha256`），本仓不得就地修改；因此把两条链路
+拆成两个模型条目、各自声明正确的端点变量：
+
+```json
+{ "id": "deepseek-v4.1-flash-gateway", "kind": "llm", "model": "deepseek-flash",
+  "adapter": "model-gateway", "apiKeyEnv": "DEEPSEEK_API_KEY", "baseUrlEnv": "LLM_BASE_URL" }
+```
+
+- `acceptance/profile.json`：新增上述条目，`LLM-G1.model` 指向它；
+- 回归：`scripts/acceptance/live-profile-dialect.test.mjs`（4 例，`node --test`，已进 `pnpm test:scripts`）——
+  锁住 `model-gateway` 不落 `/anthropic`、`dsh-harness` 仍走 Anthropic 根；
+- 基座通用修法（含归一函数 + 8 例单测）：`proposals/workloom-im/0002-acceptance-live-model-gateway-dialect.md`
+  （补丁已在一次性临时树 `git apply --check` 通过，本仓不代推基座）。
+
+### 8.3 修复后证据（2026-09-29 真实调用）
+
+```bash
+node scripts/acceptance/live.mjs --env client-runtime --keys-file ~/.workloom/live.env \
+  --tasks LLM-G1 --require-live --out outputs/acceptance/live-mc015
+# → [acceptance:live] ✓ LLM-G1 ok；结论：pass；exit 0
+```
+
+回执：`{kind:"model-gateway", endpoint:"https://api.deepseek.com/chat/completions",
+model:"deepseek-flash", tokens:149, synced:true}`（报告 `outputs/acceptance/live-mc015/live-report.md`）。
+
+### 8.4 仍未闭环（外部依赖，不在 §8 修复范围）
+
+- `pnpm env:readiness` 仍 6 项阻断：客户端运行时 `LLM_PROVIDER=mock`、模型/出图密钥未注入客户端
+  `runtime/.env`、`PUBLISH_DRIVER` 未设 `desktop`、`ops/publish-accounts.json` 缺平台登录声明；
+- 客户端运行时 `install-state.json` 仍为 `failed/recovery`（2026-09-19 的 PG 端口占用，**与 LLM-G1 无关**），
+  `127.0.0.1:9207` 未拉起 → 影响的是 `PROD-01` 产品派单与真实发布，不是模型网关任务；
+- 平台登录态 / 客户素材 / 真实发布：需人工提供（§6）。
