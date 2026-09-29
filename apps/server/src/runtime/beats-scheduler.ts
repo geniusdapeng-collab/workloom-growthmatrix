@@ -20,7 +20,7 @@
  */
 import type pg from "pg";
 import { getAppPool, getGatewayPool, getOwnerPool } from "@workloom/db";
-import { makeReadableId } from "@workloom/shared";
+import { insertQueuedThread } from "./thread-admission.js";
 import {
   runBoardPackBeat,
   runBreakerBeat,
@@ -249,13 +249,15 @@ async function queueTriggerDispatch(
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
     await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]);
-    const max = await client.query<{ n: number }>(`SELECT public.threads_max_t_no() AS n`);
-    const threadId = makeReadableId("T", Number(max.rows[0]?.n ?? 100) + 1);
-    await client.query(
-      `INSERT INTO threads (id, tenant_id, workspace_id, title, mode, status, created_by, agent_id)
-       VALUES ($1,$2,$3,$4,'quest','queued','beats-scheduler',$5)`,
-      [threadId, scope.tenantId, scope.workspaceId, input.title, input.presetKey],
-    );
+    // U-03：与手动派遣共用「SAVEPOINT 撞号重试」的取号建档（原实现撞号即中止事务并 500）
+    const threadId = await insertQueuedThread(client, {
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+      title: input.title,
+      mode: "quest",
+      createdBy: "beats-scheduler",
+      agentId: input.presetKey,
+    });
     const ev = await gatewayAppendOnClient(client, {
       tenantId: scope.tenantId,
       workspaceId: scope.workspaceId,

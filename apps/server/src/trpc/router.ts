@@ -21,8 +21,8 @@ import {
   type Identity,
 } from "@workloom/base/tenancy";
 import { gatewayAppend, gatewayAppendOnClient, MockEmbedder, upsertMemoryInTx } from "@workloom/base/workdata";
-import { makeReadableId } from "@workloom/shared";
 import { capabilityWriteProcedure, protectedProcedure, publicProcedure, router, scopeOf, sessionProcedure, writeProcedure } from "./context.js";
+import { insertQueuedThread, mapDispatchDbError } from "../runtime/thread-admission.js";
 import { accountsRouter } from "./accounts-router.js";
 import {
   ApprovalError,
@@ -1100,6 +1100,14 @@ const threadsRouter = router({
         return { kind: "clarify" as const, question: intent.clarifyQuestion, via: intent.via };
       }
       /**
+       * F3.2 契约：kind=routed 必须带 mode（clarify 分支已提前返回）。
+       * 缺失即路由实现回归——fail-closed 报错，不允许静默按 quest 建档。
+       */
+      if (!intent.mode) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "意图路由结果缺失任务模式（F3.2 契约破坏）" });
+      }
+      const routedMode = intent.mode;
+      /**
        * 视频目标「管线分流」（T-2026-0925-0002）。
        *
        * 此前这里对所有视频目标硬编码 `isMarketing: true` 且不传 metadata：
@@ -1197,6 +1205,13 @@ const threadsRouter = router({
         await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
         await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]);
         /**
+         * U-03（并发上限形同虚设）：上限判定必须与建档在同一串行点——
+         * 此前 12 路并发同时读到 count<10 各自放行，实测占用冲到 13/10。
+         * 这里先取工作区行锁（同一事务持锁到提交），后到者等前者提交后再计数，
+         * 于是「计数 ≤ 上限」与「插入」变成原子序列；锁等待已计入客户端超时预算。
+         */
+        await client.query(`SELECT id FROM workspaces WHERE id=$1 FOR UPDATE`, [scope.workspaceId]);
+        /**
          * L3.1：单工作区并发 ≤10，超出排队且可见（须在 RLS 上下文内统计，否则恒 0 行 fail-open）。
          * N-15（第三轮实测）：只统计**有近期心跳**的 running——种子/崩溃遗留的"僵尸 running"
          * 既不会被推进、也无法自愈，却白占配额（实测 3/10 被演示数据占掉）。
@@ -1219,14 +1234,6 @@ const threadsRouter = router({
         // 号源走 SECURITY DEFINER 函数（0016：全库最大值绕 RLS——主键全库唯一，按本区分配必撞他区；
         // 历史教训：第二次派遣即 duplicate key，ASK/QUEST 主链路故障）
         /**
-         * GR-02 第②条：号源取号 + 插入必须容忍极端撞号（唯一键冲突 PG 23505）——
-         * 序列化号源已消除常规并发撞号，但手写 id/历史数据仍可能占用号段；
-         * 撞一次就重取号源重试一次，仍失败才如实抛出（不静默改号）。
-         */
-        let inserted = false;
-        let lastError: unknown;
-        threadId = ""; // TS 明确赋值（循环内必被覆盖；失败路径直接抛出，不会用到空串）
-        /**
          * X-07（第四轮实测，P2）：建档即写 agent_id——此前只有 runQuest 执行时才回填，
          * 排队中的线程在楼层上无归属（`agent_id IS NULL` 被过滤），客户看不到"谁在排这条队"。
          */
@@ -1235,25 +1242,19 @@ const threadsRouter = router({
           [scope.workspaceId, presetKey],
         );
         const ownerAgentId = ownerAgent.rows[0]?.id ?? null;
-        for (let attempt = 0; attempt < 2 && !inserted; attempt += 1) {
-          const max = await client.query<{ n: number }>(
-            `SELECT public.threads_max_t_no() AS n`,
-          );
-          threadId = makeReadableId("T", Number(max.rows[0]?.n ?? 100) + 1); // bigint 驱动返回 string，必须 Number() 防拼接（D29 教训）
-          try {
-            await client.query(
-              `INSERT INTO threads (id, tenant_id, workspace_id, title, mode, status, created_by, agent_id)
-               VALUES ($1,$2,$3,$4,$5,'queued',$6,$7)`,
-              [threadId, scope.tenantId, scope.workspaceId, input.title, intent.mode, ctx.identity.memberNo, ownerAgentId],
-            );
-            inserted = true;
-          } catch (err) {
-            lastError = err;
-            if ((err as { code?: string }).code !== "23505") throw err;
-            console.warn(`[dispatch] 号源撞号 ${threadId}，重取一次（GR-02）`);
-          }
-        }
-        if (!inserted) throw lastError ?? new Error("线程建档失败：号源重试后仍冲突");
+        /**
+         * GR-02 第②条 + U-03：号源取号与插入封装进 `insertQueuedThread`——
+         * 撞号在 SAVEPOINT 内回滚重试（此前 23505 后事务已中止，重试的取号 SELECT
+         * 会以 PG 原文 25P02 抛 500）；重试耗尽抛业务「号源并发冲突」由外层映射 409。
+         */
+        threadId = await insertQueuedThread(client, {
+          tenantId: scope.tenantId,
+          workspaceId: scope.workspaceId,
+          title: input.title,
+          mode: routedMode,
+          createdBy: ctx.identity.memberNo,
+          agentId: ownerAgentId,
+        });
         // D16（#1/A）：建线程与派遣事件同一事务（G8 留痕不再独立于状态）
         await gatewayAppendOnClient(client, {
           ...scope,
@@ -1278,7 +1279,8 @@ const threadsRouter = router({
         await client.query("COMMIT");
       } catch (err) {
         await client.query("ROLLBACK").catch(() => undefined);
-        throw err;
+        // U-03：并发/唯一冲突类 PG 错误统一映射业务 409（PG 原文只进服务端日志）
+        throw mapDispatchDbError(err);
       } finally {
         client.release();
       }

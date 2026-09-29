@@ -281,7 +281,13 @@ async function authorizedSources({ scope, shots, timeline, verifySource }) {
   return sources;
 }
 
-async function toolchainOf(bins) {
+/**
+ * 工具指纹（U-02）：渲染器文件摘要 + ffmpeg/ffprobe 版本首三行。
+ * 缓存复验要求三者逐字节一致——这是「同一工具链产出、同一工具链复验」的 fail-closed 保证；
+ * 但环境换构建（或派生/复验用了不同解析来源）时，必须能一眼看出**哪一项**不一致，
+ * 否则现场只能看到笼统的 audio_stems_stale，无法区分「环境漂移」与「篡改」。
+ */
+export async function audioStemToolchain(bins = resolveBinaries()) {
   const versions = await Promise.all([bins.ffmpeg, bins.ffprobe].map(async (bin) => {
     const result = await runBin(bin, ["-version"], { label: "audio-stems(tool-version)", timeoutMs: 20000 });
     const version = (result.stdout || result.stderr).split("\n").slice(0, 3).join("\n").trim();
@@ -289,6 +295,26 @@ async function toolchainOf(bins) {
     return version;
   }));
   return { rendererSha256: await sha256File(fileURLToPath(import.meta.url)), ffmpeg: versions[0], ffprobe: versions[1] };
+}
+
+/** 工具指纹差异项（U-02 诊断）：renderer / ffmpeg / ffprobe 逐项比对，返回不一致的项名 */
+export function audioStemToolchainDiff(stored, current) {
+  const diff = [];
+  if (!stored || typeof stored !== "object") return ["toolchain(缺失)"];
+  if (stored.rendererSha256 !== current.rendererSha256) diff.push("renderer");
+  if (stored.ffmpeg !== current.ffmpeg) diff.push("ffmpeg");
+  if (stored.ffprobe !== current.ffprobe) diff.push("ffprobe");
+  return diff;
+}
+
+/** 指纹首行摘要（错误文案用，避免把整段 configuration 打进消息） */
+function toolchainBrief(value) {
+  if (typeof value !== "string") return String(value ?? "缺失");
+  return value.split("\n")[0]?.trim().slice(0, 120) ?? "缺失";
+}
+
+async function toolchainOf(bins) {
+  return audioStemToolchain(bins);
 }
 
 async function renderSegment({ source, shot, output, bins }) {
@@ -475,13 +501,34 @@ export async function verifyAudioStemBundle({ dir, expectedManifestSha256, expec
     try { manifest = JSON.parse(await fsp.readFile(path.join(temporary, "manifest"), "utf8")); }
     catch (error) { throw new AudioStemError("音轨缓存清单无法解析", "audio_stems_stale", error); }
     const recipe = record(manifest?.recipe, "recipe");
-    if (manifest.schemaVersion !== AUDIO_STEM_SCHEMA || manifest.status !== "ready"
-      || recipe.schemaVersion !== AUDIO_STEM_SCHEMA || manifest.recipeSha256 !== expectedRecipeSha256
-      || audioStemDigest(recipe) !== expectedRecipeSha256 || audioStemDigest(recipe.scope) !== audioStemDigest(identity)
-      || audioStemDigest(recipe.programRoles) !== audioStemDigest(PROGRAM_ROLES)
-      || recipe.musicExcludedFromProgram !== true || recipe.speedChange !== false
-      || audioStemDigest(recipe.toolchain) !== audioStemDigest(await toolchainOf(bins))) {
-      fail("音轨缓存清单、作用域、配方或工具指纹与工程快照不一致", "audio_stems_stale");
+    /**
+     * U-02：原先这一整串条件合成一条笼统报错，现场无法区分「环境工具链漂移」与「缓存被改」。
+     * 现在逐项断言并在错误里给出**具体差异项**；工具链不一致额外打印存/现指纹首行。
+     */
+    if (manifest.schemaVersion !== AUDIO_STEM_SCHEMA || manifest.status !== "ready" || recipe.schemaVersion !== AUDIO_STEM_SCHEMA) {
+      fail("音轨缓存清单 schema/status 非法（非 ready 产物）", "audio_stems_stale");
+    }
+    if (manifest.recipeSha256 !== expectedRecipeSha256 || audioStemDigest(recipe) !== expectedRecipeSha256) {
+      fail("音轨缓存配方摘要与工程快照不一致", "audio_stems_stale");
+    }
+    if (audioStemDigest(recipe.scope) !== audioStemDigest(identity)) {
+      fail("音轨缓存作用域与当前工程不一致", "audio_stems_stale");
+    }
+    if (audioStemDigest(recipe.programRoles) !== audioStemDigest(PROGRAM_ROLES)
+      || recipe.musicExcludedFromProgram !== true || recipe.speedChange !== false) {
+      fail("音轨缓存节目轨口径不一致（programRoles/musicExcluded/speedChange）", "audio_stems_stale");
+    }
+    const currentToolchain = await toolchainOf(bins);
+    const toolchainDiff = audioStemToolchainDiff(recipe.toolchain, currentToolchain);
+    if (toolchainDiff.length) {
+      fail(
+        `音轨缓存工具指纹与当前环境不一致（差异项：${toolchainDiff.join("、")}）——`
+        + `缓存 ffmpeg=${toolchainBrief(recipe.toolchain?.ffmpeg)}；当前 ffmpeg=${toolchainBrief(currentToolchain.ffmpeg)}；`
+        + `缓存渲染器摘要=${String(recipe.toolchain?.rendererSha256 ?? "").slice(0, 12)}，当前渲染器摘要=${currentToolchain.rendererSha256.slice(0, 12)}。`
+        + `同一产物必须由同一 ffmpeg/ffprobe 构建与同一渲染器复验（环境漂移请重建缓存；CI 请固定 ffmpeg 构建；`
+        + `口径与排查见 docs/MEDIA-TOOLCHAIN.md）`,
+        "audio_stems_stale",
+      );
     }
     const priorTimeline = record(recipe.timeline, "timeline");
     const shots = priorTimeline.shots?.map((shot) => ({ shotId: shot.shotId, videoSha256: shot.videoSha256,

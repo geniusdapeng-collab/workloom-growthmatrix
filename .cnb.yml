@@ -236,6 +236,14 @@
           export "$line"
         done < .env
         set +a
+        # U-02：媒体用例（audio-stems 冻结缓存复验）要求 ffmpeg/ffprobe + libx264。
+        # 镜像只装了 builder 工具，ffmpeg 缺失时原生媒体用例会跳过（覆盖缺口）——
+        # 这里按发行版固定构建补装并打印工具链指纹，保证这两组用例在 CI 真跑而不是跳。
+        # 安装失败不阻断本阶段：探针会如实回报缺失，避免流水线因网络问题整体变红。
+        if ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; then
+          apt-get update -qq && apt-get install -y -qq ffmpeg >/dev/null 2>&1 || echo "[media-toolchain] ffmpeg 安装失败（离线？），媒体用例将跳过"
+        fi
+        node scripts/ci/media-toolchain.mjs
         pnpm test
         # 仓库根 scripts/ 下的 vitest 用例（行业包治理门禁、套件夹具契约）不在
         # pnpm -r 的包范围内，历史上从未被任何流水线执行过；这里显式跑一遍。

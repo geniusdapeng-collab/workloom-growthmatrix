@@ -12,13 +12,21 @@ import { fileURLToPath } from "node:url";
 import { mix, callTool } from "./core.mjs";
 import { renderAudioStems, describeAudioStemSources } from "./audio-stems.mjs";
 import { audioStemReceiptPayload, createAudioStemReceiptVerifier } from "./audio-stems-trust.mjs";
+import { resolveBinaries } from "../subtitle-bridge/measure.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const bins = { ffmpeg: process.env.WORKLOOM_POST_FFMPEG_PATH || "ffmpeg", ffprobe: process.env.WORKLOOM_POST_FFPROBE_PATH || "ffprobe" };
+/**
+ * U-02：二进制解析只走模块同款 `resolveBinaries()`，并把结果写回子进程 env —
+ * 此前父进程按 WORKLOOM_POST_* 取、CLI/HTTP 子进程按 PATH/kit 取，
+ * 两边解析不一致时会得到"派生用 A 构建、复验用 B 构建"的假 audio_stems_stale。
+ */
+const bins = resolveBinaries();
 const scope = { tenantId: "fixture-t", workspaceId: "fixture-w", projectId: "fixture-p", revision: 1 };
 const secret = randomBytes(32).toString("hex");
 const env = { ...process.env, WORKLOOM_AUDIO_STEM_SIGNING_SECRET: secret,
-  WORKLOOM_AUDIO_STEM_SIGNING_KEY_ID: "fixture-only", WORKLOOM_BGM_DISCOVER: "0" };
+  WORKLOOM_AUDIO_STEM_SIGNING_KEY_ID: "fixture-only", WORKLOOM_BGM_DISCOVER: "0",
+  WORKLOOM_SUBTITLE_FFMPEG_PATH: bins.ffmpeg, WORKLOOM_SUBTITLE_FFPROBE_PATH: bins.ffprobe,
+  WORKLOOM_POST_FFMPEG_PATH: bins.ffmpeg, WORKLOOM_POST_FFPROBE_PATH: bins.ffprobe };
 const hash = (file) => createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 const encode = (args) => execFileSync(bins.ffmpeg, ["-hide_banner", "-v", "error", "-y", ...args], { timeout: 30000, stdio: "pipe" });
 let root, video, music, bundle, reference, shot;
@@ -85,6 +93,12 @@ async function startServer(kind) {
 }
 
 before(async () => {
+  // U-02 前置探针：环境不兼容要说清楚（缺 ffmpeg / 缺 libx264），不要伪装成 audio_stems_stale
+  const ffmpegVersion = execFileSync(bins.ffmpeg, ["-version"], { encoding: "utf8" });
+  const encoders = execFileSync(bins.ffmpeg, ["-hide_banner", "-encoders"], { encoding: "utf8" });
+  assert.match(ffmpegVersion, /^ffmpeg version /, `U-02：ffmpeg 不可用（解析结果 ${bins.ffmpeg}）`);
+  assert.match(encoders, /\blibx264\b/,
+    `U-02：ffmpeg 构建缺少 libx264（${bins.ffmpeg}）——媒体用例需要完整构建；CI 请固定 ffmpeg/ffprobe 构建（见 docs/MEDIA-TOOLCHAIN.md）`);
   root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "post6-signed-mix-")));
   env.WORKLOOM_BGM_ALLOWED_ROOTS = root;
   env.WORKLOOM_POST_ALLOWED_ROOTS = root;

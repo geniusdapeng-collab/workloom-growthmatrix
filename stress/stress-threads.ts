@@ -3,9 +3,29 @@
  * 前置：server 运行中（scheduler 每 7000ms 扫描 queued 线程）。
  * 适用基线：e71f30c。唯一后缀 RUN_ID 保证可复跑。
  */
-import { check, login, ownerPool, scene, step, summary, trpc, RUN_ID } from "./_helper.js";
+import { check, login, ownerPool, scene, step, summary, trpc, TrpcError, RUN_ID } from "./_helper.js";
 
 const SCOPE = { tenantId: "tenant-demo", workspaceId: "ws-yunqi" };
+const CONCURRENCY_LIMIT = 10; // L3.1：单工作区并发 ≤10
+
+/** 当前占用并发位（与 Router 判定同口径：queued + 有近期心跳的 running） */
+async function occupancy(db: { query: (text: string, values?: unknown[]) => Promise<{ rows: Array<{ c: number }> }> }): Promise<number> {
+  const r = await db.query(
+    `SELECT count(*)::int AS c FROM threads
+      WHERE workspace_id=$1
+        AND (status='queued' OR (status='running' AND updated_at > now() - interval '10 minutes'))`,
+    [SCOPE.workspaceId],
+  );
+  return r.rows[0]?.c ?? 0;
+}
+
+/** 失败面口径：不得 500、不得泄漏 PG 原文；并发上限/号源冲突必须是业务码 */
+function classifyFailure(err: unknown): { code: string; leak: boolean; message: string } {
+  const message = err instanceof Error ? err.message : String(err);
+  const code = err instanceof TrpcError ? err.code : "NON_TRPC";
+  const leak = /current transaction is aborted|duplicate key value|violates|relation "|PG::|pg_\w+ \(/i.test(message);
+  return { code, leak, message };
+}
 
 async function main(): Promise<void> {
   const db = ownerPool();
@@ -45,6 +65,7 @@ async function main(): Promise<void> {
 
   /* ---------- A-03/A-07 并发派遣 12 路：全部成功 + 线程号唯一 ---------- */
   scene("A-03/A-07 12 路并发派遣（号源唯一性 / 无重入）");
+  const capacityBefore = CONCURRENCY_LIMIT - (await occupancy(db)); // 必须在派遣前测量：派遣后占用已包含本批
   const results = await Promise.allSettled(
     Array.from({ length: 12 }, (_, i) =>
       trpc<{ kind?: string; threadId?: string }>("threads.dispatch", {
@@ -57,15 +78,117 @@ async function main(): Promise<void> {
     .map((r) => (r.status === "fulfilled" ? (r.value.threadId ?? null) : null))
     .filter((x): x is string => typeof x === "string");
   const failedN = results.length - okIds.length;
-  step(`成功 ${okIds.length}/12，失败 ${failedN}（${results.filter((r) => r.status === "rejected").map((r) => String((r as PromiseRejectedResult).reason).slice(0, 60)).join(" | ") || "无"}）`);
-  check("A-07 12 路并发派遣全部成功", failedN === 0, `失败 ${failedN}`);
+  const failures = results
+    .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+    .map((r) => classifyFailure(r.reason));
+  step(`成功 ${okIds.length}/12，失败 ${failedN}（预算并发位 ${capacityBefore}；${failures.map((f) => `${f.code}:${f.message.slice(0, 40)}`).join(" | ") || "无"}）`);
+  /**
+   * U-03 之后的上限口径：并发上限判定与建档已串行化——
+   *  ① 成功数不得超过提交时的可用并发位；
+   *  ② 超限失败必须是业务 429/409，不得 500、不得泄漏 PG 原文；
+   *  ③ 派遣后占用不得超过上限（此前 12 路并发实测冲到 13/10）。
+   */
+  check("A-07 12 路并发派遣：成功数不超过可用并发位", okIds.length <= Math.max(0, capacityBefore), `成功 ${okIds.length}，预算 ${capacityBefore}`);
+  check("A-07c 超限失败为业务错误（不得 500 / 泄漏 PG 原文）",
+    failures.every((f) => (f.code === "TOO_MANY_REQUESTS" || f.code === "CONFLICT") && !f.leak),
+    failures.map((f) => `${f.code}${f.leak ? "(泄漏)" : ""}`).join(",") || "无失败");
+  const afterBurst = await occupancy(db);
+  check("A-07d 派遣后占用并发位不得超过上限（并发上限竞争）", afterBurst <= CONCURRENCY_LIMIT, `占用 ${afterBurst}/${CONCURRENCY_LIMIT}`);
   if (okIds.length) {
     const dup = await db.query<{ id: string; n: string }>(
       `SELECT id, count(*)::text AS n FROM threads WHERE id = ANY($1) GROUP BY id HAVING count(*) > 1`, [okIds]);
     const missing = await db.query<{ n: string }>(`SELECT count(*)::text AS n FROM threads WHERE id = ANY($1)`, [okIds]);
     check("A-07b 派遣线程全部落库且无撞号", dup.rows.length === 0 && missing.rows[0]?.n === String(okIds.length),
       `落库 ${missing.rows[0]?.n}/${okIds.length}`);
+    // 用例自带清理（账本事件留档）：并发位还给后续 U-03 用例，避免"前一个用例把库打满"导致假红
+    await db.query(`DELETE FROM threads WHERE id = ANY($1)`, [okIds]);
+    step(`A-07 测试线程已清理 ${okIds.length} 条（biz_events 留档不动）`);
   }
+
+  /* ---------- U-03 并发上限竞争 + 号源撞号（排雷台账 U-03：500 泄漏 PG 原文 / 占用冲到 13/10） ---------- */
+  scene("U-03 并发上限竞争与号源撞号（不得 500、不得泄漏 PG 原文、占用不得超限）");
+  const u03Prefix = `U03·${RUN_ID}`;
+
+  // ① 号源撞号故障注入：函数恒返回同一号 → 首单成功、次单必须业务 409（此前 25P02 500 泄漏 PG 原文）
+  const originalFn = (await db.query<{ def: string }>(
+    `SELECT pg_get_functiondef('public.threads_max_t_no()'::regprocedure) AS def`)).rows[0]?.def;
+  if (!originalFn) {
+    check("U-03d 号源撞号必须返回业务 409（不泄漏 PG 原文）", false, "无法读取号源函数定义，故障注入跳过");
+  } else if ((await occupancy(db)) >= CONCURRENCY_LIMIT) {
+    check("U-03d 号源撞号必须返回业务 409（不泄漏 PG 原文）", false,
+      `占用已满 ${await occupancy(db)}/${CONCURRENCY_LIMIT}，撞号路径不可达（环境未腾出并发位）`);
+  } else {
+    const floor = Number((await db.query<{ n: string }>(
+      `SELECT COALESCE(MAX(NULLIF(regexp_replace(id,'[^0-9]','','g'),'')::bigint),100)::text AS n
+         FROM threads WHERE id ~ '^T-[0-9]+$'`)).rows[0]?.n ?? 100);
+    let injected = false;
+    try {
+      await db.query(
+        `CREATE OR REPLACE FUNCTION public.threads_max_t_no()
+         RETURNS bigint LANGUAGE sql SECURITY DEFINER SET search_path = public
+         AS $$ SELECT ${floor}::bigint $$`);
+      injected = true;
+      const hitTitle = `${u03Prefix}·撞号单 ${Date.now().toString(36)}`;
+      await trpc("threads.dispatch", { token, method: "mutation", input: { title: hitTitle, runImmediately: false } })
+        .then(() => step("撞号首单：建档成功（占用恒定号）"))
+        .catch((err) => step(`撞号首单异常：${classifyFailure(err).code}`));
+      const second = await trpc("threads.dispatch", {
+        token, method: "mutation", input: { title: `${hitTitle}-次单`, runImmediately: false },
+      }).then(() => ({ code: "OK", leak: false, message: "" })).catch((err) => classifyFailure(err));
+      step(`撞号次单：code=${second.code} leak=${second.leak ? "YES" : "no"} message=${second.message.slice(0, 80)}`);
+      check("U-03d 号源撞号重试耗尽必须返回业务 409（不得 500 / 泄漏 PG 原文）",
+        second.code === "CONFLICT" && !second.leak, `code=${second.code} leak=${second.leak}`);
+      const halfThreads = await db.query<{ n: string }>(
+        `SELECT count(*)::text AS n FROM threads WHERE workspace_id=$1 AND title = $2`, [SCOPE.workspaceId, `${hitTitle}-次单`]);
+      const halfEvents = await db.query<{ n: string }>(
+        `SELECT count(*)::text AS n FROM biz_events
+          WHERE workspace_id=$1 AND payload->'decision'->>'action'='thread.dispatch'
+            AND payload->'decision'->'after'->>'title' = $2`, [SCOPE.workspaceId, `${hitTitle}-次单`]);
+      check("U-03e 失败请求不得留下半截线程/账本",
+        halfThreads.rows[0]?.n === "0" && halfEvents.rows[0]?.n === "0",
+        `线程 ${halfThreads.rows[0]?.n} 条 / 事件 ${halfEvents.rows[0]?.n} 条`);
+    } finally {
+      if (injected) await db.query(originalFn);
+    }
+    const restored = (await db.query<{ ok: boolean }>(
+      `SELECT position('nextval' in pg_get_functiondef('public.threads_max_t_no()'::regprocedure)) > 0 AS ok`)).rows[0]?.ok === true;
+    check("U-03f 故障注入后号源函数必须还原（含 nextval）", restored, restored ? "" : "函数未还原，需人工检查");
+  }
+  // 清掉撞号注入造的线程，把并发位还给下面的"打满→冲击"用例
+  await db.query(`DELETE FROM threads WHERE workspace_id=$1 AND title LIKE $2`, [SCOPE.workspaceId, `${u03Prefix}·撞号单%`]);
+
+  // ② 并发上限竞争：先填满并发位，再并发冲击——占用不得超限，拒绝必须是业务码
+  let fillOk = 0;
+  while ((await occupancy(db)) < CONCURRENCY_LIMIT && fillOk < CONCURRENCY_LIMIT + 2) {
+    try {
+      await trpc("threads.dispatch", {
+        token, method: "mutation", input: { title: `${u03Prefix}·填充 ${fillOk}`, runImmediately: false },
+      });
+      fillOk += 1;
+    } catch (err) {
+      const f = classifyFailure(err);
+      step(`填充中断（${f.code}）：${f.message.slice(0, 60)}`);
+      break;
+    }
+  }
+  step(`已填充 ${fillOk} 条，占用 ${await occupancy(db)}/${CONCURRENCY_LIMIT}`);
+  const burst = await Promise.allSettled(Array.from({ length: 6 }, (_, i) =>
+    trpc("threads.dispatch", {
+      token, method: "mutation", input: { title: `${u03Prefix}·越限 ${i}`, runImmediately: false },
+    })));
+  const burstOk = burst.filter((r) => r.status === "fulfilled").length;
+  const burstFail = burst
+    .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+    .map((r) => classifyFailure(r.reason));
+  step(`越限并发冲击 6 路：成功 ${burstOk}，失败 ${burstFail.length}（${burstFail.map((f) => f.code).join(",") || "无"}）`);
+  check("U-03a 打满并发位后继续派遣必须被业务拒绝（不得静默超限）",
+    burstOk === 0 && burstFail.length === 6, `成功 ${burstOk}，拒绝 ${burstFail.length}`);
+  check("U-03b 拒绝必须是业务码（429/409）且不泄漏 PG 原文",
+    burstFail.every((f) => (f.code === "TOO_MANY_REQUESTS" || f.code === "CONFLICT") && !f.leak),
+    burstFail.map((f) => `${f.code}${f.leak ? "(泄漏)" : ""}`).join(",") || "无失败");
+  const afterU03 = await occupancy(db);
+  check("U-03c 并发冲击后占用并发位不得超限", afterU03 <= CONCURRENCY_LIMIT, `占用 ${afterU03}/${CONCURRENCY_LIMIT}`);
+  await db.query(`DELETE FROM threads WHERE workspace_id=$1 AND title LIKE $2`, [SCOPE.workspaceId, `${u03Prefix}%`]);
 
   /* ---------- 边界值：注入式 / 空参 / 超长 ---------- */
   scene("边界值（注入式输入 / 空标题 / 超长标题）");

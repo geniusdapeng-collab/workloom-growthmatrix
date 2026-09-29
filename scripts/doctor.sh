@@ -18,9 +18,11 @@ echo "== WorkLoom IM 底座 · doctor 一屏自检 =="
 sec "运行时"
 if command -v node >/dev/null 2>&1; then
   NV=$(node -v | sed 's/v//'); MAJOR=${NV%%.*}; ARCH=$(node -p "process.arch" 2>/dev/null || echo "?")
-  if [ "$MAJOR" -ge 24 ]; then ok "node v$NV · ${ARCH}（≥24 LTS）"; else bad "node v$NV 低于 24 LTS → nvm install 24"; fi
+  # U-04：24 是支持基线（dsh 运行时需 Node ≥24 zstd；桌面载荷与 CI 均固定 v24.19.0）。
+  # Node 22 的实跑记录来自排雷材料（本仓未复验），不在支持口径内，这里按阻断处理并给出理由。
+  if [ "$MAJOR" -ge 24 ]; then ok "node v$NV · ${ARCH}（≥24 LTS，支持基线）"; else bad "node v$NV 低于支持基线 24（dsh 需 Node ≥24 zstd；桌面载荷固定 v24.19.0）→ nvm install 24；Node 22 的实跑记录来自排雷材料（本仓未复验），不在支持口径内（U-04）"; fi
 else
-  bad "未安装 node → brew install nvm && nvm install 24"
+  bad "未安装 node（支持基线 ≥24）→ brew install nvm && nvm install 24"
 fi
 if command -v pnpm >/dev/null 2>&1; then ok "pnpm $(pnpm -v)"; else bad "未安装 pnpm → corepack enable && corepack prepare pnpm@10.14.0 --activate"; fi
 command -v git >/dev/null 2>&1 && ok "git $(git --version | awk '{print $3}')" || bad "未安装 git"

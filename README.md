@@ -137,6 +137,8 @@ NATS/Redis 的事件总线库可在源码中找到，但当前主业务入口未
 
 以下是当前源码对应的本地开发/模拟体验步骤，面向已准备 Bash、Node.js **≥24.0.0**、本仓指定的 **pnpm 10.14.0** 和可用 PostgreSQL 环境的机器。版本以 [package.json](package.json) 为准；数据库示例用 [PostgreSQL 17 + pgvector 的 Compose 配置](docker-compose.yml)。这些步骤说明代码约定，不代表本次文档更新已经完成空白机器安装验收。
 
+> **Node 22 不在支持口径内（U-04）**：排雷材料记录过 Node 22 的实跑——主链路可跑、只出现 pnpm 的 `EBADENGINE` 警告（**该实跑出自 growth 车道验收材料，本仓未复验**；本机当前也没有 22 运行时）。但 dsh 运行时自 0.1.2-rc.1 起依赖 Node ≥24 的 zstd API（见 [docs/AUDIT.md](docs/AUDIT.md)、[docs/OPEN_SOURCE_COMPONENTS.md](docs/OPEN_SOURCE_COMPONENTS.md)），且桌面发布载荷固定 `node-v24.19.0`（[scripts/release-assets.json](scripts/release-assets.json)）、CI 与桌面流水线均断言 v24.19.0。因此本仓声明保持 `engines.node >=24.0.0`：Node 22 的实跑只作兼容参考，不作为支持承诺；低于 24 时 `bash scripts/doctor.sh` 会直接判阻断。声明与固定点的一致性由 `node --test scripts/ci/node-baseline.test.mjs` 守护。
+
 ### 1. 克隆、依赖与专用数据库
 
 ```bash

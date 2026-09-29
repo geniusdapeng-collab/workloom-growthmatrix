@@ -10,11 +10,11 @@ import path from "node:path";
 import {
   AUDIO_STEM_ROLES, audioStemDigest, buildAudioStemTimeline, muxAudioProgram, renderAudioStems, verifyAudioStemBundle,
 } from "../bgm-bridge/audio-stems.mjs";
+import { resolveBinaries } from "../subtitle-bridge/measure.mjs";
 
-const bins = {
-  ffmpeg: process.env.WORKLOOM_POST_FFMPEG_PATH || "ffmpeg",
-  ffprobe: process.env.WORKLOOM_POST_FFPROBE_PATH || "ffprobe",
-};
+// U-02：与模块同款解析（WORKLOOM_POST_* → WORKLOOM_SUBTITLE_* → 本机 kit → PATH），
+// 避免"用例编码用一套构建、缓存复验用另一套构建"造成的假 audio_stems_stale。
+const bins = resolveBinaries();
 const scope = { tenantId: "stem-tenant", workspaceId: "stem-workspace", projectId: "stem-film", revision: 1 };
 const hash = (file) => createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 const read = (file) => JSON.parse(fs.readFileSync(file, "utf8"));
@@ -58,6 +58,12 @@ function rms(samples, startSec, durationSec) {
 }
 
 before(() => {
+  // U-02 前置探针：环境不兼容要说清楚（缺 ffmpeg / 缺 libx264），不要伪装成 audio_stems_stale
+  const ffmpegVersion = execFileSync(bins.ffmpeg, ["-version"], { encoding: "utf8" });
+  const encoders = execFileSync(bins.ffmpeg, ["-hide_banner", "-encoders"], { encoding: "utf8" });
+  assert.match(ffmpegVersion, /^ffmpeg version /, `U-02：ffmpeg 不可用（解析结果 ${bins.ffmpeg}）`);
+  assert.match(encoders, /\blibx264\b/,
+    `U-02：ffmpeg 构建缺少 libx264（${bins.ffmpeg}）——媒体用例需要完整构建；CI 请固定 ffmpeg/ffprobe 构建（见 docs/MEDIA-TOOLCHAIN.md）`);
   fixtureDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "post-audio-stems-media-")));
   files = {};
   for (const [index, role] of AUDIO_STEM_ROLES.entries()) {
@@ -316,6 +322,31 @@ describe("frozen stem bundle cache revalidation", { concurrency: false }, () => 
     const { options } = await frozen();
     await assert.rejects(verifyAudioStemBundle({ ...options, verifySource: async () => ({ status: "failed" }) }), { code: "audio_stems_source_unverified" });
     await assert.rejects(verifyAudioStemBundle({ ...options, scope: { ...scope, workspaceId: "other" } }), { code: "audio_stems_stale" });
+  });
+  /**
+   * U-02：工具链漂移（派生用 A 构建、复验用 B 构建）必须报出**具体差异项**与两侧指纹首行，
+   * 让现场能区分"环境漂移"与"缓存被改"；此前只有笼统的 audio_stems_stale。
+   * 这里用一个只改 `-version` 输出的包装脚本模拟"另一套 ffmpeg 构建"，其余调用透传真实二进制。
+   */
+  it("U-02 换 ffmpeg 构建复验时必须点名差异项（环境漂移可诊断）", async () => {
+    const { options } = await frozen();
+    const fakeVersion = "ffmpeg version 99.0-u02-drift";
+    const wrap = (real) => {
+      const file = path.join(root, `wrap-${path.basename(real)}.sh`);
+      fs.writeFileSync(file, `#!/bin/sh\nif [ "$1" = "-version" ]; then echo "${fakeVersion}"; else exec "${real}" "$@"; fi\n`);
+      fs.chmodSync(file, 0o755);
+      return file;
+    };
+    const drifted = { ffmpeg: wrap(bins.ffmpeg), ffprobe: wrap(bins.ffprobe) };
+    await assert.rejects(verifyAudioStemBundle({ ...options, bins: drifted }), (err) => {
+      assert.equal(err.code, "audio_stems_stale");
+      assert.match(err.message, /差异项：ffmpeg/);
+      assert.match(err.message, /99\.0-u02-drift/);
+      assert.match(err.message, /同一 ffmpeg\/ffprobe 构建/);
+      return true;
+    });
+    const clean = await verifyAudioStemBundle(options); // 原构建仍然可复验（漂移只影响漂移方）
+    assert.ok(clean.manifestSha256);
   });
   it("cannot forge a clean program by replacing it with retained music and recomputing public hashes", async () => {
     const { bundle, options } = await frozen();
