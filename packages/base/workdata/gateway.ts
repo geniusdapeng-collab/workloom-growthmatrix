@@ -267,6 +267,23 @@ export async function checkHighRiskAuthorization(
       `审批「${approvalRef}」绑定动作 ${snap.action} 与当前 ${event.decision.action} 不符（P1-8），拒绝`,
     );
   }
+  /**
+   * B-02 修复（L3.5 逐次授权）：验真通过即原子消费——同一 approvalRef 不得驱动第二次写动作。
+   * 此前本函数只 SELECT 不写入，一张 approved 审批就是永久通行证（复用实锤见排雷台账 B-02）。
+   * 消费与事件落库在同一事务（gatewayAppend/OnClient 口径）：事件回滚则消费回滚，不产生"票用了事没成"。
+   * 语义：一张审批只放行一次高危写落库；重试/重放须重新审批。
+   */
+  const consumed = await db.query(
+    `UPDATE approvals SET consumed_at = now()
+      WHERE approval_id = $1 AND tenant_id = $2 AND workspace_id = $3 AND consumed_at IS NULL`,
+    [approvalRef, scope.tenantId, scope.workspaceId],
+  );
+  if ((consumed.rowCount ?? 0) === 0) {
+    throw new GatewayReject(
+      "authorization",
+      `审批「${approvalRef}」已被消费（一次性授权，L3.5），同一审批不得驱动第二次写动作，须重新审批`,
+    );
+  }
 }
 
 /**

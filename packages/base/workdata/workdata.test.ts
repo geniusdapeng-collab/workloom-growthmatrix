@@ -107,9 +107,27 @@ describe("权限段①（F2.10/L9.1 复查位）", () => {
 describe("高风险授权段③（L3.5 + P1-8 验真）", () => {
   const desktop = { id: "desktop-agent", type: "agent" as const, highRisk: true, fenceBindings: ["R2"] };
   const scope = { tenantId: "tenant-demo", workspaceId: "ws-yunqi" };
-  /** 审批表桩：模拟 approvals 查询结果（P1-8 段③已改为查表验真） */
+  /**
+   * 审批表桩：模拟 approvals 查询结果（P1-8 段③查表验真 + B-02 一次性消费）。
+   * 一次性消费走 `UPDATE approvals SET consumed_at …` 并看 rowCount——桩必须回传 rowCount，
+   * 否则消费被判 0 行（等价「已被消费」）而误拒。
+   */
   const stubDb = (rows: Array<{ status: string; snapshot: unknown }>) =>
-    ({ query: async () => ({ rows }) }) as unknown as GatewayQueryable;
+    ({ query: async () => ({ rows, rowCount: rows.length }) }) as unknown as GatewayQueryable;
+  /** 一次性消费桩：第一次消费返回 1 行、再次消费返回 0 行（模拟 consumed_at 已置位） */
+  const consumingStubDb = (rows: Array<{ status: string; snapshot: unknown }>) => {
+    let consumed = false;
+    return ({
+      query: async (sql: string) => {
+        if (/UPDATE approvals SET consumed_at/.test(sql)) {
+          if (consumed) return { rows: [], rowCount: 0 };
+          consumed = true;
+          return { rows: [], rowCount: 1 };
+        }
+        return { rows, rowCount: rows.length };
+      },
+    }) as unknown as GatewayQueryable;
+  };
   const d = () => draft("desktop.gui", "desktop-agent");
 
   it("缺授权引用被拒（L3.5）", async () => {
@@ -146,6 +164,12 @@ describe("高风险授权段③（L3.5 + P1-8 验真）", () => {
     await expect(
       checkHighRiskAuthorization(stubDb([{ status: "approved", snapshot: {} }]), scope, desktop, d(), "apr-1"),
     ).resolves.toBeUndefined();
+  });
+
+  it("授权票据一次性消费（B-02）：同一引用第二次写必须被拒", async () => {
+    const db = consumingStubDb([{ status: "approved", snapshot: {} }]);
+    await expect(checkHighRiskAuthorization(db, scope, desktop, d(), "apr-once")).resolves.toBeUndefined();
+    await expect(checkHighRiskAuthorization(db, scope, desktop, d(), "apr-once")).rejects.toThrow(/已被消费/);
   });
 
   it("非高危身份不查库直接放行", async () => {

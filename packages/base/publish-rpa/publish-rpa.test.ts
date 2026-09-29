@@ -20,6 +20,8 @@ type Row = Record<string, any>;
 class MockDb {
   tasks: Row[] = [];
   events: Array<{ seq: number; event_id: string; hash: string; payload: any }> = [];
+  /** C-03 修复后：G9 围栏挂起必须同事务插审批单（此前只写事件，任务永久卡死无人可见） */
+  approvals: Array<{ approval_id: string; event_id: string; status: string; snapshot: any }> = [];
   private seq = 8800;
 
   query(sql: string, params: any[] = []): { rows: Row[]; rowCount: number } {
@@ -49,6 +51,15 @@ if (s.includes("append_event_insert")) {
     }
 
     // ---- publish_tasks ----
+    if (/INSERT INTO approvals \(approval_id, tenant_id, workspace_id, event_id, channel, status, snapshot, tier\)/.test(s)) {
+      this.approvals.push({
+        approval_id: params[0],
+        event_id: params[3],
+        status: "pending",
+        snapshot: JSON.parse(params[4] ?? "{}"),
+      });
+      return { rows: [], rowCount: 1 };
+    }
     if (/UPDATE publish_tasks SET status='running'/.test(s)) {
       const row = this.tasks.find(
         (x) => x.workspace_id === params[0] && x.id === params[1] && x.status === "pending",
@@ -156,6 +167,12 @@ describe("执行器：G9 围栏预检", () => {
     const ev = db.events.find((e) => e.payload.decision.action === "publish.fence_hold")!;
     expect(ev.payload.rule_impact).toEqual([{ rule_id: "G9", version: "v1", result: "review" }]);
     expect(ev.payload.object).toMatchObject({ type: "publish_task", id: "pt-1" });
+    // C-03：挂起必须同时产出审批单，且在审批中心可见可批（high_risk 标记不可批量照批）
+    expect(db.approvals).toHaveLength(1);
+    expect(db.approvals[0]).toMatchObject({ approval_id: "apr-pub-pt-1", status: "pending" });
+    expect(db.approvals[0]!.snapshot).toMatchObject({
+      gate: "G9", object_type: "publish_task", object_id: "pt-1", action: "publish.execute", high_risk: true,
+    });
   });
 
   it("非 pending 任务幂等退出（not_claimable）", async () => {

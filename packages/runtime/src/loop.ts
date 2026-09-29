@@ -297,7 +297,8 @@ async function loadActiveRules(app: pg.Pool, scope: { tenantId: string; workspac
 
 export interface QuestRunResult {
   threadId: string;
-  status: "completed" | "pending_review" | "failed" | "paused";
+  /** running：A-03 并发重入被 CAS 拒绝（他方正在执行同一线程），调用方应按"已在执行"处理 */
+  status: "completed" | "pending_review" | "failed" | "paused" | "running";
   stepsDone: number;
   stepsTotal: number;
   /** 未核实步骤（E3.7：无回执不得宣称完成） */
@@ -387,11 +388,11 @@ async function updateThread(app: pg.Pool, scope: { tenantId: string; workspaceId
       sets.push(`${k} = $${params.length}`);
     }
     await client.query(`UPDATE threads SET ${sets.join(", ")} WHERE id=$1 AND workspace_id=$2`, params);
+    await client.query("COMMIT"); // A-08：显式提交，失败即抛（不再 finally 吞错）
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw err;
   } finally {
-    await client.query("COMMIT").catch(() => undefined);
     client.release();
   }
 }
@@ -450,15 +451,37 @@ async function saveThreadPlan(
     );
     let superseded = 0;
     if (invalidateApprovals) {
-      const r = await client.query(
+      const r = await client.query<{ approval_id: string }>(
         `UPDATE approvals SET status='superseded'
           WHERE workspace_id=$1 AND status='pending'
             AND event_id IN (
               SELECT event_id FROM biz_events WHERE workspace_id=$1 AND session_id=$2
-            )`,
+            )
+          RETURNING approval_id`,
         [scope.workspaceId, threadId],
       );
       superseded = r.rowCount ?? 0;
+      /**
+       * B-04 修复：superseded 是关键处置（重规划作废未决审批），必须经网关留痕——
+       * 此前只改表不写事件，事件库/哈希链无痕（违反"状态变更必经网关"铁律，
+       * 与同仓 #10 修复的 expireSweep 同构）。与状态变更同一事务同一 COMMIT。
+       */
+      for (const row of r.rows) {
+        await gatewayAppendOnClient(client, {
+          ...scope,
+          actor: { id: "quest-loop", type: "system" },
+        }, {
+          who: { type: "system", id: "quest-loop" },
+          context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString(), channel: "inapp" },
+          object: { type: "approval", id: row.approval_id },
+          decision: {
+            action: "approval.superseded",
+            after: { approvalId: row.approval_id, threadId, planVersion: version },
+            basis: ["显式重规划：旧计划未决审批作废（绝不允许被新计划消费）"],
+          },
+          rule_impact: [],
+        });
+      }
     }
     await client.query("COMMIT");
     return superseded;
@@ -502,7 +525,9 @@ async function approvedStepIds(
       `SELECT e.payload->'decision'->>'step_id' AS step_id, a.approval_id, a.snapshot
        FROM approvals a JOIN biz_events e ON e.event_id = a.event_id
        WHERE a.workspace_id=$1 AND e.session_id=$2 AND a.status IN ('approved','edited')
-         AND e.payload->'decision'->>'step_id' IS NOT NULL`,
+         AND e.payload->'decision'->>'step_id' IS NOT NULL
+         -- B-03 修复：过期审批即使被批也不得驱动步骤执行（消费侧与 decide() 过期口径一致）
+         AND (a.snapshot->>'expires_at' IS NULL OR (a.snapshot->>'expires_at')::timestamptz > now())`,
       [scope.workspaceId, threadId],
     );
     await client.query("COMMIT");
@@ -650,7 +675,7 @@ export async function runQuest(
       // 显式重规划留痕（原因枚举 + 失效审批数），便于复盘"为什么又变了"
       await gatewayAppend(gateway, {
         ...scope,
-        actor: { id: preset.presetKey, type: "agent", fenceBindings: preset.fenceBindings },
+        actor: { id: preset.presetKey, type: "agent", fenceBindings: preset.fenceBindings, ...(preset.highRisk ? { highRisk: true } : {}) },
         sessionId: threadId,
       }, {
         who: { type: "agent", id: preset.presetKey, version: preset.version },
@@ -772,7 +797,7 @@ export async function runQuest(
       await inTx(app, scope, async (c) => {
         const ev = await gatewayAppendOnClient(c, {
           ...scope,
-          actor: { id: preset.presetKey, type: "agent", fenceBindings: preset.fenceBindings },
+          actor: { id: preset.presetKey, type: "agent", fenceBindings: preset.fenceBindings, ...(preset.highRisk ? { highRisk: true } : {}) },
           sessionId: threadId,
         }, {
           who: { type: "agent", id: preset.presetKey, version: preset.version },
@@ -828,7 +853,7 @@ export async function runQuest(
       const { approvalId } = await inTx(app, scope, async (c) => {
         const ev = await gatewayAppendOnClient(c, {
           ...scope,
-          actor: { id: preset.presetKey, type: "agent", fenceBindings: preset.fenceBindings },
+          actor: { id: preset.presetKey, type: "agent", fenceBindings: preset.fenceBindings, ...(preset.highRisk ? { highRisk: true } : {}) },
           sessionId: threadId,
         }, {
           who: { type: "agent", id: preset.presetKey, version: preset.version },
@@ -966,7 +991,7 @@ export async function runQuest(
       await inTx(app, scope, async (c) => {
         const ev = await gatewayAppendOnClient(c, {
           ...scope,
-          actor: { id: preset.presetKey, type: "agent", fenceBindings: preset.fenceBindings },
+          actor: { id: preset.presetKey, type: "agent", fenceBindings: preset.fenceBindings, ...(preset.highRisk ? { highRisk: true } : {}) },
           approvalRef,
           sessionId: threadId,
         }, {
@@ -1011,7 +1036,7 @@ export async function runQuest(
     await inTx(app, scope, async (c) => {
       const ev = await gatewayAppendOnClient(c, {
         ...scope,
-        actor: { id: preset.presetKey, type: "agent", fenceBindings: preset.fenceBindings },
+        actor: { id: preset.presetKey, type: "agent", fenceBindings: preset.fenceBindings, ...(preset.highRisk ? { highRisk: true } : {}) },
         approvalRef, // #34：已批准步骤携带审批引用（L3.5 授权留痕）
         sessionId: threadId,
       }, {
