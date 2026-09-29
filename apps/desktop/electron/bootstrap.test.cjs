@@ -336,6 +336,61 @@ describe("桌面 PostgreSQL 实例归属与端口契约", () => {
       assert.equal(new URL(value).port, "55432");
     }
   });
+
+  it("GR-15：按载荷桥源码注入多桥执行器注册表，无 runtimeDir 时不注入", () => {
+    const scheme = "postgres://";
+    const original = [
+      `DATABASE_URL=${scheme}postgres:test-only@localhost:5432/workloom`,
+      "APP_DB_PASSWORD=test-only",
+      "GATEWAY_DB_PASSWORD=test-only",
+      "",
+    ].join("\n");
+    const options = {
+      pgPort: 55432,
+      serverPort: 18787,
+      webPort: 15173,
+      adminPassword: "test-only",
+      appPassword: "test-only",
+      gatewayPassword: "test-only",
+    };
+
+    // 没有 runtimeDir（例如单元测试/旧调用点）时不得抛错，也不得写入空注册表。
+    const withoutRuntime = buildDesktopEnvironment(original, options);
+    assert.doesNotMatch(withoutRuntime.text, /WORKLOOM_TOOL_EXECUTOR_MODULES/u);
+
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "workloom-bootstrap-bridges-"));
+    try {
+      const bridgeDir = path.join(root, "bundles", "demo-bundle", "connectors", "demo-bridge");
+      fs.mkdirSync(bridgeDir, { recursive: true });
+      fs.writeFileSync(path.join(bridgeDir, "executor.ts"), [
+        "// 演示桥（测试夹具）：默认端点 http://127.0.0.1:9911",
+        "export const DEMO_TOOLS = [\"demo.one\", \"demo.two\"] as const;",
+        "export function createDemoExecutor() { return {}; }",
+        "",
+      ].join("\n"));
+
+      const withRuntime = buildDesktopEnvironment(original, { ...options, runtimeDir: root });
+      const injected = withRuntime.text.match(/^WORKLOOM_TOOL_EXECUTOR_MODULES=(.*)$/mu)?.[1] ?? "";
+      assert.match(injected, /demo-bridge\/executor\.ts#createDemoExecutor#demo\.\*#http:\/\/127\.0\.0\.1:9911/u);
+      assert.equal(withRuntime.values.WORKLOOM_TOOL_EXECUTOR_MODULES, injected);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("Mac 桌面包骨架齐备：Info.plist 可解析且启动器可执行（pack-macos 前置）", () => {
+    const appDir = path.join(__dirname, "../WorkLoom.app");
+    const plist = fs.readFileSync(path.join(appDir, "Contents/Info.plist"), "utf8");
+    assert.match(plist, /<key>CFBundleExecutable<\/key>\s*<string>WorkLoom<\/string>/u);
+    assert.match(plist, /<key>CFBundleIdentifier<\/key>\s*<string>com\.geniusdapeng\.workloomgrowth<\/string>/u);
+    const launcher = path.join(appDir, "Contents/MacOS/WorkLoom");
+    assert.equal(fs.existsSync(launcher), true);
+    if (process.platform !== "win32") assert.equal(fs.statSync(launcher).mode & 0o111, 0o111);
+
+    const packMacos = fs.readFileSync(path.join(__dirname, "../../../scripts/pack-macos.sh"), "utf8");
+    assert.match(packMacos, /apps\/desktop\/WorkLoom\.app\/Contents\/Info\.plist/u);
+    assert.equal(fs.existsSync(path.join(appDir, "Contents/Info.plist")), true);
+  });
 });
 
 describe("桌面本机渲染子进程的 Node 路径", () => {

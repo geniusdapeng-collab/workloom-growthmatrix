@@ -377,6 +377,7 @@ function buildDesktopEnvironment(text, {
   adminPassword,
   appPassword,
   gatewayPassword,
+  runtimeDir = "",
 }) {
   const values = {
     DATABASE_URL: databaseUrl("postgres", adminPassword, pgPort),
@@ -392,7 +393,7 @@ function buildDesktopEnvironment(text, {
    * 没有这一行，桌面上任何含写步骤的 quest 都会落 `connector-required`（未核实）而无法交付。
    * 规格与端口/工具名都从载荷内的桥源码派生（bundle 增删桥后无需改本文件）。
    */
-  const toolExecutorModules = resolveToolExecutorModules(RUNTIME);
+  const toolExecutorModules = runtimeDir ? resolveToolExecutorModules(runtimeDir) : "";
   if (toolExecutorModules) values.WORKLOOM_TOOL_EXECUTOR_MODULES = toolExecutorModules;
   let next = text;
   for (const [key, value] of Object.entries(values)) next = upsertEnvValue(next, key, value);
@@ -970,6 +971,7 @@ async function bootstrap(opts) {
     adminPassword,
     appPassword,
     gatewayPassword,
+    runtimeDir: RUNTIME,
   });
   if (!envExisted || desktopConfig.text !== envText) atomicWrite(envFile, desktopConfig.text, 0o600);
   else {

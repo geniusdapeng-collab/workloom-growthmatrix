@@ -139,7 +139,7 @@
 | 高保真演示页（12 页，糖果色） | `docs/demo/`，经 `pnpm preview:all` :3001 + 手机壳 `shell.html` 预览 | 三端演示 |
 | 三端验收清单 | `PREVIEW_CHECKLIST.md` | preview:all 验收口径 |
 | 官网静态站 | `apps/site/`（index.html / en.html / shots） | 对外产品故事 |
-| Mac 桌面包 | `apps/desktop/HyperReality.app`；打包 `bash scripts/pack-macos.sh` | 桌面发行（RPA 真机发布载体） |
+| Mac 桌面包 | 仓库内骨架 `apps/desktop/WorkLoom.app`（`Info.plist` + `Contents/MacOS/WorkLoom` 启动器）；打包 `bash scripts/pack-macos.sh`（zip 线）/ `pnpm app:dist`（DMG 线） | 桌面发行（RPA 真机发布载体） |
 | 发布脚本 | `bash scripts/release.sh` | 版本发布流程 |
 | IM 通道插件安装 | `bash scripts/install-im-channels.sh` | dsh-im 通道接入 |
 | TTL 生命周期清扫 | `pnpm exec tsx --env-file=.env scripts/cleanup-ttl.ts` | 过期数据清理 |
