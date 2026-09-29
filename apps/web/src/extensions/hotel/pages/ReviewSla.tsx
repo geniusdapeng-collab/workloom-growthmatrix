@@ -18,7 +18,7 @@ export default function ReviewSla() {
       source={data?.source} state={state}>
       <MetricGrid>
         <Metric label="评价事件" value={data?.replies.length ?? 0} hint="拉取/回复/围栏命中" />
-        <Metric label="差评（≤3 分）" value={badReviews} hint="必审挂起（R6）" />
+        <Metric label="差评（≤3 分）" value={badReviews} hint="差评必审：挂起待人工处置" />
         <Metric label="待批评价类" value={data?.pendingApprovals ?? 0} hint="等人工确认后发布" />
         <Metric label="评价扫描异常" value={data?.findings.length ?? 0} />
       </MetricGrid>

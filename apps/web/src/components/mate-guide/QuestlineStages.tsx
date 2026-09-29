@@ -2,7 +2,7 @@
  * QuestlineStages · 首日上岗四关的分关视图（从引导壳中拆出，便于逐关审查）
  *
  * 约束：只负责渲染与回调，不做 tRPC 调用、不写进度、不改事实——
- * 所有副作用都留在 QuestlineOverlay 与 useQuestline 里。
+ * 所有副作用都留在 QuestlineGuide 与 useQuestline 里。
  *
  * 2026-09-21 产品所有者口径（本机单人运行）：基座通用审批环节已移除，原「拍板」关
  * （待拍板队列 + 批准/修改/驳回卡片）整关删除；业务链路自带的关卡在各自业务页面就地放行。
@@ -11,6 +11,7 @@ import { Icon } from "@workloom/ui";
 import type { QuestLevel, QuestStageId } from "../../onboarding/questline";
 import type { TaskCardDef } from "../../onboarding/questline.config";
 import { useQuestlineContent } from "../../onboarding/QuestlineContent";
+import { COMMON_STATUS_TEXT, dictText, shortId } from "../../lib/display";
 
 /** 任务线程视图（真实事实：status/progress 来自服务端） */
 export interface ThreadView {
@@ -216,7 +217,7 @@ export function DispatchStage({
       </div>
       {thread && (
         <div className="min-w-0 rounded-xl border border-holo/40 bg-holo/5 px-3 py-2 text-body text-ink2">
-          任务线程 <span className="font-mono text-holo">{thread.id}</span> · 当前状态 {thread.status} ·
+          任务线程 <span className="font-mono text-holo">{shortId(thread.id)}</span> · 当前状态 {dictText(COMMON_STATUS_TEXT, thread.status)} ·
           进度 {thread.progress_done}/{thread.progress_total}（下一步看交付结果）
         </div>
       )}

@@ -18,8 +18,8 @@ export default function OrderFlow() {
       <MetricGrid>
         <Metric label="订单数" value={data?.totals.orders ?? 0} />
         <Metric label="订单金额" value={data ? yuan(data.totals.amountFen) : "—"} />
-        <Metric label="OTA 佣金节省" value={data ? yuan(data.totals.commissionSavedFen) : "—"} hint="直连成交对照" />
-        <Metric label="转化链事件种类" value={data?.chain.length ?? 0} hint="lead/conversion/deal/booking" />
+        <Metric label="线上旅行社佣金节省" value={data ? yuan(data.totals.commissionSavedFen) : "—"} hint="直连成交对照" />
+        <Metric label="转化链事件种类" value={data?.chain.length ?? 0} hint="线索 / 转化 / 成交 / 预订" />
       </MetricGrid>
       <Panel title="转化链事件（近 30 天）">
         <DataTable

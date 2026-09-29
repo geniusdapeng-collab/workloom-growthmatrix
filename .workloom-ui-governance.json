@@ -3,12 +3,51 @@
   "dependency": "npm:typescript@5.9.3",
   "yamlDependency": "npm:yaml@2.9.0",
   "updatePolicy": "stable-upgrade-pr-only",
+  "lane": "experiment",
+  "note": "WorkLoom-growthmatrix 是三端壳之上的产品分叉（实验车道 / 隔离副本）：页面、应用壳、语音、首日上岗引导与获客增长产品层组件不与基座三端壳逐字节一致。按 docs/DEVELOPMENT-PROTOCOL.md#10.3「实验车道受管文件分叉容差」，这些路径登记为本仓自有（退管，不再接收基座覆盖），门禁据此豁免受管指纹比对与非白名单检查；基座必备入口（三端 main.tsx、C 端加载壳配置）与 @workloom/ui 同版关系仍强制。清单 = 基座 sync/child-repos.json 中 WorkLoom-growth 的登记项 ∪ 本仓 2026-09-19 声明（.workloom-client-extensions.json）∪ 本仓实测产品分叉面（2026-09-29 门禁修复，MC-011/MC-012）。",
+  "industryExtensionPaths": [
+    "apps/*/package.json",
+    "apps/*/src/App.tsx",
+    "apps/*/src/components/MateWelcome.tsx",
+    "apps/*/src/components/WelcomeCeremony.tsx",
+    "apps/*/src/components/hud/**",
+    "apps/*/src/components/mate-guide/**",
+    "apps/*/src/components/star-ring/**",
+    "apps/*/src/onboarding/**",
+    "apps/*/src/pages/**",
+    "apps/*/src/shell/**",
+    "apps/*/src/voice/**",
+    "apps/*/vitest.config.ts",
+    "apps/web/consumer-e2e/**",
+    "apps/web/src/audio/sfx.ts",
+    "apps/web/src/components/AIFeedback.tsx",
+    "apps/web/src/components/AgentAvatar.tsx",
+    "apps/web/src/components/Floor3D.tsx",
+    "apps/web/src/components/SkillDistBanner.tsx",
+    "apps/web/src/components/SimBanner.tsx",
+    "apps/web/src/components/Stage3D.tsx",
+    "apps/web/src/components/ValueCounters.tsx",
+    "apps/web/src/components/loomball/**",
+    "apps/web/src/components/loommate/**",
+    "apps/web/src/components/welcomeScripts.ts",
+    "apps/web/src/lib/clientText.test.ts",
+    "apps/web/src/lib/clientText.ts",
+    "apps/web/src/lib/display.test.ts",
+    "apps/web/src/lib/display.ts",
+    "apps/web/src/lib/theaterDiff.ts",
+    "apps/web/src/lib/trpc.test.ts",
+    "apps/web/src/lib/trpc.ts",
+    "apps/web/src/vendor/loomball/**",
+    "apps/web/vite.config.ts",
+    "apps/webc/src/styles/tokens.css",
+    "apps/webb/src/Auth.tsx"
+  ],
   "files": {
     "scripts/verify-ui-consumer.mjs": {
-      "sha256": "33d22bbb2b665ad23c7c570cfce1dab842bfb3f4173284255f106f270b88b288"
+      "sha256": "36ee95f17dd02be258e24be46c99e945551531f6908de2bd7d99d637b2dc3dd4"
     },
     "scripts/ui-governance-rules.mjs": {
-      "sha256": "2b5f1786a757083607adddddb913776b0babed4f245b0695170e09afe26cbf12"
+      "sha256": "2164c1acdc97653da5fbb04fb50437a4f107129cc81dfff58d1b38ce8b95c99c"
     }
   }
 }

@@ -19,7 +19,7 @@ export default function PriceHealth() {
     <ConsoleShell title="价格健康" desc="调价是否在宪章报价带内、渠道是否倒挂、房态是否同步——先守住价格纪律再要流量"
       source={data?.source} state={state}>
       <MetricGrid>
-        <Metric label="保底价" value={data?.business?.floor_price ? `¥${data.business.floor_price}` : "未建档"} hint="低于即熔断（R2）" />
+        <Metric label="保底价" value={data?.business?.floor_price ? `¥${data.business.floor_price}` : "未建档"} hint="低于保底价即熔断" />
         <Metric label="房型价带" value={bands.length} hint="一店一档声明" />
         <Metric label="围栏命中" value={data?.fenceHits.reduce((sum, row) => sum + row.n, 0) ?? 0} hint="近 30 天" />
         <Metric label="渠道异常" value={data?.parityAnomalies.length ?? 0} hint="倒挂/房态未同步" />

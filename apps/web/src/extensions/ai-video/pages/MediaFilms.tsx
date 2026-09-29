@@ -9,6 +9,8 @@ import { useNavigate } from "react-router";
 import { ensureDemoLogin, trpc } from "../../../lib/trpc";
 import { BannerAlert, EmptyState, Skeleton } from "../../../components/hud";
 import { PageExitLink } from "../../../shell/PageExitLink";
+import { payloadText, shortId } from "../../../lib/display";
+import { operationFailure } from "../../../lib/ui-state";
 
 interface FilmRow {
   id: string;
@@ -50,7 +52,7 @@ export default function MediaFilms() {
       setCursor(result.nextCursor);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "读取成片历史"));
     } finally {
       setLoading(false);
     }
@@ -76,7 +78,7 @@ export default function MediaFilms() {
         archive: (d as { archive: { relative: string; exists: boolean } | null }).archive,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "读取成片详情"));
     }
   }, []);
 
@@ -96,7 +98,7 @@ export default function MediaFilms() {
       <div className="flex flex-wrap items-center gap-2">
         <PageExitLink label="返回工作台" />
         <h2 className="text-h1 font-black text-ink">成片历史</h2>
-        <span className="text-caption text-ink3">{items.length} 支成片（final_cut：交付母版/变体/重剪产出）</span>
+        <span className="text-caption text-ink3">{items.length} 支成片（交付母版 / 变体 / 重剪产出）</span>
         <div className="ml-auto flex items-center gap-2">
           <select
             className="rounded-lg border border-line bg-card px-2 py-1.5 text-caption text-ink2"
@@ -139,14 +141,14 @@ export default function MediaFilms() {
                 >
                   <div className="relative aspect-video bg-black/30">
                     {film.thumbUrl
-                      ? <img src={film.thumbUrl} alt={film.title ?? film.id} className="h-full w-full object-cover" loading="lazy" />
+                      ? <img src={film.thumbUrl} alt={film.title ?? shortId(film.id)} className="h-full w-full object-cover" loading="lazy" />
                       : <div className="flex h-full items-center justify-center text-caption text-ink3">成片</div>}
                     {film.durationSeconds !== null
-                      ? <span className="absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">{film.durationSeconds.toFixed(1)}s</span>
+                      ? <span className="absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">{film.durationSeconds.toFixed(1)} 秒</span>
                       : null}
                   </div>
                   <div className="space-y-1 p-2">
-                    <div className="line-clamp-1 text-caption font-bold text-ink">{film.title ?? film.id}</div>
+                    <div className="line-clamp-1 text-caption font-bold text-ink">{film.title ?? shortId(film.id)}</div>
                     <div className="flex flex-wrap gap-1 text-[10px] text-ink3">
                       {film.pipelineKind ? <span className="rounded bg-line/40 px-1.5 py-0.5">{PIPELINE_LABEL[film.pipelineKind]}</span> : null}
                       {film.sourceType === "recut" ? <span className="rounded bg-line/40 px-1.5 py-0.5">重剪</span> : null}
@@ -177,16 +179,16 @@ export default function MediaFilms() {
       {selected ? (
         <div className="rounded-xl border border-line bg-card p-3">
           <div className="flex items-center justify-between">
-            <div className="text-body font-bold text-ink">{selected.title ?? selected.id}</div>
+            <div className="text-body font-bold text-ink">{selected.title ?? shortId(selected.id)}</div>
             <button type="button" className="cursor-pointer text-caption text-ink3" onClick={() => setSelected(null)}>关闭</button>
           </div>
           <div className="mt-2 grid gap-3 lg:grid-cols-2">
             {selected.url ? <video controls src={selected.url} className="w-full rounded-lg" /> : <div className="text-caption text-ink3">本机媒体仓没有该文件（云端素材可先点播触发按需拉取）。</div>}
             <div className="space-y-2 text-caption text-ink3">
-              <div>素材 id：{selected.id}</div>
+              <div>素材编号：{shortId(selected.id)}</div>
               {selected.projectId ? (
                 <div>
-                  项目：{selected.projectTitle ?? selected.projectId}
+                  项目：{selected.projectTitle ?? `编号 ${shortId(selected.projectId)}`}
                   <button
                     type="button"
                     className="ml-2 cursor-pointer text-ink2"
@@ -198,8 +200,8 @@ export default function MediaFilms() {
               ) : null}
               {detail?.archive ? <div className="break-all">制片档案：{detail.archive.relative}{detail.archive.exists ? "" : "（目录不存在）"}</div> : null}
               <div className="rounded border border-line p-2">
-                <div className="text-[11px]">来源证据（provenance）</div>
-                <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap text-[11px]">{JSON.stringify(detail?.provenance ?? {}, null, 2)}</pre>
+                <div className="text-[11px]">来源证据（生产记录摘要；完整原始记录以本机档案为准）</div>
+                <div className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words text-[11px]">{payloadText(detail?.provenance ?? {}, 600)}</div>
               </div>
               {detail?.prompt ? (
                 <div className="rounded border border-line p-2">

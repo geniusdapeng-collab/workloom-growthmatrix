@@ -1,5 +1,5 @@
 /**
- * QuestlineOverlay · 首日上岗引导壳（四关：认人 → 定目标 → 派活 → 验收）
+ * QuestlineGuide · 首日上岗引导壳（四关：认人 → 定目标 → 派活 → 验收）
  *
  * 设计要点：
  *  - 不新增路由：客户始终在经营主页之上走完，走完落回原处，不会"迷路"；
@@ -7,11 +7,18 @@
  *    （2026-09-21 产品所有者口径），业务关卡由各自业务页面就地放行；
  *  - 事实回传（onFact）：由 P0 汇总成 QuestFacts，再交给 useQuestline 的 autoAdvance；
  *  - 随时"稍后再来"：进度在 useQuestline 里持久化，下次从同一关继续。
+ *
+ * 命名口径（2026-09-29 UI 门禁修复 MC-011）：全屏沉浸式引导壳与 `WelcomeCeremony` /
+ * `MateWelcome` 同型——**行为**走基座 `useManagedSurface`（Esc / 焦点圈定 / 背景 inert /
+ * 焦点恢复），**名字**用业务角色而非 `*Overlay` 这类表面词。UI 门禁的跨文件校验只能证明
+ * 「直接渲染共享表面组件」的委托，认不出 hook 返回值展开式；用表面词命名会让每次使用被
+ * 判成「未知或第三方包装」（scripts/ui-governance-rules.mjs#SURFACE_COMPONENT_NAME）。
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Icon, clientChineseText, useManagedSurface } from "@workloom/ui";
 import { ensureDemoLogin, trpc } from "../../lib/trpc";
 import { AudioEngine } from "../../audio/AudioEngine";
+import { displayNameOf } from "../../lib/naming";
 import {
   QUEST_STAGE_ORDER,
   type QuestFacts,
@@ -37,7 +44,7 @@ export interface QuestCelebrationView {
   stage: QuestStageId | null;
 }
 
-export interface QuestlineOverlayProps {
+export interface QuestlineGuideProps {
   open: boolean;
   state: QuestState;
   level: QuestLevel;
@@ -58,7 +65,7 @@ export interface QuestlineOverlayProps {
 
 const STAGE_HINT_MS = 9000;
 
-export function QuestlineOverlay({
+export function QuestlineGuide({
   open,
   state,
   level,
@@ -74,7 +81,7 @@ export function QuestlineOverlay({
   onThreadId,
   onClearCelebration,
   onTrack,
-}: QuestlineOverlayProps) {
+}: QuestlineGuideProps) {
   const content = useQuestlineContent();
   const def = stageDef(state.stage, content);
   const [cardPage, setCardPage] = useState(0);
@@ -427,7 +434,7 @@ export function QuestlineOverlay({
                             </span>
                             <div className="min-w-0">
                               <div className="break-words text-body font-bold text-ink">{card.title}</div>
-                              <div className="font-mono text-body text-ink3">{card.presetKey}</div>
+                              <div className="text-body text-ink3">{displayNameOf({ presetKey: card.presetKey })}</div>
                             </div>
                           </div>
                           <p className="mt-2 min-w-0 break-words text-body leading-relaxed text-ink2">{card.duty}</p>

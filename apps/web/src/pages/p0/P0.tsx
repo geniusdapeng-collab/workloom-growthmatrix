@@ -24,7 +24,7 @@ import { AudioEngine } from "../../audio/AudioEngine";
 import { useAmbience } from "../../audio/ambience";
 import { ValueCounters } from "../../components/ValueCounters";
 import { QuestlineHud } from "../../components/mate-guide/QuestlineHud";
-import { QuestlineOverlay } from "../../components/mate-guide/QuestlineOverlay";
+import { QuestlineGuide } from "../../components/mate-guide/QuestlineGuide";
 import { useQuestline } from "../../onboarding/useQuestline";
 import { EMPTY_FACTS, factsFromRecentActions, type QuestFacts } from "../../onboarding/questline";
 import { questlineForBundle } from "../../onboarding/questline.config";
@@ -545,7 +545,7 @@ export default function P0() {
               onOpen={questline.openQuestline}
             />
           )}
-          <QuestlineOverlay
+          <QuestlineGuide
             open={questline.open && !showWelcome}
             state={questline.state}
             level={questline.level}

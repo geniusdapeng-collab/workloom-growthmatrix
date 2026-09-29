@@ -74,7 +74,7 @@ apps/web/src/voice/mateVoice.ts   织伴音色档案（欢迎仪式与首日上�
 apps/web/src/components/mate-guide/
   MateGuideAvatar.tsx     引导形象（织伴官方海报 + 状态环；禁用自创形象）
   MateGuideBubble.tsx     打字机气泡 + 语音（口型随真实 TTS）
-  QuestlineOverlay.tsx    五关引导壳（真实派活/审批接线；useManagedSurface 负责 Esc/焦点）
+  QuestlineGuide.tsx      五关引导壳（真实派活/审批接线；useManagedSurface 负责 Esc/焦点）
   QuestlineHud.tsx        常驻入口（织伴待命位；窄屏紧凑形态）
   QuestlineStages.tsx     分关视图与动作条
 ```

@@ -6,7 +6,8 @@ import { useEffect, useState } from "react";
 import { ensureDemoLogin, trpc } from "../../lib/trpc";
 import { BannerAlert, EmptyState, Skeleton } from "../../components/hud";
 import { Icon } from "@workloom/ui";
-import { actionText } from "../../lib/display";
+import { actionText, dictText, shortId } from "../../lib/display";
+import { operationFailure } from "../../lib/ui-state";
 
 interface DomainRow { domain: string; label: string; agents: number; pending: number; actions7d: number; redLines7d: number }
 interface PacketItem { id: string; title: string; tier: "l2_captain" | "l3_fleet" | "l4_chairman"; risk: number; deadline: string | null; createdAt: string; action?: string }
@@ -70,7 +71,7 @@ export default function Portfolio() {
         setState("ready");
       } catch (err) {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : "组合看板加载失败");
+        setError(operationFailure(err, "读取组合看板"));
         setState("error");
       }
     })();
@@ -148,13 +149,13 @@ export default function Portfolio() {
               <li key={c.id} className="flex items-center justify-between gap-3 py-2">
                 <div className="min-w-0">
                   <div className="truncate text-body text-ink">{c.title}</div>
-                  <div className="text-body text-ink3">{c.id} · {c.assigneePreset} → 验收 {c.verifierPreset} · {c.mode}</div>
+                  <div className="text-body text-ink3">{shortId(c.id)} · {c.assigneePreset} → 验收 {c.verifierPreset} · {c.mode}</div>
                 </div>
-                <span className="shrink-0 rounded border border-line px-2 py-0.5 text-body text-ink2">{STATUS_TEXT[c.status] ?? c.status}</span>
+                <span className="shrink-0 rounded border border-line px-2 py-0.5 text-body text-ink2">{dictText(STATUS_TEXT, c.status)}</span>
               </li>
             ))}
           </ul>
-        ) : <div className="mt-2 text-body text-ink3">暂无契约。跨团队任务可经 collaboration.contracts.create 建立契约并留痕。</div>}
+        ) : <div className="mt-2 text-body text-ink3">暂无契约。跨团队任务可在「任务契约」处建立契约并留痕。</div>}
       </section>
     </div>
   );

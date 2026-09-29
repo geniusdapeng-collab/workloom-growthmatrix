@@ -561,7 +561,7 @@ function AgentProfilePage({ agentId }: { agentId: string }) {
                   <div className="flex justify-between gap-3"><span className="text-ink3">运行版本</span><span className="text-ink2">{versionText(p.agent.version)}</span></div>
                   {/* 音色（2026-09-20）：来自音色库 voice/voiceLibrary.ts，按岗位标识稳定散列 ——
                       同一员工全场同一嗓音；性别是硬约束，女声岗位不会掉到男声。 */}
-                  <div className="flex justify-between gap-3"><span className="text-ink3">音色</span><span className="text-ink2">{libraryVoiceFor(p.agent.presetKey).label}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-ink3">音色</span><span className="text-ink2">{clientChineseText(libraryVoiceFor(p.agent.presetKey).label, "音色待确认")}</span></div>
                   <div className="flex justify-between"><span className="text-ink3">工作区</span><span className="text-ink2">{p.workspaceName}</span></div>
                   <div className="flex justify-between gap-3"><span className="text-ink3">来源行业包</span><span className="text-ink2">{clientChineseText(p.bundle, p.bundle)}</span></div>
                   <div className="flex justify-between"><span className="text-ink3">战队</span><span className="text-ink2">{p.agent.nightShift ? "夜班中心 · 夜班窗口自动上线" : "日常班组"}</span></div>

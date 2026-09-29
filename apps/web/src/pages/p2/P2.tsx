@@ -202,7 +202,7 @@ function ArtifactView({ threadId, artifact }: { threadId: string; artifact: Arti
       ) : artifact.kind === "video" ? (
         <video src={url} controls playsInline className="max-h-72 w-full max-w-full rounded-md border border-line bg-bg950" />
       ) : (
-        <div className="text-body text-ink2">该格式不支持内联预览，点「下载」取用（支持纯文本 / Markdown / HTML / PDF）。</div>
+        <div className="text-body text-ink2">该格式不支持内联预览，点「下载」取用（支持纯文本 / 网页 / 文档 / PDF）。</div>
       )}
     </div>
   );

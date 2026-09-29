@@ -18,7 +18,7 @@ export default function Breakpoints() {
     <ConsoleShell title="断点流与根因" desc="暂停/失败的经营任务、根因事件分布——断裂的环节先补，再谈增长"
       source={data?.source} state={state}>
       <MetricGrid>
-        <Metric label="熔断暂停" value={paused} hint="围栏 block：需人工处置" />
+        <Metric label="熔断暂停" value={paused} hint="围栏阻断：需人工处置" />
         <Metric label="执行失败" value={failed} hint="工具/连接器失败" />
         <Metric label="根因事件种类" value={data?.roots.length ?? 0} hint="近 14 天" />
       </MetricGrid>

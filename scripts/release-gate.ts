@@ -11,6 +11,7 @@
  * 用法：pnpm release:gate（需要 server 运行于 SERVER_BASE，默认 http://localhost:8787）
  */
 import pg from "pg";
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -113,7 +114,19 @@ await check("G-B0", "三端客户端同版分发契约", async () => {
   assert(clientState.updatePolicy === "upgrade-pr-only", "行业产品客户端基座更新策略无效");
   assert(clientState.version === uiState.version, "行业产品客户端基座与共享 UI 不同版");
   assert(existsSync(join(REPO_ROOT, "scripts/verify-client-foundation-consumer.mjs")), "缺少三端客户端基座消费门禁");
-  return `行业产品 ${product.productId} · 三端稳定版 ${clientState.version}`;
+  /**
+   * 2026-09-29（MC-011）：此前只 `existsSync` 检查门禁脚本存在，"发布门禁全绿 ≠ UI 合规"。
+   * 现改为**实跑**两道 UI 门禁（含治理指纹核对），把 UI 合规并入发布口径。
+   */
+  const runUiGate = (script: string, args: string[] = []): void => {
+    const result = spawnSync(process.execPath, [join(REPO_ROOT, script), ...args], { cwd: REPO_ROOT, encoding: "utf8" });
+    if (result.status === 0) return;
+    const tail = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim().split("\n").slice(-6).join(" / ");
+    assert(false, `${script} 未通过（退出码 ${String(result.status)}）：${tail || "无输出"}`);
+  };
+  runUiGate("scripts/verify-ui-consumer.mjs", ["--require-governance-state"]);
+  runUiGate("scripts/verify-client-foundation-consumer.mjs");
+  return `行业产品 ${product.productId} · 三端稳定版 ${clientState.version} · UI 两道门禁已实跑通过`;
 });
 
 // 宪章从旧的固定业务字段升级为 Bundle 命名的 ranges/caps 后，基座不得

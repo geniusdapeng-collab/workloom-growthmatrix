@@ -33,23 +33,23 @@ export const EMPLOYEE_SCORECARD: Record<string, ScorecardSpec> = {
   "render-operator": {
     title: "渲染师成绩单",
     metrics: [
-      { key: "first_pass_rate", label: "一次通过率", hint: "首次提交即过 G8 审的渲染任务占比" },
+      { key: "first_pass_rate", label: "一次通过率", hint: "首次提交即通过额度审批的渲染任务占比" },
       { key: "waste_rate", label: "废片率", hint: "渲染产出被判定不可用占比（越低越好）" },
-      { key: "cost_deviation", label: "单集成本偏差", hint: "实际烧额度 vs 单集预算的偏差幅度" },
+      { key: "cost_deviation", label: "单集成本偏差", hint: "实际消耗额度与单集预算的偏差幅度" },
     ],
   },
   "publish-operator": {
     title: "发布专员成绩单",
     metrics: [
-      { key: "compliance_rate", label: "发布合规率", hint: "过 G9 发布包校验且零违规的发布占比" },
-      { key: "rpa_success_rate", label: "RPA 成功率", hint: "RPA 模拟人工上传成功且有回执占比" },
+      { key: "compliance_rate", label: "发布合规率", hint: "通过发布审批校验且零违规的发布占比" },
+      { key: "rpa_success_rate", label: "自动化上传成功率", hint: "自动上传成功且拿到回执的发布占比" },
       { key: "schedule_punctuality", label: "排期准点率", hint: "按排期窗口准点发布占比" },
     ],
   },
   "comment-operator": {
     title: "评论区运营成绩单",
     metrics: [
-      { key: "routing_accuracy", label: "分流准确率", hint: "三级分流（auto/review/block）判定正确占比" },
+      { key: "routing_accuracy", label: "分流准确率", hint: "三级分流（自动放行 / 人工复核 / 阻断）判定正确占比" },
       { key: "negative_sla", label: "负面响应及时率", hint: "负面评论在 SLA 内响应占比" },
       { key: "misjudge_rate", label: "误判率", hint: "人工复核推翻机器分流占比（越低越好）" },
     ],

@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ensureDemoLogin } from "../../lib/trpc";
 import { PageExitLink } from "../../shell/PageExitLink";
+import { operationFailure } from "../../lib/ui-state";
 
 export interface ConsoleState<T> {
   data: T | null;
@@ -31,7 +32,7 @@ export function useConsoleData<T>(loader: () => Promise<T>): ConsoleState<T> {
         const next = await loaderRef.current();
         if (!cancelled) { setData(next); setError(null); }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "取数失败，请稍后重试");
+        if (!cancelled) setError(operationFailure(err, "读取经营看板数据"));
       } finally {
         if (!cancelled) setLoading(false);
       }

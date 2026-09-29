@@ -16,11 +16,11 @@ export default function Channels() {
   const data = state.data;
   const newChannels = (data?.channels ?? []).filter((channel) => channel.channel_new).length;
   return (
-    <ConsoleShell title="渠道巡检与内容留痕" desc="OTA/社媒/直连三类渠道的经营状态、异常发现与内容发布节奏——触达要按渠道算账"
+    <ConsoleShell title="渠道巡检与内容留痕" desc="线上旅行社 / 社媒 / 直连三类渠道的经营状态、异常发现与内容发布节奏——触达要按渠道算账"
       source={data?.source} state={state}>
       <MetricGrid>
         <Metric label="在营渠道" value={data?.channels.length ?? 0} />
-        <Metric label="新渠道" value={newChannels} hint="首发必审（G9）" />
+        <Metric label="新渠道" value={newChannels} hint="首次发布必审" />
         <Metric label="巡检异常" value={data?.anomalies.length ?? 0} hint="近 30 条滚动" />
         <Metric label="内容事件" value={data?.content.reduce((sum, row) => sum + row.n, 0) ?? 0} hint="近 30 天草稿/发布" />
       </MetricGrid>
@@ -51,7 +51,7 @@ export default function Channels() {
               { key: "n", title: "发布数", render: (row) => row.n },
             ]}
             rows={data?.publishes ?? []}
-            empty="暂无发布留痕（发布动作必审 G9）。"
+            empty="暂无发布留痕（发布动作一律必审）。"
           />
         </div>
       </Panel>

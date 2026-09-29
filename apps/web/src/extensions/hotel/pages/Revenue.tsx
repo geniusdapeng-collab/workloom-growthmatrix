@@ -28,15 +28,15 @@ export default function Revenue() {
         <DataTable
           columns={[
             { key: "month", title: "月份", render: (row) => row.month },
-            { key: "occ", title: "OCC", render: (row) => (row.occ === undefined ? "—" : `${(row.occ * 100).toFixed(0)}%`) },
-            { key: "adr", title: "ADR", render: (row) => (row.adr === undefined ? "—" : `¥${row.adr}`) },
-            { key: "revpar", title: "RevPAR", render: (row) => (row.revpar === undefined ? "—" : `¥${row.revpar}`) },
+            { key: "occ", title: "出租率", render: (row) => (row.occ === undefined ? "—" : `${(row.occ * 100).toFixed(0)}%`) },
+            { key: "adr", title: "平均房价", render: (row) => (row.adr === undefined ? "—" : `¥${row.adr}`) },
+            { key: "revpar", title: "每间可售房收入", render: (row) => (row.revpar === undefined ? "—" : `¥${row.revpar}`) },
           ]}
           rows={Object.entries(data?.history ?? {}).map(([month, value]) => ({ month, ...value }))}
           empty="一店一档尚无历史经营曲线。"
         />
       </Panel>
-      <Panel title="六级漏斗基线（一店一档 conversion_assets）">
+      <Panel title="六级漏斗基线（一店一档）">
         <DataTable
           columns={[
             { key: "stage", title: "环节", render: (row) => row.stage },

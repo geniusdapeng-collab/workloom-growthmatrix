@@ -11,6 +11,9 @@ import { useNavigate } from "react-router";
 import { ensureDemoLogin, trpc } from "../../../lib/trpc";
 import { BannerAlert, EmptyState, Skeleton } from "../../../components/hud";
 import { PageExitLink } from "../../../shell/PageExitLink";
+import { shortId } from "../../../lib/display";
+import { operationFailure } from "../../../lib/ui-state";
+import { mediaKindText } from "../pipelineText";
 
 interface CollectionSummary {
   id: string;
@@ -76,7 +79,7 @@ export default function MediaCollections() {
         setLoading(true);
         await loadCollections();
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        setError(operationFailure(err, "读取合集列表"));
       } finally {
         setLoading(false);
       }
@@ -89,7 +92,7 @@ export default function MediaCollections() {
       try {
         await loadDetail(activeId);
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        setError(operationFailure(err, "读取合集内容"));
       }
     })();
   }, [activeId, loadDetail]);
@@ -103,7 +106,7 @@ export default function MediaCollections() {
       setActiveId(created.id);
       setNotice(`合集已创建：${created.title}（去媒资库勾选素材加入）`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "新建合集"));
     }
   }, [loadCollections]);
 
@@ -128,7 +131,7 @@ export default function MediaCollections() {
       setDirty(false);
       setNotice("片单顺序已保存（顺序即重剪镜头顺序）");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "保存片单顺序"));
     }
   }, [activeId, items]);
 
@@ -139,7 +142,7 @@ export default function MediaCollections() {
       await loadDetail(activeId);
       await loadCollections();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "移除片单素材"));
     }
   }, [activeId, loadDetail, loadCollections]);
 
@@ -149,24 +152,26 @@ export default function MediaCollections() {
     try {
       if (dirty) await saveOrder();
       const started = await trpc.video.media.recut.mutate({ collectionId: activeId, title: active?.title ?? "重剪成片" });
-      setNotice(`重剪作业已启动：${started.jobId}（${started.segments} 段）`);
+      setNotice(`重剪作业已启动：作业 ${shortId(started.jobId)}（${started.segments} 段）`);
       const timer = setInterval(async () => {
         try {
-          const status = await trpc.video.media.recutJob.query({ jobId: started.jobId });
-          setJob(status as RecutJobView);
-          if (status.status !== "running") {
+          const recut = await trpc.video.media.recutJob.query({ jobId: started.jobId });
+          setJob(recut as RecutJobView);
+          if (recut.status !== "running") {
             clearInterval(timer);
-            setNotice(status.status === "done" ? `重剪完成：新成片 ${status.producedAssetId}（见成片历史）` : `重剪失败：${status.error}`);
+            setNotice(recut.status === "done"
+              ? `重剪完成：新成片已入库（${shortId(recut.producedAssetId)}），可在成片历史查看`
+              : "重剪失败：作业未通过，请在作业日志中核对原因后重试。");
             await loadCollections();
             await loadDetail(activeId);
           }
         } catch (err) {
           clearInterval(timer);
-          setError(err instanceof Error ? err.message : String(err));
+          setError(operationFailure(err, "查询重剪作业"));
         }
       }, 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "启动重剪"));
     }
   }, [activeId, collections, dirty, saveOrder, loadCollections, loadDetail]);
 
@@ -177,7 +182,7 @@ export default function MediaCollections() {
       <div className="flex flex-wrap items-center gap-2">
         <PageExitLink label="返回工作台" />
         <h2 className="text-h1 font-black text-ink">合集重剪台</h2>
-        <span className="text-caption text-ink3">片单顺序 = 重剪镜头顺序；重剪是本地 ffmpeg 作业，不烧渲染额度</span>
+        <span className="text-caption text-ink3">片单顺序 = 重剪镜头顺序；重剪在本机本地转码完成，不占用渲染额度</span>
         <div className="ml-auto flex gap-2">
           <button type="button" className="cursor-pointer rounded-lg border border-line px-3 py-1.5 text-caption text-ink2" onClick={() => void createCollection()}>
             新建合集
@@ -265,10 +270,10 @@ export default function MediaCollections() {
                     >
                       <span className="w-6 text-center text-caption text-ink3">{index + 1}</span>
                       <div className="min-w-0 flex-1">
-                        <div className="line-clamp-1 text-caption text-ink">{item.title ?? item.asset_id}</div>
+                        <div className="line-clamp-1 text-caption text-ink">{item.title ?? shortId(item.asset_id)}</div>
                         <div className="text-[11px] text-ink3">
-                          {item.kind}
-                          {item.duration_seconds ? ` · ${Number(item.duration_seconds).toFixed(1)}s` : ""}
+                          {mediaKindText(item.kind)}
+                          {item.duration_seconds ? ` · ${Number(item.duration_seconds).toFixed(1)} 秒` : ""}
                           {item.local_path ? "" : " · 文件不在本机（重剪前需拉取）"}
                         </div>
                       </div>
@@ -282,7 +287,7 @@ export default function MediaCollections() {
 
               {job ? (
                 <div className="mt-3 rounded-lg border border-line p-2">
-                  <div className="text-caption text-ink2">作业 {job.jobId}：{job.status === "running" ? "执行中" : job.status === "done" ? "完成" : "失败"}</div>
+                  <div className="text-caption text-ink2">作业 {shortId(job.jobId)}：{job.status === "running" ? "执行中" : job.status === "done" ? "完成" : "失败"}</div>
                   <div className="mt-1 max-h-32 overflow-auto text-[11px] text-ink3">
                     {job.log.slice(-10).map((line, index) => <div key={index}>{line}</div>)}
                   </div>

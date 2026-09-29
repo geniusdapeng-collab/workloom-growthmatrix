@@ -16,6 +16,8 @@ import { useNavigate } from "react-router";
 import { ensureDemoLogin, trpc } from "../../../lib/trpc";
 import { BannerAlert, EmptyState, Skeleton } from "../../../components/hud";
 import { PageExitLink } from "../../../shell/PageExitLink";
+import { dictText, shortId, versionText } from "../../../lib/display";
+import { operationFailure } from "../../../lib/ui-state";
 
 const KIND_LABEL: Record<string, string> = {
   clip: "镜头", final_cut: "成片", portrait: "定妆照", cover: "封面",
@@ -73,7 +75,7 @@ const fmtBytes = (n: number | null) => {
   if (n < 1024 ** 3) return `${(n / 1024 ** 2).toFixed(1)}MB`;
   return `${(n / 1024 ** 3).toFixed(2)}GB`;
 };
-const fmtDuration = (s: number | null) => (s === null ? null : `${s.toFixed(1)}s`);
+const fmtDuration = (s: number | null) => (s === null ? null : `${s.toFixed(1)} 秒`);
 const fmtTime = (iso: string) => new Date(iso).toLocaleString("zh-CN", { hour12: false });
 
 export default function MediaLibrary() {
@@ -118,7 +120,7 @@ export default function MediaLibrary() {
       setSearchTrace(result.searchTrace ? { layer: result.searchTrace.layer, mock: result.searchTrace.mock } : null);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "读取媒资列表"));
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -145,7 +147,7 @@ export default function MediaLibrary() {
       setCollections(cols.items as never);
       setQuota(q as never);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "读取标签与合集"));
     }
   }, []);
   useEffect(() => { void loadSide(); }, [loadSide]);
@@ -158,7 +160,7 @@ export default function MediaLibrary() {
       setSelected(detail as MediaDetail);
       setTagDraft((detail.tags ?? []).join("、"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "读取素材详情"));
     } finally {
       setDetailBusy(false);
     }
@@ -174,7 +176,7 @@ export default function MediaLibrary() {
       void loadSide();
       void load("reset");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "保存标签"));
     }
   }, [selected, tagDraft, load, loadSide]);
 
@@ -182,11 +184,11 @@ export default function MediaLibrary() {
     if (!selected) return;
     try {
       await trpc.video.media.archive.mutate({ id: selected.id });
-      setNotice(`素材已归档：${selected.title ?? selected.id}`);
+      setNotice(`素材已归档：${selected.title ?? shortId(selected.id)}`);
       setSelected(null);
       void load("reset");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "归档素材"));
     }
   }, [selected, load]);
 
@@ -204,25 +206,27 @@ export default function MediaLibrary() {
         await trpc.video.media.collections.addItem.mutate({ collectionId: collection.id, assetId });
       }
       const started = await trpc.video.media.recut.mutate({ collectionId: collection.id, title });
-      setNotice(`重剪作业已启动（${started.segments} 段）：${started.jobId}`);
+      setNotice(`重剪作业已启动（${started.segments} 段）：作业 ${shortId(started.jobId)}`);
       setTray([]);
       const poll = setInterval(async () => {
         try {
-          const status = await trpc.video.media.recutJob.query({ jobId: started.jobId });
-          setJob(status as never);
-          if (status.status !== "running") {
+          const recut = await trpc.video.media.recutJob.query({ jobId: started.jobId });
+          setJob(recut as never);
+          if (recut.status !== "running") {
             clearInterval(poll);
-            setNotice(status.status === "done" ? `重剪完成：新成片 ${status.producedAssetId}` : `重剪失败：${status.error}`);
+            setNotice(recut.status === "done"
+              ? `重剪完成：新成片已入库（${shortId(recut.producedAssetId)}）`
+              : "重剪失败：作业未通过，请在作业日志中核对原因后重试。");
             void load("reset");
             void loadSide();
           }
         } catch (err) {
           clearInterval(poll);
-          setError(err instanceof Error ? err.message : String(err));
+          setError(operationFailure(err, "查询重剪作业"));
         }
       }, 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "启动重剪"));
     }
   }, [tray, load, loadSide]);
 
@@ -259,12 +263,12 @@ export default function MediaLibrary() {
         title: file.name,
         tags: ["上传"],
       });
-      setNotice(`上传已入库：${(registered as { assetId: string }).assetId}`);
+      setNotice(`上传已入库：素材 ${shortId((registered as { assetId: string }).assetId)}`);
       void load("reset");
       void loadSide();
       void openDetail((registered as { assetId: string }).assetId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "上传素材"));
     } finally {
       setUploading(null);
       if (fileRef.current) fileRef.current.value = "";
@@ -317,14 +321,14 @@ export default function MediaLibrary() {
       {error ? <BannerAlert level="alert" onAction={() => setError(null)} actionLabel="关闭">{error}</BannerAlert> : null}
       {uploading ? <BannerAlert level="warn">{`正在上传 ${uploading.name}（${uploading.percent}%）——大文件请勿关闭页面`}</BannerAlert> : null}
       {job && job.status === "running" ? (
-        <BannerAlert level="info">{`重剪进行中（${job.jobId}）：${job.log.at(-1) ?? "排队中"}`}</BannerAlert>
+        <BannerAlert level="info">{`重剪进行中（作业 ${shortId(job.jobId)}）：${job.log.at(-1) ?? "排队中"}`}</BannerAlert>
       ) : null}
 
       <div className="rounded-xl border border-line bg-card p-3">
         <div className="flex flex-wrap items-center gap-2">
           <input
             className="min-w-[220px] flex-1 rounded-lg border border-line bg-transparent px-3 py-1.5 text-body text-ink"
-            placeholder="搜索标题 / 提示词（中文走子串+trgm；开启语义检索后走向量近邻）"
+            placeholder="搜索标题 / 提示词（中文按子串与分词模糊匹配；开启语义检索后走向量近邻）"
             value={filters.query}
             onChange={(event) => setFilters((prev) => ({ ...prev, query: event.target.value }))}
           />
@@ -347,7 +351,7 @@ export default function MediaLibrary() {
           {searchTrace ? (
             <span className="text-caption text-ink3">
               检索层级：{{ semantic: "语义", tsv: "全文", trgm: "模糊", none: "无" }[searchTrace.layer] ?? searchTrace.layer}
-              {searchTrace.mock ? "（Mock 向量：无语义，仅链路）" : ""}
+              {searchTrace.mock ? "（模拟向量：无语义，仅链路）" : ""}
             </span>
           ) : null}
         </div>
@@ -396,8 +400,8 @@ export default function MediaLibrary() {
               >
                 <div className="relative aspect-video bg-black/30">
                   {item.thumbUrl
-                    ? <img src={item.thumbUrl} alt={item.title ?? item.id} className="h-full w-full object-cover" loading="lazy" />
-                    : <div className="flex h-full items-center justify-center text-caption text-ink3">{KIND_LABEL[item.kind] ?? item.kind}</div>}
+                    ? <img src={item.thumbUrl} alt={item.title ?? shortId(item.id)} className="h-full w-full object-cover" loading="lazy" />
+                    : <div className="flex h-full items-center justify-center text-caption text-ink3">{dictText(KIND_LABEL, item.kind)}</div>}
                   {item.durationSeconds !== null ? (
                     <span className="absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">{fmtDuration(item.durationSeconds)}</span>
                   ) : null}
@@ -413,12 +417,12 @@ export default function MediaLibrary() {
                 </div>
                 <div className="space-y-1 p-2">
                   <div className="flex items-center gap-1 text-[10px] text-ink3">
-                    <span className="rounded bg-line/40 px-1.5 py-0.5">{KIND_LABEL[item.kind] ?? item.kind}</span>
+                    <span className="rounded bg-line/40 px-1.5 py-0.5">{dictText(KIND_LABEL, item.kind)}</span>
                     {item.pipelineKind ? <span className="rounded bg-line/40 px-1.5 py-0.5">{PIPELINE_LABEL[item.pipelineKind]}</span> : null}
                     {item.sourceType === "recut" ? <span className="rounded bg-line/40 px-1.5 py-0.5">重剪</span> : null}
                     {!item.hasLocalFile ? <span className="rounded bg-amber-500/20 px-1.5 py-0.5">文件未在本机</span> : null}
                   </div>
-                  <div className="line-clamp-1 text-caption font-bold text-ink">{item.title ?? item.id}</div>
+                  <div className="line-clamp-1 text-caption font-bold text-ink">{item.title ?? shortId(item.id)}</div>
                   <div className="line-clamp-2 text-[11px] text-ink3">{item.prompt ?? "（无提示词）"}</div>
                 </div>
               </div>
@@ -443,16 +447,16 @@ export default function MediaLibrary() {
               <div className="mt-2 text-caption text-ink3">在左侧点选一条素材查看提示词、版本链与归档操作。</div>
             ) : (
               <div className="mt-2 space-y-2">
-                <div className="text-caption font-bold text-ink">{selected.title ?? selected.id}</div>
+                <div className="text-caption font-bold text-ink">{selected.title ?? shortId(selected.id)}</div>
                 {selected.kind === "upload_audio" ? (
                   selected.url ? <audio controls src={selected.url} className="w-full" /> : null
                 ) : selected.kind.startsWith("upload_image") || ["portrait", "cover", "product_image", "reference_image"].includes(selected.kind) ? (
-                  selected.url ? <img src={selected.url} alt={selected.title ?? selected.id} className="w-full rounded-lg" /> : null
+                  selected.url ? <img src={selected.url} alt={selected.title ?? shortId(selected.id)} className="w-full rounded-lg" /> : null
                 ) : (
                   selected.url ? <video controls src={selected.url} className="w-full rounded-lg" /> : null
                 )}
                 <div className="text-[11px] text-ink3">
-                  {KIND_LABEL[selected.kind] ?? selected.kind} · v{selected.version} · {fmtBytes(selected.bytes)}
+                  {dictText(KIND_LABEL, selected.kind)} · {versionText(String(selected.version))} · {fmtBytes(selected.bytes)}
                   {selected.width && selected.height ? ` · ${selected.width}×${selected.height}` : ""}
                   {selected.durationSeconds !== null ? ` · ${fmtDuration(selected.durationSeconds)}` : ""}
                 </div>
@@ -497,7 +501,7 @@ export default function MediaLibrary() {
                         className={`cursor-pointer rounded border px-1.5 py-0.5 ${v.id === selected.id ? "border-holo/60 text-ink" : "border-line"}`}
                         onClick={() => void openDetail(v.id)}
                       >
-                        v{v.version}
+                        第 {v.version} 版
                       </button>
                     ))}
                   </div>
@@ -506,7 +510,7 @@ export default function MediaLibrary() {
                   <div>来源：{SOURCE_LABEL[selected.sourceType] ?? selected.sourceType} · {fmtTime(selected.createdAt)}</div>
                   {selected.project ? (
                     <div className="mt-1">
-                      项目：{selected.project.title}（{selected.project.id}）
+                      项目：{selected.project.title}（编号 {shortId(selected.project.id)}）
                       <button
                         type="button"
                         className="ml-2 cursor-pointer text-caption text-ink2"
@@ -573,7 +577,7 @@ export default function MediaLibrary() {
         <div className="sticky bottom-3 rounded-xl border border-holo/40 bg-card/95 p-3 shadow-lg backdrop-blur">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-caption font-bold text-ink">本次片单：{tray.length} 段</span>
-            <span className="text-[11px] text-ink3">{tray.map((id) => items.find((i) => i.id === id)?.title ?? id).join(" → ")}</span>
+            <span className="text-[11px] text-ink3">{tray.map((assetId) => items.find((i) => i.id === assetId)?.title ?? shortId(assetId)).join(" → ")}</span>
             <div className="ml-auto flex gap-2">
               <button type="button" className="cursor-pointer rounded border border-line px-2 py-1 text-caption text-ink2" onClick={() => setTray([])}>清空</button>
               <button

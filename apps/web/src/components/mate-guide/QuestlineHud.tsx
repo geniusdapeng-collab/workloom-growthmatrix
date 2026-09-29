@@ -90,7 +90,7 @@ export function QuestlineHud({ summary, level, xp, achievements, serverXp, compl
           </button>
           <div className="flex min-w-0 items-center gap-2 pr-6">
             <span className="break-words text-body font-bold text-goldhi">{content.mateName}</span>
-            <span className="text-body text-ink3">Lv.{level.level} {level.rank}</span>
+            <span className="text-body text-ink3">等级 {level.level} · {level.rank}</span>
           </div>
           <div className="mt-0.5 break-words text-body leading-relaxed text-ink2">
             {completed ? "首日上岗已完成，可以重播" : summary.label}

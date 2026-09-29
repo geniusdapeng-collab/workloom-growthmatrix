@@ -10,6 +10,8 @@ import { useNavigate } from "react-router";
 import { ensureDemoLogin, trpc } from "../../../lib/trpc";
 import { BannerAlert, EmptyState, Skeleton } from "../../../components/hud";
 import { PageExitLink } from "../../../shell/PageExitLink";
+import { clientChineseText } from "@workloom/ui";
+import { operationFailure } from "../../../lib/ui-state";
 
 interface ProductProfile {
   id: string;
@@ -53,7 +55,7 @@ export default function MediaProducts() {
       setItems(result.items as ProductProfile[]);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "读取商品档案"));
     } finally {
       setLoading(false);
     }
@@ -73,12 +75,12 @@ export default function MediaProducts() {
       setNotice(
         failed.length === 0
           ? `重扫完成：${result.scanned} 份档案（内容有变化 ${result.results.filter((r) => r.changed).length} 份）`
-          : `重扫完成：${result.scanned} 份，其中 ${failed.length} 份失败（${failed[0]?.error ?? ""}）`,
+          : `重扫完成：${result.scanned} 份，其中 ${failed.length} 份未完成（首条原因：${clientChineseText(failed[0]?.error ?? "", "已记录到本机日志")}）`,
       );
       setStaleDays(null);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(operationFailure(err, "重新扫描商品档案"));
     } finally {
       setBusy(null);
     }
@@ -90,7 +92,7 @@ export default function MediaProducts() {
         <PageExitLink label="返回工作台" />
         <h2 className="text-h1 font-black text-ink">商品档案</h2>
         <span className="text-caption text-ink3">
-          情报环节产出的 dossier 投影（文件是本体、表是发现面，按 sha256 对账）
+          情报环节产出的商品档案投影（文件是本体、表是发现面，按内容指纹对账）
         </span>
         <div className="ml-auto flex gap-2">
           <button
@@ -115,7 +117,7 @@ export default function MediaProducts() {
       {!loading && items.length === 0 ? (
         <EmptyState
           title="还没有商品档案"
-          description="营销片跑完情报环节后，dossier 会自动投影到这里；也可以点「全部重新扫描」把历史档案补进来。"
+          description="营销片跑完情报环节后，商品档案会自动投影到这里；也可以点「全部重新扫描」把历史档案补进来。"
         />
       ) : null}
 
@@ -181,7 +183,7 @@ export default function MediaProducts() {
                   用此商品开拍 →
                 </button>
                 <span className="w-full break-all text-[10px] text-ink3">
-                  dossier：{profile.dossierPath}（sha256 {profile.dossierSha256.slice(0, 10)}…）
+                  档案目录：{profile.dossierPath}（内容指纹 {profile.dossierSha256.slice(0, 10)}…）
                 </span>
               </div>
             </div>

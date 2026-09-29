@@ -1,12 +1,18 @@
 /**
- * 本仓客户端基座门禁的"产品分叉面"回归：
+ * 本仓客户端基座门禁的"实验车道产品分叉面"回归。
  *
- * WorkLoom-growthmatrix 是三端壳上的产品分叉（页面/壳/语音/引导都是获客增长产品层），
- * 因此门禁允许本仓用 `.workloom-client-extensions.json` 显式声明自有路径。
- * 本测试锁定三件事：
- *  ① 没有声明时，受管指纹漂移与非白名单文件必须继续报错（声明是唯一开关，不能默认放宽）；
- *  ② 声明后这些路径被当作本仓自有（0 错误），且必备受管入口仍在受管集合里；
- *  ③ 非法声明（越界路径）必须报错，不能静默忽略。
+ * 口径（docs/DEVELOPMENT-PROTOCOL.md §10.3，2026-09-27 起）：仓级行业扩展路径的唯一事实源是
+ * **仓内 `.workloom-ui-governance.json` 的 `lane: "experiment"` + `industryExtensionPaths`**
+ * （由 rollout 依据基座 `sync/child-repos.json` 写入）。本仓 2026-09-19 自持的
+ * `.workloom-client-extensions.json` 机制在 2026-09-29 门禁修复（MC-011）中退场：
+ * 它只在本仓 fork 的门禁里有意义，与基座现行门禁重复，且让治理指纹核对长期红灯。
+ *
+ * 本测试锁定四件事：
+ *  ① 未登记实验车道（缺治理文件 / lane 非 experiment）时，受管指纹漂移与非白名单文件必须继续报错
+ *     （容差不是默认放宽，fail closed）；
+ *  ② 登记后这些路径被当作本仓自有（0 错误），且必备受管入口仍在受管集合里；
+ *  ③ 非法声明（越界 / 反斜杠路径）必须报错，不能静默忽略；
+ *  ④ 非实验车道（行业仓）不可用该容差。
  */
 import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -70,23 +76,33 @@ function fixtureRepo(): string {
   return root;
 }
 
+/** 写治理文件（实验车道登记：lane + 行业扩展路径） */
+function writeGovernance(root: string, input: { lane?: string; paths?: unknown }): void {
+  writeJson(join(root, ".workloom-ui-governance.json"), {
+    schemaVersion: "workloom.ui-governance-state/v1",
+    dependency: "npm:typescript@5.9.3",
+    yamlDependency: "npm:yaml@2.9.0",
+    updatePolicy: "stable-upgrade-pr-only",
+    lane: input.lane ?? "experiment",
+    industryExtensionPaths: input.paths ?? ["apps/*/src/pages/**", "apps/*/src/shell/**"],
+    files: {},
+  });
+}
+
 afterEach(() => {
   while (roots.length > 0) rmSync(roots.pop()!, { recursive: true, force: true });
 });
 
-describe("客户端基座门禁 · 本仓产品分叉声明", () => {
-  it("没有声明文件时：指纹漂移与非白名单文件继续报错", () => {
+describe("客户端基座门禁 · 实验车道产品分叉声明", () => {
+  it("没有治理文件时：指纹漂移与非白名单文件继续报错（fail closed）", () => {
     const errors = verifyClientFoundationConsumer(fixtureRepo());
     expect(errors.some((error) => error.includes("指纹漂移：apps/web/src/pages/p1/P1.tsx"))).toBe(true);
     expect(errors.some((error) => error.includes("非白名单行业文件：apps/web/src/shell/PageExitLink.tsx"))).toBe(true);
   });
 
-  it("声明为本仓自有后：0 错误，且必备受管入口仍在受管集合内", () => {
+  it("登记 lane=experiment + 扩展路径后：0 错误，且必备受管入口仍在受管集合内", () => {
     const root = fixtureRepo();
-    writeJson(join(root, ".workloom-client-extensions.json"), {
-      schemaVersion: "workloom.client-extensions/v1",
-      industryExtensionPaths: ["apps/*/src/pages/**", "apps/*/src/shell/**"],
-    });
+    writeGovernance(root, {});
     expect(verifyClientFoundationConsumer(root)).toEqual([]);
 
     // 必备入口仍是受管文件：把它删掉必须报错（防止用声明把基座入口一并豁免）
@@ -95,13 +111,18 @@ describe("客户端基座门禁 · 本仓产品分叉声明", () => {
     expect(errors.some((error) => error.includes("apps/webb/src/main.tsx"))).toBe(true);
   });
 
-  it("非法声明路径（越界）必须报错，不能静默忽略", () => {
+  it("非实验车道（行业仓）不可用该容差：lane=industry 仍报分叉", () => {
     const root = fixtureRepo();
-    writeJson(join(root, ".workloom-client-extensions.json"), {
-      schemaVersion: "workloom.client-extensions/v1",
-      industryExtensionPaths: ["apps/../etc/**"],
-    });
+    writeGovernance(root, { lane: "industry" });
     const errors = verifyClientFoundationConsumer(root);
-    expect(errors.some((error) => error.includes("仓级扩展路径非法"))).toBe(true);
+    expect(errors.some((error) => error.includes("指纹漂移：apps/web/src/pages/p1/P1.tsx"))).toBe(true);
+    expect(errors.some((error) => error.includes("非白名单行业文件：apps/web/src/shell/PageExitLink.tsx"))).toBe(true);
+  });
+
+  it("非法声明路径（越界 / 反斜杠）必须报错，不能静默忽略", () => {
+    const root = fixtureRepo();
+    writeGovernance(root, { paths: ["apps/../etc/**", "apps\\web\\src\\pages\\**"] });
+    const errors = verifyClientFoundationConsumer(root);
+    expect(errors.filter((error) => error.includes("仓级行业扩展路径非法")).length).toBe(2);
   });
 });

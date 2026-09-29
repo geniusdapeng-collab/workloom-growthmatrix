@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AsyncState, Button, Card } from "@workloom/ui";
+import { AsyncState, Button, Card, Input } from "@workloom/ui";
 import { enterGuest, savedWorkspace, setSession, trpc } from "./lib/trpc";
 import { safeMessage } from "./lib/useResource";
 
@@ -60,10 +60,10 @@ export function Auth({ onReady }: { onReady: () => void }) {
         <p className="eyebrow">B 端移动工作台</p>
         <h1>登录 WorkLoom</h1>
         <p className="muted">任务、夜班交接和经营结果会使用与 PC 相同的工作区数据。</p>
-        <label>工作区识别码<input value={workspace} disabled={Boolean(busy)} onChange={(event) => setWorkspace(event.target.value)} autoComplete="organization" /></label>
-        <label>手机号<input value={phone} disabled={Boolean(busy)} onChange={(event) => setPhone(event.target.value)} inputMode="tel" autoComplete="tel" /></label>
+        <Input label="工作区识别码" value={workspace} disabled={Boolean(busy)} onChange={(event) => setWorkspace(event.target.value)} autoComplete="organization" />
+        <Input label="手机号" value={phone} disabled={Boolean(busy)} onChange={(event) => setPhone(event.target.value)} inputMode="tel" autoComplete="tel" />
         <div className="inline-fields">
-          <label>验证码<input value={code} disabled={Boolean(busy)} onChange={(event) => setCode(event.target.value)} inputMode="numeric" autoComplete="one-time-code" maxLength={6} /></label>
+          <Input label="验证码" value={code} disabled={Boolean(busy)} onChange={(event) => setCode(event.target.value)} inputMode="numeric" autoComplete="one-time-code" maxLength={6} />
           <Button onClick={() => void sendCode()} busy={busy === "code"} disabled={phone.length < 6 || Boolean(busy)}>{sent ? "重新发送" : "发送验证码"}</Button>
         </div>
         {devCode && <p className="dev-note">本机开发验证码：{devCode}</p>}

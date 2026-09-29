@@ -16,6 +16,10 @@ import { useNavigate, useSearchParams } from "react-router";
 import { ensureDemoLogin, trpc } from "../../../lib/trpc";
 import { Bridge } from "../../../shell/Bridge";
 import { BannerAlert, EmptyState, Skeleton } from "../../../components/hud";
+import { clientChineseText } from "@workloom/ui";
+import { dictText, MODEL_TIER_TEXT, shortId } from "../../../lib/display";
+import { operationFailure } from "../../../lib/ui-state";
+import { publishDriverText, publishKindText, publishLevelText } from "../pipelineText";
 
 interface ModelEntry {
   id: string;
@@ -56,7 +60,8 @@ interface ScriptRow {
   id: string; project_id: string; shot_id: string; script_key: string; version: number; status: string; md: string;
 }
 
-const STATUS_META: Record<string, { label: string; cls: string }> = {
+/** 命名固定为 `STATUS`：UI 门禁按标识符名登记「已脱敏的状态映射」（scripts/ui-governance-rules.mjs#SAFE_DISPLAY_MAPS）。 */
+const STATUS: Record<string, { label: string; cls: string }> = {
   submitted: { label: "已提交", cls: "border-holo/45 text-holo" },
   rendering: { label: "生成中", cls: "border-holo/45 text-holo" },
   done: { label: "已完成", cls: "border-go/45 text-go" },
@@ -67,7 +72,7 @@ const PLATFORMS = [
   { id: "douyin", label: "抖音" },
   { id: "xiaohongshu", label: "小红书" },
   { id: "bilibili", label: "B站" },
-  { id: "youtube", label: "YouTube" },
+  { id: "youtube", label: "油管（海外视频）" },
 ] as const;
 
 export default function Studio() {
@@ -131,7 +136,7 @@ export default function Studio() {
       const rows = await trpc.video.gen.jobs.query({ limit: 30 }) as unknown as JobRow[];
       setJobs(rows);
     } catch (e) {
-      setBanner({ level: "alert", text: `任务队列加载失败：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "读取任务队列") });
     } finally {
       setReady(true);
     }
@@ -143,7 +148,7 @@ export default function Studio() {
         await ensureDemoLogin();
         await Promise.all([loadCatalog(), loadScripts()]);
       } catch (e) {
-        setBanner({ level: "alert", text: `模型目录加载失败：${e instanceof Error ? e.message : String(e)}` });
+        setBanner({ level: "alert", text: operationFailure(e, "读取模型目录") });
       }
     })();
     void loadJobs();
@@ -197,12 +202,12 @@ export default function Studio() {
       setBanner({
         level: "info",
         text: r.deduped
-          ? `该请求与已有任务重复（幂等命中）：${r.jobId}，未重复扣费。`
-          : `${r.mock ? "演示提交（未消耗额度）" : "真实渲染已提交"}：${r.provider} · ${r.durationSec}s${r.clamped ? "（已按模型上限夹紧）" : ""} · 预估 ${r.estUsd === null ? "未核价" : `$${r.estUsd} / ¥${r.estCny}`}`,
+          ? `该请求与已有任务重复（幂等命中）：${shortId(r.jobId)}，未重复扣费。`
+          : `${r.mock ? "演示提交（未消耗额度）" : "真实渲染已提交"}：${clientChineseText(r.provider, "供应商已记录")} · ${r.durationSec} 秒${r.clamped ? "（已按模型上限夹紧）" : ""} · 预估 ${r.estUsd === null ? "未核价" : `$${r.estUsd} / ¥${r.estCny}`}`,
       });
       await loadJobs(true);
     } catch (e) {
-      setBanner({ level: "alert", text: `提交被拦下：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "提交生成请求") });
     } finally {
       setBusy(null);
     }
@@ -217,7 +222,7 @@ export default function Studio() {
       setBanner({ level: "info", text: `轮询完成：检查 ${r.checked} · 完成 ${r.done} · 入库 ${r.ingested} · 进行中 ${r.running} · 失败 ${r.failed}` });
       await loadJobs(true);
     } catch (e) {
-      setBanner({ level: "alert", text: `轮询失败：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "刷新任务状态") });
     } finally {
       setBusy(null);
     }
@@ -244,10 +249,10 @@ export default function Studio() {
       };
       setBanner({
         level: "info",
-        text: `发布任务 ${created.taskId}：G9 预检 ${created.level} → 执行结果 ${run.kind}（驱动 ${run.driver}${run.overrideUsed ? " · 测试放行" : ""}；回执 synced=${String(run.receipt?.synced ?? false)}）。真实平台上传需在桌面端登录态下执行。`,
+        text: `发布任务 ${shortId(created.taskId)}：预检${publishLevelText(created.level)} → 执行结果${publishKindText(run.kind)}（驱动${publishDriverText(run.driver)}${run.overrideUsed ? " · 测试放行" : ""}；回执${run.receipt?.synced ? "已同步" : "未同步（试运行不留真实回执）"}）。真实平台上传需在桌面端登录态下执行。`,
       });
     } catch (e) {
-      setBanner({ level: "alert", text: `发布流程失败：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "执行发布流程") });
     } finally {
       setBusy(null);
     }
@@ -268,12 +273,12 @@ export default function Studio() {
           >
             {models.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.name} · {m.tier} · {m.provider}
+                {m.name} · {dictText(MODEL_TIER_TEXT, m.tier)} · {clientChineseText(m.provider, "已接入供应商")}
               </option>
             ))}
           </select>
           <div className="mt-1.5 text-micro text-ink3">
-            {model.provider} / {model.effectiveProviderModel}
+            {clientChineseText(model.provider, "供应商已记录")} / {clientChineseText(model.effectiveProviderModel, "模型编号已记录")}
           </div>
           {model.notes && <div className="mt-1 text-micro text-ink3">注：{model.notes}</div>}
         </div>
@@ -383,7 +388,7 @@ export default function Studio() {
         onClick={() => nav("/ai-video/assets")}
         className="mt-1.5 w-full cursor-pointer rounded-lg border border-line px-3 py-2 text-caption text-ink3 hover:border-holo/40 hover:text-ink2"
       >
-        ← 返回片库 / 脚本 CMS
+        ← 返回片库 / 脚本库
       </button>
     </>
   );
@@ -396,20 +401,20 @@ export default function Studio() {
         <EmptyState icon="🎬" title="暂无生成任务" hint="左侧选模型 → 看报价 → 提交；任务会出现在这里，并在生成完成后自动入库。" />
       )}
       {jobs.map((j) => {
-        const meta = STATUS_META[j.status] ?? { label: j.status, cls: "border-line text-ink3" };
+        const meta = STATUS[j.status] ?? { label: "状态待确认", cls: "border-line text-ink3" };
         return (
           <div key={j.id} className="mb-1.5 rounded-lg border border-line bg-card px-3 py-2.5">
             <div className="flex items-center justify-between">
-              <span className="font-mono text-[11px] text-ink3">{j.id}</span>
+              <span className="font-mono text-[11px] text-ink3">任务 {shortId(j.id)}</span>
               <span className="flex items-center gap-1">
                 {j.mock && <span className="rounded border border-line px-1.5 py-0.5 text-micro text-ink3">演示</span>}
                 <span className={`rounded border px-1.5 py-0.5 text-micro ${meta.cls}`}>{meta.label}</span>
               </span>
             </div>
             <div className="mt-1 break-all text-caption text-ink2">
-              {j.provider ?? "-"} · {j.provider_model ?? "-"}
+              {clientChineseText(j.provider ?? "", "供应商已记录")} · {clientChineseText(j.provider_model ?? "", "模型编号已记录")}
             </div>
-            <div className="mt-0.5 text-micro text-ink3">项目 {j.project_id}{j.script_key ? ` · ${j.script_key}` : ""}</div>
+            <div className="mt-0.5 text-micro text-ink3">项目 {shortId(j.project_id)}{j.script_key ? ` · 工作稿 ${shortId(j.script_key)}` : ""}</div>
             <div className="mt-0.5 font-mono text-micro text-ink3">
               {j.est_cny !== null && `预估 ¥${j.est_cny}`}
               {j.actual_cny !== null && ` · 实际 ¥${j.actual_cny}`}
@@ -447,7 +452,7 @@ export default function Studio() {
       })}
 
       <div className="mt-3 rounded-lg border border-line bg-card p-3">
-        <div className="text-micro text-ink3">发布（公网发布必审 · G9）</div>
+        <div className="text-micro text-ink3">发布（公网发布必审）</div>
         <div className="mt-1.5 grid grid-cols-2 gap-2">
           <select
             value={publishPlatform}
@@ -459,7 +464,7 @@ export default function Studio() {
           <input
             value={publishAccount}
             onChange={(e) => setPublishAccount(e.target.value)}
-            placeholder="账号 ID"
+            placeholder="账号编号"
             className="rounded-md border border-line bg-bg900 px-2 py-1 text-caption text-ink2"
           />
         </div>
@@ -475,10 +480,10 @@ export default function Studio() {
           onClick={() => void publish()}
           className="mt-2 w-full cursor-pointer rounded-md border border-gold/50 px-3 py-1.5 text-caption font-bold text-gold hover:bg-gold/10 disabled:opacity-40"
         >
-          ⇪ 入队并执行发布（本机 dry-run）
+          ⇪ 入队并执行发布（本机试运行）
         </button>
         <div className="mt-1.5 text-micro leading-relaxed text-ink3">
-          真实上传需要桌面端 Playwright 驱动 + 你本人登录态；服务端 dry-run 只验证机制并留痕（回执 synced=false）。
+          真实上传需要桌面端自动上传组件 + 你本人登录态；服务端试运行只验证机制并留痕（该回执不算真实发布）。
         </div>
       </div>
     </>
@@ -490,7 +495,7 @@ export default function Studio() {
         {productHint ? (
           <div className="mb-3 rounded-lg border border-line bg-card px-3 py-2 text-caption text-ink2">
             本次开拍商品：<span className="font-bold text-ink">{productHint}</span>
-            <span className="text-ink3">（来自商品档案；立项/下单时引用该商品，情报环节会复用这份 dossier）</span>
+            <span className="text-ink3">（来自商品档案；立项 / 下单时引用该商品，情报环节会复用这份档案）</span>
           </div>
         ) : null}
         <div className="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-2">
@@ -521,7 +526,7 @@ export default function Studio() {
               当前项目已有 {shots.length} 个服务镜头、{scripts.length} 个工作稿版本、{jobs.length} 个生成任务。
             </div>
             <div className="mt-2 text-micro leading-relaxed text-ink3">
-              · 服务先审核当前镜头的完整生成请求；通过后再过 G8（素材制作默认自动放行；超预算走人审）与成本上限闸（USD/CNY 双轨）；
+              · 服务先审核当前镜头的完整生成请求；通过后再过额度审批（素材制作默认自动放行；超预算走人审）与成本上限闸（美元 / 人民币双轨）；
               · 生成完成后点「立即刷新任务状态」触发轮询回填 + 成片入库（供应商只保留 7 天，入库后才算真交付）；
               · 真实渲染会消耗供应商额度，界面上的"演示/促销价/未核价"标识以数据为准，不粉饰。
             </div>

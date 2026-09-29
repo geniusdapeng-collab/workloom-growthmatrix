@@ -16,6 +16,7 @@ import {
   NAVIGATION_GROUP_ORDER,
   Overlay,
   NightShiftStatus,
+  Textarea,
   TopContextBar,
   clientChineseText,
   clientIdentifierText,
@@ -189,7 +190,7 @@ function TasksPage({ canDispatch }: { canDispatch: boolean }) {
   };
   return <div className="page"><PageHeading title="任务" description="查看谁在做、做到哪、为什么停住，以及下一步是否需要你。" />
     <Resource state={resource.state} retry={resource.reload}>{({ me, threads, agents }) => <>
-      {canDispatch && <Card><h2>发起任务</h2><p className="item-copy">请写清目标、对象和时间；信息不足时系统会先反问，不会偷偷创建任务。</p><div className="stack"><label>任务目标<textarea rows={3} value={title} disabled={busy} onChange={(event) => setTitle(event.target.value)} placeholder="例如：复盘本周核心指标变化，并列出需要我决定的三件事" /></label>{error && <div className="status-strip" role="alert">{error}</div>}{notice && <div className="status-strip" role="status">{notice}</div>}<Button variant="primary" disabled={!title.trim() || agents.length === 0 || busy} onClick={() => setConfirmDispatch(true)}>预览并创建任务</Button></div></Card>}
+      {canDispatch && <Card><h2>发起任务</h2><p className="item-copy">请写清目标、对象和时间；信息不足时系统会先反问，不会偷偷创建任务。</p><div className="stack"><Textarea label="任务目标" rows={3} value={title} disabled={busy} onChange={(event) => setTitle(event.target.value)} placeholder="例如：复盘本周核心指标变化，并列出需要我决定的三件事" />{error && <div className="status-strip" role="alert">{error}</div>}{notice && <div className="status-strip" role="status">{notice}</div>}<Button variant="primary" disabled={!title.trim() || agents.length === 0 || busy} onClick={() => setConfirmDispatch(true)}>预览并创建任务</Button></div></Card>}
       <div className="stack">{threads.map((thread) => <AgentWorkCard key={thread.id} work={{ id: thread.id, actor: thread.agent_id ? "数字员工" : "等待分派", humanOwner: me.identity.name, goal: thread.title, stage: clientStatusLabel(thread.status), progress: { completed: thread.progress_done, total: thread.progress_total || undefined, next: thread.status === "pending_review" ? "等待业务关卡放行" : thread.status === "failed" ? "查看失败原因并选择重试或接管" : undefined }, reason: `状态和进度来自当前工作区的任务事件；创建于 ${formatTime(thread.created_at)}。`, needsHuman: thread.status === "pending_review" ? { action: "到对应业务页面放行该关卡", consequence: "关卡放行前任务保持等待。" } : thread.status === "failed" ? { action: "选择重试、接管或停止", consequence: "任务不会被标记为完成。" } : undefined, risk: thread.status === "failed" ? "high" : thread.status === "pending_review" ? "medium" : "none", receipt: { requestId: thread.id }, recovery: "失败可重试，关键动作可由人类接管" }} />)}{threads.length === 0 && <AsyncState status="empty" title="暂无任务" description="创建任务后，可以在这里跟踪数字员工进度和异常。" />}</div>
       <Overlay open={confirmDispatch} title="确认创建任务" description="提交后系统会先判断信息是否充分；信息不足时只会反问，不会创建任务。" onClose={() => { if (!busy) setConfirmDispatch(false); }} dismissOnBackdrop={!busy} dismissOnEscape={!busy} footer={<><Button disabled={busy} onClick={() => setConfirmDispatch(false)}>取消</Button><Button variant="primary" busy={busy} onClick={() => void dispatch(agents)}>确认交给数字员工</Button></>}><div className="stack"><p><strong>任务目标：</strong>{title.trim()}</p><p><strong>首选执行者：</strong>{clientChineseText(agents[0]?.name, "尚无可用数字员工")}</p></div></Overlay>
     </>}</Resource>

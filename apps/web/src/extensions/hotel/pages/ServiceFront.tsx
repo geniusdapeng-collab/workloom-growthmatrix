@@ -19,7 +19,7 @@ export default function ServiceFront() {
       <MetricGrid>
         <Metric label="知识库集合" value={data?.kb.collections ?? 0} />
         <Metric label="知识条目" value={data?.kb.documents ?? 0} hint={`切片 ${data?.kb.chunks ?? 0} 块`} />
-        <Metric label="电话记录" value={data?.calls.length ?? 0} hint="phone_call.log" />
+        <Metric label="电话记录" value={data?.calls.length ?? 0} hint="通话记录归档" />
         <Metric label="C 端工单类型" value={data?.tickets.length ?? 0} />
       </MetricGrid>
       <Panel title="知识库最近更新">

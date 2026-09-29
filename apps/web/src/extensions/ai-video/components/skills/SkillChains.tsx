@@ -18,11 +18,11 @@ const CHAINS: SkillChain[] = [
     key: "chain-viral-seeding",
     name: "爆款种草流水线",
     icon: "🌱",
-    desc: "情报五站供料 → Brief 解析 → 逐镜提示词，从爆款情报到可渲染脚本的种草链路",
+    desc: "情报五站供料 → 需求单解析 → 逐镜提示词，从爆款情报到可渲染脚本的种草链路",
     steps: [
-      { skill: "jenny-loom-research", note: "趋势/竞品/爆款拆解，产出情报档案（G1 确认）" },
-      { skill: "marketing-brief-parser", note: "情报档案 → 12 字段营销 Brief 确认单" },
-      { skill: "shot-prompt-craft", note: "Brief → 逐镜 25 字段提示词（字符口径校验）" },
+      { skill: "jenny-loom-research", note: "趋势/竞品/爆款拆解，产出情报档案（选题确认）" },
+      { skill: "marketing-brief-parser", note: "情报档案 → 12 字段需求确认单" },
+      { skill: "shot-prompt-craft", note: "需求单 → 逐镜 25 字段提示词（字符口径校验）" },
     ],
   },
   {

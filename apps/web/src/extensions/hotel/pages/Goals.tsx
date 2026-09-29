@@ -21,9 +21,9 @@ export default function Goals() {
       source={data?.source} state={state}>
       <MetricGrid>
         <Metric label="年度营收目标" value={year?.revenue ? `¥${Number(year.revenue).toLocaleString("zh-CN")}` : "未设置"} />
-        <Metric label="年度 OCC 目标" value={year?.occ ? `${(Number(year.occ) * 100).toFixed(0)}%` : "—"} hint="入住率" />
+        <Metric label="年度出租率目标" value={year?.occ ? `${(Number(year.occ) * 100).toFixed(0)}%` : "—"} hint="入住率（客房出租比例）" />
         <Metric label="月度目标" value={month ? `${month[0].replace("month_", "")}` : "未设置"} hint={String((month?.[1] as Record<string, unknown> | undefined)?.note ?? "")} />
-        <Metric label="最新偏差" value={deviation === null ? "暂无 tracking" : `${deviation} pt`}
+        <Metric label="最新偏差" value={deviation === null ? "暂无偏差回写" : `${deviation} 个百分点`}
           hint={deviation === null ? "等待周度回写" : deviation < 0 ? "落后目标，需补救" : "超目标"} />
       </MetricGrid>
       <Panel title="目标锚点（一店一档）" hint={String(data?.goals?.tracking ?? "")}>
@@ -36,20 +36,20 @@ export default function Goals() {
           empty="尚未在「一店一档」声明年度目标。"
         />
       </Panel>
-      <Panel title="偏差跟踪（goal.tracking）">
+      <Panel title="偏差跟踪（周度回写）">
         <DataTable
           columns={[
             { key: "metric", title: "指标", render: (row) => String(row.after.metric ?? "—") },
             { key: "target", title: "目标", render: (row) => String(row.after.target ?? "—") },
             { key: "actual", title: "实际", render: (row) => String(row.after.actual ?? "—") },
-            { key: "deviation", title: "偏差(pt)", render: (row) => String(row.after.deviation_pt ?? "—") },
+            { key: "deviation", title: "偏差（个百分点）", render: (row) => String(row.after.deviation_pt ?? "—") },
             { key: "at", title: "回写时间", render: (row) => row.at.slice(0, 16).replace("T", " ") },
           ]}
           rows={data?.tracking ?? []}
-          empty="还没有周度偏差回写（goal.tracking）。"
+          empty="还没有周度偏差回写。"
         />
       </Panel>
-      <Panel title="补救举措（initiative.*）">
+      <Panel title="补救举措">
         <DataTable
           columns={[
             { key: "action", title: "动作", render: (row) => row.action },

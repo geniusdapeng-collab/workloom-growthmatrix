@@ -42,6 +42,7 @@ import { clientNaturalText } from "../../lib/clientText";
 import { NAV_ENTRIES } from "../../shell/NavMenu";
 import { COMMON_STATUS_TEXT, dictText, THREAD_MODE_TEXT } from "../../lib/display";
 import { sharedLayoutPixels } from "../../lib/useAskRail";
+import { displayNameOf } from "../../lib/naming";
 
 /** 路由 → 情境快捷钮（前缀匹配；越靠上越优先） */
 const CONTEXT_CHIPS: Array<[prefix: string, chips: string[]]> = [
@@ -98,7 +99,8 @@ interface TaskCard {
   presetKey?: string;
 }
 
-const TASK_STATUS_TEXT: Record<string, string> = {
+/** 命名固定为 `TASK_STATUS`：UI 门禁按标识符名登记「已脱敏的状态映射」（scripts/ui-governance-rules.mjs#SAFE_DISPLAY_MAPS）。 */
+const TASK_STATUS: Record<string, string> = {
   queued: "排队中", running: "进行中", pending_review: "等待业务关卡放行",
   completed: "已完成", failed: "失败", paused: "已暂停",
 };
@@ -202,12 +204,12 @@ function TaskCardView({ card, onOpen, highlight = false }: {
         <Icon name={icon} size={15} className={iconClass} />
         <span className="min-w-0 flex-1 truncate text-body font-bold text-ink">{card.title}</span>
         <span className={`shrink-0 rounded border px-1.5 text-body ${taskStatusClass(card.status)}`}>
-          {TASK_STATUS_TEXT[card.status] ?? card.status}
+          {TASK_STATUS[card.status] ?? "状态待确认"}
         </span>
       </div>
       <div className="mt-1 break-words text-body text-ink3">{taskCardSummary(card)}</div>
       {card.presetKey && (
-        <div className="mt-0.5 text-body text-ink3">派给：{card.presetKey} · {card.mode === "agent" ? "逐步确认" : card.mode === "ask" ? "问答" : "自主执行"}</div>
+        <div className="mt-0.5 text-body text-ink3">派给：{displayNameOf({ presetKey: card.presetKey })} · {card.mode === "agent" ? "逐步确认" : card.mode === "ask" ? "问答" : "自主执行"}</div>
       )}
       {/* GR-15/GR-17：连接器提示与失败原因直接上卡（不再"跑完才知道"） */}
       {card.warnings?.map((w) => (

@@ -15,6 +15,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { ensureDemoLogin, trpc } from "../../../lib/trpc";
 import { BannerAlert, EmptyState, Skeleton } from "../../../components/hud";
+import { dictText, payloadText, shortId, versionText } from "../../../lib/display";
+import { operationFailure } from "../../../lib/ui-state";
+import {
+  attributionText,
+  colorLookText,
+  loudnessText,
+  subtitleFormatText,
+  transitionModeText,
+  videoGateText,
+  videoVerdictText,
+} from "../pipelineText";
 
 interface PackageSummary {
   dir: string;
@@ -170,7 +181,7 @@ export default function Delivery() {
       setPackages(rows);
       setActiveDir((cur) => cur ?? preferDir ?? rows[0]?.dir ?? null);
     } catch (e) {
-      setBanner({ level: "alert", text: `交付包列表加载失败：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "读取交付包列表") });
     } finally {
       setReady(true);
     }
@@ -184,7 +195,7 @@ export default function Delivery() {
     } catch (e) {
       if (request !== detailLoadRef.current) return;
       setDetail(null);
-      setBanner({ level: "alert", text: `交付包加载失败：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "读取交付包") });
     }
   }, []);
 
@@ -237,7 +248,7 @@ export default function Delivery() {
       await loadDetail(activeDir);
       await loadList(true);
     } catch (e) {
-      setBanner({ level: "alert", text: `选择失败：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "选定交付版本") });
     } finally {
       setBusy(null);
     }
@@ -252,9 +263,9 @@ export default function Delivery() {
         dir: activeDir, feedback: feedback.trim(), record: true,
       }) as unknown as { triage: TriageView };
       setTriage(outcome.triage);
-      setBanner({ level: "info", text: "分诊完成：返修单已落盘（revision-requests/），下面是可以执行的 patch 预览。" });
+      setBanner({ level: "info", text: "分诊完成：返修意见已落盘，下面是可执行的修改预览。" });
     } catch (e) {
-      setBanner({ level: "alert", text: `分诊失败：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "返修分诊") });
     } finally {
       setBusy(null);
     }
@@ -270,11 +281,11 @@ export default function Delivery() {
     try {
       const parsed = JSON.parse(advancedPatch || "{}") as unknown;
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        return { patch: {}, error: "高级 patch 必须是对象（JSON object）" };
+        return { patch: {}, error: "高级修改必须写成一组对象形式的键值对（方向括号 {}），不能是数组或空值。" };
       }
       advanced = parsed as Record<string, unknown>;
-    } catch (e) {
-      return { patch: {}, error: `高级 patch 不是合法 JSON：${e instanceof Error ? e.message : String(e)}` };
+    } catch {
+      return { patch: {}, error: "高级修改不是合法的 JSON 文本，请检查括号、引号与逗号后再试。" };
     }
     const patch: Record<string, unknown> = { ...advanced };
     if (subtitleText.trim()) patch.subtitles = { ...(patch.subtitles as Record<string, unknown> | undefined), zhText: subtitleText };
@@ -282,14 +293,15 @@ export default function Delivery() {
       const value = bgmInput.trim();
       /**
        * 曲目输入两种口径（默认按**风格/情绪关键词**走检索，而不是当曲目 id）：
-       *   · `id:<曲目id>` → 精确指定（工位会做许可校验，找不到就报错）；
-       *   · 其他一律当风格/情绪关键词（corporate-clean / 温暖自在 / 运动 高燃 都能命中——
+       *   · `编号:<曲目编号>` → 精确指定（工位会做许可校验，找不到就报错）；
+       *   · 其他一律当风格/情绪关键词（商务简洁 / 温暖自在 / 运动高燃 都能命中——
        *     工位在**全量曲库**的 id/style/styleLabel/genre/mood/tags 上匹配）。
-       * 早先把 `corporate-clean` 当曲目 id 处理，结果三变体全被判 not_found（如实降级但不达意）。
+       * 早先把风格关键词当曲目编号处理，结果三变体全被判未找到（如实降级但不达意）。
        */
+      const explicitTrack = value.match(/^(?:id[:：]|编号[:：])\s*(.+)$/i);
       patch.bgm = {
         ...(patch.bgm as Record<string, unknown> | undefined),
-        ...(value.toLowerCase().startsWith("id:") ? { trackId: value.slice(3).trim() } : { style: value }),
+        ...(explicitTrack ? { trackId: (explicitTrack[1] ?? "").trim() } : { style: value }),
       };
     }
     return { patch, error: null };
@@ -306,7 +318,7 @@ export default function Delivery() {
       return;
     }
     if (Object.keys(composedPatch.patch).length === 0) {
-      setBanner({ level: "warn", text: "先填一处具体修改（字幕文本 / 曲目 / 高级 patch），再执行——分诊提示本身是模板，不能直接跑。" });
+      setBanner({ level: "warn", text: "先填一处具体修改（字幕文本 / 曲目 / 高级修改），再执行——分诊提示本身是模板，不能直接跑。" });
       return;
     }
     const patch = composedPatch.patch;
@@ -318,7 +330,7 @@ export default function Delivery() {
       setJob(created);
       setBanner({ level: "info", text: `本地重合成已启动（作业 ${created.jobId}）：只重算受影响的层，镜头不重新生成。` });
     } catch (e) {
-      setBanner({ level: "alert", text: `重合成启动失败：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "启动本地重合成") });
     } finally {
       setBusy(null);
     }
@@ -392,7 +404,7 @@ export default function Delivery() {
         className="text-xs text-ink3 hover:text-holo"
         onClick={() => nav("/ai-video/assets")}
       >
-        ← 返回片库 / 脚本 CMS
+        ← 返回片库 / 脚本库
       </button>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -445,11 +457,11 @@ export default function Delivery() {
                 </span>
               </div>
               <div className="mt-1 text-xs text-ink3">
-                {row.platform ?? "默认平台"} · {row.quality === "uhd" ? "UHD" : "HD"} · {row.variantCount} 个版本 · {row.revisionCount} 次返修
+                {row.platform ?? "默认平台"} · {row.quality === "uhd" ? "超高清" : "高清"} · {row.variantCount} 个版本 · {row.revisionCount} 次返修
               </div>
               <div className="mt-1 text-[11px] text-ink4">{fmtTime(row.createdAt)}</div>
               {row.selectedVariantId ? (
-                <div className="mt-1 text-[11px] text-go">已选：{row.selectedVariantId}</div>
+                <div className="mt-1 text-[11px] text-go">已选版本：{shortId(row.selectedVariantId)}</div>
               ) : null}
             </button>
           ))}
@@ -471,11 +483,11 @@ export default function Delivery() {
                   <div className="font-orb text-sm text-ink">
                     干净母版（不含字幕）
                     <span className={`ml-2 rounded border px-1.5 py-0.5 text-[11px] ${detail.quality === "uhd" ? "border-go/45 text-go" : "border-line text-ink3"}`}>
-                      {detail.quality === "uhd" ? "UHD · 本机后期" : "HD"}
+                      {detail.quality === "uhd" ? "超高清 · 本机后期" : "高清"}
                     </span>
                     <span className="ml-2 text-xs text-ink3">
-                      {detail.resolution ? `${detail.resolution[0]}×${detail.resolution[1]}` : ""} {detail.fps ? `@${detail.fps}fps` : ""}
-                      {detail.master.duration ? ` · ${detail.master.duration}s` : ""}
+                      {detail.resolution ? `${detail.resolution[0]}×${detail.resolution[1]}` : ""} {detail.fps ? `每秒 ${detail.fps} 帧` : ""}
+                      {detail.master.duration ? ` · ${detail.master.duration} 秒` : ""}
                     </span>
                   </div>
                   {artifactUrl(detail.master.ref) ? (
@@ -495,7 +507,7 @@ export default function Delivery() {
                     <div>旁挂字幕（母版未烧字，可后置决定用不用）：</div>
                     {detail.subtitleFiles.length === 0 ? <div>本次未提供字幕</div> : detail.subtitleFiles.map((file) => (
                       <div key={file.path} className="flex items-center gap-2">
-                        <span className="rounded bg-black/30 px-1.5 py-0.5">{file.format.toUpperCase()}</span>
+                        <span className="rounded bg-black/30 px-1.5 py-0.5">{subtitleFormatText(file.format)}</span>
                         <span>{file.lang}</span>
                         {artifactUrl(file.ref) ? (
                           <a className="text-holo underline" href={artifactUrl(file.ref)!} download={file.path.split("/").pop() ?? "subtitle"}>下载</a>
@@ -548,13 +560,13 @@ export default function Delivery() {
                       {variant.positioning ? <p className="mt-1 text-xs text-ink3">{variant.positioning}</p> : null}
                       <ul className="mt-2 space-y-1 text-[11px] text-ink3">
                         <li>调色：{variant.style?.color
-                          ? `${variant.style.color.profile ?? variant.style.color.lut ?? "有色"} @${variant.style.color.intensity ?? "-"}`
+                          ? `${colorLookText(variant.style.color.profile)}${variant.style.color.intensity ? ` · 强度 ${variant.style.color.intensity}` : ""}`
                           : "不调色"}</li>
                         <li>配乐：{variant.audio
-                          ? `${variant.audio.trackTitle ?? variant.audio.trackId ?? "已配乐"}${variant.audio.lufs ? ` · ${variant.audio.lufs} LUFS` : ""}`
+                          ? `${variant.audio.trackTitle ?? (variant.audio.trackId ? "已配乐（曲目编号已记录）" : "已配乐")}${variant.audio.lufs ? ` · ${loudnessText(variant.audio.lufs)}` : ""}`
                           : "原声"}</li>
                         <li>转场：{variant.style?.transitions
-                          ? `${variant.style.transitions.mode ?? "-"}${variant.style.transitions.fadeSec ? ` ${variant.style.transitions.fadeSec}s` : ""}`
+                          ? `${transitionModeText(variant.style.transitions.mode)}${variant.style.transitions.fadeSec ? ` · ${variant.style.transitions.fadeSec} 秒` : ""}`
                           : "默认"}</li>
                         <li>文案口吻：{variant.style?.copyTone ?? "默认"}</li>
                       </ul>
@@ -566,7 +578,7 @@ export default function Delivery() {
                       ) : null}
                       {variant.audio?.autoTrimDb && variant.audio.autoTrimDb < 0 ? (
                         <div className="mt-2 rounded border border-warn/40 p-2 text-[11px] text-warn">
-                          配乐首档压住人声，已自动降 {variant.audio.autoTrimDb}dB 后通过（如实记账）
+                          配乐首档压住人声，已自动降低 {variant.audio.autoTrimDb} 分贝后通过（如实记账）
                         </div>
                       ) : null}
                       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -610,7 +622,7 @@ export default function Delivery() {
                           <td className="py-1">{row.meanAbsDiff ?? "—"}/255</td>
                           <td className="py-1">
                             <span className={`rounded border px-1.5 py-0.5 text-[11px] ${VERDICT_CLS[row.verdict ?? ""] ?? "border-line text-ink3"}`}>
-                              {row.verdict ?? "—"}
+                              {row.verdict ? videoVerdictText(row.verdict) : "—"}
                             </span>
                           </td>
                           <td className="py-1">{row.audioDiffers ? "不同" : "相同"}</td>
@@ -624,7 +636,7 @@ export default function Delivery() {
                   <ul className="mt-2 space-y-1 text-xs">
                     {detail.checks.map((check) => (
                       <li key={check.kind} className="flex items-center justify-between gap-2">
-                        <span className="text-ink2">{CHECK_LABEL[check.kind] ?? check.kind}</span>
+                        <span className="text-ink2">{dictText(CHECK_LABEL, check.kind)}</span>
                         <span className={check.ok ? "text-go" : "text-alert"}>{check.ok ? "通过" : "未通过"}</span>
                       </li>
                     ))}
@@ -634,7 +646,7 @@ export default function Delivery() {
                       <div className="text-ink4">返修历史</div>
                       {detail.revisions.map((rev) => (
                         <div key={`${rev.version}-${rev.at}`} className="mt-1">
-                          v{rev.version ?? "?"} · {fmtTime(rev.at)} · {rev.localOnly === false ? "含镜头重生成" : "本地重合成"}
+                          {versionText(rev.version == null ? null : String(rev.version))} · {fmtTime(rev.at)} · {rev.localOnly === false ? "含镜头重生成" : "本地重合成"}
                         </div>
                       ))}
                     </div>
@@ -645,12 +657,12 @@ export default function Delivery() {
               <div className="rounded border border-line/60 p-3">
                 <div className="text-xs uppercase tracking-wide text-ink4">提返修意见（先在本地重合成，不重新生成镜头）</div>
                 <p data-testid="delivery-revision-base" className="mt-2 break-words text-xs text-ink3">
-                  {detail.revisionBase ? `本次修改基于 v${detail.revisionBase.version}。其他人提交新版本后，需要刷新并核对后再提交。`
+                  {detail.revisionBase ? `本次修改基于${versionText(String(detail.revisionBase.version))}。其他人提交新版本后，需要刷新并核对后再提交。`
                     : `暂不能执行返修：${detail.revisionBaseReason ?? "工程版本尚未读取"}`}
                 </p>
                 {detail.revisionBase && detail.revisionBase.version !== detail.revision ? (
                   <p className="mt-1 break-words text-xs text-warn">
-                    上方预览{detail.revision ? `仍对应交付 v${detail.revision}` : "尚未标记交付版本"}；最新返修工程为 v{detail.revisionBase.version}，不代表新版成片已通过终审。
+                    上方预览{detail.revision != null ? `仍对应交付${versionText(String(detail.revision))}` : "尚未标记交付版本"}；最新返修工程为{versionText(String(detail.revisionBase.version))}，不代表新版成片已通过终审。
                   </p>
                 ) : null}
                 <textarea
@@ -688,15 +700,15 @@ export default function Delivery() {
                   <div className="mt-3 space-y-2 text-xs">
                     <div className="flex flex-wrap gap-2">
                       {triage.attributions.map((code) => (
-                        <span key={code} className="rounded border border-line/60 px-1.5 py-0.5 text-ink3">{code}</span>
+                        <span key={code} className="rounded border border-line/60 px-1.5 py-0.5 text-ink3">{attributionText(code)}</span>
                       ))}
                     </div>
                     <div className="text-ink2">
-                      受影响层：{triage.layers.length ? triage.layers.map((layer) => LAYER_LABEL[layer] ?? layer).join(" → ") : "需要人工指认"}
+                      受影响层：{triage.layers.length ? triage.layers.map((layer) => dictText(LAYER_LABEL, layer)).join(" → ") : "需要人工指认"}
                     </div>
                     <div className={triage.requiresShotRegeneration ? "text-warn" : "text-go"}>
                       {triage.requiresShotRegeneration
-                        ? `点名到画面内容（${triage.shotIds.join("、") || "未点名"}）：需要先过 ${triage.gate ?? "G8"} 人审并重生成点名镜头，本页不烧渲染额度`
+                        ? `点名到画面内容（${triage.shotIds.join("、") || "未点名"}）：需要先过${triage.gate ? videoGateText(triage.gate) : "额度审批"}并重生成点名镜头，本页不占用渲染额度`
                         : "后期能解决：本地重合成即可，镜头不重新生成"}
                     </div>
                     <div className="text-ink3">成本：{triage.costHint.note}</div>
@@ -706,7 +718,7 @@ export default function Delivery() {
                         <div className="text-ink4">要改成什么（填了才可执行）</div>
                         {triage.layers.includes("text") ? (
                           <label className="block">
-                            <span className="text-ink3">新字幕（SRT 全文；留空则不改字幕）</span>
+                            <span className="text-ink3">新字幕（全文粘贴；留空则不改字幕）</span>
                             <textarea
                               data-testid="delivery-revision-subtitles"
                               className="mt-1 h-24 w-full rounded border border-line/60 bg-black/20 p-2 font-mono text-[11px] text-ink2"
@@ -718,7 +730,7 @@ export default function Delivery() {
                         ) : null}
                         {triage.layers.includes("audio") ? (
                           <label className="block">
-                            <span className="text-ink3">配乐：风格 / 情绪关键词（例：corporate-clean、温暖自在、运动 高燃）；精确指定曲目写 id:&lt;曲目id&gt;</span>
+                            <span className="text-ink3">配乐：风格 / 情绪关键词（例：商务简洁、温暖自在、运动高燃）；精确指定曲目写「编号:曲目编号」</span>
                             <input
                               data-testid="delivery-revision-bgm"
                               className="mt-1 w-full rounded border border-line/60 bg-black/20 p-2 text-xs text-ink2"
@@ -728,7 +740,7 @@ export default function Delivery() {
                           </label>
                         ) : null}
                         <details>
-                          <summary className="cursor-pointer text-ink4">高级：直接写 patch JSON（调色/封面/文案/转场等）</summary>
+                          <summary className="cursor-pointer text-ink4">高级：直接写修改指令（调色 / 封面 / 文案 / 转场等）</summary>
                           <textarea
                             data-testid="delivery-revision-advanced"
                             className="mt-1 h-28 w-full rounded border border-line/60 bg-black/30 p-2 font-mono text-[11px] text-ink2"
@@ -737,11 +749,11 @@ export default function Delivery() {
                           />
                           <div className="mt-1 text-[11px] text-ink4">
                             分诊模板（**是提示不是可执行内容**，占位符要换成真实值）：
-                            <pre className="mt-1 overflow-x-auto rounded bg-black/30 p-2">{JSON.stringify(triage.patchHint, null, 2)}</pre>
+                            <div className="mt-1 break-words rounded bg-black/30 p-2">{payloadText(triage.patchHint, 400)}</div>
                           </div>
                         </details>
                         <div className="text-[11px] text-ink4">
-                          将要提交的 patch：<code>{JSON.stringify(composedPatch.patch)}</code>
+                          将要提交的修改：<span>{payloadText(composedPatch.patch, 240)}</span>
                           {composedPatch.error ? <span className="text-alert"> · {composedPatch.error}</span> : null}
                         </div>
                       </div>
@@ -753,8 +765,8 @@ export default function Delivery() {
                   <div className="mt-3 rounded border border-line/50 p-2 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-ink2">
-                        作业 {job.jobId} · {job.status === "running" ? "执行中" : job.status === "done" ? "已完成" : "失败"}
-                        {job.version ? ` · v${job.version}` : ""}
+                        作业 {shortId(job.jobId)} · {job.status === "running" ? "执行中" : job.status === "done" ? "已完成" : "失败"}
+                        {job.version ? ` · ${versionText(String(job.version))}` : ""}
                       </span>
                       <span className="text-ink4">{job.finishedAt ? fmtTime(job.finishedAt) : fmtTime(job.startedAt)}</span>
                     </div>
@@ -762,7 +774,7 @@ export default function Delivery() {
 {job.logTail.slice(-12).join("\n")}
                     </pre>
                     {job.status === "done" && job.outDir ? (
-                      <div className="mt-1 text-go">新版本目录：{job.outDir}（刷新列表可见 v{job.version} 的返修记录）</div>
+                      <div className="mt-1 text-go">新版本本机目录：{job.outDir}（刷新列表可见{versionText(job.version == null ? null : String(job.version))}的返修记录）</div>
                     ) : null}
                   </div>
                 ) : null}

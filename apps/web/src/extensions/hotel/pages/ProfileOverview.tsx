@@ -1,6 +1,7 @@
 /** p20 一店一档全景：融合档案模块、围栏、编制来源、技能装配——获客系统的"身份与边界" */
 import { trpc } from "../../../lib/trpc";
 import { ConsoleShell, DataTable, Metric, MetricGrid, Panel, useConsoleData } from "../console";
+import { payloadText } from "../../../lib/display";
 
 interface Payload {
   source: string;
@@ -25,7 +26,7 @@ export default function ProfileOverview() {
         <Metric label="在册员工" value={data?.roster.reduce((sum, row) => sum + row.n, 0) ?? 0} />
         <Metric label="已装技能" value={data?.skillsInstalled ?? 0} />
       </MetricGrid>
-      <Panel title="编制来源（融合体口径）" hint="同名岗位按主包裁决，遮蔽留痕在 agents.meta">
+      <Panel title="编制来源（融合体口径）" hint="同名岗位按主包裁决，遮蔽留痕在岗位元数据">
         <DataTable
           columns={[
             { key: "bundle", title: "来源行业包", render: (row) => row.bundle },
@@ -35,7 +36,7 @@ export default function ProfileOverview() {
           empty="尚未装配数字员工。"
         />
       </Panel>
-      <Panel title="档案模块清单" hint={data?.journey ? `旅程：${JSON.stringify(data.journey)}` : undefined}>
+      <Panel title="档案模块清单" hint={data?.journey ? `旅程：${payloadText(data.journey, 200)}` : undefined}>
         <div className="flex flex-wrap gap-2">
           {(data?.modules ?? []).map((module) => (
             <span key={module} className="rounded border border-line px-2 py-0.5 text-body text-ink2">{module}</span>

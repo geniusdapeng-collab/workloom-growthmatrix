@@ -14,6 +14,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { ensureDemoLogin, trpc } from "../../../lib/trpc";
 import { Bridge } from "../../../shell/Bridge";
 import { BannerAlert, EmptyState, Skeleton } from "../../../components/hud";
+import { operationFailure } from "../../../lib/ui-state";
 
 interface ScriptRow {
   id: string; project_id: string; shot_id: string; script_key: string; version: number;
@@ -22,8 +23,12 @@ interface ScriptRow {
   created_by: string; created_at: string;
 }
 
-/** 状态 chip 口径（语义四色 §2.2：青=进行中/信息，绿=已完成，琥珀=待审，红=失败，灰=草稿） */
-const STATUS_META: Record<string, { label: string; cls: string }> = {
+/**
+ * 状态 chip 口径（语义四色 §2.2：青=进行中/信息，绿=已完成，琥珀=待审，红=失败，灰=草稿）。
+ * 命名固定为 `STATUS`：UI 门禁把「已登记中文映射表」按标识符名登记（scripts/ui-governance-rules.mjs#SAFE_DISPLAY_MAPS），
+ * 改名会退回「动态值未脱敏」红灯。
+ */
+const STATUS: Record<string, { label: string; cls: string }> = {
   draft: { label: "草稿", cls: "border-line text-ink3" },
   approved: { label: "已审批", cls: "border-go/45 text-go" },
   submitted: { label: "已提交", cls: "border-holo/45 text-holo" },
@@ -67,7 +72,7 @@ export default function P10() {
       setScripts(rows);
       setSelectedKey((cur) => cur ?? rows[rows.length - 1]?.script_key ?? null); // 缺省选最新一条链
     } catch (e) {
-      setBanner({ level: "alert", text: `片库加载失败：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "读取片库") });
     } finally {
       setReady(true);
     }
@@ -102,7 +107,7 @@ export default function P10() {
       const row = await trpc.video.cms.getScript.query({ scriptId: head.id }) as unknown as ScriptRow | null;
       setDetail(row);
     } catch (e) {
-      setBanner({ level: "alert", text: `脚本详情加载失败：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "读取脚本详情") });
     }
   }, [scripts]);
 
@@ -127,12 +132,12 @@ export default function P10() {
         charCheck: { charCount: md.length, withinSpec: md.length >= CHAR_MIN && md.length <= CHAR_MAX },
         diffSummary: "工作台手工编辑",
       }) as unknown as ScriptRow;
-      setBanner({ level: "info", text: `已保存为第 ${r.version} 版（父版本为第 ${r.parent_version} 版；新版本须重新通过 G8 审批）` });
+      setBanner({ level: "info", text: `已保存为第 ${r.version} 版（父版本为第 ${r.parent_version} 版；新版本须重新通过额度审批）` });
       setDirty(false);
       await load(true);
       await selectChain(detail.script_key);
     } catch (e) {
-      setBanner({ level: "alert", text: `保存失败：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "保存新版本") });
     } finally {
       setBusy(null);
     }
@@ -144,11 +149,11 @@ export default function P10() {
     setBusy("approve");
     try {
       await trpc.video.cms.approveScript.mutate({ scriptKey: detail.script_key, version: detail.version });
-      setBanner({ level: "info", text: `G8 审批通过：第 ${detail.version} 版脚本已放行，渲染额度门已开启。` });
+      setBanner({ level: "info", text: `额度审批通过：第 ${detail.version} 版脚本已放行，渲染额度门已开启。` });
       await load(true);
       await selectChain(detail.script_key);
     } catch (e) {
-      setBanner({ level: "alert", text: `审批失败：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "审批脚本版本") });
     } finally {
       setBusy(null);
     }
@@ -177,7 +182,7 @@ export default function P10() {
       await load(true);
       await selectChain(detail.script_key);
     } catch (e) {
-      setBanner({ level: "alert", text: `提交被围栏拦下：${e instanceof Error ? e.message : String(e)}` });
+      setBanner({ level: "alert", text: operationFailure(e, "提交生成请求") });
     } finally {
       setBusy(null);
     }
@@ -192,7 +197,7 @@ export default function P10() {
         <div className="mt-0.5 text-micro text-ink3">营销片管线</div>
       </div>
       {chains.map((c) => {
-        const meta = STATUS_META[c.head.status] ?? STATUS_META.draft!;
+        const meta = STATUS[c.head.status] ?? STATUS.draft!;
         const active = c.key === selectedKey;
         return (
           <button
@@ -212,7 +217,7 @@ export default function P10() {
             <div className="mt-1 flex flex-wrap items-center gap-1 font-mono text-micro text-ink3">
               {c.versions.map((v, i) => (
                 <span key={v.id} className={v.version === c.head.version ? "text-goldhi" : ""}>
-                  {i > 0 && "→ "}v{v.version}
+                  {i > 0 && "→ "}{v.version} 版
                 </span>
               ))}
             </div>
@@ -246,10 +251,10 @@ export default function P10() {
     <>
       <div className="mb-2 px-1 text-[11px] tracking-[.2em] text-ink3">提交纪律</div>
       <div className="rounded-lg border border-line bg-card p-3 text-caption leading-relaxed text-ink2">
-        保存即新版本；版本即审批对象——新版本不继承既有审批结果，须重新通过 G8。
+        保存即新版本；版本即审批对象——新版本不继承既有审批结果，须重新通过额度审批。
       </div>
       <div className="mt-2.5 rounded-lg border border-line bg-card p-3 text-caption leading-relaxed text-ink3">
-        <div className="mb-1 text-micro font-bold text-ink2">G8 烧额度门</div>
+        <div className="mb-1 text-micro font-bold text-ink2">额度审批门</div>
         先核对当前预生产镜头，再审核完整生成请求<br />
         禁止 → 直接熔断<br />
         人工复核 → 须先完成脚本审批<br />
@@ -316,8 +321,8 @@ export default function P10() {
                 {/* 工作台头：镜头 / 版本链 / 状态 / 字数校验 */}
                 <div className="mb-3 flex flex-wrap items-center gap-2.5">
                   <b className="min-w-0 break-words text-h2 text-ink">镜头 {detail.shot_id} · 第 {detail.version} 版</b>
-                  <span className={`rounded border px-1.5 py-0.5 text-micro ${(STATUS_META[detail.status] ?? STATUS_META.draft!).cls}`}>
-                    {(STATUS_META[detail.status] ?? STATUS_META.draft!).label}
+                  <span className={`rounded border px-1.5 py-0.5 text-micro ${(STATUS[detail.status] ?? STATUS.draft!).cls}`}>
+                    {(STATUS[detail.status] ?? STATUS.draft!).label}
                   </span>
                   <span className="font-mono text-micro text-ink3">
                     {detail.parent_version ? `第 ${detail.parent_version} 版 → ` : ""}第 {detail.version} 版（当前）
@@ -344,7 +349,7 @@ export default function P10() {
                       onClick={() => void approve()}
                       className="cursor-pointer rounded-md border border-go/50 px-3 py-1.5 text-caption font-bold text-go hover:bg-go/10 disabled:opacity-40"
                     >
-                      ✓ G8 审批通过
+                      ✓ 额度审批通过
                     </button>
                   )}
                   <button

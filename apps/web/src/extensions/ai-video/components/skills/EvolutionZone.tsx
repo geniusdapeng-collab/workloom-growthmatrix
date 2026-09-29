@@ -35,7 +35,7 @@ export function EvolutionZone({
   return (
     <div className="mb-5">
       <div className="mb-2 text-caption font-bold tracking-wider text-ink2">
-        进化环 · 冷藏与进化提案（F8.5 采纳闭环）
+        进化环 · 冷藏与进化提案（采纳闭环）
       </div>
 
       {/* 冷藏区（折叠 · 降权展示） */}
@@ -59,7 +59,7 @@ export function EvolutionZone({
                   <div key={s.id} className="flex items-center gap-2 text-caption opacity-55">
                     <span>{skillIcon(s)}</span>
                     <span className="min-w-0 flex-1 truncate text-ink3">{displayName(s)}</span>
-                    <span className="text-micro text-ink3">近 30 天零调用投影 · 建议优化或下架（F8.5）</span>
+                    <span className="text-micro text-ink3">近 30 天零调用投影 · 建议优化或下架（采纳闭环）</span>
                   </div>
                 ))
               : MOCK_COLD.map((m) => (
@@ -78,7 +78,7 @@ export function EvolutionZone({
         <div className="mb-2 flex items-center gap-2">
           <span className="text-[15px]">🧬</span>
           <b className="text-caption font-bold text-ink2">进化提案</b>
-          <span className="text-micro text-ink3">基于驳回样本的修订建议（校准闭环 E8.3）</span>
+          <span className="text-micro text-ink3">基于驳回样本的修订建议（校准闭环）</span>
         </div>
         {proposals.length === 0 ? (
           <div className="text-caption text-ink3">暂无进化提案——出现驳回样本后自动生成修订建议</div>
@@ -93,19 +93,19 @@ export function EvolutionZone({
                 </div>
                 <div className="mt-1 text-micro leading-relaxed text-ink2">
                   驳回样本：{u.rejectReasons.map((r) => `「${r.reason}」×${r.count}`).join("、")}
-                  ——建议修订触发条件与边界声明，将高频驳回原因写入「不能做什么」（自动转围栏 F8.3）
+                  ——建议修订触发条件与边界声明，将高频驳回原因写入「不能做什么」（自动转围栏）
                 </div>
                 <div className="mt-1.5 flex gap-2">
                   <button
                     type="button"
-                    onClick={() => onToast(`已批准「${displayName(skill)}」进化提案（占位）：批准后将生成 v2 修订草稿进版本管理（F8.3），当前为占位说明`)}
+                    onClick={() => onToast(`已批准「${displayName(skill)}」进化提案（占位）：批准后将生成第 2 版修订草稿进版本管理，当前为占位说明`)}
                     className="cursor-pointer rounded-md border border-go/50 px-2.5 py-1 text-micro font-bold text-go hover:bg-go/10"
                   >
                     ✓ 批准修订
                   </button>
                   <button
                     type="button"
-                    onClick={() => onToast(`已驳回「${displayName(skill)}」进化提案（占位）：该样本口径将降权（E8.3 校准闭环）`)}
+                    onClick={() => onToast(`已驳回「${displayName(skill)}」进化提案（占位）：该样本口径将降权（校准闭环）`)}
                     className="cursor-pointer rounded-md border border-line px-2.5 py-1 text-micro text-ink3 hover:border-alert/40 hover:text-alert"
                   >
                     驳回
