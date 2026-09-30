@@ -77,6 +77,7 @@ import {
   type CoverAccountProfile, type CoverDesignInput, type CoverMeasurements, type CoverPlan,
   type CoverPlatformSpec, type GateCheck, type GateEvent, type PipelineGateStepKey,
   type DeviceCategory, type DeviceDefect, type EnvDefect, type HookCard, type MicromotionTrace, type PlatePromptShot,
+  detectProductAnchor, resolveRoutePreflight, RoutePreflightError, type RoutePreflightResult, // T-2026-0930-0015-PORT
   type ProducerVerdict, type SceneBible, type ScenePolicyReport
 } from "../../packages/video-studio/src/index.js";
 import { normalizeShotIntent, shotIntentHash, type ShotIntentStatus } from "../../packages/video-studio/src/shot-intent.js";
@@ -127,6 +128,17 @@ const log = (line: string): void => process.stdout.write(`[${stamp().slice(11, 1
 
 /* ================= 参数 ================= */
 
+/**
+ * 服务端"固定影片工位"（--worker / FILM_WORKER_MODE=worker）在 **CLI 侧尚未接线**（第二批，T-2026-0930-0015-PORT）。
+ * 显式 fail-closed：否则子进程在读不到作业上下文的情况下继续跑，报错位置与原因都不可读。
+ */
+if (flag("--worker") || String(process.env.FILM_WORKER_MODE ?? "") === "worker") {
+  throw new Error(
+    "WORKER_MODE_NOT_WIRED: 服务端固定影片工位的 CLI 侧入口尚未接线（第二批）。"
+    + "缺的是：解析 FILM_JOB_CONTEXT（冻结阶段/选项/inputRef）与受限通道（llm/image/video/media/voice/review）。"
+    + "请走公开 CLI 出片，或先完成第二批接线（docs/repairs/T-2026-0927-0039.md）。"
+  );
+}
 const SHOTS_FILE = abs(arg("--shots"));
 if (!SHOTS_FILE || !existsSync(SHOTS_FILE)) throw new Error("需要 --shots <shotlist.json>");
 const sourceBytes = readFileSync(SHOTS_FILE);
@@ -590,7 +602,51 @@ const records: StageRecord[] = [];
 if (!Array.isArray(sourceDocument.shots) || !sourceDocument.shots.length) throw new Error("SHOT_REGISTRY_REQUIRED");
 const sourceIds = sourceDocument.shots.map((shot) => String(shot.shotId ?? ""));
 if (sourceIds.some((id) => !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(id) || id.includes("..")) || new Set(sourceIds).size !== sourceIds.length) throw new Error("SHOT_REGISTRY_INVALID: 镜号缺失、重复或包含路径字符");
-if (ONLY.some((id) => !sourceIds.includes(id))) throw new Error("SHOT_SCOPE_UNKNOWN: --only 包含未登记镜号");
+/**
+ * 视频类型分流前置（T-2026-0930-0015-PORT）：分流器原来只接在服务端派活上，
+ * 直接跑本 CLI 会跳过"先判营销片 / 叙事片"。这里变成**出片入口的 fail-closed 前置**：
+ * `--route work/route.json`（route-video.mts 产物）或 `--route-kind marketing|narrative`（已确认过的补跑）。
+ * 营销片必须有商品锚点（不猜商品）；分流结论是"判不准"时必须先问用户。
+ */
+const ROUTE_FILE = arg("--route", "");
+const ROUTE_KIND_ARG = arg("--route-kind", "");
+const routeBrief: unknown = BRIEF_FILE && existsSync(abs(BRIEF_FILE))
+  ? (() => {
+    try {
+      return JSON.parse(readFileSync(abs(BRIEF_FILE), "utf8"));
+    } catch (error) {
+      throw new Error(`ROUTE_BRIEF_UNREADABLE: --brief 不是合法 JSON（${error instanceof Error ? error.message : String(error)}）`);
+    }
+  })()
+  : undefined;
+const routeRecord: unknown = ROUTE_FILE
+  ? (() => {
+    if (!existsSync(abs(ROUTE_FILE))) {
+      throw new Error(`ROUTE_FILE_MISSING: --route ${ROUTE_FILE} 不存在；先跑 scripts/tools/route-video.mts --out ${ROUTE_FILE}`);
+    }
+    try {
+      return JSON.parse(readFileSync(abs(ROUTE_FILE), "utf8"));
+    } catch (error) {
+      throw new Error(`ROUTE_FILE_UNREADABLE: --route 不是合法 JSON（${error instanceof Error ? error.message : String(error)}）`);
+    }
+  })()
+  : undefined;
+const ROUTE_PRODUCT_ANCHOR = detectProductAnchor({ brief: routeBrief, shotlist: sourceDocument });
+const ROUTE_PREFLIGHT: RoutePreflightResult = (() => {
+  try {
+    return resolveRoutePreflight({ routeRecord, routeKind: ROUTE_KIND_ARG, productAnchor: ROUTE_PRODUCT_ANCHOR });
+  } catch (error) {
+    if (error instanceof RoutePreflightError) {
+      log(`⛔ 分流前置检查未通过（${error.code}）：`);
+      for (const line of error.message.split("\n")) log(`　　${line}`);
+      throw new Error(`ROUTE_PREFLIGHT_${error.code}: ${error.message.split("\n")[0]}`);
+    }
+    throw error;
+  }
+})();
+log(`✅ 分流前置：${ROUTE_PREFLIGHT.kind}（来源：${ROUTE_PREFLIGHT.source}）`
+  + `${ROUTE_PREFLIGHT.productAnchor ? ` · 商品锚点「${ROUTE_PREFLIGHT.productAnchor}」` : ""}`);
+
 const lineageComponentHash = sha256FileSync(join(REPO_ROOT, "scripts/tools/full-chain-film.mts"));
 const SCENE_BIBLE_FILE = arg("--scene-bible");
 const sceneBible: SceneBible | null = SCENE_BIBLE_FILE
@@ -601,8 +657,55 @@ const authorContext = loadOrCreateFilmAuthorContext({ path: AUTHOR_CONTEXT_FILE,
   eraProfile: sourceDocument.eraProfile ?? sceneBible?.eraProfile });
 const filmContractSource = { projectId: PROJECT, shots: sourceDocument.shots!, eraProfile: authorContext.eraProfile,
   ...(sceneBible ? { sceneBible } : {}) };
-function reviewStage(options: Omit<ProducerGateOptions, "contracts">): Promise<ProducerVerdict> {
-  return reviewFilmStage(filmContractSource, options);
+type ReviewPolicy = "off" | "advisory" | "blocking";
+const REVIEW_POLICY = (arg("--review-policy", "off").trim() || "off") as ReviewPolicy;
+if (!["off", "advisory", "blocking"].includes(REVIEW_POLICY)) {
+  throw new Error(`--review-policy 只支持 off / advisory / blocking，收到：${REVIEW_POLICY}`);
+}
+const REVIEW_DISABLED_REASON = "审核层已移除：渲染后只做事实性交付检查（存在/时长/分辨率/音轨/音画对齐/命名），质量由客户验收；渲染前的把关靠管线标准规范（红线/合同/参数/授权）";
+/** 事实性硬闸：与"好看不好看"无关，失败即产物或交付规格不成立 */
+function deterministicHardFailures(options: Omit<ProducerGateOptions, "contracts">): string[] {
+  return options.deterministic
+    .filter((check) => check.hard === true && (check.status === "failed" || (check.status === undefined && check.pass === false)))
+    .map((check) => `${check.id}：${check.detail}`);
+}
+function syntheticReviewVerdict(
+  options: Omit<ProducerGateOptions, "contracts">, hardFailures: string[], issues: string[], reason: string,
+): ProducerVerdict {
+  return {
+    stage: options.stage,
+    status: hardFailures.length > 0 ? "failed" : "passed",
+    approved: hardFailures.length === 0,
+    score: hardFailures.length > 0 ? 0 : 100,
+    hardFailures,
+    issues,
+    suggestions: hardFailures.length > 0 ? [`修复事实性硬闸后重跑：${hardFailures[0]}`] : [],
+    rerun: hardFailures.length > 0,
+    via: "deterministic",
+    ms: 0,
+    reason,
+    degraded: false,
+    evidence: [],
+  };
+}
+async function reviewStage(options: Omit<ProducerGateOptions, "contracts">): Promise<ProducerVerdict> {
+  /** 事实性硬闸任何策略下都不放过（"渲出来没有/规格不对"不是审美问题） */
+  const hardFailures = deterministicHardFailures(options);
+  if (hardFailures.length > 0) {
+    return syntheticReviewVerdict(options, hardFailures, options.deterministic.filter((c) => c.pass === false).map((c) => `${c.id}：${c.detail}`),
+      `事实性硬闸未通过（${hardFailures.length} 项）`);
+  }
+  if (REVIEW_POLICY === "off") {
+    return syntheticReviewVerdict(options, [], options.deterministic.filter((c) => c.pass === false).map((c) => `${c.id}：${c.detail}`),
+      REVIEW_DISABLED_REASON);
+  }
+  const verdict = await reviewFilmStage(filmContractSource, options);
+  if (REVIEW_POLICY === "advisory") {
+    /** 咨询模式：意见照记，但**不阻断交付**（approved 归一为 true，评审内容留在 issues/reason 里） */
+    return { ...verdict, approved: true, status: "passed", rerun: false, degraded: false,
+      reason: `[advisory] ${verdict.reason}` };
+  }
+  return verdict;
 }
 const sourceSupportFiles = [AUTHOR_CONTEXT_FILE, ...(BRIEF_FILE ? [abs(BRIEF_FILE)] : []), ...(arg("--scene-bible") ? [abs(arg("--scene-bible"))] : [])];
 const sourceSnapshot = captureLineageInputs(sourceSupportFiles);
@@ -739,6 +842,122 @@ function readStageHistory(): StageRecord[] {
     try { return JSON.parse(line) as StageRecord; }
     catch { throw new Error(`STAGE_LEDGER_INVALID: ${STAGE_LOG}:${index + 1}，先恢复有效账本再续跑`); }
   });
+}
+/**
+ * 渲染 / 返工台账（T-2026-0930-0015-PORT）：客户要能看到"每一次花钱的账"——提交几次、判不合格几次、
+ * 平台拒收几次、canary 止损几次、后期返工几次。只统计事实，不做费用估算。
+ */
+interface RenderLedgerShot {
+  shotId: string;
+  attempts: number;
+  rejected: number;
+  lastReason: string | null;
+  platformRejections: number;
+  canaryAborts: number;
+}
+interface RenderLedger {
+  generatedAt: string;
+  projectId: string;
+  totals: { renderAttempts: number; rendersRejected: number; platformRejections: number; canaryAborts: number; postStageRetries: number };
+  shots: RenderLedgerShot[];
+  postStages: Array<{ stage: string; retries: number; lastReason: string | null }>;
+  notes: string[];
+}
+const RENDER_LEDGER_STAGES = ["material-gen", "shot"] as const;
+const RENDER_LEDGER_POST_STAGES = ["compose", "color", "subtitle", "bgm", "cover", "mux", "master", "deliver"] as const;
+function buildRenderLedger(history: StageRecord[]): RenderLedger {
+  const byShot = new Map<string, RenderLedgerShot>();
+  const postByStage = new Map<string, { stage: string; retries: number; lastReason: string | null }>();
+  let platformRejections = 0;
+  let canaryAborts = 0;
+  for (const row of history) {
+    const evidence = row.evidence ?? {};
+    const errorText = String(evidence.error ?? "");
+    const reasonText = String(
+      (row.verdict?.hardFailures ?? [])[0] ?? row.verdict?.reason ?? row.note ?? evidence.reason ?? errorText ?? ""
+    ).slice(0, 240);
+    if ((RENDER_LEDGER_STAGES as readonly string[]).includes(row.stage) && row.invoked) {
+      const shotId = String(row.shotId ?? "(unassigned)");
+      const entry = byShot.get(shotId) ?? { shotId, attempts: 0, rejected: 0, lastReason: null, platformRejections: 0, canaryAborts: 0 };
+      if (/AccountOverdue|限额|quota|insufficient/i.test(errorText)) {
+        entry.platformRejections += 1;
+        platformRejections += 1;
+      } else if (errorText.startsWith("CANARY_ABORT")) {
+        entry.canaryAborts += 1;
+        canaryAborts += 1;
+      } else {
+        entry.attempts += 1;
+        if (!row.ok) {
+          entry.rejected += 1;
+          entry.lastReason = reasonText || entry.lastReason;
+        }
+      }
+      byShot.set(shotId, entry);
+      continue;
+    }
+    if ((RENDER_LEDGER_POST_STAGES as readonly string[]).includes(row.stage) && row.invoked && !row.ok) {
+      const current = postByStage.get(row.stage) ?? { stage: row.stage, retries: 0, lastReason: null };
+      current.retries += 1;
+      current.lastReason = reasonText || current.lastReason;
+      postByStage.set(row.stage, current);
+    }
+  }
+  const shots = [...byShot.values()].sort((a, b) => a.shotId.localeCompare(b.shotId));
+  const postStages = [...postByStage.values()].sort((a, b) => a.stage.localeCompare(b.stage));
+  return {
+    generatedAt: stamp(),
+    projectId: PROJECT,
+    totals: {
+      renderAttempts: shots.reduce((sum, entry) => sum + entry.attempts, 0),
+      rendersRejected: shots.reduce((sum, entry) => sum + entry.rejected, 0),
+      platformRejections,
+      canaryAborts,
+      postStageRetries: postStages.reduce((sum, entry) => sum + entry.retries, 0)
+    },
+    shots,
+    postStages,
+    notes: [
+      "口径：渲染提交与打回次数来自本项目 stages.jsonl（material-gen / shot）；平台拒收与 canary 止损**不计入**渲染次数。",
+      "只记次数与原因，不做费用估算（渲染单价未登记；客户可按自己与平台的结算口径折算）。"
+    ]
+  };
+}
+function renderLedgerMarkdown(ledger: RenderLedger): string {
+  const lines = [
+    `# 渲染与返工台账 · ${ledger.projectId}`,
+    "",
+    `生成时间：${ledger.generatedAt}`,
+    "",
+    "## 汇总",
+    "",
+    `- 提交渲染（含重试）：**${ledger.totals.renderAttempts}** 次`,
+    `- 渲出后判不合格：**${ledger.totals.rendersRejected}** 次`,
+    `- 平台拒收（未渲染，如欠费）：**${ledger.totals.platformRejections}** 次`,
+    `- canary 止损中止（未继续渲染）：**${ledger.totals.canaryAborts}** 次`,
+    `- 后期返工：**${ledger.totals.postStageRetries}** 次`,
+    "",
+    "## 逐镜",
+    "",
+    "| 镜号 | 渲染次数 | 判不合格 | 平台拒收 | canary 止损 | 最近原因 |",
+    "|---|---:|---:|---:|---:|---|",
+    ...(ledger.shots.length
+      ? ledger.shots.map((shot) => `| ${shot.shotId} | ${shot.attempts} | ${shot.rejected} | ${shot.platformRejections} | ${shot.canaryAborts} | ${(shot.lastReason ?? "").replace(/\|/g, "／")} |`)
+      : ["| （无渲染记录） | 0 | 0 | 0 | 0 | |"]),
+    "",
+    "## 后期返工",
+    "",
+    "| 环节 | 失败次数 | 最近原因 |",
+    "|---|---:|---|",
+    ...(ledger.postStages.length
+      ? ledger.postStages.map((entry) => `| ${entry.stage} | ${entry.retries} | ${(entry.lastReason ?? "").replace(/\|/g, "／")} |`)
+      : ["| （无返工记录） | 0 | |"]),
+    "",
+    "## 口径",
+    "",
+    ...ledger.notes.map((note) => `- ${note}`),
+    ""
+  ];
+  return `${lines.join("\n")}\n`;
 }
 function historyApproved(history: StageRecord[], stage: string): boolean { return stageApproved(stage, [null], history); }
 function lineageCheck(files: Array<{ label: string; path: string }>): { ok: boolean; detail: string } {
@@ -1022,6 +1241,19 @@ const writeScenePolicyReport = (): void => {
   }, null, 2)}\n`, "utf8");
 };
 writeScenePolicyReport();
+/**
+ * 分流结论留痕（T-2026-0930-0015-PORT）：`--route` / `--route-kind` 的结论与来源写进阶段账本，交付清单同样带 `route` 字段。
+ */
+record({
+  stage: "route", shotId: null, invoked: true, ok: true, cached: false, degraded: false, attempt: 1, ms: 0,
+  artifact: ROUTE_FILE ? abs(ROUTE_FILE) : null,
+  evidence: {
+    kind: ROUTE_PREFLIGHT.kind, source: ROUTE_PREFLIGHT.source,
+    productAnchor: ROUTE_PREFLIGHT.productAnchor, notes: ROUTE_PREFLIGHT.notes,
+    recordTitle: ROUTE_PREFLIGHT.record ? String(ROUTE_PREFLIGHT.record.title ?? "") : null
+  },
+  verdict: null, note: `视频类型：${ROUTE_PREFLIGHT.kind}（${ROUTE_PREFLIGHT.source}）`
+});
 record({ stage: "scene-policy-audit", shotId: null, invoked: true, ok: scenePolicyReport?.passed ?? true,
   cached: false, degraded: false, attempt: 1, ms: 0, artifact: SCENE_POLICY_REPORT_FILE,
   evidence: { policy: scenePolicy?.id ?? null, version: scenePolicy?.version ?? null,
@@ -3382,9 +3614,11 @@ if (STAGES.has("material-gen")) {
                 id: "motion-richness",
                 pass: lastMotionVerdict.rich,
                 detail: `原始渲染：${lastMotionVerdict.detail}`,
-                hard: true
+                /** 运镜强弱是创作口径（not-static-display 已核"确实在动"），交客户验收，不阻断交付（T-2026-0930-0015） */
+                hard: false
               },
-              { id: "speed-ramp", pass: lastRampVerdict.rich, detail: lastRampVerdict.detail, hard: true }
+              { id: "speed-ramp", pass: lastRampVerdict.rich, hard: false,
+                detail: `${lastRampVerdict.detail}（创作口径，不阻断交付）` }
             ],
             context: {
               shotId: shot.shotId, scene: shot.scene, motion: spec.motion ?? null,
@@ -3413,10 +3647,10 @@ if (STAGES.has("material-gen")) {
               {
                 id: "motion-richness",
                 pass: lastMotionVerdict.rich,
-                hard: true,
-                detail: lastMotionVerdict.detail
+                hard: false,
+                detail: `${lastMotionVerdict.detail}（创作口径，不阻断交付）`
               },
-              { id: "speed-ramp", pass: lastRampVerdict.rich, hard: true, detail: lastRampVerdict.detail },
+              { id: "speed-ramp", pass: lastRampVerdict.rich, hard: false, detail: `${lastRampVerdict.detail}（创作口径，不阻断交付）` },
               { id: "fidelity-reviewed", pass: lastVerdict.approved, hard: false, detail: lastVerdict.approved ? "监制保真评审放行" : `监制未放行（${lastVerdict.reason.slice(0, 80)}）` }
             ],
             softApproved: lastVerdict.approved, via: lastVerdict.via, score: lastVerdict.score,
@@ -3619,9 +3853,9 @@ if (STAGES.has("videos")) {
           : `环境真实性硬缺陷 ${envSummary.hard} 项 + 设备口径硬缺陷 ${devSummary.hard} 项（${Object.entries({ ...envSummary.byRule, ...devSummary.byRule }).map(([rule, count]) => `${rule}×${count}`).join(" · ")}）${envAccepted ? "——已显式声明带瑕疵放行" : "——渲染前必须清零"}`
       },
       {
-        id: "scene-policy", pass: scenePolicyReport?.passed ?? true, hard: true,
+        id: "scene-policy", pass: scenePolicyReport?.passed ?? true, hard: REVIEW_POLICY === "blocking", // T-2026-0930-0015
         detail: scenePolicyReport
-          ? `${scenePolicy!.id}@${scenePolicy!.version} 全片配比和逐镜品质门：${scenePolicyReport.defects.length} 项硬缺陷；报告 ${basename(SCENE_POLICY_REPORT_FILE)}`
+          ? `${scenePolicy!.id}@${scenePolicy!.version} 全片配比和逐镜品质门：${scenePolicyReport.defects.length} 项缺陷（默认咨询项；--review-policy blocking 下作硬闸）；报告 ${basename(SCENE_POLICY_REPORT_FILE)}`
           : "需求未命中已安装的片型知识条目（本门不适用）"
       },
       /** 平台语速门（2026-09-30）：与 hook-first-3s 同口径，结论必须在这道花钱前的门里可见 */
@@ -5310,7 +5544,33 @@ if (STAGES.has("cover") && existsSync(colored)) {
     if (index <= 0) return 0;
     return CUT_GRID[index - 1] ?? shots.slice(0, index).reduce((sum, s) => sum + Number(s.duration ?? 5), 0);
   };
-  const personShots = shots.filter((s) => String(s.character ?? "").length > 0);
+  /**
+   * 人物来源镜硬闸（T-2026-0930-0015-PORT）：卡片里有人物镜、管线也知道主角是谁，但没有任何一张卡的 `character`
+   * 写了主角名/ID 时，封面"人物为主"版式必然找不到来源镜 → 设计师稿非法 → 退最小稿 → 母版终审被拦。
+   * 这里在做封面之前**显式报错**并指出改哪一处，不再静默退化；显式 `--cover-archetype subject-led` 不拦。
+   */
+  const leadMatchedPersons = lead
+    ? personShots.filter((s) => String(s.character ?? "").includes(lead.name) || String(s.character ?? "").includes(lead.id))
+    : personShots;
+  if (COVER_ARCHETYPE !== "subject-led" && lead && personShots.length > 0 && leadMatchedPersons.length === 0) {
+    const detail = `COVER_PERSON_SOURCE_MISSING: 分镜卡里有 ${personShots.length} 个带 character 的镜头，但没有任何一个写了主角「${lead.name}（${lead.id}）」；`
+      + "封面「人物为主」版式无法定位人物来源镜（真机事故：character 只写「这位女士…」）。"
+      + `请把主角名/ID 写进对应镜头的 character 字段（如「${lead.name}（${lead.id}；与认证素材为同一人…）」），`
+      + "或显式声明 --cover-archetype subject-led 只用物体主视觉。";
+    log(`⛔ ${detail}`);
+    record({
+      stage: "cover", shotId: null, invoked: false, ok: false, cached: false, degraded: false, attempt: 1, ms: 0,
+      artifact: null,
+      evidence: {
+        code: "COVER_PERSON_SOURCE_MISSING", archetype: COVER_ARCHETYPE,
+        lead: { name: lead.name, id: lead.id },
+        personShots: personShots.map((s) => s.shotId)
+      },
+      verdict: null, note: "封面人物卡缺主角来源镜：先补镜头卡 character（P0 字段）再出片"
+    });
+    throw new Error(detail);
+  }
+
   const coverBrief = BRIEF_FILE && existsSync(abs(BRIEF_FILE))
     ? (JSON.parse(readFileSync(abs(BRIEF_FILE), "utf8")) as CoverDesignInput["brief"])
     : null;
@@ -5603,8 +5863,12 @@ if (STAGES.has("cover") && existsSync(colored)) {
    */
   const wantsLandmark = /滕王阁/.test(planText);
   const isNightShot = (shot: ShotCard): boolean => {
-    const scene = String(shot.scene ?? "");
-    if (!/夜景|夜色|夜间|夜晚|灯光秀|灯火|夜市/.test(scene)) return false;
+    /**
+     * 判定口径（T-2026-0930-0015-PORT 补）：场景正文 + 场景描述一起看，并认"晚 20:05 / 深夜 / 傍晚"。
+     * 旧口径只看 scene 且不认"晚 HH:MM" → 夜景底图被判成日景，被 5.5 的白天清晰度下限否掉。
+     */
+    const scene = `${String(shot.scene ?? "")} ${String((shot as Record<string, unknown>).sceneDescription ?? "")}`;
+    if (!/夜景|夜色|夜间|夜晚|夜里|深夜|傍晚|晚\s?\d{1,2}[:：]\d{2}|灯光秀|灯火|夜市/.test(scene)) return false;
     return wantsLandmark ? /滕王阁/.test(scene) : true;
   };
   if (wantsNight && !isNightShot(bgShot)) {
@@ -6005,7 +6269,12 @@ if (STAGES.has("cover") && existsSync(colored)) {
       + `${isNightShot(COVER_HERO === "person" || COVER_HERO === "person-solo" ? heroShot : bgShot) ? "，夜景口径" : ""}；低于它基本是运动模糊/失焦）`
       + `${bgSubstituted && !(COVER_HERO === "person" || COVER_HERO === "person-solo") ? "（已自动改取全片最清晰帧）" : ""}`
       + `${COVER_HERO === "person" || COVER_HERO === "person-solo" ? `（人物底图：${heroShot.shotId} @ ${heroAt}s）` : ""}`,
-    hard: true
+    /**
+     * 清晰度是**画质口径**而不是事实（T-2026-0930-0015-PORT）：已经自动改取过全片最清晰帧，仍达不到阈值时，
+     * 继续判硬失败只会让整片交不出去（真机：夜景底图 3.34 被 5.5 否掉 → 封面/母版连环打回）。
+     * 默认记为咨询项；`--review-policy blocking` 恢复旧硬闸。
+     */
+    hard: REVIEW_POLICY === "blocking"
   });
   /** ④ 监制：看整图（rubric 只问可验证的事） */
   const verdict = await reviewStage({
@@ -6407,8 +6676,12 @@ if (STAGES.has("master") && existsSync(scored) && !DRY_RUN) {
       { path: STAGE_LOG, kind: "json", note: "逐环节阶段日志（invoked/ok/degraded/cached/verdict）" }
     ],
     deterministic: [
-      { id: "scene-policy", pass: scenePolicyReport?.passed ?? true, hard: true,
-        detail: scenePolicyReport ? `${scenePolicy!.id}@${scenePolicy!.version} 全片配比与逐镜方案审计通过；${basename(SCENE_POLICY_REPORT_FILE)}` : "未命中片型政策，不适用" },
+      /**
+       * 片型配比是创作口径（T-2026-0930-0015）：渲出来的素材已经存在，默认记咨询项；
+       * `--review-policy blocking` 恢复旧硬闸。
+       */
+      { id: "scene-policy", pass: scenePolicyReport?.passed ?? true, hard: REVIEW_POLICY === "blocking",
+        detail: scenePolicyReport ? `${scenePolicy!.id}@${scenePolicy!.version} 全片配比与逐镜方案审计：${scenePolicyReport.defects.length} 缺陷（默认咨询项）；${basename(SCENE_POLICY_REPORT_FILE)}` : "未命中片型政策，不适用" },
       {
         id: "duration",
         pass: Math.abs(Number(info.duration ?? 0) - expectedMasterSeconds) <= 1.0,
@@ -6491,7 +6764,12 @@ if (STAGES.has("master") && existsSync(scored) && !DRY_RUN) {
               : "")
             + (ACCEPT_REJECTED.includes("character-consistency") ? "（已显式放行，留痕在阶段记录）" : "")
           : "未跑合成阶段，角色一致性未实测（跨镜造型主色判据不适用）",
-        hard: true,
+        /**
+         * 跨镜造型主色是**串戏嫌疑信号**（能力边界：不做人脸识别），命中需人工确认；
+         * 旧口径直接当硬闸否决交付；新口径（T-2026-0930-0015）默认记为咨询项，
+         * 让客户看到真片再判断——素材已经渲出来了，不再为"疑似"重跑。
+         */
+        hard: REVIEW_POLICY === "blocking",
       },
       /**
        * 字幕**标点口径**（2026-09-25）：正规字幕不带标点。
@@ -6874,11 +7152,18 @@ if (STAGES.has("deliver") && !DRY_RUN && (QUALITY !== "uhd" || masterApprovedFor
   }));
   const coverFile = join(OUT_DIR, `${PROJECT}-cover.png`);
   const withCover = join(OUT_DIR, `${PROJECT}-with-cover.mp4`);
+  /**
+   * 渲染 / 返工台账（T-2026-0930-0015-PORT）：清单与 Markdown 同时落盘（UHD 走暂存发布，一并纳入）。
+   */
+  const renderLedger = buildRenderLedger(readStageHistory());
+  const renderLedgerFile = join(OUT_DIR, `${PROJECT}-render-ledger.md`);
+  writeFileSync(renderLedgerFile, renderLedgerMarkdown(renderLedger), "utf8");
   const stagedContentAssets = [...new Set([deliverablePath, ...stagedSubtitles,
     ...variantManifest.flatMap((variant) => [variant.path, ...(variant.cover ? [variant.cover.path] : [])]),
     ...(existsSync(coverFile) ? [coverFile] : []),
     ...(softsubFile ? [softsubFile] : []),
     ...(existsSync(withCover) && stageApproved("cover-intro") ? [withCover] : []),
+    renderLedgerFile,
   ])];
   const assetHashes = QUALITY === "uhd"
     ? await Promise.all(stagedContentAssets.map(async (path) => ({ path: publicDeliveryPath(path), sha256: await sha256UhdAsset(path) })))
@@ -6912,7 +7197,18 @@ if (STAGES.has("deliver") && !DRY_RUN && (QUALITY !== "uhd" || masterApprovedFor
     tier: QUALITY, sourceResolution: SOURCE_RESOLUTION, outputResolution: OUTPUT_RESOLUTION,
     width: OUTPUT_SIZE.width, height: OUTPUT_SIZE.height,
     localEnhancement: QUALITY === "uhd" ? "per-shot, verified receipt in stages.jsonl" : "not requested"
-  } }, null, 2)}\n`, "utf8");
+  },
+  /** 审核口径 / 分流结论 / 渲染台账（T-2026-0930-0015-PORT）：客户侧一眼可见"按哪条管线做的、事后检查是否移除、花了多少次" */
+  reviewPolicy: REVIEW_POLICY,
+  reviewPolicyNote: REVIEW_DISABLED_REASON,
+  route: {
+    kind: ROUTE_PREFLIGHT.kind,
+    source: ROUTE_PREFLIGHT.source,
+    productAnchor: ROUTE_PREFLIGHT.productAnchor,
+    notes: ROUTE_PREFLIGHT.notes,
+  },
+  renderLedger,
+  renderLedgerFile: publicDeliveryPath(renderLedgerFile) }, null, 2)}\n`, "utf8");
   if (QUALITY === "uhd") {
     if (!gate.approved || gate.degraded) {
       record({ stage: "deliver", shotId: null, invoked: true, ok: false, cached: false, degraded: gate.degraded,
