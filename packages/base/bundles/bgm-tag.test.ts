@@ -37,6 +37,40 @@ function ffmpegAvailable(): boolean {
 }
 const HAS_FFMPEG = ffmpegAvailable();
 
+/**
+ * 真机量测的**能力自检**：不只看 `-filters` 列表，而是拿 1 秒静音把**真实滤镜链**跑一遍
+ * （`aspectralstats=measure=centroid+flatness:win_size=2048,ametadata=print`）。
+ *
+ * 为什么不能只看滤镜列表：2026-09-30 CI 实测 —— bookworm 的 apt ffmpeg 里 `-filters` 能列出
+ * `aspectralstats`，但真跑就报 `Failed to inject frame into filter network: Option not found`
+ * （滤镜存在≠选项/实现满足本用例），于是用例照样红。自检失败时**显式跳过并打印 ffmpeg 原文**，
+ * 既不假红、也不静默：覆盖率缺口以 CI 日志可见的形式留痕（口径与文件头注释一致）。
+ */
+function bgmMeasurementReadiness(): { ok: boolean; reason: string } {
+  if (!HAS_FFMPEG) return { ok: false, reason: "缺 ffmpeg" };
+  try {
+    execFileSync(
+      "ffmpeg",
+      [
+        "-hide_banner", "-nostats",
+        "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono", "-t", "1",
+        "-af", "aspectralstats=measure=centroid+flatness:win_size=2048,ametadata=print",
+        "-f", "null", "-",
+      ],
+      { stdio: ["ignore", "pipe", "pipe"], timeout: 30_000 },
+    );
+    return { ok: true, reason: "aspectralstats 滤镜链自检通过" };
+  } catch (error) {
+    const detail = String((error as { stderr?: unknown })?.stderr ?? (error as Error)?.message ?? error)
+      .split("\n").map((line) => line.trim()).filter(Boolean).slice(-3).join(" | ");
+    return { ok: false, reason: `aspectralstats 滤镜链自检失败：${detail}` };
+  }
+}
+const BGM_MEASUREMENT = bgmMeasurementReadiness();
+if (HAS_FFMPEG && !BGM_MEASUREMENT.ok) {
+  console.warn(`[bgm-tag] 跳过真机量测：${BGM_MEASUREMENT.reason}`);
+}
+
 const tempDirs: string[] = [];
 function tempDir(prefix: string): string {
   const dir = mkdtempSync(join(tmpdir(), prefix));
@@ -563,7 +597,7 @@ describe("曲库打标 · 索引契约（与运行时加载器同构）", () => 
   });
 });
 
-describe.runIf(HAS_FFMPEG)("曲库打标 · 真机量测（需要 ffmpeg）", () => {
+describe.runIf(BGM_MEASUREMENT.ok)("曲库打标 · 真机量测（需要可用的 ffmpeg 频谱滤镜链）", () => {
   it("合成曲目打标 → 索引/证据/报告三件套齐备，且拍速/响度来自实测", async () => {
     const dir = tempDir("bgm-tag-real-");
     const wav = join(dir, "sample.wav");
@@ -579,6 +613,14 @@ describe.runIf(HAS_FFMPEG)("曲库打标 · 真机量测（需要 ffmpeg）", ()
       root: dir, license: "workloom-self-generated", licenseNote: "合成测试素材",
       maxSeconds: 60, concurrency: 1, filters: { ...DEFAULT_FILTERS, minDurationSec: 10 },
     });
+    /**
+     * 量测失败必须**显式说出来**：`errors` 里的条目此前只在计数断言上表现为
+     * 「tagged+rejected=0」，看不出是环境缺件、二进制方言差异还是素材本身的问题
+     * （2026-09-30 CI 实测：装有 apt ffmpeg 的 test-gate 镜像里该用例首次真正执行即红）。
+     */
+    if (result.errors.length > 0) {
+      throw new Error(`曲库打标实测失败（errors=${result.errors.length}）：${JSON.stringify(result.errors).slice(0, 1500)}`);
+    }
     expect(result.counts.scanned).toBe(1);
     expect(result.counts.tagged + result.counts.rejected).toBe(1);
     if (result.counts.tagged === 0) {
@@ -616,6 +658,9 @@ describe.runIf(HAS_FFMPEG)("曲库打标 · 真机量测（需要 ffmpeg）", ()
       root: dir, license: "workloom-self-generated", licenseNote: "合成测试素材",
       maxSeconds: 60, concurrency: 1,
     });
+    if (result.errors.length > 0) {
+      throw new Error(`曲库打标实测失败（errors=${result.errors.length}）：${JSON.stringify(result.errors).slice(0, 1500)}`);
+    }
     const total = result.counts.tagged + result.counts.rejected;
     expect(total).toBe(1);
     for (const rejected of result.rejected) expect(rejected.reasons.length).toBeGreaterThan(0);
