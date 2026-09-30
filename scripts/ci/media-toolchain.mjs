@@ -9,6 +9,7 @@
  * 供 CI 日志、验收证据与问题复现引用：
  *   - ffmpeg / ffprobe 版本首行 + 可执行文件 sha256（存在时）
  *   - libx264 能力（audio-stems 媒体用例的硬前置）
+ *   - aspectralstats 滤镜能力（bgm-tag 真机量测的硬前置；需 ffmpeg ≥ 6.0，bookworm apt 5.1 无此滤镜）
  *   - 渲染器摘要（bundles/ai-video/connectors/bgm-bridge/audio-stems.mjs）
  *
  * 用法：
@@ -60,11 +61,16 @@ const report = {
   ffmpeg: probe(bins.ffmpeg),
   ffprobe: probe(bins.ffprobe),
   libx264: false,
+  // 曲库打标（bgm-tag）真机量测的硬前置：ffmpeg ≥ 6.0 的 aspectralstats 滤镜。
+  // Debian bookworm 的 apt ffmpeg 是 5.1（无该滤镜）→ bgm-tag 用例按能力跳过并在日志留痕。
+  aspectralstats: false,
   renderer: { path: path.relative(root, renderer), sha256: sha256(renderer) },
 };
 if (report.ffmpeg.present) {
   const encoders = run(report.ffmpeg.bin, ["-hide_banner", "-encoders"]);
   report.libx264 = encoders.ok && /\blibx264\b/.test(encoders.out);
+  const filters = run(report.ffmpeg.bin, ["-hide_banner", "-filters"]);
+  report.aspectralstats = filters.ok && /\baspectralstats\b/.test(filters.out);
 }
 const capable = report.ffmpeg.present && report.ffprobe.present && report.libx264;
 
@@ -75,6 +81,7 @@ if (asJson) {
   console.log(`[media-toolchain] ffmpeg=${report.ffmpeg.present ? `${report.ffmpeg.bin} sha256=${String(report.ffmpeg.sha256).slice(0, 16)}…` : "缺失"} ${report.ffmpeg.version ?? ""}`);
   console.log(`[media-toolchain] ffprobe=${report.ffprobe.present ? `${report.ffprobe.bin} sha256=${String(report.ffprobe.sha256).slice(0, 16)}…` : "缺失"} ${report.ffprobe.version ?? ""}`);
   console.log(`[media-toolchain] libx264=${report.libx264 ? "yes" : "no"}`);
+  console.log(`[media-toolchain] aspectralstats=${report.aspectralstats ? "yes" : "no"}（bgm-tag 真机量测前置，需 ffmpeg ≥ 6.0）`);
   console.log(`[media-toolchain] renderer=${report.renderer.path} sha256=${String(report.renderer.sha256).slice(0, 16)}…`);
   if (!capable) {
     console.log("[media-toolchain] ⚠️ 不满足 audio-stems 媒体用例前置（需 ffmpeg/ffprobe + libx264）：");
