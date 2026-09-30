@@ -104,7 +104,7 @@
 | Bundle | 内容 | 入口 |
 |---|---|---|
 | `hotel/`（v3.3.0） | 酒店获客垂直包：围栏 R1–R26、29 技能、16 员工、28 对象类、获客闭环管线、三客群默认配置 | `bundles/hotel/` |
-| `geo-growthmatrix/` | GEO 双域包 + 获客用增班组：25 preset（双域 16 + 增长 9，含 2 个 P2 条件岗）、25 围栏（双域 17 + 增长 8）、41 对象类、4 管线、15 技能（双域 6 + 增长 9） | `bundles/geo-growthmatrix/` |
+| `geo-growth/` | GEO 双域包 + 获客用增班组：25 preset（双域 16 + 增长 9，含 2 个 P2 条件岗）、25 围栏（双域 17 + 增长 8）、41 对象类、4 管线、15 技能（双域 6 + 增长 9） | `bundles/geo-growth/` |
 | `ai-video/` | 短视频创作域 | `bundles/ai-video/` |
 
 ### L4.1 内置人物资产 · 开箱即用的默认模特（**别重复造角色**）
@@ -120,6 +120,7 @@
 | 内置默认模特「陈卓」（8 角度定妆照） | `bundles/ai-video/library/characters/model-01-chen-zhuo/` | 目录内 `gates.jsonl`（定妆照门）+ `reviews/*.json`（监制评审，只增不改） |
 | 选角解析（显式 / 姓名别名 / 默认回落 / 兜底） | `scripts/tools/full-chain-film.mts#loadCharacters`、`packages/video-studio/src/character-archive.ts` | `pnpm vitest run packages/video-studio`；跑一镜出片看默认模特日志 |
 | 真人肖像授权通道（`asset://`） | 方舟「私域真人人像库」授权素材；参考图绑定见 `packages/video-studio/src/portrait-binding.ts` | 直传真人图必被平台拦（`InputImageSensitiveContentDetected.PrivacyInformation`）——不得绕过 |
+| **认证真人 → 专业定妆照（每个客户认证新模特都要走一遍）** | 客户给一张「资产详情页截图」→ `scripts/tools/real-person-assets.mts reconcile`（清单对账，**不猜角度**）→ Agent 读缩略图给角度映射 → `scripts/tools/portrait-set-from-asset.mts`（两段式出图 + 逐张**机器像不像**校验，不过整批拒绝）→ `scripts/tools/portrait-set-install.mts`（装档 + 写后复核）。SOP：[`real-person-portrait-set.md`](real-person-portrait-set.md)；速查：`bundles/ai-video/README.md` §6.1 | `portrait-set-install.mts` 写后复核 `verifyPortraitSet=passed`；`scripts/tools/portrait-agent.mts review` 监制评分 ≥70（<70 会打回，真机已验证会抓出"同一套造型不自洽/未声明品牌标识"） |
 | 加新模特 / 换默认 | 新建 `model-02-<拼音>/` + `registry.json#models` 追加 + `defaultModel` 改指向 | `node scripts/verify-builtin-character-assets.mjs` + `pnpm capabilities`（能力速览自动同步） |
 
 > 声明点（任一入口都能找到这件事）：`docs/character-registry.md`（权威）· `bundles/ai-video/library/README.md` ·
@@ -139,7 +140,7 @@
 | 高保真演示页（12 页，糖果色） | `docs/demo/`，经 `pnpm preview:all` :3001 + 手机壳 `shell.html` 预览 | 三端演示 |
 | 三端验收清单 | `PREVIEW_CHECKLIST.md` | preview:all 验收口径 |
 | 官网静态站 | `apps/site/`（index.html / en.html / shots） | 对外产品故事 |
-| Mac 桌面包 | 仓库内骨架 `apps/desktop/WorkLoom.app`（`Info.plist` + `Contents/MacOS/WorkLoom` 启动器）；打包 `bash scripts/pack-macos.sh`（zip 线）/ `pnpm app:dist`（DMG 线） | 桌面发行（RPA 真机发布载体） |
+| Mac 桌面包 | `apps/desktop/HyperReality.app`；打包 `bash scripts/pack-macos.sh` | 桌面发行（RPA 真机发布载体） |
 | 发布脚本 | `bash scripts/release.sh` | 版本发布流程 |
 | IM 通道插件安装 | `bash scripts/install-im-channels.sh` | dsh-im 通道接入 |
 | TTL 生命周期清扫 | `pnpm exec tsx --env-file=.env scripts/cleanup-ttl.ts` | 过期数据清理 |
