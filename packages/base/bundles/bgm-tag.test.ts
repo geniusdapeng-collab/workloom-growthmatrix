@@ -579,6 +579,14 @@ describe.runIf(HAS_FFMPEG)("曲库打标 · 真机量测（需要 ffmpeg）", ()
       root: dir, license: "workloom-self-generated", licenseNote: "合成测试素材",
       maxSeconds: 60, concurrency: 1, filters: { ...DEFAULT_FILTERS, minDurationSec: 10 },
     });
+    /**
+     * 量测失败必须**显式说出来**：`errors` 里的条目此前只在计数断言上表现为
+     * 「tagged+rejected=0」，看不出是环境缺件、二进制方言差异还是素材本身的问题
+     * （2026-09-30 CI 实测：装有 apt ffmpeg 的 test-gate 镜像里该用例首次真正执行即红）。
+     */
+    if (result.errors.length > 0) {
+      throw new Error(`曲库打标实测失败（errors=${result.errors.length}）：${JSON.stringify(result.errors).slice(0, 1500)}`);
+    }
     expect(result.counts.scanned).toBe(1);
     expect(result.counts.tagged + result.counts.rejected).toBe(1);
     if (result.counts.tagged === 0) {
@@ -616,6 +624,9 @@ describe.runIf(HAS_FFMPEG)("曲库打标 · 真机量测（需要 ffmpeg）", ()
       root: dir, license: "workloom-self-generated", licenseNote: "合成测试素材",
       maxSeconds: 60, concurrency: 1,
     });
+    if (result.errors.length > 0) {
+      throw new Error(`曲库打标实测失败（errors=${result.errors.length}）：${JSON.stringify(result.errors).slice(0, 1500)}`);
+    }
     const total = result.counts.tagged + result.counts.rejected;
     expect(total).toBe(1);
     for (const rejected of result.rejected) expect(rejected.reasons.length).toBeGreaterThan(0);
