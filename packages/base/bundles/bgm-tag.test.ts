@@ -38,22 +38,37 @@ function ffmpegAvailable(): boolean {
 const HAS_FFMPEG = ffmpegAvailable();
 
 /**
- * 频谱度量要求 ffmpeg ≥ 6.0 的 `aspectralstats` 滤镜（Debian bookworm 的 apt ffmpeg 是 5.1，
- * 没有该滤镜：CI 实测 `ffmpeg(aspectralstats) 退出码 1：Failed to inject frame into filter network:
- * Option not found`）。这里把"缺滤镜"与"缺 ffmpeg"同等对待：**显式跳过真机量测并打印原因**，
- * 既不假红、也不静默——覆盖率缺口以 CI 日志可见的形式留痕（口径与文件头注释一致）。
+ * 真机量测的**能力自检**：不只看 `-filters` 列表，而是拿 1 秒静音把**真实滤镜链**跑一遍
+ * （`aspectralstats=measure=centroid+flatness:win_size=2048,ametadata=print`）。
+ *
+ * 为什么不能只看滤镜列表：2026-09-30 CI 实测 —— bookworm 的 apt ffmpeg 里 `-filters` 能列出
+ * `aspectralstats`，但真跑就报 `Failed to inject frame into filter network: Option not found`
+ * （滤镜存在≠选项/实现满足本用例），于是用例照样红。自检失败时**显式跳过并打印 ffmpeg 原文**，
+ * 既不假红、也不静默：覆盖率缺口以 CI 日志可见的形式留痕（口径与文件头注释一致）。
  */
-function ffmpegHasFilter(name: string): boolean {
+function bgmMeasurementReadiness(): { ok: boolean; reason: string } {
+  if (!HAS_FFMPEG) return { ok: false, reason: "缺 ffmpeg" };
   try {
-    const out = execFileSync("ffmpeg", ["-hide_banner", "-filters"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
-    return new RegExp(`\\b${name}\\b`).test(out);
-  } catch {
-    return false;
+    execFileSync(
+      "ffmpeg",
+      [
+        "-hide_banner", "-nostats",
+        "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono", "-t", "1",
+        "-af", "aspectralstats=measure=centroid+flatness:win_size=2048,ametadata=print",
+        "-f", "null", "-",
+      ],
+      { stdio: ["ignore", "pipe", "pipe"], timeout: 30_000 },
+    );
+    return { ok: true, reason: "aspectralstats 滤镜链自检通过" };
+  } catch (error) {
+    const detail = String((error as { stderr?: unknown })?.stderr ?? (error as Error)?.message ?? error)
+      .split("\n").map((line) => line.trim()).filter(Boolean).slice(-3).join(" | ");
+    return { ok: false, reason: `aspectralstats 滤镜链自检失败：${detail}` };
   }
 }
-const HAS_ASPECTRALSTATS = HAS_FFMPEG && ffmpegHasFilter("aspectralstats");
-if (HAS_FFMPEG && !HAS_ASPECTRALSTATS) {
-  console.warn("[bgm-tag] ffmpeg 存在但缺少 aspectralstats 滤镜（需 ffmpeg ≥ 6.0）→ 跳过真机量测用例（覆盖缺口已留痕）");
+const BGM_MEASUREMENT = bgmMeasurementReadiness();
+if (HAS_FFMPEG && !BGM_MEASUREMENT.ok) {
+  console.warn(`[bgm-tag] 跳过真机量测：${BGM_MEASUREMENT.reason}`);
 }
 
 const tempDirs: string[] = [];
@@ -582,7 +597,7 @@ describe("曲库打标 · 索引契约（与运行时加载器同构）", () => 
   });
 });
 
-describe.runIf(HAS_FFMPEG && HAS_ASPECTRALSTATS)("曲库打标 · 真机量测（需要 ffmpeg ≥ 6.0：aspectralstats）", () => {
+describe.runIf(BGM_MEASUREMENT.ok)("曲库打标 · 真机量测（需要可用的 ffmpeg 频谱滤镜链）", () => {
   it("合成曲目打标 → 索引/证据/报告三件套齐备，且拍速/响度来自实测", async () => {
     const dir = tempDir("bgm-tag-real-");
     const wav = join(dir, "sample.wav");
