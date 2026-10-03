@@ -29,7 +29,9 @@
       "node scripts/ci/verify-sync-contract.mjs --source <上游仓工作树> --strict",
       "node scripts/ci/controlled-rename.mjs classify --source <上游仓工作树> --target . --strict",
       "node scripts/ci/controlled-rename.mjs plan --source <上游仓工作树> --target . --json"
-    ]
+    ],
+    "syncPolicy": "none-in-none-out",
+    "localReviewedRepairsStatement": "Only listed exact local repair bytes are preserved by owner authorization; original frozen upstream refs/digests remain the source of all other protected assets. No distribution or return to base is enabled."
   },
   "rules": [
     {
@@ -37,7 +39,9 @@
       "kind": "content",
       "match": "workloom-ai\\/WorkLoom-growth(?!matrix)",
       "replace": "workloom-ai/WorkLoom-growthmatrix",
-      "scope": ["**/*"],
+      "scope": [
+        "**/*"
+      ],
       "evidence": "上游 references 链接与站点文案中的 CNB 仓 slug 改写（含 //cnb.cool/workloom-ai/WorkLoom-growth 与 //github.com 旧址）"
     },
     {
@@ -45,7 +49,9 @@
       "kind": "content",
       "match": "workloom-ai\\/workloom-growth(?!matrix)",
       "replace": "workloom-ai/workloom-growthmatrix",
-      "scope": ["**/*"],
+      "scope": [
+        "**/*"
+      ],
       "evidence": "小写仓 slug（README_EN / 文档内引用）"
     },
     {
@@ -53,7 +59,9 @@
       "kind": "content",
       "match": "WorkLoom-growth(?!matrix)",
       "replace": "WorkLoom-growthmatrix",
-      "scope": ["**/*"],
+      "scope": [
+        "**/*"
+      ],
       "evidence": "产品显示名与仓库标题"
     },
     {
@@ -61,7 +69,9 @@
       "kind": "content",
       "match": "workloom-ai-growth(?!matrix)",
       "replace": "workloom-ai-growthmatrix",
-      "scope": ["**/*"],
+      "scope": [
+        "**/*"
+      ],
       "evidence": "包命名空间与依赖标识"
     },
     {
@@ -69,7 +79,9 @@
       "kind": "content",
       "match": "workloom-growth(?!matrix)",
       "replace": "workloom-growthmatrix",
-      "scope": ["**/*"],
+      "scope": [
+        "**/*"
+      ],
       "evidence": "包名、运行器标签（workloom-growth-desktop-macos/windows）、示例目录名"
     },
     {
@@ -77,7 +89,9 @@
       "kind": "content",
       "match": "geo-growth(?!matrix)",
       "replace": "geo-growthmatrix",
-      "scope": ["**/*"],
+      "scope": [
+        "**/*"
+      ],
       "evidence": "行业包目录/标识（bundles/geo-growth、apps/server/src/industry/geo-growth、geo-growth-baseline 围栏、service-front 投影 id）；业务域词 growth-lead / growth-review / id:growth 不改"
     },
     {
@@ -116,7 +130,9 @@
       "reason": "T-2026-0929-0001 · F-04 新增三岗（内容排期官/达人库管理员/成本核算员）+ 编制口径同步：bundle 预设清单顺序与条目变化",
       "task": "T-2026-0929-0001",
       "kind": "modified",
-      "paths": ["bundles/geo-growthmatrix/bundle.json"]
+      "paths": [
+        "bundles/geo-growthmatrix/bundle.json"
+      ]
     },
     {
       "reason": "T-2026-0929-0001 · A 组点火与事实源接线：节拍调度器挂载、目标/指标 tRPC、行业规划器注册（server 与 captain 侧改动）",
@@ -145,19 +161,27 @@
       "reason": "T-2026-0929-0001 · E-02 C 端投影摘要重生成（service-front 投影）",
       "task": "T-2026-0929-0001",
       "kind": "modified",
-      "paths": ["apps/webc/public/industry/service-front.config.json"]
+      "paths": [
+        "apps/webc/public/industry/service-front.config.json"
+      ]
     },
     {
       "reason": "T-2026-0929-0001 · E-03 套件数据态自愈：开跑前自愈 + 翻转改 try/finally",
       "task": "T-2026-0929-0001",
       "kind": "modified",
-      "paths": ["scripts/suite.ts"]
+      "paths": [
+        "scripts/suite.ts"
+      ]
     },
     {
       "reason": "T-2026-0929-0001 · E-04 身份句纠正与站点旧品牌清理",
       "task": "T-2026-0929-0001",
       "kind": "modified",
-      "paths": ["README.md", "apps/site/index.html", "apps/site/en.html"]
+      "paths": [
+        "README.md",
+        "apps/site/index.html",
+        "apps/site/en.html"
+      ]
     },
     {
       "reason": "T-2026-0929-0001 · F-01/F-02 治理与工具声明守护：静态门禁新增阶段、bundle 脚本、bgm 桥白名单补齐",
@@ -210,6 +234,82 @@
         "scripts/check-tool-declarations.mts",
         "scripts/check-tool-declarations.test.ts"
       ]
+    },
+    {
+      "reason": "Original nineteen-findings delivery repair: exact locally reviewed governance, dependency metadata and evidence closure; no business/industry assets or frozen upstream state changed.",
+      "task": "T-2026-1002-9001",
+      "kind": "modified",
+      "paths": [
+        ".workloom-runtime-deps/metadata.json",
+        "AGENTS.md",
+        "acceptance/profile.json",
+        "scripts/generate-capabilities.mjs",
+        "scripts/oss-inventory.mjs",
+        "scripts/oss-inventory.test.mjs",
+        "scripts/oss-watch-ci.mjs",
+        "scripts/oss-watch.mjs",
+        "scripts/oss-watch.sh"
+      ]
+    },
+    {
+      "reason": "Original nineteen-findings delivery repair: exact locally reviewed governance, dependency metadata and evidence closure; no business/industry assets or frozen upstream state changed.",
+      "task": "T-2026-1002-9001",
+      "kind": "added",
+      "paths": [
+        ".workloom-rename-policy.json",
+        "scripts/acceptance/EVIDENCE.md",
+        "scripts/acceptance/fleet-run.test.mjs",
+        "scripts/acceptance/isolated-evidence.test.mjs",
+        "scripts/acceptance/lib/evidence.mjs",
+        "scripts/acceptance/lib/live/README.md",
+        "scripts/acceptance/lib/live/assertions.mjs",
+        "scripts/acceptance/lib/live/audit.plugin.mjs",
+        "scripts/acceptance/lib/live/audit.test.mjs",
+        "scripts/acceptance/lib/live/budget.test.mjs",
+        "scripts/acceptance/lib/live/checks.mjs",
+        "scripts/acceptance/lib/live/cli-fixtures.mjs",
+        "scripts/acceptance/lib/live/dsh-process.test.mjs",
+        "scripts/acceptance/lib/live/live-cli-browser.test.mjs",
+        "scripts/acceptance/lib/live/live-cli-wire.test.mjs",
+        "scripts/acceptance/lib/live/live-cli.test.mjs",
+        "scripts/acceptance/lib/live/live-truth.test.mjs",
+        "scripts/acceptance/lib/live/media-decoder.test.mjs",
+        "scripts/acceptance/lib/live/media-negative.test.mjs",
+        "scripts/acceptance/lib/live/media.mjs",
+        "scripts/acceptance/lib/live/product.test.mjs",
+        "scripts/acceptance/lib/live/providers-http.test.mjs",
+        "scripts/acceptance/lib/live/providers.test.mjs",
+        "scripts/acceptance/lib/live/test-fixtures.mjs",
+        "scripts/acceptance/lib/live/usage.mjs",
+        "scripts/acceptance/lib/live/usage.test.mjs",
+        "scripts/acceptance/lib/live/verification.mjs",
+        "scripts/acceptance/lib/outcome-contract.mjs",
+        "scripts/acceptance/lib/outcome-contract.test.mjs",
+        "scripts/acceptance/lib/outcome-fixture.mjs",
+        "scripts/acceptance/lib/profile-contract.mjs",
+        "scripts/acceptance/lib/profile-contract.test.mjs",
+        "scripts/acceptance/lib/regression-evidence.mjs",
+        "scripts/acceptance/live-profile-dialect.test.mjs",
+        "scripts/acceptance/outcome.test.mjs",
+        "scripts/acceptance/profile-check.test.mjs",
+        "scripts/capability-status.mjs",
+        "scripts/capability-status.test.mjs",
+        "scripts/ci/controlled-rename.mjs",
+        "scripts/ci/controlled-rename.test.mjs",
+        "scripts/ci/verify-sync-contract.mjs",
+        "scripts/delivery/evidence.mjs",
+        "scripts/delivery/node-test-reporter.mjs",
+        "scripts/oss-watch.test.mjs",
+        "scripts/tools/cnb-api.mjs"
+      ]
+    },
+    {
+      "reason": "G14 already validated three-path industry acceptance suite, previously omitted by the exact acceptance/outcomes Git ignore rule. Only this concrete file is part of the owner-authorized nineteen-findings repair; configuration validation does not prove business success.",
+      "task": "T-2026-1002-9001",
+      "kind": "added",
+      "paths": [
+        "acceptance/outcomes/industry.yaml"
+      ]
     }
   ],
   "measuredBaseline": {
@@ -242,5 +342,211 @@
       "result": "对已同步树再次执行受控同步，逐字节差异为 0（受控资产原字节、登记差异保留、其余按规则改写）",
       "verifiedAt": "2026-09-29T12:52:00.000Z"
     }
-  }
+  },
+  "localReviewedRepairs": [
+    {
+      "path": "docs/DEVELOPMENT-PROTOCOL.md",
+      "originalSha256": "9d9f11926f8dec06e42d9368bbf04e6aab04a030cbeb21b99369cf8b556efede",
+      "localSha256": "de429dd1ea4c122d5586f1573c3b39b479ea8d848037efd9d105d704ac961420",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "docs/REAL-DEVICE-ACCEPTANCE-SPEC.md",
+      "originalSha256": "4c495d8b4c82ad8ef0694e376246b883f1c76313b10433c8ef5135aceb1d82db",
+      "localSha256": "b9818589875253b04455ffea5c102d982dfdb2ebaf663c1d2078dad62afe0a25",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "docs/acceptance/report-template.md",
+      "originalSha256": "3ee38bf4e8c3082db11cc47ef0385f31f0ec24470311a807fa5f246f9600a6d3",
+      "localSha256": "789631a913e621b29a942591744c87f9c982503808f1fd3e72743dc84072ff67",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "0b9d0ea4828ac3fddf79bad38aecaaac43d00250",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "docs/acceptance/profile.example.json",
+      "originalSha256": "488f7e472106dab75005251c4f9206e81f34409cdd0cefbd34eb3a3e77b054ed",
+      "localSha256": "5839fe170b0ece3da73db146b68bf2cb61e9b13878ac2d1424076f2b0c024b62",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "0b9d0ea4828ac3fddf79bad38aecaaac43d00250",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "scripts/acceptance/README.md",
+      "originalSha256": "6c1f0641d9537097aec3bb01d376fdde79b5bb76ff748eed2ee24d1a448ba2aa",
+      "localSha256": "be216530cc9bce19b04f4060fe66e87506d46bb72b250c13db0d591f2bb2ebb3",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "scripts/acceptance/outcome.mjs",
+      "originalSha256": "49956e094268f189897c37e92461c17a7d87920719d615453dea19aad31e934c",
+      "localSha256": "50e9abb408bbb39024c51b83d741a13617a752187abfad0a4c568354a3a801c7",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "scripts/acceptance/coverage.mjs",
+      "originalSha256": "f9a689192ad20aba29f920bf74dfde9954d049b278bd211995c5014dfd98d30d",
+      "localSha256": "5cc6261de57c4379cc7bde0293db5bae0c979fb9938b6778af6d093c64642665",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "scripts/acceptance/report-v3.mjs",
+      "originalSha256": "c07b354b6b44a946641746aa2a849b7582960d0ab05794f762d15f4f179276af",
+      "localSha256": "fe476e83815cc88c0844b261985c4b84f1b3d67dd57b9aa0314a8b505c154c78",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "scripts/acceptance/profile-check.mjs",
+      "originalSha256": "229c9cb305f99c96516cde79f48890a051bded00a1fc735205dc504b75c11d19",
+      "localSha256": "b170e634624f4cdfbd9ada9b95a0319a3631d83765ce3434e7a15be542916038",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "scripts/acceptance/fleet-run.mjs",
+      "originalSha256": "27ec55ec7b5c6f75d030992757bc4ea4d2b2178d798e4256e6123f9628d4da1f",
+      "localSha256": "582c96389a7fed5d95005d5f751a3bbfcd90462b630a9a66bbc479eea52c60d4",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "scripts/acceptance/lib/profile.mjs",
+      "originalSha256": "ea28c17957ffaecb4e1c457584960fa8df1c642dd2bc269c85f541626704a08e",
+      "localSha256": "af9a904843a80b8f43f4df3f7813cac80c8373e75080f09735a4b50032a710a8",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "scripts/acceptance/lib/target.mjs",
+      "originalSha256": "e23009b53ab9cfd56b1e099bc31ced62092124a445e85d6723cd6b3213ebb669",
+      "localSha256": "6c949a9c378d5e7e86f907ef77d5f5c6c47df677f0bd18fdc3793f0b7f77d92b",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "scripts/acceptance/lib/live/budget.mjs",
+      "originalSha256": "9b393165760d5894e4babae3a17c0d5a052cf49d7ef2006528c8e28f7c092628",
+      "localSha256": "eb0718caa058173e56d3d6149aff8397fb7244e4f4ebbcc4d70d6d170578fcbc",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "scripts/acceptance/lib/live/providers.mjs",
+      "originalSha256": "de318cc6992f583caf819ca9e2b1f29954afd843ed3b6ea212ad63440b9653f1",
+      "localSha256": "aeba07177975b98e4ccc89f0293ec56534f727e0b6ddb33db04d4da99255ed67",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "scripts/acceptance/lib/live/stub-provider.mjs",
+      "originalSha256": "c06a794b557e22aa45f7012efed587e21991370b61586f5cdeeb5137a4f003e8",
+      "localSha256": "329a04b4d7f140a477e93228de23560accbeafe4c430104937a6b35c7ccded51",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "scripts/acceptance/live.mjs",
+      "originalSha256": "f7a33446efe4f97a10077173c5a6a73a8fbb391327f0775a1a6f3a36cb6b922d",
+      "localSha256": "aa54be9b487467c73450c04ea8465a361f671b4114cfe61d5a1739367e6010cb",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    },
+    {
+      "path": "AGENTS.md#managed-section",
+      "originalSha256": "e44bef55f5b3b5ae2e0217575e3b950d46ff782fb47e7389eab5e713b958d970",
+      "localSha256": "ab2af64cd57a71736900b5ffbeae78f529507e68a3e8bfb60401b31b060a1044",
+      "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
+      "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
+      "sourceRepository": "workloom-ai/workloom-im",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
+      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    }
+  ]
 }

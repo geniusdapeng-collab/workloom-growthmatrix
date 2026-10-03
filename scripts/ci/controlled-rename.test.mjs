@@ -11,7 +11,7 @@
  */
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -395,5 +395,281 @@ describe("CLI 输入保护", () => {
     assert.equal(parsed.errors.length, 0);
     assert.ok(parsed.protectedAssets.includes("docs/CONTROLLED.md"));
     assert.equal(resolve(repo).startsWith(resolve(tmpdir())) || existsSync(join(repo, ".workloom-rename-policy.json")), true);
+  });
+});
+
+function localRepairFixture(t) {
+  const f = fixture();
+  t.after(() => rmSync(f.root, { recursive: true, force: true }));
+  const before = readFileSync(join(f.source, "docs/CONTROLLED.md"));
+  const after = Buffer.from("本仓安全修复，保留隔离与产品身份\n");
+  const state = JSON.parse(readFileSync(join(f.repo, ".workloom-base-sync.json"), "utf8"));
+  state.lastRequiredAssetsBaseSha = "1".repeat(40);
+  state.requiredRootAssetsSha256["docs/CONTROLLED.md"] = sha256(before);
+  write(join(f.repo, ".workloom-base-sync.json"), `${JSON.stringify(state)}\n`);
+  write(join(f.repo, "docs/CONTROLLED.md"), after);
+  write(join(f.target, "docs/CONTROLLED.md"), after);
+  f.policy.contract.syncPolicy = "none-in-none-out";
+  f.policy.localReviewedRepairs = [{
+    path: "docs/CONTROLLED.md", originalSha256: sha256(before), localSha256: sha256(after),
+    frozenBaseSha: state.lastRequiredAssetsBaseSha, sourceCommit: "2".repeat(40),
+    sourceRepository: "workloom-ai/workloom-im", task: "T-2026-1002-9001",
+    authorizedBy: "product-owner-session", reviewedBy: "/root", reason: "本仓明确授权的安全修复；保持隔离",
+  }];
+  write(join(f.repo, ".workloom-rename-policy.json"), `${JSON.stringify(f.policy)}\n`);
+  return { ...f, before, after, state };
+}
+
+describe("隔离副本经评审的本仓安全修复", () => {
+  it("单列本仓修复散列，保留历史上游 SHA 与原始受控摘要", (t) => {
+    const f = localRepairFixture(t);
+    const stateBefore = readFileSync(join(f.repo, ".workloom-base-sync.json"));
+    const assets = loadProtectedAssets(f.repo);
+    assert.equal(assets.files.get("docs/CONTROLLED.md"), sha256(f.after));
+    assert.equal(assets.frozenFiles.get("docs/CONTROLLED.md"), sha256(f.before));
+    assert.equal(assets.localRepairs.size, 1);
+    assert.deepEqual(verifyProtectedAssets({ repoRoot: f.repo, protectedAssets: assets }).drift, []);
+    assert.deepEqual(readFileSync(join(f.repo, ".workloom-base-sync.json")), stateBefore);
+    write(join(f.repo, "docs/CONTROLLED.md"), "未经登记的新改动\n");
+    assert.equal(verifyProtectedAssets({ repoRoot: f.repo, protectedAssets: assets }).drift.length, 1);
+  });
+
+  it("登记必须绑定冻结摘要、完整提交、具体任务与授权；路径与重复项不能逃逸", (t) => {
+    const f = localRepairFixture(t);
+    const original = f.policy.localReviewedRepairs[0];
+    for (const [key, value] of [["originalSha256", "a".repeat(64)], ["localSha256", "x"],
+      ["frozenBaseSha", "3".repeat(40)], ["sourceCommit", "short"], ["task", ""],
+      ["authorizedBy", "automation"], ["reviewedBy", ""], ["reason", ""],
+      ["path", "../escape"], ["path", "docs/UNKNOWN.md"]]) {
+      f.policy.localReviewedRepairs = [{ ...original, [key]: value }];
+      write(join(f.repo, ".workloom-rename-policy.json"), JSON.stringify(f.policy));
+      assert.throws(() => loadProtectedAssets(f.repo), undefined, key);
+    }
+    f.policy.localReviewedRepairs = [original, original];
+    write(join(f.repo, ".workloom-rename-policy.json"), JSON.stringify(f.policy));
+    assert.throws(() => loadProtectedAssets(f.repo), /重复/);
+  });
+
+  it("登记不得在普通同步车道启用，也不能覆盖片段或伪造基座来源", (t) => {
+    const f = localRepairFixture(t);
+    for (const mutate of [
+      (p) => { p.identity.lane = "industry"; },
+      (p) => { p.contract.syncPolicy = "full"; },
+      (p) => { p.localReviewedRepairs[0].path = "AGENTS.md#managed-section"; },
+      (p) => { p.localReviewedRepairs[0].sourceRepository = "foreign/repo"; },
+    ]) {
+      const policy = structuredClone(f.policy); mutate(policy);
+      write(join(f.repo, ".workloom-rename-policy.json"), JSON.stringify(policy));
+      assert.throws(() => loadProtectedAssets(f.repo));
+    }
+  });
+
+  it("计划保留已评审修复，冻结上游或本地字节改变则在写盘前拒绝", (t) => {
+    const f = localRepairFixture(t); const assets = loadProtectedAssets(f.repo);
+    const plan = planSync({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets });
+    const entry = plan.entries.find((item) => item.targetPath === "docs/CONTROLLED.md");
+    assert.equal(entry.action, "preserved"); assert.equal(entry.localReviewedRepair.task, "T-2026-1002-9001");
+    applyPlan(plan, { sourceRoot: f.source, targetRoot: f.target, write: true });
+    assert.deepEqual(readFileSync(join(f.target, "docs/CONTROLLED.md")), f.after);
+    write(join(f.source, "docs/CONTROLLED.md"), "另一个上游版本\n");
+    assert.throws(() => planSync({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets }));
+    write(join(f.source, "docs/CONTROLLED.md"), f.before);
+    write(join(f.target, "docs/CONTROLLED.md"), "未经评审的本地改动\n");
+    assert.throws(() => planSync({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets }));
+  });
+
+  it("严格分类单列本仓修复；错误上游或再次漂移仍是阻断", (t) => {
+    const f = localRepairFixture(t); const assets = loadProtectedAssets(f.repo);
+    const result = classifyTrees({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets });
+    assert.equal(result.protectedDrift.length, 0); assert.equal(result.stats.localReviewedPreserved, 1);
+    assert.equal(result.localReviewedPreserved[0].task, "T-2026-1002-9001");
+    write(join(f.source, "docs/CONTROLLED.md"), "未经绑定的上游\n");
+    const wrongSource = classifyTrees({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets });
+    assert.equal(wrongSource.protectedDrift.length, 1);
+    write(join(f.source, "docs/CONTROLLED.md"), f.before);
+    write(join(f.target, "docs/CONTROLLED.md"), "再次发生本地漂移\n");
+    assert.equal(classifyTrees({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets }).protectedDrift.length, 1);
+  });
+
+  it("计划之后发生修复字节漂移，apply 在任何写入前拒绝", (t) => {
+    const f = localRepairFixture(t); const assets = loadProtectedAssets(f.repo);
+    const plan = planSync({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets });
+    write(join(f.target, "docs/CONTROLLED.md"), "计划后的漂移\n");
+    write(join(f.target, "assets/logo.bin"), "操作前哨兵\n");
+    assert.throws(() => applyPlan(plan, { sourceRoot: f.source, targetRoot: f.target, write: true }));
+    assert.equal(readFileSync(join(f.target, "assets/logo.bin"), "utf8"), "操作前哨兵\n");
+  });
+
+  it("策略错误、排除隐藏或声明删除不能使本仓修复被跳过或写回", (t) => {
+    const f = localRepairFixture(t); const assets = loadProtectedAssets(f.repo);
+    for (const mutate of [
+      (p) => { p.rules.push({ id: "bad", kind: "path", match: "(", replace: "x" }); },
+      (p) => { p.contract.excludedPaths.push("docs/**"); },
+      (p) => { p.declaredDiffs.push({ task: "T-FIXTURE", reason: "删除受控修复", kind: "removed", paths: ["docs/CONTROLLED.md"] }); },
+    ]) {
+      const policy = structuredClone(f.policy); mutate(policy);
+      const plan = planSync({ sourceRoot: f.source, targetRoot: f.target, policy, protectedAssets: assets });
+      assert.ok(plan.errors.length > 0);
+      write(join(f.target, "assets/logo.bin"), "写前哨兵\n");
+      assert.throws(() => applyPlan(plan, { sourceRoot: f.source, targetRoot: f.target, write: true }));
+      assert.equal(readFileSync(join(f.target, "assets/logo.bin"), "utf8"), "写前哨兵\n");
+      assert.deepEqual(readFileSync(join(f.target, "docs/CONTROLLED.md")), f.after);
+    }
+  });
+
+  it("外部符号链接即使具有相同字节也不能冒充本仓修复文件", (t) => {
+    const f = localRepairFixture(t); const assets = loadProtectedAssets(f.repo);
+    const external = join(f.root, "outside.md"); write(external, f.after);
+    rmSync(join(f.target, "docs/CONTROLLED.md")); symlinkSync(external, join(f.target, "docs/CONTROLLED.md"));
+    assert.throws(() => planSync({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets }), /符号链接/);
+    rmSync(join(f.repo, "docs/CONTROLLED.md")); symlinkSync(external, join(f.repo, "docs/CONTROLLED.md"));
+    assert.equal(verifyProtectedAssets({ repoRoot: f.repo, protectedAssets: assets }).drift.length, 1);
+  });
+
+  it("真实CLI核验与同步契约报告保留原摘要并单列修复来源", (t) => {
+    const f = localRepairFixture(t);
+    const result = JSON.parse(execFileSync(process.execPath, [SCRIPT, "verify-assets", "--repo", f.repo, "--json"], { encoding: "utf8" }));
+    assert.equal(result.drift.length, 0);
+    const checker = fileURLToPath(new URL("./verify-sync-contract.mjs", import.meta.url));
+    const contract = JSON.parse(execFileSync(process.execPath, [checker, "--repo", f.repo, "--json"], { encoding: "utf8" }));
+    assert.deepEqual(contract.failures, []);
+    assert.equal(contract.protectedAssets.localReviewedRepairs[0].originalSha256, sha256(f.before));
+    assert.equal(contract.protectedAssets.localReviewedRepairs[0].localSha256, sha256(f.after));
+  });
+});
+
+function managedRepairFixture(t, { repair = true } = {}) {
+  const f = fixture();
+  t.after(() => rmSync(f.root, { recursive: true, force: true }));
+  const begin = "<!-- WORKLOOM-CONTEXT:BEGIN -->";
+  const end = "<!-- WORKLOOM-CONTEXT:END -->";
+  const originalSection = `${begin}\n共享旧规则 geo-growth\n${end}`;
+  const localSection = `${begin}\n共享规则的本仓安全修复 geo-growth\n${end}`;
+  const before = Buffer.from(`# 指引\n\n${originalSection}\n\n本仓专属规则\n`);
+  const after = Buffer.from(`# 指引\n\n${repair ? localSection : originalSection}\n\n本仓专属规则\n`);
+  write(join(f.source, "AGENTS.md"), before);
+  write(join(f.target, "AGENTS.md"), after);
+  write(join(f.repo, "AGENTS.md"), after);
+  const state = JSON.parse(readFileSync(join(f.repo, ".workloom-base-sync.json"), "utf8"));
+  state.lastRequiredAssetsBaseSha = "1".repeat(40);
+  state.requiredRootAssetsSha256["AGENTS.md#managed-section"] = sha256(originalSection);
+  write(join(f.repo, ".workloom-base-sync.json"), JSON.stringify(state));
+  f.policy.contract.syncPolicy = "none-in-none-out";
+  f.policy.localReviewedRepairs = repair ? [{
+    path: "AGENTS.md#managed-section", originalSha256: sha256(originalSection), localSha256: sha256(localSection),
+    frozenBaseSha: state.lastRequiredAssetsBaseSha, sourceCommit: "2".repeat(40),
+    sourceRepository: state.baseRepo, task: "T-2026-1002-9001", authorizedBy: "product-owner-session",
+    reviewedBy: "/root", reason: "仅本仓已冻结的具体受控片段安全修复",
+  }] : [];
+  write(join(f.repo, ".workloom-rename-policy.json"), JSON.stringify(f.policy));
+  return { ...f, state, before, after, originalSection, localSection, begin, end };
+}
+
+describe("隔离副本具体受控片段的评审修复", () => {
+  it("仅已冻结的 managed-section 可绑定新摘要，原冻结状态不被改写", t => {
+    const f = managedRepairFixture(t); const stateBefore = readFileSync(join(f.repo, ".workloom-base-sync.json"));
+    const assets = loadProtectedAssets(f.repo);
+    assert.equal(assets.localRepairs.get("AGENTS.md#managed-section").localSha256, sha256(f.localSection));
+    assert.equal(assets.managedSections[0].frozenSha256, sha256(f.originalSection));
+    assert.equal(assets.managedSections[0].sha256, sha256(f.localSection));
+    const verified = verifyProtectedAssets({ repoRoot: f.repo, protectedAssets: assets });
+    assert.equal(verified.total, 2); assert.deepEqual(verified.drift, []); assert.deepEqual(verified.missing, []);
+    assert.deepEqual(readFileSync(join(f.repo, ".workloom-base-sync.json")), stateBefore);
+  });
+
+  it("计划与真实写入保留受控片段及本仓外部规则，分类单列原始来源", t => {
+    const f = managedRepairFixture(t); const assets = loadProtectedAssets(f.repo);
+    const plan = planSync({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets });
+    assert.equal(plan.entries.find(row => row.targetPath === "AGENTS.md").action, "preserved");
+    applyPlan(plan, { sourceRoot: f.source, targetRoot: f.target, write: true });
+    assert.deepEqual(readFileSync(join(f.target, "AGENTS.md")), f.after);
+    const classified = classifyTrees({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets });
+    assert.equal(classified.stats.localReviewedPreserved, 1); assert.deepEqual(classified.protectedDrift, []);
+    assert.deepEqual(classified.unexplained, []); assert.equal(classified.stats.reproducibleRatio, "5/5");
+  });
+
+  it("未知片段、通配与逃逸不能借真实文件名获得局部修改许可", t => {
+    const f = managedRepairFixture(t); const original = f.policy.localReviewedRepairs[0];
+    for (const path of ["AGENTS.md#other", "AGENTS.md#managed-section#extra", "AGENTS.md#../managed-section",
+      "AGENTS.md#*", "AGENTS.md#managed-section/extra", "UNKNOWN.md#managed-section"]) {
+      const policy = structuredClone(f.policy); policy.localReviewedRepairs = [{ ...original, path }];
+      assert.throws(() => loadProtectedAssets(f.repo, undefined, policy), undefined, path);
+    }
+  });
+
+  it("上游片段或本地片段不匹配时不能计划同步或接受严格分类", t => {
+    const f = managedRepairFixture(t); const assets = loadProtectedAssets(f.repo);
+    write(join(f.source, "AGENTS.md"), f.before.toString().replace("共享旧规则", "未绑定上游规则"));
+    assert.throws(() => planSync({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets }));
+    assert.equal(classifyTrees({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets }).protectedDrift.length, 1);
+    write(join(f.source, "AGENTS.md"), f.before);
+    write(join(f.target, "AGENTS.md"), f.after.toString().replace("本仓安全修复", "未经登记修改"));
+    assert.throws(() => planSync({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets }));
+    assert.equal(classifyTrees({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets }).protectedDrift.length, 1);
+  });
+
+  it("计划后片段漂移在第一笔写入前拒绝，其他文件哨兵保持不变", t => {
+    const f = managedRepairFixture(t); const assets = loadProtectedAssets(f.repo);
+    const plan = planSync({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets });
+    write(join(f.target, "AGENTS.md"), f.after.toString().replace("本仓安全修复", "计划后新改动"));
+    write(join(f.target, "assets/logo.bin"), "第一笔写入前哨兵\n");
+    assert.throws(() => applyPlan(plan, { sourceRoot: f.source, targetRoot: f.target, write: true }));
+    assert.equal(readFileSync(join(f.target, "assets/logo.bin"), "utf8"), "第一笔写入前哨兵\n");
+  });
+
+  it("未登记片段同样严格验证，缺失、重复或倒置受控标记均失败", t => {
+    const f = managedRepairFixture(t, { repair: false }); const assets = loadProtectedAssets(f.repo);
+    assert.deepEqual(verifyProtectedAssets({ repoRoot: f.repo, protectedAssets: assets }).drift, []);
+    for (const value of [f.before.toString().replace("共享旧规则", "未登记漂移"),
+      f.before.toString().replace(f.begin, ""), `${f.begin}\n${f.before}`, `${f.end}\n${f.begin}`]) {
+      write(join(f.repo, "AGENTS.md"), value);
+      assert.equal(verifyProtectedAssets({ repoRoot: f.repo, protectedAssets: assets }).drift.length, 1);
+    }
+  });
+
+  it("真实文件含外部符号链接不能用相同片段摘要冒充仓内授权", t => {
+    const f = managedRepairFixture(t); const assets = loadProtectedAssets(f.repo);
+    const outside = join(f.root, "outside-agents.md"); write(outside, f.after);
+    rmSync(join(f.target, "AGENTS.md")); symlinkSync(outside, join(f.target, "AGENTS.md"));
+    assert.throws(() => planSync({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets }), /符号链接/);
+    rmSync(join(f.repo, "AGENTS.md")); symlinkSync(outside, join(f.repo, "AGENTS.md"));
+    assert.equal(verifyProtectedAssets({ repoRoot: f.repo, protectedAssets: assets }).drift.length, 1);
+  });
+
+  it("排除或声明删除整个文件不能隐藏受控片段修复", t => {
+    const f = managedRepairFixture(t); const assets = loadProtectedAssets(f.repo);
+    for (const mutate of [p => p.contract.excludedPaths.push("AGENTS.md"),
+      p => p.declaredDiffs.push({ reason: "隐藏受控片段", kind: "removed", paths: ["AGENTS.md"] })]) {
+      const policy = structuredClone(f.policy); mutate(policy);
+      const plan = planSync({ sourceRoot: f.source, targetRoot: f.target, policy, protectedAssets: assets });
+      assert.ok(plan.errors.length > 0);
+      assert.throws(() => applyPlan(plan, { sourceRoot: f.source, targetRoot: f.target, write: true }));
+    }
+  });
+
+  it("片段评审不能让未登记的片段外改动获得通过", t => {
+    const f = managedRepairFixture(t); const assets = loadProtectedAssets(f.repo);
+    write(join(f.target, "AGENTS.md"), f.after.toString().replace("本仓专属规则", "未登记的专属规则变更"));
+    const classified = classifyTrees({ sourceRoot: f.source, targetRoot: f.target, policy: f.policy, protectedAssets: assets });
+    assert.equal(classified.protectedDrift.length, 0); assert.equal(classified.unexplained.length, 1);
+    assert.equal(classified.stats.localReviewedPreserved, 0);
+  });
+
+  it("片段外差异单独登记也不能放宽片段摘要，实际CLI严格核验仍有效", t => {
+    const f = managedRepairFixture(t);
+    write(join(f.target, "AGENTS.md"), f.after.toString().replace("本仓专属规则", "本次任务的隔离说明"));
+    f.policy.declaredDiffs.push({ task: "T-2026-1002-9001", reason: "只登记受控标记外的隔离说明", kind: "modified", paths: ["AGENTS.md"] });
+    write(join(f.repo, ".workloom-rename-policy.json"), JSON.stringify(f.policy));
+    const output = JSON.parse(execFileSync(process.execPath, [SCRIPT, "classify", "--repo", f.repo, "--source", f.source, "--target", f.target, "--strict", "--json"], { encoding: "utf8" }));
+    assert.equal(output.stats.localReviewedPreserved, 1); assert.deepEqual(output.protectedDrift, []); assert.deepEqual(output.unexplained, []);
+    write(join(f.target, "AGENTS.md"), f.after.toString().replace("共享规则的本仓安全修复", "未登记片段改动"));
+    assert.throws(() => execFileSync(process.execPath, [SCRIPT, "classify", "--repo", f.repo, "--source", f.source, "--target", f.target, "--strict"], { encoding: "utf8" }), error => error.status === 1);
+  });
+
+  it("仅片段级资产的文件也不能被路径规则改名", t => {
+    const f = managedRepairFixture(t); const assets = loadProtectedAssets(f.repo);
+    assets.files.clear();
+    f.policy.rules.push({ id: "illegal-managed-rename", kind: "path", match: "^AGENTS\\.md$", replace: "AGENTS.old.md" });
+    assert.ok(validatePolicy(f.policy, { protectedAssets: assets }).errors.some(error => error.includes("会改写受控资产路径")));
   });
 });
