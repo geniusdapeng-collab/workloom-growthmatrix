@@ -1,21 +1,14 @@
 /**
- * live-profile-dialect.test.mjs · P 域模型端点「方言」回归（MC-015）
+ * live-profile-dialect.test.mjs · 本仓实际 profile 的模型端点方言回归（MC-015）
  *
- * 为什么需要它（2026-09-29 真机实测的根因）：
- *   本机封存凭据 `~/.workloom/live.env` 里两个端点环境变量是**两种方言**：
- *     · `DEEPSEEK_BASE_URL=https://api.deepseek.com/anthropic` —— Anthropic 兼容根（Messages 协议），
- *       dsh-harness 的 deepseek-official 适配器走它；
- *     · `LLM_BASE_URL=https://api.deepseek.com` —— OpenAI 兼容根，`model-gateway` 链路拼 `/chat/completions`。
- *   把 Anthropic 根交给 OpenAI 兼容链路必得 **HTTP 404**（实测：POST
- *   `https://api.deepseek.com/anthropic/chat/completions` → 404、空体；同一 key 打
- *   `https://api.deepseek.com/chat/completions` → 200）。而基座
- *   `scripts/acceptance/lib/live/providers.mjs#resolveLiveModels` 对两条链路用同一套 base 解析顺序
- *   （`baseUrlEnv` → `LLM_BASE_URL` → `DEEPSEEK_BASE_URL`），且基座文件在本车道是**受控只读资产**
- *   （`.workloom-base-sync.json#requiredRootAssetsSha256`），不能在本仓改。
- *   因此本仓的处置是：在 `acceptance/profile.json` 里把两条链路拆成两个模型条目、各自声明正确的
- *   `baseUrlEnv`；基座侧的通用修法走 `proposals/workloom-im/0002-*.patch`。
- *   本测试按「本仓真实 profile + live.env 真实键约定」复算解析结果，锁住该配置不会再漂回 404，
- *   同时防止有人为了省事把 dsh 也指到 OpenAI 兼容根（反向 404，见 live.mjs 的内联注释）。
+ * 历史 growthmatrix 实测发现：Messages 兼容根带 /anthropic；OpenAI 兼容
+ * /chat/completions 必须使用归一后的 OpenAI 根。两个模型条目和任务仍读取本仓
+ * acceptance/profile.json，不借其它仓的 profile 证明通过。
+ *
+ * 本次获授权的隔离仓局部控制修复保留本仓协议声明；缺 LLM_BASE_URL 时以精确
+ * 端点与归一警告锁定回归，不能用允许错误协议根的宽松正则冒充验证。
+ * 原 required 摘要、隔离状态、业务身份、上游冻结引用和 rename policy 不变。
+ * 此测试仅进行解析和断言，不发网络请求，也不证明付费供应商或产品任务完成。
  *
  * 用法：node --test scripts/acceptance/live-profile-dialect.test.mjs
  */
@@ -94,14 +87,11 @@ describe("P 域模型端点方言（MC-015 · LLM-G1 404 根因）", () => {
     delete env.LLM_BASE_URL;
     const gatewayModelId = tasksOfChain("model-gateway")[0].model;
     const model = modelOf(resolvedOf(env), gatewayModelId);
-    // 基座解析顺序里 DEEPSEEK_BASE_URL 是最后的兜底；此处记录真实行为：
-    // 一旦 LLM_BASE_URL 缺失就会退回 Anthropic 根 → 该场景必须靠基座补丁（proposals/0002）修，
-    // 本仓只能保证「声明层不把 Anthropic 根发给 OpenAI 链路」这条已被上一条锁住。
+    // 当前局部修复在缺 OpenAI 根时剥除 Anthropic 协议后缀，并记录归一警告。
+    // 本仓真实 profile 的任务和两条协议声明均保留，不能用宽松正则接受错误端点。
     assert.ok(model, "model-gateway 的模型条目必须可解析");
-    assert.match(
-      String(model.baseUrl),
-      /^https:\/\/api\.deepseek\.com(\/anthropic)?$/,
-      `缺 LLM_BASE_URL 时的兜底行为需人工确认：${model.baseUrl}`,
-    );
+    assert.equal(model.baseUrl, "https://api.deepseek.com");
+    assert.equal(model.baseUrlDialect, "openai");
+    assert.ok(model.warnings.some((warning) => warning.includes("OpenAI 兼容根归一")));
   });
 });

@@ -20,6 +20,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   DEFAULT_POLICY_PATH,
+  DEFAULT_BASE_SYNC_PATH,
   classifyTrees,
   loadPolicy,
   loadProtectedAssets,
@@ -59,7 +60,7 @@ function main() {
   let protectedAssets;
   try {
     ({ policy } = loadPolicy(repoRoot, policyPath));
-    protectedAssets = loadProtectedAssets(repoRoot);
+    protectedAssets = loadProtectedAssets(repoRoot, DEFAULT_BASE_SYNC_PATH, policy);
   } catch (err) {
     console.error(`[sync-contract] 输入错误：${err instanceof Error ? err.message : String(err)}`);
     return 2;
@@ -68,7 +69,7 @@ function main() {
   /* ① 受控资产摘要 */
   const assets = verifyProtectedAssets({ repoRoot, protectedAssets });
   if (assets.drift.length) {
-    failures.push(`受控资产摘要漂移 ${assets.drift.length} 项（改名前必须与上游逐字节一致）`);
+    failures.push(`受控资产摘要漂移 ${assets.drift.length} 项（冻结上游与经评审本仓修复分别绑定摘要）`);
   }
   if (assets.missing.length) {
     failures.push(`受控资产缺失 ${assets.missing.length} 项`);
@@ -143,6 +144,7 @@ function main() {
       drift: assets.drift,
       missing: assets.missing,
       managedSections: protectedAssets.managedSections.map((s) => s.key),
+      localReviewedRepairs: [...protectedAssets.localRepairs.values()],
     },
     declaredAbsent,
     classification: classification
@@ -151,6 +153,7 @@ function main() {
           unexplained: classification.unexplained,
           undeclaredNewFiles: classification.undeclaredNewFiles,
           protectedDrift: classification.protectedDrift,
+          localReviewedPreserved: classification.localReviewedPreserved,
           missing: classification.missing,
         }
       : null,
@@ -174,6 +177,7 @@ function main() {
     );
     console.log(`  ② 策略校验：规则 ${validation.compiledRules.length} 条 · 差异登记 ${declaredPaths.size} 项 · 错误 ${validation.errors.length}`);
     console.log(`  ③ 登记有效性：缺失目标 ${declaredAbsent.length} 项 · 与受控资产重叠 ${declaredOnProtected.length} 项`);
+    console.log(`     本仓评审修复 ${protectedAssets.localRepairs.size} 项（原始受控摘要与上游 SHA 保留）`);
     if (classification) {
       const s = classification.stats;
       console.log(

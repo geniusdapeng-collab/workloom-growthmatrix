@@ -15,7 +15,7 @@
  *     · 留痕：plan/apply 产出 `workloom.rename-report/v1` 报告，逐文件记录动作与命中的规则。
  *
  * 三条硬纪律（代码强制，不靠自觉）：
- *   1. 受控资产永不改内容：命中 protectedAssets 的文件按上游原字节落盘，命中改名规则也不改写；
+ *   1. 受控资产不被改名规则改写；本仓已授权评审的精确修复单独绑定原摘要和本地摘要，不改冻结状态；
  *   2. 已登记差异永不覆盖：declaredDiffs 命中的目标文件保留本仓现有内容（preserved），只报告不动手；
  *   3. 未登记差异必须可见：目标树里既非改名可达、又未登记的差异一律计入 unexplained（--strict 失败）。
  *
@@ -29,7 +29,7 @@
  * 退出码：0 = 通过（可能有告警）；1 = 失败（未登记漂移 / 受控资产漂移 / 缺文件）；2 = 用法或输入错误。
  */
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -161,7 +161,7 @@ export function loadPolicy(repoRoot, policyPath = DEFAULT_POLICY_PATH) {
  * 受控只读资产：来自 `.workloom-base-sync.json#requiredRootAssetsSha256`。
  * `#managed-section` 形态（如 `AGENTS.md#managed-section`）只锁片段，不锁整文件，单独返回。
  */
-export function loadProtectedAssets(repoRoot, baseSyncPath = DEFAULT_BASE_SYNC_PATH) {
+export function loadProtectedAssets(repoRoot, baseSyncPath = DEFAULT_BASE_SYNC_PATH, selectedPolicy) {
   const abs = resolve(repoRoot, baseSyncPath);
   if (!existsSync(abs)) {
     throw new Error(`缺少基座同步状态：${abs}`);
@@ -178,7 +178,100 @@ export function loadProtectedAssets(repoRoot, baseSyncPath = DEFAULT_BASE_SYNC_P
     }
     files.set(key, digest);
   }
-  return { files, managedSections, baseSyncPath: abs };
+  const frozenFiles = new Map(files);
+  const frozenManagedSections = managedSections.map((entry) => ({ ...entry }));
+  const frozenDigests = new Map([...frozenFiles, ...managedSections.map((entry) => [entry.key, entry.sha256])]);
+  const policyFile = resolve(repoRoot, DEFAULT_POLICY_PATH);
+  const policy = selectedPolicy ?? (existsSync(policyFile) ? readJson(policyFile) : {});
+  const repairs = policy.localReviewedRepairs ?? [];
+  if (!Array.isArray(repairs)) throw new Error("localReviewedRepairs 必须是数组");
+  if (repairs.length && (policy.identity?.lane !== "isolated-copy" || policy.contract?.syncPolicy !== "none-in-none-out")) {
+    throw new Error("本仓评审修复只允许用于 none-in-none-out 的 isolated-copy 车道");
+  }
+  const localRepairs = new Map();
+  for (const repair of repairs) {
+    const path = repair?.path;
+    const file = typeof path === "string" ? path.split("#")[0] : null;
+    const section = managedSections.find((entry) => entry.key === path && entry.section === "managed-section");
+    if (typeof path !== "string" || !path || !file || file.startsWith("/") || /[\\*?\u0000]/.test(path)
+      || file.split("/").some((part) => !part || part === "." || part === "..")
+      || (path.includes("#") ? !section : !frozenFiles.has(path))) {
+      throw new Error(`本仓评审修复必须指向已冻结的具体受控文件或 managed-section：${String(path)}`);
+    }
+    if (localRepairs.has(path)) throw new Error(`本仓评审修复路径重复：${path}`);
+    if (!/^[a-f0-9]{64}$/.test(repair.originalSha256 ?? "") || repair.originalSha256 !== frozenDigests.get(path)
+      || !/^[a-f0-9]{64}$/.test(repair.localSha256 ?? "")
+      || !/^[a-f0-9]{40}$/.test(repair.frozenBaseSha ?? "") || repair.frozenBaseSha !== state.lastRequiredAssetsBaseSha
+      || !/^[a-f0-9]{40}$/.test(repair.sourceCommit ?? "") || repair.sourceRepository !== state.baseRepo
+      || !/^T-\d{4}-\d{4}-\d{4}$/.test(repair.task ?? "")
+      || repair.authorizedBy !== "product-owner-session" || !String(repair.reviewedBy ?? "").trim()
+      || !String(repair.reason ?? "").trim()) {
+      throw new Error(`本仓评审修复缺少有效冻结摘要、完整来源提交、任务或授权：${path}`);
+    }
+    localRepairs.set(path, Object.freeze({ ...repair }));
+    if (section) section.sha256 = repair.localSha256;
+    else files.set(path, repair.localSha256);
+  }
+  for (const section of managedSections) section.frozenSha256 = frozenDigests.get(section.key);
+  return { files, frozenFiles, frozenManagedSections, localRepairs, managedSections, baseSyncPath: abs };
+}
+
+/** 逐段拒绝符号链接，确保修复散列指向仓内真实文件而不是外部目标。 */
+function readRepairBytes(root, rel) {
+  let current = resolve(root);
+  for (const part of rel.split("/")) {
+    current = join(current, part);
+    if (lstatSync(current).isSymbolicLink()) throw new Error(`本仓评审修复路径含符号链接：${rel}`);
+  }
+  if (!lstatSync(current).isFile()) throw new Error(`本仓评审修复路径不是文件：${rel}`);
+  return readFileSync(current);
+}
+
+function extractManagedSection(bytes) {
+  const text = bytes.toString("utf8");
+  const begin = "<!-- WORKLOOM-CONTEXT:BEGIN -->";
+  const end = "<!-- WORKLOOM-CONTEXT:END -->";
+  if (text.split(begin).length !== 2 || text.split(end).length !== 2) {
+    throw new Error("受控片段的 BEGIN/END 标记必须各出现且只出现一次");
+  }
+  const start = text.indexOf(begin); const finish = text.indexOf(end);
+  if (finish < start) throw new Error("受控片段的 BEGIN/END 标记顺序错误");
+  return text.slice(start, finish + end.length);
+}
+
+function repairFile(path) { return path.split("#")[0]; }
+
+function readAssetBytes(root, key) {
+  const bytes = readRepairBytes(root, repairFile(key));
+  if (!key.includes("#")) return bytes;
+  if (key.split("#").length !== 2 || key.split("#")[1] !== "managed-section") {
+    throw new Error(`未知受控片段：${key}`);
+  }
+  return Buffer.from(extractManagedSection(bytes));
+}
+
+function checkLocalRepairBytes(repair, sourceRoot, targetRoot) {
+  const sourceDigest = sha256(readAssetBytes(sourceRoot, repair.path));
+  const targetDigest = sha256(readAssetBytes(targetRoot, repair.path));
+  if (sourceDigest !== repair.originalSha256 || targetDigest !== repair.localSha256) {
+    throw new Error(`本仓评审修复字节与已绑定的冻结上游或本地摘要不符：${repair.path}`);
+  }
+}
+
+function managedGuards(protectedAssets) {
+  return (protectedAssets?.managedSections ?? []).map((entry) => ({
+    path: entry.key, originalSha256: entry.frozenSha256 ?? entry.sha256, localSha256: entry.sha256,
+  }));
+}
+
+function localRepairForFile(path, protectedAssets) {
+  return protectedAssets?.localRepairs?.get(path)
+    ?? protectedAssets?.localRepairs?.get(`${path}#managed-section`);
+}
+
+function withoutManagedSection(bytes) {
+  const section = extractManagedSection(bytes);
+  return bytes.toString("utf8").replace(section, "<!-- WORKLOOM-CONTEXT:OWNED -->");
 }
 
 export function compileRule(rule) {
@@ -236,8 +329,25 @@ export function validatePolicy(policy, { protectedAssets } = {}) {
       declared.set(path, entry);
     }
   }
+  for (const [path, repair] of protectedAssets?.localRepairs ?? []) {
+    if (declared.has(path)) errors.push(`本仓评审修复不能另登记为 declaredDiffs：${path}`);
+    if (declared.get(repairFile(path))?.kind === "removed") errors.push(`本仓评审修复不能声明删除：${path}`);
+    if ((policy.contract?.excludedPaths ?? []).some((glob) => isExcluded(repairFile(path), [glob]))) {
+      errors.push(`本仓评审修复不能被同步排除规则隐藏：${path}`);
+    }
+    const selected = (policy.localReviewedRepairs ?? []).filter((item) => item.path === path);
+    if (selected.length !== 1 || JSON.stringify(selected[0]) !== JSON.stringify(repair)) {
+      errors.push(`本仓评审修复策略与已加载摘要不一致：${path}`);
+    }
+  }
+  for (const section of protectedAssets?.managedSections ?? []) {
+    if (declared.get(section.file)?.kind === "removed") errors.push(`受控片段所在文件不能声明删除：${section.file}`);
+    if ((policy.contract?.excludedPaths ?? []).some((glob) => isExcluded(section.file, [glob]))) {
+      errors.push(`受控片段不能被同步排除规则隐藏：${section.key}`);
+    }
+  }
   // 受控资产不得被任何规则改写：策略层拦截，避免「改名改到受控副本」再次发生
-  if (protectedAssets?.files?.size) {
+  if (protectedAssets?.files?.size || protectedAssets?.managedSections?.length) {
     for (const rule of compiled.filter((r) => r.kind === "content")) {
       const covered = [...protectedAssets.files.keys()].filter((assetPath) =>
         rule.scope.some((glob) => matchGlob(assetPath, glob)),
@@ -249,7 +359,7 @@ export function validatePolicy(policy, { protectedAssets } = {}) {
       }
     }
     for (const rule of compiled.filter((r) => r.kind === "path")) {
-      for (const assetPath of protectedAssets.files.keys()) {
+      for (const assetPath of new Set([...protectedAssets.files.keys(), ...(protectedAssets.managedSections ?? []).map((entry) => entry.file)])) {
         const mapped = assetPath.replace(rule.regex, rule.replace);
         if (mapped !== assetPath) {
           errors.push(`路径规则 ${rule.id} 会改写受控资产路径：${assetPath} → ${mapped}`);
@@ -317,6 +427,11 @@ export function planSync({ sourceRoot, targetRoot, policy, protectedAssets }) {
   const targetFiles = new Set(walkFiles(targetRoot, { excludes }));
   const entries = [];
   const mappedTargets = new Set();
+  for (const repair of protectedAssets?.localRepairs?.values() ?? []) {
+    checkLocalRepairBytes(repair, sourceRoot, targetRoot);
+  }
+  const sectionGuards = managedGuards(protectedAssets);
+  for (const guard of sectionGuards) checkLocalRepairBytes(guard, sourceRoot, targetRoot);
 
   for (const rel of sourceFiles) {
     const pathResult = applyPathRules(rel, rules);
@@ -325,6 +440,8 @@ export function planSync({ sourceRoot, targetRoot, policy, protectedAssets }) {
     const sourceBuf = readFileSync(join(sourceRoot, rel));
     const binary = isBinaryBuffer(sourceBuf);
     const protectedAsset = isProtected(rel, protectedAssets) || isProtected(targetRel, protectedAssets);
+    const localReviewedRepair = localRepairForFile(rel, protectedAssets) ?? localRepairForFile(targetRel, protectedAssets);
+    const managed = (protectedAssets?.managedSections ?? []).some((entry) => entry.file === rel || entry.file === targetRel);
     const declaration = declared.get(targetRel) ?? declared.get(rel);
     if (declaration?.kind === "removed") {
       entries.push({
@@ -342,7 +459,9 @@ export function planSync({ sourceRoot, targetRoot, policy, protectedAssets }) {
 
     let action;
     let fired = pathResult.fired;
-    if (protectedAsset) {
+    if (localReviewedRepair || managed) {
+      action = "preserved";
+    } else if (protectedAsset) {
       action = "protected";
     } else if (declaration && existsInTarget) {
       action = "preserved";
@@ -361,6 +480,7 @@ export function planSync({ sourceRoot, targetRoot, policy, protectedAssets }) {
       binary,
       declared: declaration ? declaration.reason : null,
       rules: fired,
+      ...(localReviewedRepair ? { localReviewedRepair } : {}),
     });
   }
 
@@ -376,6 +496,7 @@ export function planSync({ sourceRoot, targetRoot, policy, protectedAssets }) {
     rewritten: entries.filter((e) => e.action === "rewritten").length,
     protected: entries.filter((e) => e.action === "protected").length,
     preserved: entries.filter((e) => e.action === "preserved").length,
+    localReviewedPreserved: entries.filter((e) => e.localReviewedRepair).length,
     removedDeclared: entries.filter((e) => e.action === "removed-declared").length,
     staleTargets: staleTargets.length,
     declaredMissing: declaredMissing.length,
@@ -391,6 +512,7 @@ export function planSync({ sourceRoot, targetRoot, policy, protectedAssets }) {
     protectedManifest: protectedAssets
       ? [...protectedAssets.files.keys()].sort()
       : [],
+    managedSectionGuards: sectionGuards,
   };
 }
 
@@ -399,6 +521,12 @@ export function planSync({ sourceRoot, targetRoot, policy, protectedAssets }) {
  * 语义：受控资产按上游原字节、已登记差异保留本仓现字节、其余按规则改写。
  */
 export function applyPlan(plan, { sourceRoot, targetRoot, write = false }) {
+  if (plan.errors?.length) throw new Error(`策略校验失败，拒绝写盘：${plan.errors.join("；")}`);
+  // 在第一笔写入前重验所有修复字节，不能写到一半才发现漂移。
+  for (const entry of plan.entries) {
+    if (entry.localReviewedRepair) checkLocalRepairBytes(entry.localReviewedRepair, sourceRoot, targetRoot);
+  }
+  for (const guard of plan.managedSectionGuards ?? []) checkLocalRepairBytes(guard, sourceRoot, targetRoot);
   const written = [];
   const preserved = [];
   const skipped = [];
@@ -450,6 +578,7 @@ export function classifyTrees({ sourceRoot, targetRoot, policy, protectedAssets 
   const declaredPreserved = [];
   const declaredRemoved = [];
   const protectedIdentical = [];
+  const localReviewedPreserved = [];
   let identicalCount = 0;
   const protectedDrift = [];
   const unexplained = [];
@@ -473,6 +602,36 @@ export function classifyTrees({ sourceRoot, targetRoot, policy, protectedAssets 
     const targetBuf = readFileSync(join(targetRoot, targetRel));
     const identical = sourceBuf.equals(targetBuf);
     const protectedAsset = isProtected(rel, protectedAssets) || isProtected(targetRel, protectedAssets);
+    const localRepair = localRepairForFile(rel, protectedAssets) ?? localRepairForFile(targetRel, protectedAssets);
+
+    if (localRepair) {
+      try {
+        checkLocalRepairBytes(localRepair, sourceRoot, targetRoot);
+        if (localRepair.path.includes("#")) {
+          const expectedOutside = applyContentRules(withoutManagedSection(sourceBuf), rules, targetRel).text;
+          const targetOutside = withoutManagedSection(targetBuf);
+          if (expectedOutside !== targetOutside && (declared.get(targetRel) ?? declared.get(rel))?.kind !== "modified") {
+            unexplained.push({ targetPath: targetRel, sourcePath: rel, reason: "受控片段修复不授权未登记的片段外改动",
+              sourceSha256: sha256(sourceBuf), targetSha256: sha256(targetBuf) });
+            continue;
+          }
+        }
+        localReviewedPreserved.push({ file: targetRel, ...localRepair });
+      } catch (error) {
+        protectedDrift.push({ path: targetRel, expectedSourceSha256: localRepair.originalSha256,
+          expectedSha256: localRepair.localSha256, actualSourceSha256: sha256(sourceBuf), actualSha256: sha256(targetBuf),
+          drift: true, reason: error.message });
+      }
+      continue;
+    }
+
+    const sections = managedGuards(protectedAssets).filter((entry) => repairFile(entry.path) === rel || repairFile(entry.path) === targetRel);
+    let sectionFailed = false;
+    for (const guard of sections) {
+      try { checkLocalRepairBytes(guard, sourceRoot, targetRoot); }
+      catch (error) { protectedDrift.push({ path: guard.path, reason: error.message }); sectionFailed = true; }
+    }
+    if (sectionFailed) continue;
 
     if (protectedAsset) {
       if (identical) protectedIdentical.push(targetRel);
@@ -537,6 +696,7 @@ export function classifyTrees({ sourceRoot, targetRoot, policy, protectedAssets 
       declaredPreserved: declaredPreserved.length,
       declaredRemoved: declaredRemoved.length,
       protectedIdentical: protectedIdentical.length,
+      localReviewedPreserved: localReviewedPreserved.length,
       unexplained: unexplained.length,
       protectedDrift: protectedDrift.length,
       missing: missing.length,
@@ -544,12 +704,13 @@ export function classifyTrees({ sourceRoot, targetRoot, policy, protectedAssets 
       reproducibleRatio:
         sourceFiles.length === 0
           ? "0/0"
-          : `${identicalCount + renameExplained.length + declaredPreserved.length + declaredRemoved.length + protectedIdentical.length}/${sourceFiles.length}`,
+          : `${identicalCount + renameExplained.length + declaredPreserved.length + declaredRemoved.length + protectedIdentical.length + localReviewedPreserved.length}/${sourceFiles.length}`,
     },
     renameExplained,
     declaredPreserved,
     declaredRemoved,
     protectedIdentical,
+    localReviewedPreserved,
     protectedDrift,
     unexplained,
     missing,
@@ -569,10 +730,19 @@ export function verifyProtectedAssets({ repoRoot, protectedAssets }) {
       missing.push({ path: rel, expectedSha256: expected });
       continue;
     }
-    const actual = sha256(readFileSync(abs));
+    let actual;
+    try { actual = sha256(protectedAssets.localRepairs?.has(rel) ? readRepairBytes(repoRoot, rel) : readFileSync(abs)); }
+    catch (error) { drift.push({ path: rel, expectedSha256: expected, reason: error.message }); continue; }
     if (actual !== expected) drift.push({ path: rel, expectedSha256: expected, actualSha256: actual });
   }
-  return { drift, missing, total: protectedAssets.files.size };
+  for (const section of protectedAssets.managedSections ?? []) {
+    if (!existsSync(join(repoRoot, section.file))) { missing.push({ path: section.key, expectedSha256: section.sha256 }); continue; }
+    try {
+      const actual = sha256(readAssetBytes(repoRoot, section.key));
+      if (actual !== section.sha256) drift.push({ path: section.key, expectedSha256: section.sha256, actualSha256: actual });
+    } catch (error) { drift.push({ path: section.key, expectedSha256: section.sha256, reason: error.message }); }
+  }
+  return { drift, missing, total: protectedAssets.files.size + (protectedAssets.managedSections?.length ?? 0) };
 }
 
 /* ------------------------------------------------------------------ */
@@ -655,7 +825,7 @@ function main() {
     }
 
     const { policy } = loadPolicy(repoRoot, policyPath);
-    const protectedAssets = loadProtectedAssets(repoRoot);
+    const protectedAssets = loadProtectedAssets(repoRoot, DEFAULT_BASE_SYNC_PATH, policy);
     const validation = validatePolicy(policy, { protectedAssets });
 
     if (command === "describe") {
@@ -670,6 +840,7 @@ function main() {
         declaredDiffs: (policy.declaredDiffs ?? []).map((e) => ({ reason: e.reason, task: e.task, kind: e.kind, paths: e.paths })),
         protectedAssets: [...protectedAssets.files.keys()],
         protectedManagedSections: protectedAssets.managedSections.map((s) => s.key),
+        localReviewedRepairs: [...protectedAssets.localRepairs.values()],
         errors: validation.errors,
         warnings: validation.warnings,
       };
