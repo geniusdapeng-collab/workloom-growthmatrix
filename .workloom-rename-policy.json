@@ -310,6 +310,15 @@
       "paths": [
         "acceptance/outcomes/industry.yaml"
       ]
+    },
+    {
+      "reason": "Canonical isolated repository identity helper and permanent rejection/relocation regressions; exact native repair provenance is listed in localRepairPhases.",
+      "task": "T-2026-1002-9001",
+      "kind": "added",
+      "paths": [
+        "scripts/acceptance/lib/repository-instance.mjs",
+        "scripts/acceptance/lib/repository-instance.test.mjs"
+      ]
     }
   ],
   "measuredBaseline": {
@@ -443,14 +452,25 @@
     {
       "path": "scripts/acceptance/profile-check.mjs",
       "originalSha256": "229c9cb305f99c96516cde79f48890a051bded00a1fc735205dc504b75c11d19",
-      "localSha256": "b170e634624f4cdfbd9ada9b95a0319a3631d83765ce3434e7a15be542916038",
+      "localSha256": "88e7126aeccbf6b471e9b45e85f3c02c7bed00fcea24bce0403542c551e2f690",
       "frozenBaseSha": "f5fe43403fed9fa2db6f159b431861d11573e521",
       "sourceCommit": "85b5a948baecb0021524da1e57e8655ed70bfb2e",
       "sourceRepository": "workloom-ai/workloom-im",
       "task": "T-2026-1002-9001",
       "authorizedBy": "product-owner-session",
       "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
-      "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+      "reason": "The retained sourceCommit/sourceRepository describe the earlier base repair foundation only. The current canonical repository identity implementation comes from the exact native localRepairSource commit and hash. Original upstream digest and frozen base SHA remain unchanged.",
+      "foundationSourceOnly": true,
+      "localRepairSource": {
+        "id": "profile-instance-canonical-ci",
+        "sourceRepository": "workloom-ai/workloom-growthmatrix",
+        "sourceCommit": "ea8392892d3676c79eb2c064b2093b0d0a68f8e3",
+        "task": "T-2026-1002-9001",
+        "authorizedBy": "product-owner-session",
+        "reviewedBy": "mcd:source-registration:/root; independent clean-source M6 pending",
+        "path": "scripts/acceptance/profile-check.mjs",
+        "sha256": "88e7126aeccbf6b471e9b45e85f3c02c7bed00fcea24bce0403542c551e2f690"
+      }
     },
     {
       "path": "scripts/acceptance/fleet-run.mjs",
@@ -547,6 +567,50 @@
       "authorizedBy": "product-owner-session",
       "reviewedBy": "mcd:source-registration:/root (precise source review; separate final M6 pending)",
       "reason": "Original G01–G07/G11/G14 evidence and execution repair, applied as an exact local owner-approved exception; frozen upstream SHA and original digest map retained."
+    }
+  ],
+  "localRepairPhases": [
+    {
+      "id": "profile-instance-canonical-ci",
+      "sourceRepository": "workloom-ai/workloom-growthmatrix",
+      "sourceCommit": "ea8392892d3676c79eb2c064b2093b0d0a68f8e3",
+      "task": "T-2026-1002-9001",
+      "authorizedBy": "product-owner-session",
+      "reviewedBy": "mcd:source-registration:/root; independent clean-source M6 pending",
+      "reason": "CNB checks out this isolated repository at a generic workspace path. Canonical CNB/Git identity replaces directory-basename inference; wrong, missing, ambiguous or credential-bearing identities still reject.",
+      "paths": [
+        {
+          "path": "package.json",
+          "sha256": "bd2d19d1ae9f3bd0e94f38a575266e466badb208b0a1db96a8df13b17603fa0b"
+        },
+        {
+          "path": "scripts/acceptance/lib/profile-contract.mjs",
+          "sha256": "96e4da67027a9193abbd5f57af8f0b6503046ee5c47f4751f995eca2477952be"
+        },
+        {
+          "path": "scripts/acceptance/lib/profile-contract.test.mjs",
+          "sha256": "97cf9725c9160b37cc7730f6ea381b72094316f36055d7ab070932b68d64b974"
+        },
+        {
+          "path": "scripts/acceptance/lib/repository-instance.mjs",
+          "sha256": "9cf1474805de8726acede5e5d164d28d17edb08c5786ca3c1a1a7bb6c100ed94"
+        },
+        {
+          "path": "scripts/acceptance/lib/repository-instance.test.mjs",
+          "sha256": "712c10ea2eb1819d4a0b1a1e7e71329da9092b3d468a3e75a956be6f5a31c69f"
+        },
+        {
+          "path": "scripts/acceptance/profile-check.mjs",
+          "sha256": "88e7126aeccbf6b471e9b45e85f3c02c7bed00fcea24bce0403542c551e2f690"
+        },
+        {
+          "path": "scripts/acceptance/profile-check.test.mjs",
+          "sha256": "9a03fdf1d06d090a98a97e20e8b6ec6d2b721fb62359c1039a6472bd54d507f7"
+        }
+      ],
+      "sourceAuthorGoSha256": "2485eb7b71f2dc88cbba613f85e3d4a4e8a0d947d27018ad3e72b19294f19fb7",
+      "nativeSourceBlobsAndCurrentBytesMatched": true,
+      "provenanceEnforcement": "This registration process read back actual committed Git blobs. The existing controller enforces original/local byte hashes; these extra native-source provenance fields are review metadata."
     }
   ]
 }
