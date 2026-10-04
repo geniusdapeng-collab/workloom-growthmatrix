@@ -12,6 +12,7 @@
  *  - 手势回写（F5.5）：手势事件经安全网关落库；驳回原因枚举回流偏好模式（F1.7 校准闭环）
  */
 import type pg from "pg";
+import { createHash } from "node:crypto";
 import {
   APPROVAL_LIMITS,
   GESTURE_WEIGHT,
@@ -36,10 +37,32 @@ export interface ApprovalRow {
   decided_by: string | null;
   decided_at: string | null;
   created_at: string;
-  /** 审批层级（l2_captain/l3_fleet/l4_chairman）；批量守卫保守口径使用（B-01） */
-  tier?: string;
+  /** 审批分级（0010 迁移）：l2_captain / l3_fleet / l4_chairman —— 权威列，非派生快照字段 */
+  tier?: "l2_captain" | "l3_fleet" | "l4_chairman" | null;
   /** 队列投影附带：被审批事件（diff/规则版本/影响面，F5.1/F5.3） */
   event?: BusinessEvent;
+}
+
+/**
+ * 高危审批的**单一判据**（2026-09-29 第二次修复，W-04）。
+ *
+ * 为什么要有这个函数：Y-01 的批量守卫原先只读 `snapshot.high_risk`，而该字段只有
+ * `packages/runtime/src/loop.ts` 一条快照构造路径会写；CEO 队列（hr.replacement / org.hiring）、
+ * 技能下发（skill.dist）、视频人工门、种子审批等路径的快照都没有这个字段——
+ * 于是"高危必须逐条人审"这条不变量在这些入口直接空转（第三方实测：ws-geo 种子两条
+ * l4_chairman 审批被一次批量调用全部放行，`skipped=[]`）。
+ *
+ * 判据取**权威列 + 步骤语义**，不再依赖各生产者"记得打标"：
+ *   ① `approvals.tier = 'l4_chairman'`（董事长级，0010 迁移的权威分级列）；
+ *   ② 快照显式声明 `high_risk`（围栏提案、desktop 高危及 loop.ts 派生路径）；
+ *   ③ 快照声明 `irreversible`（不可逆写步骤，与 loop.ts 的派生口径同源）。
+ * 三者在批量采纳与超时扫描两处共用，防止两侧口径漂移。
+ */
+export function isHighRiskApproval(row: Pick<ApprovalRow, "tier" | "snapshot">): boolean {
+  if (row.tier === "l4_chairman") return true;
+  if (row.snapshot?.high_risk === true) return true;
+  if ((row.snapshot as { irreversible?: unknown } | null | undefined)?.irreversible === true) return true;
+  return false;
 }
 
 export class ApprovalError extends Error {
@@ -256,8 +279,11 @@ export async function decide(
 
     // F1.7 校准闭环：驳回原因枚举 → 偏好模式记忆（机制位；权重衰减在数据大脑侧）
     if (gesture.type === "reject" && gesture.reasonEnum) {
+      const memoryId = `mem-reject-${createHash("sha256").update(JSON.stringify([
+        scope.tenantId, scope.workspaceId, gesture.reasonEnum,
+      ])).digest("hex").slice(0, 32)}`;
       await upsertMemoryInTx(c, scope, {
-        memoryId: `mem-reject-${gesture.reasonEnum}`,
+        memoryId,
         scope: "workspace",
         kind: "preference",
         content: `驳回偏好模式：原因枚举「${gesture.reasonEnum}」被采纳为校准信号（最新来源 ${gres.eventId}）`,
@@ -268,7 +294,7 @@ export async function decide(
       // 缺列时 workspace_id 为 NULL，WITH CHECK 不通过（RLS 42501）
       await c.query(
         `INSERT INTO memory_usage (memory_id, event_id, workspace_id) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,
-        [`mem-reject-${gesture.reasonEnum}`, gres.eventId, scope.workspaceId],
+        [memoryId, gres.eventId, scope.workspaceId],
       );
     }
 
@@ -356,16 +382,17 @@ export async function batchApprove(
     const row = rows.rows[0];
     if (!row) { skipped.push({ id, reason: "不存在" }); continue; }
     if (row.status !== "pending") { skipped.push({ id, reason: `已处理（${row.status}）` }); continue; }
-    if (row.snapshot?.high_risk) { skipped.push({ id, reason: "高危项不可批量采纳（须逐条）" }); continue; }
+    // W-04：判据统一走 isHighRiskApproval（tier=l4_chairman / snapshot.high_risk / snapshot.irreversible），
+    // 不再只看某一条快照路径写的 high_risk（那条路径之外全是空转）
+    if (isHighRiskApproval(row)) { skipped.push({ id, reason: "高危项不可批量采纳（须逐条）" }); continue; }
     /**
      * B-01 修复（守卫空转对症）：高危标记此前靠"生产者自觉写 snapshot.high_risk"，
      * G8/G9/G10 等对外/花钱门快照从未写过该字段 → 一键批量照批对外发布。
      * 保守口径（防未来生产者再漏写）：
-     *   ① 董事长级（l4）一律须逐条裁决；
+     *   ① 董事长级（l4）一律须逐条裁决（已由 isHighRiskApproval 覆盖）；
      *   ② 快照缺 high_risk 标记且动作属对外/花钱类（发布/投放/外发/群发/交易支付），按高危处理。
      * 已显式标记 high_risk:false 的 quest 低危步骤（Y-01 三口径派生）不受影响，仍可批量。
      */
-    if (row.tier === "l4_chairman") { skipped.push({ id, reason: "董事长级审批须逐条裁决，不可批量" }); continue; }
     const snapAction = (row.snapshot as { action?: string; tool?: string } | null)?.action
       ?? (row.snapshot as { tool?: string } | null)?.tool ?? "";
     if (row.snapshot?.high_risk === undefined && BATCH_GUARD_EXTERNAL_ACTION.test(snapAction)) {
@@ -400,7 +427,7 @@ export async function expireSweep(
   for (const row of pend) {
     const exp = row.snapshot?.expires_at ? new Date(row.snapshot.expires_at) : null;
     if (!exp || exp.getTime() >= Date.now()) continue;
-    if (row.snapshot?.high_risk) {
+    if (isHighRiskApproval(row)) {
       keptHighRisk.push(row.approval_id); // L5.4：高危项超时标提醒但不放行不expired跳过
       continue;
     }

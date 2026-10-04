@@ -20,8 +20,8 @@ type Row = Record<string, any>;
 class MockDb {
   tasks: Row[] = [];
   events: Array<{ seq: number; event_id: string; hash: string; payload: any }> = [];
-  /** C-03 修复后：G9 围栏挂起必须同事务插审批单（此前只写事件，任务永久卡死无人可见） */
-  approvals: Array<{ approval_id: string; event_id: string; status: string; snapshot: any }> = [];
+  /** C-03（排雷台账）：G9 挂起须插审批单，此处登记以便断言「挂起有单、单带高危标记」 */
+  approvals: Row[] = [];
   private seq = 8800;
 
   query(sql: string, params: any[] = []): { rows: Row[]; rowCount: number } {
@@ -54,9 +54,12 @@ if (s.includes("append_event_insert")) {
     if (/INSERT INTO approvals \(approval_id, tenant_id, workspace_id, event_id, channel, status, snapshot, tier\)/.test(s)) {
       this.approvals.push({
         approval_id: params[0],
+        tenant_id: params[1],
+        workspace_id: params[2],
         event_id: params[3],
         status: "pending",
         snapshot: JSON.parse(params[4] ?? "{}"),
+        tier: (s.match(/'(l[24]_[a-z]+)'/) ?? [])[1],
       });
       return { rows: [], rowCount: 1 };
     }
@@ -169,7 +172,7 @@ describe("执行器：G9 围栏预检", () => {
     expect(ev.payload.object).toMatchObject({ type: "publish_task", id: "pt-1" });
     // C-03：挂起必须同时产出审批单，且在审批中心可见可批（high_risk 标记不可批量照批）
     expect(db.approvals).toHaveLength(1);
-    expect(db.approvals[0]).toMatchObject({ approval_id: "apr-pub-pt-1", status: "pending" });
+    expect(db.approvals[0]).toMatchObject({ approval_id: "apr-pub-pt-1", status: "pending", tier: "l2_captain" });
     expect(db.approvals[0]!.snapshot).toMatchObject({
       gate: "G9", object_type: "publish_task", object_id: "pt-1", action: "publish.execute", high_risk: true,
     });

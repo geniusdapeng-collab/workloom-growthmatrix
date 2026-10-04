@@ -46,7 +46,8 @@ interface OpenJob {
 const RENDER_JOB_TIMEOUT_H = Number(process.env.RENDER_JOB_TIMEOUT_H ?? 24);
 function renderJobTimedOut(job: OpenJob): boolean {
   if (!(RENDER_JOB_TIMEOUT_H > 0)) return false;
-  const ageMs = Date.now() - Date.parse(job.created_at);
+  // created_at 由 pg 返回 Date（也兼容驱动配成字符串的部署），统一走 Date 构造避免格式猜测
+  const ageMs = Date.now() - new Date(job.created_at).getTime();
   return Number.isFinite(ageMs) && ageMs > RENDER_JOB_TIMEOUT_H * 3600_000;
 }
 

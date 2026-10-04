@@ -149,13 +149,8 @@ const SKIP_DIRS = new Set([
   "__pycache__",
 ]);
 
-/**
- * 本地专用目录（T-2026-0926-0008；全部在 .gitignore 里，**不属于仓库事实**）：
- *   var/             —— 运行产物（talkcraft 任务、媒体仓、ASR venv：venv 里的
- *                       site-packages/requirements.txt 会被扫描器当成"仓库 Python 依赖"）
- *   vendor/talkcraft —— 安装期拉取的引擎（自带 runtime/package.json，会被当成 npm 直接依赖）
- * 不排除它们，本地 `pnpm oss:check` 会与 CI（干净检出）结论不一致 —— 清单必须两边同源。
- */
+// Installed engines and customer runtime output are not repository dependencies.
+// Match complete relative path segments so vendor/talkcraft-other stays visible.
 const SKIP_PATHS = ["var", "vendor/talkcraft"];
 
 /* ============================ 基础 IO ============================ */
@@ -205,7 +200,7 @@ export function walkFiles(root, { filter = () => true, maxDepth = 8 } = {}) {
       if (entry.isSymbolicLink()) continue;
       if (entry.isDirectory()) {
         if (SKIP_DIRS.has(entry.name)) continue;
-        if (SKIP_PATHS.some((p) => relPath === p || relPath.startsWith(`${p}/`))) continue;
+        if (SKIP_PATHS.some((path) => relPath === path || relPath.startsWith(`${path}/`))) continue;
         visit(full, depth + 1);
       } else if (entry.isFile() && filter(posix(relative(root, full)))) {
         found.push(posix(relative(root, full)));

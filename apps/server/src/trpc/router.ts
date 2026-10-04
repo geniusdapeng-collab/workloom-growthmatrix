@@ -20,10 +20,12 @@ import {
   signDemoToken,
   type Identity,
 } from "@workloom/base/tenancy";
-import { gatewayAppend, gatewayAppendOnClient, MockEmbedder, upsertMemoryInTx } from "@workloom/base/workdata";
+import { gatewayAppend, gatewayAppendOnClient, insertWithReadableId, MockEmbedder, THREAD_ID_SOURCE, upsertMemoryInTx } from "@workloom/base/workdata";
+import { makeReadableId } from "@workloom/shared";
 import { capabilityWriteProcedure, protectedProcedure, publicProcedure, router, scopeOf, sessionProcedure, writeProcedure } from "./context.js";
 import { insertQueuedThread, mapDispatchDbError } from "../runtime/thread-admission.js";
 import { accountsRouter } from "./accounts-router.js";
+import { assertDemoLoginAllowed, desktopLoginTarget } from "../service/desktop-auth.js";
 import {
   ApprovalError,
   batchApprove,
@@ -852,6 +854,7 @@ const authRouter = router({
   loginAs: publicProcedure
     .input(z.object({ workspaceSlug: z.string(), memberNo: z.string() }))
     .mutation(async ({ input }) => {
+      assertDemoLoginAllowed();
       const app = getAppPool();
       // 登录引导例外点（F7.1）：身份未建立前无法 set_config，workspace 解析走 owner 池
       const ws = await getOwnerPool().query<{ id: string; tenant_id: string }>(
@@ -876,6 +879,23 @@ const authRouter = router({
       };
       return { token: await signDemoToken(identity), identity };
     }),
+  desktopLogin: publicProcedure.mutation(async ({ ctx }) => {
+    const target = desktopLoginTarget(ctx.headers);
+    const ws = await getOwnerPool().query<{ id: string; tenant_id: string }>(
+      "SELECT id, tenant_id FROM workspaces WHERE slug=$1", [target.workspaceSlug],
+    );
+    const workspace = ws.rows[0];
+    if (!workspace) throw new TRPCError({ code: "NOT_FOUND", message: "本机工作区尚未就绪" });
+    const scope = { tenantId: workspace.tenant_id, workspaceId: workspace.id };
+    const member = await getMember(getAppPool(), scope, target.memberNo);
+    if (!member) throw new TRPCError({ code: "NOT_FOUND", message: "本机成员尚未就绪" });
+    const tenant = await getOwnerPool().query<{ plan: Identity["plan"] }>(
+      "SELECT plan FROM tenants WHERE id=$1", [scope.tenantId],
+    );
+    const identity: Identity = { ...scope, memberId: member.id, memberNo: member.memberNo,
+      name: member.name, role: member.role, plan: tenant.rows[0]?.plan ?? "community" };
+    return { token: await signDemoToken(identity), identity };
+  }),
   /** 版本切换演示（F12 权限态：社区版/Pro/Teams/VPC 实切，F7.2 能力矩阵即时生效）
    *  owner 专属；写 tenants.plan（登录引导例外点同口径走 owner 池）+ 留痕 plan.switch（G8）+ 重签 JWT */
   setPlan: protectedProcedure
@@ -1222,8 +1242,7 @@ const threadsRouter = router({
         const conc = await client.query<{ c: string }>(
           `SELECT count(*) AS c FROM threads
             WHERE workspace_id=$1
-              AND (status='queued'
-                   OR (status='running' AND updated_at > now() - ($2::text || ' minutes')::interval))`,
+              AND status='running' AND updated_at > now() - ($2::text || ' minutes')::interval`,
           [scope.workspaceId, String(Number.isFinite(staleRunningMin) && staleRunningMin > 0 ? staleRunningMin : 10)],
         );
         if (Number(conc.rows[0]?.c ?? 0) >= MAX_CONCURRENT_THREADS) {
@@ -1689,16 +1708,6 @@ const threadsRouter = router({
 });
 
 /**
- * 步骤级审批通过 → Quest 自动续跑（2026-09-20 三合一真机修复）。
- *
- * 原语义：审批只改审批状态，用户还得回任务页点"继续推进"；生图/发布这类**半程任务**
- * 于是停在 waiting 态（实测："生成一张手冲咖啡图"批完不出图）。这里在审批落库后
- * 异步续跑一次（fire-and-forget）：
- *  - 只处理审批事件带 `decision.step_id` 与 `session_id`（线程）的步骤级审批；
- *  - 线程非 quest 模式或已完成 → 跳过；续跑仍走围栏/回执原语义（不伪造完成）；
- *  - 失败只落服务端日志，审批结果不变（用户仍可手动"继续推进"）。
- */
-/**
  * B-05/B-06 修复：批准后副作用统一钩子（单笔 decide / 批量 batchApprove / IM 手势回调三路同钩）。
  *  - 围栏激活：保持同步 await（既有验收口径：decide 返回即生效），失败隔离不反噬审批结果；
  *  - Quest 续跑：scheduleQuestResumeAfterApproval（内部自管 setTimeout/catch）；
@@ -1739,6 +1748,17 @@ async function runPostApprovalSideEffects(
     console.error(`[approvals] HR 汰换副作用失败 ${approvalId}（审批结果不变）：`, err instanceof Error ? err.message : err);
   }
 }
+
+/**
+ * 步骤级审批通过 → Quest 自动续跑（2026-09-20 三合一真机修复）。
+ *
+ * 原语义：审批只改审批状态，用户还得回任务页点"继续推进"；生图/发布这类**半程任务**
+ * 于是停在 waiting 态（实测："生成一张手冲咖啡图"批完不出图）。这里在审批落库后
+ * 异步续跑一次（fire-and-forget）：
+ *  - 只处理审批事件带 `decision.step_id` 与 `session_id`（线程）的步骤级审批；
+ *  - 线程非 quest 模式或已完成 → 跳过；续跑仍走围栏/回执原语义（不伪造完成）；
+ *  - 失败只落服务端日志，审批结果不变（用户仍可手动"继续推进"）。
+ */
 
 function scheduleQuestResumeAfterApproval(
   scope: { tenantId: string; workspaceId: string },

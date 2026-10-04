@@ -1,0 +1,1603 @@
+{
+  "schema": "workloom.mine-clear/ledger@1",
+  "task_id": "T-2026-1004-0904",
+  "repo": "growthmatrix",
+  "repo_path": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/growthmatrix",
+  "title": "Matrix 完整相关迁移与本仓演化回归",
+  "created_at": "2026-10-04T09:19:42.843Z",
+  "updated_at": "2026-10-04T16:34:07.964Z",
+  "baseline": {
+    "audit": {
+      "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+      "branch": "task/T-2026-1004-0904",
+      "remote": "origin",
+      "fetched_at": "2026-10-04T09:19:42.760Z",
+      "fetch_status": "success",
+      "notes": ""
+    },
+    "repair": {
+      "commit": null,
+      "reverified_problem_ids": []
+    },
+    "acceptance": {
+      "commit": null,
+      "is_descendant_of_repair": null
+    }
+  },
+  "environment": {
+    "kind": "local-preview",
+    "notes": "Source and owned local fixtures only; signed native and paid business qualification remain separate."
+  },
+  "invariants": [
+    {
+      "id": "INV-1",
+      "text": "租户边界覆盖数据库 RLS、运行时上下文、事件、缓存和外部连接器。",
+      "source": "AGENTS.md#4.1"
+    },
+    {
+      "id": "INV-2",
+      "text": "经营事件、审批和关键回执只增不改；纠正通过新事件表达，不静默覆盖证据。",
+      "source": "AGENTS.md#4.2"
+    },
+    {
+      "id": "INV-3",
+      "text": "所有外部或变更性动作及其子调用，统一经过权限、PII、围栏和审批链路。",
+      "source": "AGENTS.md#4.3"
+    },
+    {
+      "id": "INV-4",
+      "text": "涉钱、敏感数据、群发、公开发布、交易和破坏性变更必须按高风险处理并由人审批。",
+      "source": "AGENTS.md#4.4"
+    },
+    {
+      "id": "INV-5",
+      "text": "没有真实回执就不能标记完成；mock、模拟和体验模式在数据结构与界面上都要明确区分。",
+      "source": "AGENTS.md#4.5"
+    },
+    {
+      "id": "INV-6",
+      "text": "客户原始经营数据不得上行；蜂群只接受白名单化、最小化、匿名化且可审计的元数据或派生经验。",
+      "source": "AGENTS.md#4.6"
+    },
+    {
+      "id": "INV-7",
+      "text": "租户覆盖层只能收紧围栏，不能放宽平台不可变红线。",
+      "source": "AGENTS.md#4.7"
+    },
+    {
+      "id": "INV-8",
+      "text": "模型、提示词、技能、bundle、策略和热更新必须先评测再灰度，且始终可回滚。",
+      "source": "AGENTS.md#4.8"
+    },
+    {
+      "id": "INV-9",
+      "text": "platform-ops、平台账户运营和平台秘密只属于 Andromeda。",
+      "source": "AGENTS.md#4.9"
+    },
+    {
+      "id": "INV-10",
+      "text": "Tiger 在获得单独的合规审查和用户明确授权前，只能模拟或纸面交易。",
+      "source": "AGENTS.md#4.10"
+    },
+    {
+      "id": "INV-11",
+      "text": "令牌、密码、API key、私钥、客户凭证和私密客户数据不得进入源码、文档、上下文、提示词、日志或提交。",
+      "source": "AGENTS.md#4.11"
+    },
+    {
+      "id": "INV-12",
+      "text": "个性化与行业扩展不得形成公共机制的第二事实源。",
+      "source": "AGENTS.md#4.12"
+    }
+  ],
+  "cards": [
+    {
+      "id": "MC-101",
+      "kind": "problem",
+      "level": "L2",
+      "severity": "P1",
+      "batch": 0,
+      "state": "open",
+      "title": "被改动的成片仍被交付检查报成文件齐全",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "bundles/geo-growthmatrix/capabilities/video.mjs:247@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "f3cf0ffc9e9ce24cd0401a570c68755eade5dff623a901cbb01d2d105773bdee"
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-video-baseline-red.log",
+          "sha256": "d8ec9d9597b86c796e9fb7c24364ff5a9c3be40a16160609d24548f2104ca5a5",
+          "commit": "52b01ce98d25c58b710439aef6c2725994f4882b"
+        }
+      ],
+      "root_cause": {
+        "file": "bundles/geo-growthmatrix/capabilities/video.mjs",
+        "line": 247,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "export function deliveryInspect"
+      },
+      "trigger_path": "被改动的成片仍被交付检查报成文件齐全；运行此卡隔离反例。",
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual Matrix product function with task-owned synthetic files/query fixture; no provider/customer I/O",
+          "expect": "Selected nonzero tests pass with all assertions",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --test --test-name-pattern=changed deliverable ../matrix-video-baseline.test.mjs",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--test",
+              "--test-name-pattern=changed deliverable",
+              "../matrix-video-baseline.test.mjs"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --test --test-name-pattern=changed deliverable ../matrix-video-baseline.test.mjs",
+        "evidence": null
+      },
+      "notes": "Actual failure assertions ran before source application; first card add rejected ID, corrected attempt rejected outside-root evidence ref. Corrected add occurs after mechanical port. Failures/bytes retained, no old green imported. Direct number expectation is upgrade regression; rollback swallowing independently observed."
+    },
+    {
+      "id": "MC-102",
+      "kind": "problem",
+      "level": "L2",
+      "severity": "P1",
+      "batch": 0,
+      "state": "open",
+      "title": "影片预览缺少结构化 argv 与 PowerShell 字面值表示",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "bundles/geo-growthmatrix/capabilities/video.mjs:305@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "f3cf0ffc9e9ce24cd0401a570c68755eade5dff623a901cbb01d2d105773bdee"
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-video-baseline-red.log",
+          "sha256": "d8ec9d9597b86c796e9fb7c24364ff5a9c3be40a16160609d24548f2104ca5a5",
+          "commit": "52b01ce98d25c58b710439aef6c2725994f4882b"
+        }
+      ],
+      "root_cause": {
+        "file": "bundles/geo-growthmatrix/capabilities/video.mjs",
+        "line": 305,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "export function productionPlan"
+      },
+      "trigger_path": "影片预览缺少结构化 argv 与 PowerShell 字面值表示；运行此卡隔离反例。",
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual Matrix product function with task-owned synthetic files/query fixture; no provider/customer I/O",
+          "expect": "Selected nonzero tests pass with all assertions",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --test --test-name-pattern=literal argv ../matrix-video-baseline.test.mjs",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--test",
+              "--test-name-pattern=literal argv",
+              "../matrix-video-baseline.test.mjs"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --test --test-name-pattern=literal argv ../matrix-video-baseline.test.mjs",
+        "evidence": null
+      },
+      "notes": "Actual failure assertions ran before source application; first card add rejected ID, corrected attempt rejected outside-root evidence ref. Corrected add occurs after mechanical port. Failures/bytes retained, no old green imported. Direct number expectation is upgrade regression; rollback swallowing independently observed."
+    },
+    {
+      "id": "MC-103",
+      "kind": "problem",
+      "level": "L2",
+      "severity": "P1",
+      "batch": 0,
+      "state": "open",
+      "title": "线程号源额外加一且回退保存点失败被吞后继续重试",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/server/src/runtime/thread-admission.ts:80@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "8230292fa6722d04e302c7c46efe4e37b610b63d6a40e172ae7be66bd4396f9c"
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-thread-sequence-red.log",
+          "sha256": "0b1758162a5c4cc41180fccc6cbb3e050323a77186c1a129a6c322114c997356",
+          "commit": "52b01ce98d25c58b710439aef6c2725994f4882b"
+        }
+      ],
+      "root_cause": {
+        "file": "apps/server/src/runtime/thread-admission.ts",
+        "line": 80,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "export async function insertQueuedThread"
+      },
+      "trigger_path": "线程号源额外加一且回退保存点失败被吞后继续重试；运行此卡隔离反例。",
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual Matrix product function with task-owned synthetic files/query fixture; no provider/customer I/O",
+          "expect": "Selected nonzero tests pass with all assertions",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs exec vitest run --root .. matrix-thread-sequence.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "exec",
+              "vitest",
+              "run",
+              "--root",
+              "..",
+              "matrix-thread-sequence.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs exec vitest run --root .. matrix-thread-sequence.test.ts",
+        "evidence": null
+      },
+      "notes": "Actual failure assertions ran before source application; first card add rejected ID, corrected attempt rejected outside-root evidence ref. Corrected add occurs after mechanical port. Failures/bytes retained, no old green imported. Direct number expectation is upgrade regression; rollback swallowing independently observed."
+    },
+    {
+      "id": "MC-105",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P1",
+      "batch": 1,
+      "state": "open",
+      "title": "GEO 套件漏纳 Matrix 自有编制与内容日历产出对象",
+      "root_cause": {
+        "file": "scripts/suite-geo.ts",
+        "line": 98,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "presets.length === 27"
+      },
+      "trigger_path": "加载 Matrix 自有三岗位与内容日历后执行 GEO 套件；当前实际四项失败，登记先于本次适配。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "scripts/suite-geo.ts:98@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "90bf1968cf077ebb684ba3dbec2f220a347ed09f45a37c581283cc8b530b24bc"
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-geo-owned-db-complete.log",
+          "sha256": "9f4d8e748b50353f60c44b8b69464c52bcb3321cd4c71de7f1df6bc66e3b7e94",
+          "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+          "note": "Actual observation uses task-owned intermediate dirty port; precise source_before/source_after are in paired receipt. Not an untouched-baseline execution."
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Exact clean Matrix repair source and owned growthmatrix_audit database; no provider/customer I/O",
+          "expect": "All GEO cases pass; disk declarations, authoritatively parsed presets and all pipeline output types agree",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --import tsx scripts/suite-geo.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "--import",
+              "tsx",
+              "scripts/suite-geo.ts"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --import tsx scripts/suite-geo.ts",
+        "evidence": null
+      },
+      "notes": "Keep Matrix independent employees and content-calendar pipeline. Follow authoritative WorkforcePresetSchema where write_back defaults to []. Only undeclared material_inventory needs a product object declaration; no fabricated write tool."
+    },
+    {
+      "id": "MC-001",
+      "kind": "problem",
+      "level": "L1",
+      "severity": "P1",
+      "batch": 0,
+      "title": "桌面环境构造引用作用域外的 RUNTIME，首次启动抛异常",
+      "trigger_path": "在初装/重建环境时调用 buildDesktopEnvironment；执行原 bootstrap.test.cjs 环境构造用例即可复现。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "apps/desktop/electron/bootstrap.cjs",
+        "line": 395,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "buildDesktopEnvironment"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/desktop/electron/bootstrap.cjs:395@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "cfa0f9bb35cba09c9be09da58a748fe255c38f86b75200334fa6962537ac76eb",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Nonzero desktop bootstrap tests pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --test apps/desktop/electron/bootstrap.test.cjs",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "--test",
+              "apps/desktop/electron/bootstrap.test.cjs"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "apps/desktop/electron/bootstrap.cjs:395@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --test apps/desktop/electron/bootstrap.test.cjs",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-002",
+      "kind": "problem",
+      "level": "L2",
+      "severity": "P1",
+      "batch": 0,
+      "title": "客户端精确依赖锁未随仓库实际依赖更新，载荷门禁失败",
+      "trigger_path": "基线运行 node scripts/runtime-deps-lock.mjs verify；装配脚本在依赖 stage 前检查当前产品精确 manifest。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": ".workloom-runtime-deps/metadata.json",
+        "line": 28,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "runtime-deps-lock verify 输入指纹"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": ".workloom-runtime-deps/metadata.json:28@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "03b6280e4db14f295646f9a911e4d9f30eb284c6277645480227867edba5ae02",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Exact current Matrix runtime lock verifies",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env scripts/runtime-deps-lock.mjs verify",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "scripts/runtime-deps-lock.mjs",
+              "verify"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": ".workloom-runtime-deps/metadata.json:28@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env scripts/runtime-deps-lock.mjs verify",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-003",
+      "kind": "problem",
+      "level": "L2",
+      "severity": "P1",
+      "batch": 0,
+      "title": "工作区源码复制进 node_modules 后破坏相对路径与模块单例",
+      "trigger_path": "按原脚本打包，再从独立 support 目录启动；视频包从 node_modules 的复制位置解析 ../../../bundles。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "scripts/pack-electron-payload.sh",
+        "line": 127,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "内部工作区包实体注册循环"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "scripts/pack-electron-payload.sh:127@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "5b9879d9df5258a77e3d6b3c34dadaae5900798f01f487a817949c6dd602ca72",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Nonzero relocation, singleton and payload tests pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --test scripts/pack-workspace-modules.test.mjs scripts/payload-policy.test.mjs",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "--test",
+              "scripts/pack-workspace-modules.test.mjs",
+              "scripts/payload-policy.test.mjs"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "scripts/pack-electron-payload.sh:127@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": true,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --test scripts/pack-workspace-modules.test.mjs scripts/payload-policy.test.mjs",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-004",
+      "kind": "problem",
+      "level": "L2",
+      "severity": "P1",
+      "batch": 0,
+      "title": "载荷漏影片辅助模块，备线遗漏种子与白板工具依赖",
+      "trigger_path": "使用原独立安装 runtime 加 tsx loader 调用 full-chain-film.mts --worker；Mac/Windows 备线装配种子和工具。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "scripts/pack-electron-payload.sh",
+        "line": 91,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "Film CLI 文件白名单"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "scripts/pack-electron-payload.sh:91@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "5b9879d9df5258a77e3d6b3c34dadaae5900798f01f487a817949c6dd602ca72",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix physical:all assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group physical",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "physical"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "scripts/pack-electron-payload.sh:91@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": true,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group physical",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-005",
+      "kind": "problem",
+      "level": "L1",
+      "severity": "P0",
+      "batch": 0,
+      "title": "生产环境公共 loginAs 无身份验证，非示例工作区可取得 owner 身份",
+      "trigger_path": "NODE_ENV=production，使用随机签名密钥、loopback 隔离服务器；创建 is_example=false、dataMode=real 的假资产，用 slug 与 memberNo 发匿名 HTTP 请求，再请求 threads.list。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "apps/server/src/trpc/router.ts",
+        "line": 851,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "authRouter.loginAs / publicProcedure"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/server/src/trpc/router.ts:851@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "d771d869f701922cb41876c3df5c51d732ad1a5f8f2195c972246cc19c4c5e0f",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix auth:all assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group auth",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "auth"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "apps/server/src/trpc/router.ts:851@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group auth",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-006",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P0",
+      "batch": 1,
+      "title": "外部动作先执行后授权，审批并发可产生重复副作用",
+      "trigger_path": "使用真实 PG 和本地计数连接器：无 fence_bindings 的 agent 调写工具；一张高危审批对应 pending_review 线程并发续跑两次；另测 edited 高危审批。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "packages/runtime/src/loop.ts",
+        "line": 1038,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "runTool → gateway authorization / thread runner CAS"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "packages/runtime/src/loop.ts:1038@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "b729fe1d9857a1852b7a13e2e21061ef495508c4ce046d72226fbd33f4e93561",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix runtime:all assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "runtime"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "packages/runtime/src/loop.ts:1038@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-007",
+      "kind": "problem",
+      "level": "L1",
+      "severity": "P0",
+      "batch": 1,
+      "title": "缺参和低相关性标记跳过全部围栏，人工审批可越过 block 红线",
+      "trigger_path": "同一 unconditional block 规则下，对照普通计划与 context.params_incomplete=true 计划；实际调用 decide 采纳再续跑。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "packages/runtime/src/loop.ts",
+        "line": 778,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "needsHumanCheck 分支跳过 judge"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "packages/runtime/src/loop.ts:778@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "b729fe1d9857a1852b7a13e2e21061ef495508c4ce046d72226fbd33f4e93561",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix runtime:BLOCK-FLAG assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime --case BLOCK-FLAG",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "runtime",
+              "--case",
+              "BLOCK-FLAG"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "packages/runtime/src/loop.ts:778@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime --case BLOCK-FLAG",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-008",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P1",
+      "batch": 2,
+      "title": "plan_unverified 在存计划之后才标记，重放可绕过未批准的审核",
+      "trigger_path": "创建目标与写计划零相关的线程，第一次挂起；不决定审批，第二次复用 DB 中计划运行。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "packages/runtime/src/loop.ts",
+        "line": 677,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "saveThreadPlan → relevance annotation"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "packages/runtime/src/loop.ts:677@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "b729fe1d9857a1852b7a13e2e21061ef495508c4ce046d72226fbd33f4e93561",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix runtime:RELEVANCE-REPLAY assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime --case RELEVANCE-REPLAY",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "runtime",
+              "--case",
+              "RELEVANCE-REPLAY"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "packages/runtime/src/loop.ts:677@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime --case RELEVANCE-REPLAY",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-009",
+      "kind": "problem",
+      "level": "L4",
+      "severity": "P1",
+      "batch": 2,
+      "title": "编辑后采纳只记录新值，实际工具继续执行原参数",
+      "trigger_path": "审批中将 amount=1 编辑为 amount=2，真实 decide 编辑后采纳，再运行同一步。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "packages/base/review-console/approvals.ts",
+        "line": 246,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "gesture.edited_after 与 loop 审批快照读取"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "packages/base/review-console/approvals.ts:246@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "ca315b67e5b4db4c2640dc208b97e4befff508d96951c4bc984d5cbdf4463230",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix runtime:EDIT-PARAMS assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime --case EDIT-PARAMS",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "runtime",
+              "--case",
+              "EDIT-PARAMS"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "packages/base/review-console/approvals.ts:246@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime --case EDIT-PARAMS",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-010",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P1",
+      "batch": 2,
+      "title": "把 queued 算进运行并发，十条待办且零运行时队列停滞",
+      "trigger_path": "同工作区插入 10 queued、0 running，连续执行真实 sweepQueuedThreads 两次。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "apps/server/src/runtime/scheduler.ts",
+        "line": 72,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "sweepQueuedThreads 并发计数"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/server/src/runtime/scheduler.ts:72@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "56bce7d9f98070b3b18dbda5e3c15c3e25bd6b3390f6cfff182bd28b0c2ad58a",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix runtime:QUEUE-10 assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime --case QUEUE-10",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "runtime",
+              "--case",
+              "QUEUE-10"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "apps/server/src/runtime/scheduler.ts:72@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime --case QUEUE-10",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-011",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P1",
+      "batch": 2,
+      "title": "已驳回的 cancelled 线程可被普通 run 重新挂起",
+      "trigger_path": "真实 decide reject 将审批关联线程置 cancelled；对原线程调用普通 runner。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "apps/server/src/runtime/thread-runner.ts",
+        "line": 244,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "runQuestForThread CAS 与终态检查"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/server/src/runtime/thread-runner.ts:244@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "311b389046de1161915a2ee1d7e42d605402f04a43efc8bca13ec2cff93e65e1",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix runtime:REJECT-TERMINAL assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime --case REJECT-TERMINAL",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "runtime",
+              "--case",
+              "REJECT-TERMINAL"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "apps/server/src/runtime/thread-runner.ts:244@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime --case REJECT-TERMINAL",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-012",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P1",
+      "batch": 2,
+      "title": "驳回记忆 ID 不含工作区，同原因在第二工作区导致审批回滚",
+      "trigger_path": "两个新工作区用相同 reasonEnum 驳回各自审批；org_memory 全局主键冲突与 RLS 同时触发。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "packages/base/review-console/approvals.ts",
+        "line": 282,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "mem-reject-${reasonEnum} 与 org_memory 全局主键"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "packages/base/review-console/approvals.ts:282@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "ca315b67e5b4db4c2640dc208b97e4befff508d96951c4bc984d5cbdf4463230",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix runtime:REJECT-WORKSPACE-COLLISION assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime --case REJECT-WORKSPACE-COLLISION",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "runtime",
+              "--case",
+              "REJECT-WORKSPACE-COLLISION"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "packages/base/review-console/approvals.ts:282@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group runtime --case REJECT-WORKSPACE-COLLISION",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-013",
+      "kind": "problem",
+      "level": "L2",
+      "severity": "P1",
+      "batch": 2,
+      "title": "影片工位子进程缺 TypeScript 加载器，worker 分支仍未接通",
+      "trigger_path": "真实公开 filmRouter.start/status，种子 owner 和有效 eraProfile；仅 storyboard，供应商 key 清空，mock，不产生供应商请求。另从修复后的安装 runtime 加 tsx loader 调 --worker。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "apps/server/src/video/film-worker.ts",
+        "line": 383,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "runFilmJob child spawn / full-chain-film --worker"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/server/src/video/film-worker.ts:383@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "d5059b20b89cb456578593a3b7288b65616ba20e69217194bd0b8e7711c5b54c",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix film:all assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group film",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "film"
+            ]
+          },
+          "last_result": "not-run"
+        },
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix film:missing-output assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group film --case missing-output",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "film",
+              "--case",
+              "missing-output"
+            ]
+          },
+          "last_result": "not-run"
+        },
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix film:deadline assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group film --case deadline",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "film",
+              "--case",
+              "deadline"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "apps/server/src/video/film-worker.ts:383@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": true,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group film",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-014",
+      "kind": "problem",
+      "level": "L2",
+      "severity": "P2",
+      "batch": 2,
+      "title": "GEO 围栏引用 publish_job，组合对象模型没有该类型",
+      "trigger_path": "运行 suite:geo；将 geo-growth/ai-video/hotel schemas 和 runtime 豁免对象合并后检查围栏 match.object_types。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "bundles/geo-growthmatrix/fences/geo-growthmatrix-baseline.yml",
+        "line": 42,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "G9b 与 suite:geo A-10 对象并集"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "bundles/geo-growthmatrix/fences/geo-growthmatrix-baseline.yml:42@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "a0c702bf4ffd6257278d0991729b36a234255933c75b8eb7d6f00f0e99f4049a",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "All Matrix GEO cases pass against the owned database",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --import tsx scripts/suite-geo.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "--import",
+              "tsx",
+              "scripts/suite-geo.ts"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "bundles/geo-growth/fences/geo-growth-baseline.yml:42@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --import tsx scripts/suite-geo.ts",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-015",
+      "kind": "problem",
+      "level": "L4",
+      "severity": "P2",
+      "batch": 2,
+      "title": "影片预览建议命令未转义用户字符串，中文路径和分号破坏参数",
+      "trigger_path": "只调用 productionPlan，传 projectId 含分号与标记文本、路径和平台含中文空格；未执行返回命令。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "bundles/geo-growthmatrix/capabilities/video.mjs",
+        "line": 329,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "productionPlan recommendedCommand"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "bundles/geo-growthmatrix/capabilities/video.mjs:329@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "f3cf0ffc9e9ce24cd0401a570c68755eade5dff623a901cbb01d2d105773bdee",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Nonzero argv and artifact tampering tests pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --test scripts/video-capabilities.test.mjs",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "--test",
+              "scripts/video-capabilities.test.mjs"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "bundles/geo-growth/capabilities/video.mjs:329@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": true,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --test scripts/video-capabilities.test.mjs",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-016",
+      "kind": "problem",
+      "level": "L2",
+      "severity": "P2",
+      "batch": 3,
+      "title": "Live2D 间接工具链含四个安全公告，需按实际可达面处理",
+      "trigger_path": "基线 pnpm audit --prod 查询 registry，锁定的 gh-pages4.0.0 和 brace-expansion1.1.18 命中公告；检查实际 runtime 精确安装树。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "apps/web/package.json",
+        "line": 24,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "pixi-live2d-display → gh-pages → brace-expansion"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/web/package.json:24@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "52b769f4449d59c8fc45c249166285e6bd5a020169acc1469db095f37b441e1b",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual current production dependency audit exits zero",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs audit --prod --json",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "audit",
+              "--prod",
+              "--json"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "apps/web/package.json:24@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs audit --prod --json",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-017",
+      "kind": "problem",
+      "level": "L1",
+      "severity": "P0",
+      "batch": 0,
+      "title": "演示重置在非交互模式绕过确认，未识别客户工作区且缺少删除前备份",
+      "trigger_path": "已存在合成.env的非交互环境，无--yes调用原脚本；psql/pg_dump/pnpm/docker均为PATH替身；不访问真实数据库。",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "scripts/reset.sh",
+        "line": 12,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "confirmation / DROP SCHEMA"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "scripts/reset.sh:12@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "f1b5d4f5b79aa5b5b5ef014f1ffb263ba68e2ab7e303aa4e9867723752f93381",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Nonzero reset guard, retention and failure tests pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --test scripts/reset-safety.test.mjs",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "--test",
+              "scripts/reset-safety.test.mjs"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "scripts/reset.sh:12@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": false,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --test scripts/reset-safety.test.mjs",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-018",
+      "kind": "problem",
+      "level": "L1",
+      "severity": "P1",
+      "batch": 1,
+      "title": "启动诊断导出遗漏 JSON/连接串秘密，覆盖文件未收紧权限且保存错误逃出恢复流程",
+      "trigger_path": "Synthetic log fields and startup/read errors -> actual diagnosticText; cancel/new/existing file and dialog/open/write faults -> actual export action function. Original full Git source retained; no real secrets or customer data.",
+      "state": "open",
+      "fixed_by": null,
+      "verified_by": null,
+      "root_cause": {
+        "file": "apps/desktop/electron/main.cjs",
+        "line": 188,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "diagnosticText / handleSplashAction(export)"
+      },
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/desktop/electron/main.cjs:188@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "deef7f37e40bf09886f1cf0712b8225b033d2b8958e5b053f7cf5a47c5e04c0f",
+          "note": "B transfer obligation, actual Matrix audit blob; source finding is not an invented Matrix failure"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Nonzero diagnostic redaction and error tests pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --test --test-name-pattern=启动诊断秘密脱敏 apps/desktop/electron/bootstrap.test.cjs",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "--test",
+              "--test-name-pattern=启动诊断秘密脱敏",
+              "apps/desktop/electron/bootstrap.test.cjs"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "source_finding_provenance": {
+        "repository": "WorkLoom-growth",
+        "source_ref": "apps/desktop/electron/main.cjs:188@42ead347c65a5cc343bcd290702d53a7fcdb1687",
+        "target_original_bytes_identical": true,
+        "target_dynamic_failure_claimed": false,
+        "source_green_imported": false
+      },
+      "notes": "Fresh Matrix regression obligation. Current target bytes differ where its evolution applies; new repair and independent acceptance are mandatory.",
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --test --test-name-pattern=启动诊断秘密脱敏 apps/desktop/electron/bootstrap.test.cjs",
+        "evidence": null
+      }
+    },
+    {
+      "id": "MC-019",
+      "kind": "problem",
+      "level": "L4",
+      "severity": "P1",
+      "batch": 3,
+      "state": "open",
+      "title": "工作台名牌、任务投放与舞台的可点击区域保留几何约束",
+      "root_cause": {
+        "file": "apps/web/src/components/Floor3D.tsx",
+        "line": 96,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "function Worker"
+      },
+      "trigger_path": "工作台名牌、任务投放与舞台的可点击区域保留几何约束；实际执行本卡合同。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/web/src/components/Floor3D.tsx:96@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "a49a8431c28add8e30531cc0ba587b5cbfc86f6bc7bf3f4ffacd4d924fade84d"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "All six named floor and stage files run and pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/web exec vitest run src/components/Floor3DLabels.test.tsx src/components/Floor3DTaskDrop.test.tsx src/components/floor3d-layout.test.ts src/pages/p0/Floor.test.tsx src/pages/p0/floor-layout.test.ts src/components/Stage3D.test.tsx",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "apps/web",
+              "exec",
+              "vitest",
+              "run",
+              "src/components/Floor3DLabels.test.tsx",
+              "src/components/Floor3DTaskDrop.test.tsx",
+              "src/components/floor3d-layout.test.ts",
+              "src/pages/p0/Floor.test.tsx",
+              "src/pages/p0/floor-layout.test.ts",
+              "src/components/Stage3D.test.tsx"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/web exec vitest run src/components/Floor3DLabels.test.tsx src/components/Floor3DTaskDrop.test.tsx src/components/floor3d-layout.test.ts src/pages/p0/Floor.test.tsx src/pages/p0/floor-layout.test.ts src/components/Stage3D.test.tsx",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Fresh target regression control; no inherited green or fabricated original failure."
+    },
+    {
+      "id": "MC-020",
+      "kind": "problem",
+      "level": "L4",
+      "severity": "P1",
+      "batch": 3,
+      "state": "open",
+      "title": "助手与欢迎流程保留失败处理和当前 Matrix 引导语义",
+      "root_cause": {
+        "file": "apps/web/src/components/loommate/LoomMate.tsx",
+        "line": 135,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "export"
+      },
+      "trigger_path": "助手与欢迎流程保留失败处理和当前 Matrix 引导语义；实际执行本卡合同。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/web/src/components/loommate/LoomMate.tsx:135@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "9c9e700519f3fcdc8a616ae00d7fa607e296acc0a9f0dbb927a22dbf21e3dce6"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "All four existing named companion and onboarding files run and pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/web exec vitest run src/onboarding/useQuestline.test.tsx src/onboarding/useWelcomeProgress.test.tsx src/components/loommate/MateLive2D.test.tsx src/components/welcomeScripts.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "apps/web",
+              "exec",
+              "vitest",
+              "run",
+              "src/onboarding/useQuestline.test.tsx",
+              "src/onboarding/useWelcomeProgress.test.tsx",
+              "src/components/loommate/MateLive2D.test.tsx",
+              "src/components/welcomeScripts.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/web exec vitest run src/onboarding/useQuestline.test.tsx src/onboarding/useWelcomeProgress.test.tsx src/components/loommate/MateLive2D.test.tsx src/components/welcomeScripts.test.ts",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Fresh target regression control; no inherited green or fabricated original failure."
+    },
+    {
+      "id": "MC-104",
+      "kind": "problem",
+      "level": "L4",
+      "severity": "P1",
+      "batch": 3,
+      "state": "open",
+      "title": "本仓线程入队仍须承受真实十二路并发与安全回滚",
+      "root_cause": {
+        "file": "apps/server/src/runtime/thread-admission.ts",
+        "line": 12,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "insertQueuedThread"
+      },
+      "trigger_path": "本仓线程入队仍须承受真实十二路并发与安全回滚；实际执行本卡合同。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/server/src/runtime/thread-admission.ts:12@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "8230292fa6722d04e302c7c46efe4e37b610b63d6a40e172ae7be66bd4396f9c"
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-queued-admission-red.log",
+          "sha256": "188fc28d5fec84a6df49978578651e41019aeed5fe44bcbe3f264ac8cfe75f3d",
+          "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+          "note": "Actual intermediate dirty port failure, registered after its repair; precise source is in paired receipt. No untouched-baseline failure claim."
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Nonzero owned database stress cases pass, including twelve queued inserts and rollback safety",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --import tsx stress/stress-threads.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "--import",
+              "tsx",
+              "stress/stress-threads.ts"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env --import tsx stress/stress-threads.ts",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Fresh target regression control; no inherited green or fabricated original failure."
+    },
+    {
+      "id": "MC-106",
+      "kind": "problem",
+      "level": "L4",
+      "severity": "P1",
+      "batch": 3,
+      "state": "open",
+      "title": "迁移须保留本仓岗位、节拍、目标、行业规划与隔离身份",
+      "root_cause": {
+        "file": "apps/server/src/industry/registry.ts",
+        "line": 25,
+        "commit": "52b01ce98d25c58b710439aef6c2725994f4882b",
+        "symbol": "export"
+      },
+      "trigger_path": "迁移须保留本仓岗位、节拍、目标、行业规划与隔离身份；实际执行本卡合同。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/server/src/industry/registry.ts:25@52b01ce98d25c58b710439aef6c2725994f4882b",
+          "sha256": "73bed6aa418d6619c66506cab3d3ce0a9b22aab503c9cd019c57a04d9f5fc27f"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Actual Matrix preservation:all assertions exit zero with source binding",
+          "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group preservation",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "preservation"
+            ]
+          },
+          "last_result": "not-run"
+        },
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Nonzero own registry, planner, beat and goal tests pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/server exec vitest run src/industry/registry.test.ts src/runtime/beats-scheduler.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "apps/server",
+              "exec",
+              "vitest",
+              "run",
+              "src/industry/registry.test.ts",
+              "src/runtime/beats-scheduler.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        },
+        {
+          "kind": "sample",
+          "given": "Actual clean Matrix source, owned loopback fixtures; no provider/customer I/O",
+          "expect": "Nonzero own goal lifecycle tests pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C packages/base exec vitest run captain/goals.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "packages/base",
+              "exec",
+              "vitest",
+              "run",
+              "captain/goals.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "/Library/Developer/CommandLineTools/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group preservation",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Fresh target regression control; no inherited green or fabricated original failure."
+    }
+  ],
+  "gates": [],
+  "scope": "18 transferred obligations, two UI contracts, five actual target discoveries, one preservation contract",
+  "role_sessions": {
+    "repair": "/root",
+    "acceptance": "/root/growth_m6"
+  },
+  "source_green_imported": false
+}
