@@ -196,6 +196,7 @@ async function workspaceIndustryOf(app: pg.Pool, scope: Scope): Promise<string |
   const cached = workspaceIndustryCache.get(scope.workspaceId);
   if (cached !== undefined) return cached;
   const client = await app.connect();
+  let discardConnection = false;
   try {
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
@@ -209,9 +210,19 @@ async function workspaceIndustryOf(app: pg.Pool, scope: Scope): Promise<string |
     workspaceIndustryCache.set(scope.workspaceId, value);
     return value;
   } catch {
+    // A failed statement leaves the connection in an aborted transaction.
+    // The generic fact provider must receive a usable connection, including
+    // when this is a one-connection pool.
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      discardConnection = true;
+      console.warn("[ask] 行业查询回滚失败，已销毁连接并回退通用取数");
+    }
+    if (!discardConnection) console.warn("[ask] 行业查询失败，已回滚并回退通用取数");
     return null; // 不缓存失败结果，下次重试
   } finally {
-    client.release();
+    client.release(discardConnection);
   }
 }
 

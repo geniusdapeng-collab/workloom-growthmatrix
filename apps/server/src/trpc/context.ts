@@ -6,6 +6,7 @@
  *  - 越权查询返回空而非 403（L7.1）：RLS + 过程内强制 identity scope
  */
 import { initTRPC, TRPCError } from "@trpc/server";
+import type { AgentInvocationRef } from "../agent/invocations.js";
 import {
   capabilityDisplayName,
   hasCapability,
@@ -31,6 +32,8 @@ export interface TrpcContext {
   partnerIdentity: PartnerSessionIdentity | null;
   /** 原始请求头（P0-1 通道验签 x-channel-* / 服务间密钥 x-workloom-key 读取面） */
   headers: Headers;
+  /** Only the trusted agent router sets this; createContext never reads it from HTTP. */
+  agentInvocation?: AgentInvocationRef;
 }
 
 export async function createContext(req: Request): Promise<TrpcContext> {

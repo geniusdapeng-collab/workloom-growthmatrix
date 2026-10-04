@@ -24,6 +24,8 @@ import { gatewayAppend, gatewayAppendOnClient, insertWithReadableId, MockEmbedde
 import { makeReadableId } from "@workloom/shared";
 import { capabilityWriteProcedure, protectedProcedure, publicProcedure, router, scopeOf, sessionProcedure, writeProcedure } from "./context.js";
 import { insertQueuedThread, mapDispatchDbError } from "../runtime/thread-admission.js";
+import { lockAgentInvocation, linkAgentInvocation } from "../agent/invocations.js";
+import { buildAgentRouter } from "./agent-router.js";
 import { accountsRouter } from "./accounts-router.js";
 import { assertDemoLoginAllowed, desktopLoginTarget } from "../service/desktop-auth.js";
 import {
@@ -1225,6 +1227,10 @@ const threadsRouter = router({
         await client.query("BEGIN");
         await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
         await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]);
+        if (ctx.agentInvocation) {
+          if (ctx.agentInvocation.memberNo !== ctx.identity.memberNo) throw new TRPCError({ code: "FORBIDDEN", message: "调用成员绑定不符" });
+          await lockAgentInvocation(client, scope, ctx.agentInvocation);
+        }
         /**
          * U-03（并发上限形同虚设）：上限判定必须与建档在同一串行点——
          * 此前 12 路并发同时读到 count<10 各自放行，实测占用冲到 13/10。
@@ -1257,11 +1263,14 @@ const threadsRouter = router({
          * X-07（第四轮实测，P2）：建档即写 agent_id——此前只有 runQuest 执行时才回填，
          * 排队中的线程在楼层上无归属（`agent_id IS NULL` 被过滤），客户看不到"谁在排这条队"。
          */
-        const ownerAgent = await client.query<{ id: string }>(
-          `SELECT id FROM agents WHERE workspace_id=$1 AND preset_key=$2 LIMIT 1`,
+        const ownerAgent = await client.query<{ id: string; status: string }>(
+          `SELECT id,status FROM agents WHERE workspace_id=$1 AND preset_key=$2 LIMIT 1 FOR SHARE`,
           [scope.workspaceId, presetKey],
         );
         const ownerAgentId = ownerAgent.rows[0]?.id ?? null;
+        if (ctx.agentInvocation && (!ownerAgentId || ownerAgent.rows[0]?.status !== "ready")) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "派单岗位不存在或尚未就绪，拒绝回落替代岗位" });
+        }
         /**
          * GR-02 第②条 + U-03：号源取号与插入封装进 `insertQueuedThread`——
          * 撞号在 SAVEPOINT 内回滚重试（此前 23505 后事务已中止，重试的取号 SELECT
@@ -1276,7 +1285,7 @@ const threadsRouter = router({
           agentId: ownerAgentId,
         });
         // D16（#1/A）：建线程与派遣事件同一事务（G8 留痕不再独立于状态）
-        await gatewayAppendOnClient(client, {
+        const dispatchEvent = await gatewayAppendOnClient(client, {
           ...scope,
           actor: { id: ctx.identity.memberNo, type: "human" },
           sessionId: threadId,
@@ -1294,6 +1303,7 @@ const threadsRouter = router({
           },
           rule_impact: [],
         });
+        if (ctx.agentInvocation) await linkAgentInvocation(client, ctx.agentInvocation, "thread", threadId, dispatchEvent.eventId);
         // A-08 修复：COMMIT 纳入 try 主体——此前在 finally 里 .catch(()=>undefined) 吞掉，
         // COMMIT 失败（连接断开/序列化冲突）时事务实际回滚但调用方按成功继续（幽灵账本）
         await client.query("COMMIT");
@@ -1599,8 +1609,8 @@ const threadsRouter = router({
           `SELECT payload FROM biz_events WHERE workspace_id=$1 AND session_id=$2 ORDER BY seq ASC`,
           [scope.workspaceId, input.threadId],
         );
-        const registered = artifactsOfEvents(r.rows.map((row) => row.payload))
-          .filter((item) => Boolean(ARTIFACT_MIME[extname(item.path).toLowerCase()]));
+        // Use the same original registration index advertised by artifacts().
+        const registered = artifactsOfEvents(r.rows.map((row) => row.payload));
         entry = registered[input.index];
       } catch (err) {
         await client.query("ROLLBACK").catch(() => undefined);
@@ -3093,12 +3103,16 @@ const rosterRouter = router({
  *  Mock 驱动默认（D4 同纪律：无真实凭据全流程可跑）；真实通道凭据在 dsh 设置页配置（dsh-im，D14），
  *  凭据永不经事件明文（L7.3）。server 层只做装配与错误映射，纪律全部内聚在 packages/base/im-channels。 */
 const imDriverKind = process.env.IM_DRIVER ?? "mock";
-const imDrivers = new Map<ApprovalChannel, MockChannelDriver>();
-function mockDriverFor(channel: ApprovalChannel): MockChannelDriver {
-  let d = imDrivers.get(channel);
+const imDrivers = new Map<string, MockChannelDriver>();
+function imDriverKey(scope: { tenantId: string; workspaceId: string }, channel: ApprovalChannel): string {
+  return JSON.stringify([scope.tenantId, scope.workspaceId, channel]);
+}
+function mockDriverFor(scope: { tenantId: string; workspaceId: string }, channel: ApprovalChannel): MockChannelDriver {
+  const key = imDriverKey(scope, channel);
+  let d = imDrivers.get(key);
   if (!d) {
     d = new MockChannelDriver(channel);
-    imDrivers.set(channel, d);
+    imDrivers.set(key, d);
   }
   return d;
 }
@@ -3191,7 +3205,7 @@ const imRouter = router({
         const sent = await sendApprovalCard(
           getGatewayPool(),
           scope,
-          mockDriverFor(input.channel),
+          mockDriverFor(scope, input.channel),
           { conversationId: input.conversationId },
           card,
           ctx.identity.memberNo,
@@ -3245,7 +3259,7 @@ const imRouter = router({
           getGatewayPool(),
           scope,
           input,
-          mockDriverFor(input.channel),
+          mockDriverFor(scope, input.channel),
           // B-05 修复：IM 手势批准与端内 decide 同钩子（批准≠执行断链对症）
           { onApproved: (id) => runPostApprovalSideEffects(scope, id) },
         );
@@ -3257,9 +3271,9 @@ const imRouter = router({
   /** mock 出站盒检视（IM_DRIVER=mock 联调/演示用；真实驱动下为空） */
   outbox: protectedProcedure
     .input(z.object({ channel: z.enum(["dingtalk", "wecom", "feishu"]) }))
-    .query(({ input }) => ({
+    .query(({ ctx, input }) => ({
       driver: imDriverKind,
-      outbox: imDrivers.get(input.channel)?.outbox ?? [],
+      outbox: imDrivers.get(imDriverKey(scopeOf(ctx.identity), input.channel))?.outbox ?? [],
     })),
 });
 
@@ -4122,6 +4136,7 @@ export const appRouter = router({
   accounts: accountsRouter,
   members: membersRouter,
   threads: threadsRouter,
+  agent: buildAgentRouter({ dispatch: (ctx, input) => threadsRouter.createCaller(ctx).dispatch(input) }),
   approvals: approvalsRouter,
   inspection: inspectionRouter,
   skills: skillsRouter,

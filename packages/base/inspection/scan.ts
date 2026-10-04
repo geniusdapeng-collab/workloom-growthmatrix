@@ -13,7 +13,8 @@
  *  - 全部事件经 gatewayAppend 三段瀑布（G8 留痕），巡检 agent 为只读 actor（inspect.* 为读类动作）
  */
 import type pg from "pg";
-import { gatewayAppend } from "../workdata/gateway.js";
+import { gatewayAppend, gatewayAppendOnClient } from "../workdata/gateway.js";
+import { withInspectionTransaction } from "./transaction.js";
 import {
   aggregateBySource,
   runChecks,
@@ -71,16 +72,31 @@ async function emit(
   return r.eventId;
 }
 
+async function emitOnClient(
+  client: pg.PoolClient,
+  scope: Scope,
+  at: Date,
+  decision: Record<string, unknown>,
+  object: { type: string; id?: string },
+  links?: string[],
+): Promise<string> {
+  const result = await gatewayAppendOnClient(client, {
+    tenantId: scope.tenantId, workspaceId: scope.workspaceId, actor: ACTOR,
+  }, {
+    who: { type: "agent", id: "inspection-agent", version: "v1.2" },
+    context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: at.toISOString(), channel: "inapp" },
+    object, decision: decision as never, rule_impact: [], links,
+  });
+  return result.eventId;
+}
+
 /** L9.1 前置断言：巡检 preset 只读（工具集裁剪保证，非提示词约束） */
 export async function assertReadonlyPreset(app: pg.Pool, scope: Scope, presetKey = "inspection-agent"): Promise<void> {
-  const client = await app.connect();
-  try {
-    // 事务级 RLS 上下文必须在显式事务内设置：autocommit 下 set_config(...,true) 语句结束即失效
-    await client.query("BEGIN");
-    await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
+  return withInspectionTransaction(app, scope, async client => {
     const r = await client.query<{ readonly: boolean; meta: { tools?: Array<{ name: string; access: string }> } }>(
-      `SELECT readonly, meta FROM agents WHERE workspace_id=$1 AND preset_key=$2`,
-      [scope.workspaceId, presetKey],
+      `SELECT readonly, a.meta FROM agents a JOIN workspaces w ON w.id=a.workspace_id
+       WHERE a.workspace_id=$1 AND a.preset_key=$2 AND w.tenant_id=$3`,
+      [scope.workspaceId, presetKey, scope.tenantId],
     );
     const agent = r.rows[0];
     if (!agent) throw new InspectionPreflightError(`巡检 preset「${presetKey}」未注册`);
@@ -89,35 +105,19 @@ export async function assertReadonlyPreset(app: pg.Pool, scope: Scope, presetKey
     if (writeTool) {
       throw new InspectionPreflightError(`巡检 preset「${presetKey}」加载了写工具 ${writeTool.name}，违反 L9.1`);
     }
-  } catch (err) {
-    await client.query("ROLLBACK").catch(() => undefined);
-    throw err;
-  } finally {
-    await client.query("COMMIT").catch(() => undefined);
-    client.release();
-  }
+  });
 }
 
 /** 只读快照装载（profiles.archive.inspection；字段由已验证行业适配器解释） */
 export async function loadSnapshot(app: pg.Pool, scope: Scope): Promise<InspectionSnapshot> {
-  const client = await app.connect();
-  try {
-    // 事务级 RLS 上下文必须在显式事务内设置：autocommit 下 set_config(...,true) 语句结束即失效
-    await client.query("BEGIN");
-    await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
+  return withInspectionTransaction(app, scope, async client => {
     const r = await client.query<{ archive: Record<string, unknown> }>(
-      `SELECT archive FROM profiles WHERE workspace_id=$1`,
-      [scope.workspaceId],
+      `SELECT archive FROM profiles WHERE workspace_id=$1 AND tenant_id=$2`,
+      [scope.workspaceId, scope.tenantId],
     );
     const insp = (r.rows[0]?.archive as { inspection?: InspectionSnapshot } | undefined)?.inspection;
     return insp ?? {};
-  } catch (err) {
-    await client.query("ROLLBACK").catch(() => undefined);
-    throw err;
-  } finally {
-    await client.query("COMMIT").catch(() => undefined);
-    client.release();
-  }
+  });
 }
 
 /** L9.3 去重键 */
@@ -127,38 +127,29 @@ export function anomalyDedupeKey(f: Finding): string {
 
 /** 查询当日仍未解决的异常键（已有 inspect.anomaly 且无对应 inspect.resolved 回链） */
 export async function listOpenAnomalyKeys(app: pg.Pool, scope: Scope, day: Date): Promise<Set<string>> {
-  const client = await app.connect();
-  try {
-    // 事务级 RLS 上下文必须在显式事务内设置：autocommit 下 set_config(...,true) 语句结束即失效
-    await client.query("BEGIN");
-    await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
-    await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]);
-    const dayStart = new Date(day); dayStart.setHours(0, 0, 0, 0);
-    const anomalies = await client.query<{ event_id: string; payload: { decision: { after?: { dedupeKey?: string } } } }>(
-      `SELECT event_id, payload FROM biz_events
-       WHERE workspace_id=$1 AND created_at >= $2 AND payload->'decision'->>'action' = 'inspect.anomaly'`,
-      [scope.workspaceId, dayStart.toISOString()],
-    );
-    const resolved = await client.query<{ payload: { links?: string[] } }>(
-      `SELECT payload FROM biz_events
-       WHERE workspace_id=$1 AND created_at >= $2 AND payload->'decision'->>'action' IN ('inspect.resolved','inspect.escalated')`,
-      [scope.workspaceId, dayStart.toISOString()],
-    );
-    const resolvedIds = new Set(resolved.rows.flatMap((r) => r.payload.links ?? []));
-    const keys = new Set<string>();
-    for (const a of anomalies.rows) {
-      if (resolvedIds.has(a.event_id)) continue;
-      const k = a.payload.decision.after?.dedupeKey;
-      if (k) keys.add(k);
-    }
-    return keys;
-  } catch (err) {
-    await client.query("ROLLBACK").catch(() => undefined);
-    throw err;
-  } finally {
-    await client.query("COMMIT").catch(() => undefined);
-    client.release();
+  return withInspectionTransaction(app, scope, client => listOpenAnomalyKeysOnClient(client, scope, day));
+}
+
+async function listOpenAnomalyKeysOnClient(client: pg.PoolClient, scope: Scope, day: Date): Promise<Set<string>> {
+  const dayStart = new Date(day); dayStart.setHours(0, 0, 0, 0);
+  const anomalies = await client.query<{ event_id: string; payload: { decision: { after?: { dedupeKey?: string } } } }>(
+    `SELECT event_id, payload FROM biz_events
+     WHERE workspace_id=$1 AND created_at >= $2 AND tenant_id=$3 AND payload->'decision'->>'action' = 'inspect.anomaly'`,
+    [scope.workspaceId, dayStart.toISOString(), scope.tenantId],
+  );
+  const resolved = await client.query<{ payload: { links?: string[] } }>(
+    `SELECT payload FROM biz_events
+     WHERE workspace_id=$1 AND created_at >= $2 AND tenant_id=$3 AND payload->'decision'->>'action' IN ('inspect.resolved','inspect.escalated')`,
+    [scope.workspaceId, dayStart.toISOString(), scope.tenantId],
+  );
+  const resolvedIds = new Set(resolved.rows.flatMap((r) => r.payload.links ?? []));
+  const keys = new Set<string>();
+  for (const a of anomalies.rows) {
+    if (resolvedIds.has(a.event_id)) continue;
+    const k = a.payload.decision.after?.dedupeKey;
+    if (k) keys.add(k);
   }
+  return keys;
 }
 
 /**
@@ -209,7 +200,7 @@ export async function runInspectionScan(
 
 async function scanOnce(
   app: pg.Pool,
-  gateway: pg.Pool,
+  _gateway: pg.Pool,
   scope: Scope,
   runId: string,
   at: Date,
@@ -230,65 +221,71 @@ async function scanOnce(
   const okCount = effective.filter((f) => f.status === "ok").length;
   const anomalies = effective.filter((f) => f.status === "anomaly");
 
-  // L9.3：当日未解决异常去重（不重复写、不重复推送）
-  const openKeys = await listOpenAnomalyKeys(app, scope, at);
-  const fresh = anomalies.filter((f) => !openKeys.has(anomalyDedupeKey(f)));
-  const deduped = anomalies.filter((f) => openKeys.has(anomalyDedupeKey(f)));
+  return withInspectionTransaction(app, scope, async client => {
+    // Acquire the scan lock before the event-chain lock, then reread the winner's commit.
+    // All anomaly/notification/completion events are part of this one transaction.
+    const dayStart = new Date(at); dayStart.setHours(0, 0, 0, 0);
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))",
+      [JSON.stringify(["inspection-scan", scope.tenantId, scope.workspaceId, dayStart.toISOString()])]);
+    const openKeys = await listOpenAnomalyKeysOnClient(client, scope, at);
+    const fresh = anomalies.filter((f) => !openKeys.has(anomalyDedupeKey(f)));
+    const deduped = anomalies.filter((f) => openKeys.has(anomalyDedupeKey(f)));
 
-  // F9.2：异常即事件（分级高/中/低）
-  const anomalyEventIds = new Map<string, string>();
-  for (const f of fresh) {
-    const id = await emit(gateway, scope, at, {
-      action: "inspect.anomaly",
+    // F9.2：异常即事件（分级高/中/低）
+    const anomalyEventIds = new Map<string, string>();
+    for (const f of fresh) {
+      const id = await emitOnClient(client, scope, at, {
+        action: "inspect.anomaly",
+        after: {
+          runId, checkId: f.checkId, severity: f.severity, summary: f.summary,
+          dedupeKey: anomalyDedupeKey(f), source: f.source,
+        },
+      }, { type: f.objectType, id: f.objectId });
+      anomalyEventIds.set(anomalyDedupeKey(f), id);
+    }
+
+    // G3/E9.2：高优异常 → 同源聚合为一条摘要推送（≤5min 机制=立即推送，inapp 本地回环）
+    const notifyEventIds: string[] = [];
+    const groups = aggregateBySource(fresh).filter((g) => g.severity === "high");
+    for (const g of groups) {
+      const id = await emitOnClient(client, scope, at, {
+        action: "inspect.notify",
+        after: {
+          runId, severity: "high", channel: "inapp", slaMinutes: 5,
+          summary: `【巡检高优】${g.source} 源 ${g.count} 项异常：${g.items[0]!.summary}${g.count > 1 ? ` 等 ${g.count} 项` : ""}`,
+          detailEventIds: g.items.map((i) => anomalyEventIds.get(anomalyDedupeKey(i))).filter(Boolean),
+        },
+        basis: ["高优异常 IM 推送 ≤5min（G3）", "同源聚合一条摘要，详单进面板（E9.2）"],
+      }, { type: "store", id: scope.workspaceId }, g.items.map((i) => anomalyEventIds.get(anomalyDedupeKey(i))!).filter(Boolean));
+      notifyEventIds.push(id);
+    }
+
+    // 巡检通过事件（M9.3：正常写巡检通过事件）——汇总一条（状态条投影数据源，F9.4）
+    const totalChecks = effective.length;
+    await emitOnClient(client, scope, at, {
+      action: "inspect.run.completed",
       after: {
-        runId, checkId: f.checkId, severity: f.severity, summary: f.summary,
-        dedupeKey: anomalyDedupeKey(f), source: f.source,
+        runId, totalChecks, okCount,
+        anomalyCount: anomalies.length, dedupedCount: deduped.length,
+        nodataCount: findings.length - effective.length,
       },
-    }, { type: f.objectType, id: f.objectId });
-    anomalyEventIds.set(anomalyDedupeKey(f), id);
-  }
+      basis: ["巡检状态条纯日志投影（F9.4/H-7 同源纪律，不建额外报表管道）"],
+    }, { type: "store", id: scope.workspaceId });
 
-  // G3/E9.2：高优异常 → 同源聚合为一条摘要推送（≤5min 机制=立即推送，inapp 本地回环）
-  const notifyEventIds: string[] = [];
-  const groups = aggregateBySource(fresh).filter((g) => g.severity === "high");
-  for (const g of groups) {
-    const id = await emit(gateway, scope, at, {
-      action: "inspect.notify",
-      after: {
-        runId, severity: "high", channel: "inapp", slaMinutes: 5,
-        summary: `【巡检高优】${g.source} 源 ${g.count} 项异常：${g.items[0]!.summary}${g.count > 1 ? ` 等 ${g.count} 项` : ""}`,
-        detailEventIds: g.items.map((i) => anomalyEventIds.get(anomalyDedupeKey(i))).filter(Boolean),
-      },
-      basis: ["高优异常 IM 推送 ≤5min（G3）", "同源聚合一条摘要，详单进面板（E9.2）"],
-    }, { type: "store", id: scope.workspaceId }, g.items.map((i) => anomalyEventIds.get(anomalyDedupeKey(i))!).filter(Boolean));
-    notifyEventIds.push(id);
-  }
-
-  // 巡检通过事件（M9.3：正常写巡检通过事件）——汇总一条（状态条投影数据源，F9.4）
-  const totalChecks = effective.length;
-  await emit(gateway, scope, at, {
-    action: "inspect.run.completed",
-    after: {
-      runId, totalChecks, okCount,
-      anomalyCount: anomalies.length, dedupedCount: deduped.length,
-      nodataCount: findings.length - effective.length,
-    },
-    basis: ["巡检状态条纯日志投影（F9.4/H-7 同源纪律，不建额外报表管道）"],
-  }, { type: "store", id: scope.workspaceId });
-
-  return {
-    runId, at: at.toISOString(), ok: true,
-    totalChecks, okCount,
-    anomalies: [
-      ...fresh.map((f) => ({
-        checkId: f.checkId, severity: f.severity ?? "low" as Severity, summary: f.summary,
-        objectType: f.objectType, objectId: f.objectId, eventId: anomalyEventIds.get(anomalyDedupeKey(f)),
-      })),
-      ...deduped.map((f) => ({
-        checkId: f.checkId, severity: f.severity ?? "low" as Severity, summary: f.summary,
-        objectType: f.objectType, objectId: f.objectId, deduped: true,
-      })),
-    ],
-    notifyEventIds,
-  };
+    return {
+      runId, at: at.toISOString(), ok: true,
+      totalChecks, okCount,
+      anomalies: [
+        ...fresh.map((f) => ({
+          checkId: f.checkId, severity: f.severity ?? "low" as Severity, summary: f.summary,
+          objectType: f.objectType, objectId: f.objectId, eventId: anomalyEventIds.get(anomalyDedupeKey(f)),
+        })),
+        ...deduped.map((f) => ({
+          checkId: f.checkId, severity: f.severity ?? "low" as Severity, summary: f.summary,
+          objectType: f.objectType, objectId: f.objectId, deduped: true,
+        })),
+      ],
+      notifyEventIds,
+    };
+  });
 }

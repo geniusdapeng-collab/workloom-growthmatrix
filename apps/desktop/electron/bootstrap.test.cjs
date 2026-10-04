@@ -704,8 +704,15 @@ describe("桌面 PostgreSQL 实例归属与端口契约", () => {
 
       const withRuntime = buildDesktopEnvironment(original, { ...options, runtimeDir: root });
       const injected = withRuntime.text.match(/^WORKLOOM_TOOL_EXECUTOR_MODULES=(.*)$/mu)?.[1] ?? "";
-      assert.match(injected, /demo-bridge\/executor\.ts#createDemoExecutor#demo\.\*#http:\/\/127\.0\.0\.1:9911/u);
+      assert.match(injected, /demo-bridge\/executor\.ts::createDemoExecutor::demo\.\*::http:\/\/127\.0\.0\.1:9911/u);
       assert.equal(withRuntime.values.WORKLOOM_TOOL_EXECUTOR_MODULES, injected);
+      const envFile = path.join(root, ".env");
+      fs.writeFileSync(envFile, withRuntime.text);
+      const parsed = spawnSync(process.execPath, [`--env-file=${envFile}`, "-p", "process.env.WORKLOOM_TOOL_EXECUTOR_MODULES"], {
+        encoding: "utf8", env: {},
+      });
+      assert.equal(parsed.status, 0, parsed.stderr);
+      assert.equal(parsed.stdout.trim(), injected, "Node env-file 不能截断工厂、工具路由或端点");
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
@@ -741,7 +748,7 @@ describe("桌面 PostgreSQL 实例归属与端口契约", () => {
         fs.copyFileSync(source, executor);
         const result = buildDesktopEnvironment(previous, { ...configuration, runtimeDir });
         assert.equal(result.values.WORKLOOM_TOOL_EXECUTOR_MODULES,
-          `${executor}#createBgmBridgeExecutor#bgmread.*|bgmwrite.*#http://127.0.0.1:9775`);
+          `${executor}::createBgmBridgeExecutor::bgmread.*|bgmwrite.*::http://127.0.0.1:9775`);
         assert.ok(result.text.includes(`WORKLOOM_TOOL_EXECUTOR_MODULES=${result.values.WORKLOOM_TOOL_EXECUTOR_MODULES}\n`));
         assert.match(result.text, /^LLM_MODEL=keep-user-choice$/mu);
         previous = result.text;

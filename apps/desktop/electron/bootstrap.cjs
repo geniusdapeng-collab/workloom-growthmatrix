@@ -78,9 +78,40 @@ function runToLog(cmd, args, logFile) {
 function spawnLogged(cmd, args, opts, logFile) {
   fs.mkdirSync(path.dirname(logFile), { recursive: true });
   const fd = fs.openSync(logFile, "a");
-  const child = spawn(cmd, args, { stdio: ["ignore", fd, fd], ...opts });
-  child.on("error", () => {});
-  return child;
+  try {
+    const child = spawn(cmd, args, { stdio: ["ignore", fd, fd], ...opts });
+    child.once("error", (error) => {
+      child.startupError = error;
+      fs.appendFileSync(logFile, `启动失败 ${path.basename(cmd)}: ${error.code || error.name}\n`);
+    });
+    return child;
+  } finally { fs.closeSync(fd); }
+}
+
+function ensureDesktopSigningSecrets(text) {
+  let next = text;
+  for (const key of ["WORKLOOM_RENDER_SIGNING_SECRET", "WORKLOOM_AUDIO_STEM_SIGNING_SECRET", "HUMAN_CONFIRMATION_SECRET"])
+    if (Buffer.byteLength(readEnvValue(next, key) || "") < 32) next = upsertEnvValue(next, key, crypto.randomBytes(32).toString("hex"));
+  return next;
+}
+
+async function assertTcpPortFree(port, label) {
+  const net = require("node:net");
+  await new Promise((resolve, reject) => {
+    const probe = net.createServer();
+    probe.once("error", (error) => reject(Object.assign(new Error(`${label} 端口 ${port} 无法使用（${error.code}）；请关闭占用程序或调整客户端端口`),{code:error.code})));
+    probe.listen(port, "127.0.0.1", () => probe.close(error => error ? reject(error) : resolve()));
+  });
+}
+
+async function desktopServiceHealthy(url, instanceId, productId) {
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 4000);
+  try {
+    const response = await fetch(url, { signal: ctrl.signal });
+    if (!response.ok) return false;
+    const body = await response.json();
+    return body.ok === true && body.desktopInstanceId === instanceId && body.productId === productId;
+  } catch { return false; } finally { clearTimeout(timer); }
 }
 
 // The server starts from our bundled Node by absolute path, but some local renderers
@@ -405,7 +436,7 @@ function buildDesktopEnvironment(text, {
 
 /**
  * 扫描载荷内 `bundles/&lt;bundle&gt;/connectors/&lt;bridge&gt;/executor.ts`，为每个桥生成一条执行器规格：
- *   `<模块绝对路径>#<工厂名>#<工具名模式|…>#<默认端点>`
+ *   `<模块绝对路径>::<工厂名>::<工具名模式|…>::<默认端点>`
  * 工具名模式取自桥源码的工具常量（`*_TOOLS`），端点取源码注释里的 127.0.0.1 端口（缺省则留空走共享 WORKLOOM_BRIDGE_BASE_URL）。
  */
 function resolveToolExecutorModules(runtimeDir) {
@@ -427,7 +458,7 @@ function resolveToolExecutorModules(runtimeDir) {
       const prefixes = [...new Set(toolNames.map((name) => name.split(".")[0]).filter(Boolean))];
       const patterns = prefixes.map((prefix) => `${prefix}.*`);
       const port = /http:\/\/127\.0\.0\.1:(\d+)/.exec(source)?.[1];
-      specs.push([file, factory, patterns.join("|"), port ? `http://127.0.0.1:${port}` : ""].join("#"));
+      specs.push([file, factory, patterns.join("|"), port ? `http://127.0.0.1:${port}` : ""].join("::"));
     }
   }
   return specs.join(",");
@@ -662,6 +693,36 @@ function validateDatabaseHelper(nodeBin, helperFile, runCommand = run) {
   }
 }
 
+function validateRuntimePayload(nodeBin, tsxCli, runtimeDir, resourcesDir, runCommand = run) {
+  const manifestFile = path.join(runtimeDir, "product.manifest.json");
+  let product;
+  try { product = JSON.parse(fs.readFileSync(manifestFile, "utf8")); }
+  catch { throw new Error("受保护产品清单无法解析，拒绝提交新载荷"); }
+  const probe = path.join(runtimeDir, "scripts", "runtime-payload-probe.mts");
+  if (!fs.existsSync(probe)) throw new Error("载荷预检入口缺失，拒绝提交新载荷");
+  const trustFile = path.join(resourcesDir, "bundle-trust.json");
+  const env = withBundledNodePath({
+    ...(IS_WIN ? { SystemRoot: process.env.SystemRoot, WINDIR: process.env.WINDIR } : {}),
+    PATH: IS_WIN ? `${process.env.SystemRoot || "C:\\Windows"}\\System32` : "/usr/bin:/bin",
+    NODE_ENV: "production", LLM_PROVIDER: "mock", WORKLOOM_RUNTIME_PREFLIGHT: "1",
+    JWT_SECRET: crypto.randomBytes(32).toString("hex"), PII_SALT: crypto.randomBytes(32).toString("hex"),
+    HUMAN_CONFIRMATION_SECRET: crypto.randomBytes(32).toString("hex"),
+    ...(fs.existsSync(trustFile) ? { BUNDLE_VERIFICATION_KEYS: fs.readFileSync(trustFile, "utf8") } : {}),
+  }, nodeBin);
+  const result = runCommand(nodeBin, [tsxCli, probe], { cwd: runtimeDir, env, timeout: 120_000, maxBuffer: 8 * 1024 * 1024 });
+  if (result.code !== 0) throw new Error(`载荷预检失败：${String(result.err || result.out).trim().slice(-500)}`);
+  const line = String(result.out).split(/\r?\n/u).findLast(value => value.startsWith("RUNTIME_PREFLIGHT "));
+  let receipt;
+  try { receipt = JSON.parse(line?.slice("RUNTIME_PREFLIGHT ".length) || ""); }
+  catch { throw new Error("载荷预检没有可读的完成回执"); }
+  if (receipt.status !== "passed" || receipt.networkCalls !== 0 || !Array.isArray(receipt.checks)
+      || !receipt.checks.includes("complete-product-identity") || !receipt.checks.includes("agent-execution-auth")
+      || ["productId", "demoWorkspaceSlug", "demoMemberNo"].some(key => typeof product[key] !== "string" || receipt[key] !== product[key])) {
+    throw new Error("载荷预检未完成全部入口及产品身份检查，拒绝提交新载荷");
+  }
+  return product;
+}
+
 function writeInstallCheckpoint(supportDir, state) {
   atomicWrite(path.join(supportDir, "install-state.json"), `${JSON.stringify({
     schemaVersion: "workloom.install-state/v1",
@@ -763,13 +824,11 @@ function installPayloadAtomically({ sourceRoot, supportDir, payloadVer, previous
 }
 
 async function httpOk(url) {
+  const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 4000);
   try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 4000);
     const r = await fetch(url, { signal: ctrl.signal });
-    clearTimeout(t);
     return r.ok;
-  } catch { return false; }
+  } catch { return false; } finally { clearTimeout(t); }
 }
 
 /* ---------------- 主流程 ---------------- */
@@ -939,6 +998,8 @@ async function bootstrap(opts) {
     if (!fs.existsSync(pgBin(executable))) throw new Error(`载荷不完整：PostgreSQL ${executable} 缺失`);
   }
   validateDatabaseHelper(NODE_BIN, DB_HELPER);
+  status("→ 预检当前产品与运行入口…", { phase: "payload-preflight", percent: 38, etaSeconds: 75 });
+  const desktopProduct = validateRuntimePayload(NODE_BIN, TSX_CLI, RUNTIME, resourceRoot);
   throwIfAborted();
 
   /* ---------- 0.5 桌面托管配置 ---------- */
@@ -976,6 +1037,7 @@ async function bootstrap(opts) {
     envText = upsertEnvValue(envText, "JWT_SECRET", jwtValue);
     envText = upsertEnvValue(envText, "PII_SALT", piiValue);
   }
+  envText = ensureDesktopSigningSecrets(envText);
   const adminPassword = databaseState.credentials.owner;
   const appPassword = databaseState.credentials.app;
   const gatewayPassword = databaseState.credentials.gateway;
@@ -987,9 +1049,8 @@ async function bootstrap(opts) {
     adminPassword,
     appPassword,
     gatewayPassword,
-    runtimeDir: RUNTIME,
   });
-  if (!envExisted || desktopConfig.text !== envText) atomicWrite(envFile, desktopConfig.text, 0o600);
+  if (!envExisted || desktopConfig.text !== fs.readFileSync(envFile, "utf8")) atomicWrite(envFile, desktopConfig.text, 0o600);
   else {
     try { fs.chmodSync(envFile, 0o600); } catch { /* Windows 不保证 POSIX mode */ }
   }
@@ -1003,13 +1064,13 @@ async function bootstrap(opts) {
     WORKLOOM_NATS_PORT: String(NATS_PORT),
   };
   const serverEnv = withBundledNodePath({ ...desktopEnv, NODE_ENV: "production" }, NODE_BIN);
-  const desktopProduct = JSON.parse(fs.readFileSync(path.join(RUNTIME, "product.manifest.json"), "utf8"));
-  if (typeof desktopProduct.demoWorkspaceSlug !== "string" || typeof desktopProduct.demoMemberNo !== "string") {
-    throw new Error("受保护产品清单缺少本机工作区与成员配置");
-  }
   const desktopLoginKey = crypto.randomBytes(32).toString("hex");
   Object.assign(serverEnv, { SERVER_HOST: "127.0.0.1", WORKLOOM_DESKTOP_LOGIN_KEY: desktopLoginKey,
     WORKLOOM_DESKTOP_WORKSPACE: desktopProduct.demoWorkspaceSlug, WORKLOOM_DESKTOP_MEMBER: desktopProduct.demoMemberNo });
+  serverEnv.WORKLOOM_DESKTOP_INSTANCE_ID = crypto.randomUUID();
+  serverEnv.WORKLOOM_PRODUCT_ID = desktopProduct.productId;
+  serverEnv.WORKLOOM_DIRECTOR_DIR = path.join(supportDir, "director");
+  serverEnv.WORKLOOM_MEDIA_DIR = path.join(supportDir, "media");
   const runDatabaseHelper = (mode, legacyPasswords = []) => run(NODE_BIN, [DB_HELPER], {
     env: {
       ...desktopEnv,
@@ -1123,8 +1184,10 @@ async function bootstrap(opts) {
   const NATS_BIN = path.join(supportDir, "nats", IS_WIN ? "nats-server.exe" : "nats-server");
   if (fs.existsSync(NATS_BIN)) {
     throwIfAborted();
-    const listening = await httpOk(`http://127.0.0.1:${NATS_PORT}/`) || run(IS_WIN ? "netstat" : "lsof", IS_WIN ? ["-ano"] : ["-nP", `-iTCP:${NATS_PORT}`, "-sTCP:LISTEN"]).out.includes(String(NATS_PORT));
-    if (!listening) {
+    let free = true;
+    try { await assertTcpPortFree(NATS_PORT, "事件总线"); }
+    catch (error) { if (error.code === "EADDRINUSE") free = false; else throw error; }
+    if (free) {
       status("→ 启动本机事件总线…", { phase: "event-bus", percent: 63, etaSeconds: 45 });
       const natsDir = path.join(supportDir, "nats-data");
       fs.mkdirSync(natsDir, { recursive: true });
@@ -1132,10 +1195,16 @@ async function bootstrap(opts) {
       children.push(proc);
       await sleep(3000);
       throwIfAborted();
+      if (proc.startupError || proc.exitCode !== null || proc.signalCode !== null)
+        throw new Error("本机事件总线启动失败，请查看 nats.log；未连接其他客户端的事件总线");
+      serverEnv.EVENT_BUS = "nats";
+      serverEnv.EVENT_BUS_URL = `nats://127.0.0.1:${NATS_PORT}`;
+      say("✓ 事件总线：当前客户端自有 nats（JetStream 持久化）");
+    } else {
+      serverEnv.EVENT_BUS = "memory";
+      delete serverEnv.EVENT_BUS_URL;
+      say(`⚠ 事件总线端口 ${NATS_PORT} 已被占用，使用本实例 memory 总线；不会复用其他客户端服务`);
     }
-    serverEnv.EVENT_BUS = "nats";
-    serverEnv.EVENT_BUS_URL = `nats://127.0.0.1:${NATS_PORT}`;
-    say("✓ 事件总线：nats（JetStream 持久化）");
   } else {
     say("⚠ 内嵌 nats-server 未随包——事件总线降级 memory");
   }
@@ -1181,6 +1250,8 @@ async function bootstrap(opts) {
 
   /* ---------- 4. 起服务：server(8787) + web preview(5173) ---------- */
   status("→ 启动 WorkLoom 服务…", { phase: "services-start", percent: 88, etaSeconds: 12 });
+  await assertTcpPortFree(SERVER_PORT, "服务");
+  await assertTcpPortFree(WEB_PORT, "工作台");
   checkpoint("services", "正在启动本机服务并执行健康检查", { targetVersion: payloadVer, percent: 88, etaSeconds: 12 });
   const serverProc = spawnLogged(NODE_BIN, [TSX_CLI, `--env-file=${envFile}`, "src/index.ts"],
     { cwd: path.join(RUNTIME, "apps", "server"), env: serverEnv }, path.join(logDir, "server.log"));
@@ -1193,7 +1264,11 @@ async function bootstrap(opts) {
   let ok = false;
   for (let i = 0; i < 90 && !ok; i++) {
     throwIfAborted();
-    ok = (await httpOk(`http://127.0.0.1:${SERVER_PORT}/health`)) && (await httpOk(`http://127.0.0.1:${WEB_PORT}/`));
+    for (const [name, child] of [["服务", serverProc], ["工作台", webProc]])
+      if (child.startupError || child.exitCode !== null || child.signalCode !== null)
+        throw new Error(`${name}进程启动失败（${child.startupError?.code || child.exitCode || child.signalCode}，详见 logs/）`);
+    ok = (await desktopServiceHealthy(`http://127.0.0.1:${SERVER_PORT}/health`, serverEnv.WORKLOOM_DESKTOP_INSTANCE_ID, serverEnv.WORKLOOM_PRODUCT_ID))
+      && (await httpOk(`http://127.0.0.1:${WEB_PORT}/`));
     if (!ok && i > 0 && i % 5 === 0) {
       const percent = Math.min(99, 90 + Math.floor(i / 10));
       status("→ 正在完成本机服务健康检查…", {
@@ -1323,8 +1398,13 @@ module.exports = {
   renderStrictPgHba,
   enforceStrictPgHba,
   validateDatabaseHelper,
+  validateRuntimePayload,
   openExternalUrl,
   acquireBootstrapLock,
   tarExtractionPlan,
   withBundledNodePath,
+  ensureDesktopSigningSecrets,
+  spawnLogged,
+  desktopServiceHealthy,
+  assertTcpPortFree,
 };

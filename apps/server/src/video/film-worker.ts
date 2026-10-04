@@ -47,6 +47,7 @@ import { canonicalRenderJson, compileProviderRequest, providerEndpointOptions, r
 import type { Scope } from "./gen/db.js";
 import { ArkImageProvider, ArkVideoProvider } from "./gen/providers.js";
 import { SubmissionError } from "./gen/submission-ledger.js";
+import type { AgentInvocationRef } from "../agent/invocations.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 /** 仓库根（apps/server/src/video → 上溯四级）。 */
@@ -99,6 +100,8 @@ export interface StartFilmJobInput {
   options?: Record<string, unknown>;
   maxBudgetCny?: number;
   env?: NodeJS.ProcessEnv;
+  /** Trusted server caller only, never accepted by the public film input schema. */
+  agentInvocation?: AgentInvocationRef;
 }
 
 function fail(code: string, message: string): never {
@@ -344,6 +347,7 @@ export async function startFilmJob(input: StartFilmJobInput): Promise<FilmJobSta
       inputSha256: frozen.sha256,
       workerEntrySha256: worker.entry_sha256,
       actor: input.actor,
+      ...(input.agentInvocation ? { agentInvocation: input.agentInvocation } : {}),
     });
   } catch (error) {
     await lease.release().catch(() => undefined);

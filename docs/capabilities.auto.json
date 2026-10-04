@@ -5,7 +5,7 @@
  "repository": "workloom-ai/WorkLoom-growthmatrix",
  "displayName": "WorkLoom 获客增长系统（实验车道）",
  "description": "企业获客与内容运营工作系统：工作台、行业包声明、内容生产工位与共享治理组件。",
- "generatedAt": "2026-10-04T15:28:09.831Z",
+ "generatedAt": "2026-10-04T21:18:19.199Z",
  "evidenceNotice": "本导览检查 manifest、脚本和文件入口。目录可发现、实际可调用、结果已验证分别记录；缺少同提交独立运行证据时后两项为未验证。岗位、技能与管线数是声明资产数，不是生产实测通过数。",
  "bundleDeclarations": [
   {
@@ -369,6 +369,58 @@
     "apps/web/src/pages/p8/P8.tsx",
     "apps/web/src/components/loommate/LoomMate.tsx",
     "apps/web/src/voice/VoiceEngine.ts"
+   ]
+  },
+  {
+   "icon": "🔗",
+   "title": "系统与岗位 CLI / MCP",
+   "items": [
+    {
+     "name": "系统目标与指定岗位",
+     "how": "[接入指南](agent-cli-mcp.md)；`node scripts/workloom-agent.mjs list`",
+     "desc": "自动选岗或指定已上岗 presetKey；任务、回执、取消与取件共享持久调用编号和幂等键",
+     "sourcePaths": [
+      "apps/server/src/trpc/agent-router.ts",
+      "scripts/workloom-agent.mjs",
+      "scripts/workloom-agent-mcp.mjs"
+     ],
+     "id": "cap:fd64f4e7c7491a88",
+     "availability": {
+      "discoverable": true,
+      "callable": "unverified",
+      "verified": "unverified",
+      "environment": null,
+      "lastSuccess": null,
+      "evidence": null,
+      "reason": "仅目录与入口元数据；没有对应运行证据"
+     }
+    },
+    {
+     "name": "影片固定工位",
+     "how": "`node scripts/workloom-agent.mjs describe video.film.start`",
+     "desc": "启动本人项目的固定阶段、查询评审与取回文件；保留父进程期限、预算与来源校验",
+     "sourcePaths": [
+      "apps/server/src/video/film-router.ts",
+      "apps/server/src/video/film-worker.ts",
+      "scripts/agent-capabilities.core.json"
+     ],
+     "id": "cap:15246ea213ce4214",
+     "availability": {
+      "discoverable": true,
+      "callable": "unverified",
+      "verified": "unverified",
+      "environment": null,
+      "lastSuccess": null,
+      "evidence": null,
+      "reason": "仅目录与入口元数据；没有对应运行证据"
+     }
+    }
+   ],
+   "sourcePaths": [
+    "docs/agent-cli-mcp.md",
+    "scripts/workloom-agent.mjs",
+    "scripts/workloom-agent-mcp.mjs",
+    "scripts/agent-capabilities.core.json"
    ]
   },
   {

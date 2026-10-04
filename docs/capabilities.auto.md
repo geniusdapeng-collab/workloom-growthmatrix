@@ -26,7 +26,7 @@
 
 岗位文件的 `preset_key` 去重得到 **84 个不同标识**；这是本仓声明去重计数，实际依赖装配和同名权威归属以主包 `composition.presetOwners` 与 [装配器](../packages/base/bundles/assembly.ts) 为准。
 
-## 代码与资产入口（42 项）
+## 代码与资产入口（44 项）
 
 ### 🖥 三端应用入口
 
@@ -57,6 +57,15 @@
 | **数字员工中心（`/agents`）** | 岗位档案 / 技能与围栏绑定 / 任务派遣；默认包声明 30 个岗位，不是在线员工数 | 按 README 准备隔离环境后：`LLM_PROVIDER=mock pnpm preview:all` → http://localhost:3000/agents | 是 | 未验证 | 未验证 |
 | **织伴数字人组件** | 形象、语音与动作交互组件；需要对应资源与配置，不承诺每个部署均启用 | 查看组件与语音配置 | 是 | 未验证 | 未验证 |
 | **语音与口型引擎** | 语音播放、音色与口型相关实现；真实 TTS 需要服务或本地引擎 | docs/voice-and-avatar-delivery-contract.md | 是 | 未验证 | 未验证 |
+
+### 🔗 系统与岗位 CLI / MCP
+
+来源：[docs/agent-cli-mcp.md](../docs/agent-cli-mcp.md) · [scripts/workloom-agent.mjs](../scripts/workloom-agent.mjs) · [scripts/workloom-agent-mcp.mjs](../scripts/workloom-agent-mcp.mjs) · [scripts/agent-capabilities.core.json](../scripts/agent-capabilities.core.json)。
+
+| 入口 | 用途与边界 | 查阅或运行 | 可发现 | 可调用 | 结果已验证 / 环境 |
+|---|---|---|---|---|---|
+| **系统目标与指定岗位** | 自动选岗或指定已上岗 presetKey；任务、回执、取消与取件共享持久调用编号和幂等键 | [接入指南](agent-cli-mcp.md)；`node scripts/workloom-agent.mjs list` | 是 | 未验证 | 未验证 |
+| **影片固定工位** | 启动本人项目的固定阶段、查询评审与取回文件；保留父进程期限、预算与来源校验 | `node scripts/workloom-agent.mjs describe video.film.start` | 是 | 未验证 | 未验证 |
 
 ### 🖐 电脑操作接口
 

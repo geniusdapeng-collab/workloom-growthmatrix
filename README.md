@@ -112,6 +112,7 @@ NATS/Redis 的事件总线库可在源码中找到，但当前主业务入口未
 - 🖥 **三端应用入口**：PC 工作台 · 员工移动工作台 · 客户 H5 服务前台
 - 📦 **行业包声明资产**：bundles/ai-video/ · bundles/geo-growthmatrix/ · bundles/hotel/
 - 🧑‍💼 **岗位与交互入口**：数字员工中心（`/agents`） · 织伴数字人组件 · 语音与口型引擎
+- 🔗 **系统与岗位 CLI / MCP**：系统目标与指定岗位 · 影片固定工位
 - 🖐 **电脑操作接口**：浏览器与桌面驱动接口 · HTTP / MCP 工位入口
 - ⚙ **共享基础模块（目录存在性）**：围栏判定 · 技能分发组件 · 任务编排基础组件 · 夜班状态与调度 · 模型路由与用量记录 · 发布适配层（默认演练） 等 15 项
 - 🎬 **内容生产专用入口**：视频工位 · 媒资与交付 · 白板与口播解释片
@@ -235,7 +236,7 @@ pnpm -C apps/webc dev
 - **视频与角色**：[角色库与默认模特](docs/character-registry.md)、[视频交付与返修](docs/video-delivery-and-revision.md)、[口播解释片](docs/talkcraft-explainer.md)、[白板引擎](docs/whiteboard-engine.md)。
 - **桌面 Agent 接入（Codex / DeepSeek Harness）**：[客户端接入指南](docs/AGENT-CLIENTS.md)（5 分钟接入 + MCP 配置 + 视频能力清单 + 安全边界）。
 - **接入与运行**：[电脑工位指南](docs/computer-use-production.md)、[连接器退出 mock 的约定](docs/connectors-mock-exit.md)、[发布清单](docs/release-checklist.md)。
-- **桌面 Agent 接入（Codex / DeepSeek Harness）**：[客户端接入指南](docs/AGENT-CLIENTS.md)（5 分钟接入 + MCP 配置 + 视频能力清单 + 安全边界）。
+- **系统与指定数字员工调用**：[CLI / MCP 指南](docs/agent-cli-mcp.md)（目标派遣、指定岗位、持久回执与取件）。
 - **产品方案背景**：[社媒与 GEO 融合方案](docs/geo-fusion-plan.md)、[获客方案](docs/plan-acquisition.md)。这些文档含目标与历史设计，不能单独证明当前运行能力。
 - **开发治理**：[AGENTS.md](AGENTS.md)、[本仓规则](AGENTS.repo.md)、[全景认知](WORKLOOM_PRODUCT_CONTEXT.md)、[开发协作协议](docs/DEVELOPMENT-PROTOCOL.md)。
 

@@ -179,6 +179,7 @@ export async function loadGoalArchive(
   scope: Scope, ref: string,
 ): Promise<{ text: string; version: string } | undefined> {
   const client = await getAppPool().connect();
+  let discardConnection = false;
   try {
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
@@ -201,14 +202,16 @@ export async function loadGoalArchive(
       ? (raw as { version: string }).version
       : "v1";
     return { text: text.trim(), version };
-  } catch (error) {
-    console.warn(
-      "[goal-archive] 档案读取失败（fail-closed：按无档案处理，不猜目标）",
-      error instanceof Error ? error.message : String(error),
-    );
+  } catch {
+    try { await client.query("ROLLBACK"); }
+    catch {
+      discardConnection = true;
+      console.warn("[goal-archive] 档案查询回滚失败，已销毁连接");
+    }
+    console.warn("[goal-archive] 档案读取失败，已回退无档案结果，不猜目标");
     return undefined;
   } finally {
-    client.release();
+    client.release(discardConnection);
   }
 }
 
@@ -327,6 +330,7 @@ export async function industryOfWorkspace(scope: Scope): Promise<string | null> 
   const cached = industryCache.get(scope.workspaceId);
   if (cached !== undefined) return cached;
   const client = await getAppPool().connect();
+  let discardConnection = false;
   try {
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
@@ -340,9 +344,15 @@ export async function industryOfWorkspace(scope: Scope): Promise<string | null> 
     industryCache.set(scope.workspaceId, value);
     return value;
   } catch {
+    try { await client.query("ROLLBACK"); }
+    catch {
+      discardConnection = true;
+      console.warn("[thread-runner] 行业查询回滚失败，已销毁连接");
+    }
+    if (!discardConnection) console.warn("[thread-runner] 行业查询失败，已回滚并回退通用规划");
     // 查询失败不缓存（下次重试），同时不影响规划主链路（围栏词表仍由 runQuest 内部注入）
     return null;
   } finally {
-    client.release();
+    client.release(discardConnection);
   }
 }

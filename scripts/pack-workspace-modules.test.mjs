@@ -140,3 +140,54 @@ test("源码复制 CLI 保留中文空格路径并以失败退出码报告缺参
   assert.equal(existsSync(join(payload, "packages/film/src/index.mjs")), true);
   assert.throws(() => execFileSync(process.execPath, [script, "--copy-sources", payload], { cwd: root, stdio: "pipe" }), /缺少载荷源码路径/u);
 });
+
+test("后项源码链接无效时，前项有效源码也不复制且不创建目标根", (t) => {
+  const root = fixture(t);
+  pkg(root, "film");
+  const outside = mkdtempSync(join(tmpdir(), "workloom-late-source-"));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  put(outside, "private.mjs", "export const outside = true;");
+  symlinkSync(join(outside, "private.mjs"), join(root, "packages/film/src/late.mjs"));
+  const payload = join(root, "未创建客户目录");
+  assert.throws(() => copyRuntimeSources(root, payload, ["bundles", "packages"]), /链接越界/u);
+  assert.equal(existsSync(payload), false);
+});
+
+test("后项目标祖先链接无效时，前项有效文件及外部目录保持原样", (t) => {
+  const root = fixture(t);
+  pkg(root, "film");
+  const outside = mkdtempSync(join(tmpdir(), "workloom-late-target-"));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  const payload = join(root, "客户载荷");
+  mkdirSync(payload);
+  put(outside, "sentinel.txt", "outside unchanged");
+  symlinkSync(outside, join(payload, "packages"), "junction");
+  assert.throws(() => copyRuntimeSources(root, payload, ["bundles", "packages"]), /目标.*(?:链接|越界)/u);
+  assert.equal(existsSync(join(payload, "bundles")), false);
+  assert.equal(existsSync(join(outside, "film")), false);
+  assert.deepEqual(readdirSync(outside), ["sentinel.txt"]);
+});
+
+test("后项注册目标越界时，不先替换前项有效入口", (t) => {
+  const root = fixture(t);
+  pkg(root, "a-first", { name: "@first/film" });
+  pkg(root, "z-invalid", { name: "@blocked/film" });
+  const outside = mkdtempSync(join(tmpdir(), "workloom-late-registration-"));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  mkdirSync(join(root, "node_modules"));
+  symlinkSync(outside, join(root, "node_modules/@blocked"), "junction");
+  put(root, "node_modules/@first/film/package.json", '{"marker":"original canonical facade"}');
+  assert.throws(() => registerWorkspaceModules(root), /注册目录越界/u);
+  assert.equal(readFileSync(join(root, "node_modules/@first/film/package.json"), "utf8"), '{"marker":"original canonical facade"}');
+  assert.deepEqual(readdirSync(outside), []);
+});
+
+test("注册根链接越界时，不在外部创建包作用域目录", (t) => {
+  const root = fixture(t);
+  pkg(root, "film");
+  const outside = mkdtempSync(join(tmpdir(), "workloom-registration-root-"));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  symlinkSync(outside, join(root, "node_modules"), "junction");
+  assert.throws(() => registerWorkspaceModules(root), /注册目录越界/u);
+  assert.deepEqual(readdirSync(outside), []);
+});

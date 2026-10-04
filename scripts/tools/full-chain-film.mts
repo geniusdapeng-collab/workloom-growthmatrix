@@ -30,7 +30,6 @@
  * 阶段汇总：`<work-dir>/logs/stages.json`
  */
 import { execFileSync, spawnSync } from "node:child_process";
-import { auditFilmRedlines, PROMPT_REDLINE_POLICY_VERSION } from "../../packages/video-studio/src/prompt-redlines.js";
 import { createHash, randomUUID } from "node:crypto";
 import {
   accessSync, appendFileSync, closeSync, constants as fsConstants, copyFileSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync,
@@ -79,7 +78,6 @@ import {
   type CoverAccountProfile, type CoverDesignInput, type CoverMeasurements, type CoverPlan,
   type CoverPlatformSpec, type GateCheck, type GateEvent, type PipelineGateStepKey,
   type DeviceCategory, type DeviceDefect, type EnvDefect, type HookCard, type MicromotionTrace, type PlatePromptShot,
-  detectProductAnchor, resolveRoutePreflight, RoutePreflightError, type RoutePreflightResult, // T-2026-0930-0015-PORT
   type ProducerVerdict, type SceneBible, type ScenePolicyReport
 } from "../../packages/video-studio/src/index.js";
 import { normalizeShotIntent, shotIntentHash, type ShotIntentStatus } from "../../packages/video-studio/src/shot-intent.js";
@@ -138,17 +136,6 @@ const log = (line: string): void => process.stdout.write(`[${stamp().slice(11, 1
 
 /* ================= 参数 ================= */
 
-/**
- * 服务端"固定影片工位"（--worker / FILM_WORKER_MODE=worker）在 **CLI 侧尚未接线**（第二批，T-2026-0930-0015-PORT）。
- * 显式 fail-closed：否则子进程在读不到作业上下文的情况下继续跑，报错位置与原因都不可读。
- */
-if (flag("--worker") || String(process.env.FILM_WORKER_MODE ?? "") === "worker") {
-  throw new Error(
-    "WORKER_MODE_NOT_WIRED: 服务端固定影片工位的 CLI 侧入口尚未接线（第二批）。"
-    + "缺的是：解析 FILM_JOB_CONTEXT（冻结阶段/选项/inputRef）与受限通道（llm/image/video/media/voice/review）。"
-    + "请走公开 CLI 出片，或先完成第二批接线（docs/repairs/T-2026-0927-0039.md）。"
-  );
-}
 const SHOTS_FILE = abs(arg("--shots"));
 if (!SHOTS_FILE || !existsSync(SHOTS_FILE)) throw new Error("需要 --shots <shotlist.json>");
 const sourceBytes = readFileSync(SHOTS_FILE);
