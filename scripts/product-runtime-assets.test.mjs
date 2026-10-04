@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, 
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { copyRuntimeSources, isRuntimeSource } from "./product-runtime-assets.mjs";
+import { copyRuntimeSources, isRuntimeSource, preflightRuntime } from "./product-runtime-assets.mjs";
 
 function put(root, ref, contents) {
   const file = path.join(root, ref);
@@ -52,6 +52,21 @@ test("normal physical source copy records canonical source and generated contrac
   assert.equal(readFileSync(path.join(destination, ".env.defaults"), "utf8"), "LLM_PROVIDER=mock\n");
   const assets = JSON.parse(readFileSync(path.join(destination, "RUNTIME_ASSETS.json")));
   assert.ok(assets.files.some(item => item.path === "packages/industry-contract/dist/index.js" && item.origin === "compiled-internal-contract"));
+});
+
+test("cross-target structure checks the installed video package without requiring Growthtest-only director sources", (t) => {
+  const { root, destination } = fixture(t);
+  copyRuntimeSources(root, destination);
+  for (const ref of ["scripts/skill-bindings.mts", "scripts/workloom-agent.mjs", "scripts/workloom-agent-mcp.mjs",
+    "scripts/runtime-payload-probe.mts", "vendor/supermickey/hyperreality-system/index.js",
+    "packages/video-studio/src/index.ts", "apps/web/dist/index.html", "node_modules/tsx/dist/cli.mjs"]) {
+    put(destination, ref, "// Controlled structural fixture; this test does not execute the target runtime.\n");
+  }
+  const target = { platform: process.platform === "win32" ? "darwin" : "win32", arch: "x64" };
+  assert.deepEqual(preflightRuntime(destination, target), { status: "target-execution-required", ...target, structural: true });
+  assert.equal(existsSync(path.join(destination, "bundles/ai-video/library/director-system/core.mjs")), false);
+  rmSync(path.join(destination, "packages/video-studio/src/index.ts"));
+  assert.throws(() => preflightRuntime(destination, target), /载荷依赖缺失：packages\/video-studio\/src\/index\.ts/u);
 });
 
 test("tracked source through an ancestor symlink is refused before copying outside bytes", (t) => {

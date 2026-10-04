@@ -170,7 +170,7 @@ export function preflightRuntime(runtimeRoot,{node=process.execPath,platform=pro
   assertRuntimePayloadBoundary(runtime,loadPayloadPolicy(runtime));
   const required=["scripts/skill-bindings.mts","scripts/workloom-agent.mjs","scripts/workloom-agent-mcp.mjs",
     "scripts/runtime-payload-probe.mts","vendor/supermickey/hyperreality-system/index.js",
-    "bundles/ai-video/library/director-system/core.mjs","apps/web/dist/index.html","node_modules/tsx/dist/cli.mjs"];
+    "packages/video-studio/src/index.ts","apps/web/dist/index.html","node_modules/tsx/dist/cli.mjs"];
   for(const ref of required) if(!existsSync(safeTarget(runtime,ref))) throw new Error(`载荷依赖缺失：${ref}`);
   if(platform!==process.platform||arch!==process.arch) return {status:"target-execution-required",platform,arch,structural:true};
   const output=execFileSync(node,[path.join(runtime,"node_modules/tsx/dist/cli.mjs"),path.join(runtime,"scripts/runtime-payload-probe.mts")],
