@@ -6,9 +6,18 @@ import { readFile } from "node:fs/promises";
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"..");
 if(process.env.WORKLOOM_RUNTIME_PREFLIGHT!=="1") throw new Error("Preflight requires an isolated host");
 globalThis.fetch=async()=>{throw new Error("PREFLIGHT_NETWORK_FORBIDDEN");};
-const {resolveDeliveryTargets,buildDirectorDefaults}=await import("@hyperreality/video-studio");
-if(resolveDeliveryTargets("雨后民宿电影").expectedOutputs!==4) throw new Error("Director policy contract failed");
-if(buildDirectorDefaults({intent:"创业人物短片"}).confirmationSteps!==0) throw new Error("Director user-cost contract failed");
+const {normalizeFilmJobRequest,assertFilmStageCoverage}=await import("@hyperreality/video-studio");
+const film=normalizeFilmJobRequest(["deliver"],{fps:24});
+if(JSON.stringify(film.stages)!==JSON.stringify(["deliver","master"])||film.options.fps!=="24")
+  throw new Error("Fixed film stage policy contract failed");
+try {
+  normalizeFilmJobRequest(["unregistered-worker"],{});
+  throw new Error("Unknown film stage was accepted");
+} catch(error) {if((error as {code?:string}).code!=="UNKNOWN_STAGE") throw error;}
+try {
+  assertFilmStageCoverage(["spec"],{}, {}, []);
+  throw new Error("A missing film stage result was accepted");
+} catch(error) {if((error as {code?:string}).code!=="RESULT_INVALID") throw error;}
 const require=createRequire(path.join(root,"package.json"));
 require(path.join(root,"vendor/supermickey/hyperreality-system/index.js"));
 require(path.join(root,"vendor/supermickey/systems/llm-reasoning-engine.js"));
@@ -32,4 +41,4 @@ try {
 } catch(error) {if((error as {code?:string}).code!=="UNAUTHORIZED") throw error;}
 console.log("RUNTIME_PREFLIGHT "+JSON.stringify({status:"passed",platform:process.platform,arch:process.arch,
   productId:identity.productId,demoWorkspaceSlug:identity.demoWorkspaceSlug,demoMemberNo:identity.demoMemberNo,
-  checks:["physical-internal-package","director-policy","vendor-import","server-router-import","verified-bundle-composition","agent-catalog","agent-execution-auth","complete-product-identity"],networkCalls:0}));
+  checks:["physical-internal-package","fixed-film-stage-policy","vendor-import","server-router-import","verified-bundle-composition","agent-catalog","agent-execution-auth","complete-product-identity"],networkCalls:0}));
