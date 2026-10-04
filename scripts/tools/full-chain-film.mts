@@ -3914,6 +3914,9 @@ if (STAGES.has("material-gen")) {
         stage: "material-gen", shotId: shot.shotId, invoked: true, ok: false, cached: false, degraded: false, attempt: 1, ms: 0,
         artifact: null, evidence: { photo, missing: true, policy: MATERIAL_POLICY_VERSION }, verdict: null, note: "素材文件不存在"
       });
+      if (isProductMaterialShot(shot) || isAssetShot(shot)) {
+        throw new Error(`CANARY_ABORT: ${shot.shotId} 素材文件不存在，已停止后续渲染`);
+      }
       continue;
     }
     try {
@@ -3976,6 +3979,9 @@ if (STAGES.has("material-gen")) {
           ms: Date.now() - shotStarted, artifact: null, evidence: { gateBlocked: "material-generate", reason: submitGate.reason },
           verdict: null, note: "G-MAT1 提交门未通过：未向渲染服务提交"
         });
+        if (isProductMaterialShot(shot) || isAssetShot(shot)) {
+          throw new Error(`CANARY_ABORT: ${shot.shotId} 素材提交门未通过，已停止后续渲染`);
+        }
         continue;
       }
       /** 原始渲染产物（未做速度坡道）：留档，便于"坡道参数换一版"而不重新烧额度 */
@@ -4313,6 +4319,10 @@ if (STAGES.has("material-gen")) {
         ms: Date.now() - shotStarted, artifact: null,
         evidence: { error: err instanceof Error ? err.message.slice(0, 300) : String(err) }, verdict: null
       });
+      if (isProductMaterialShot(shot) || isAssetShot(shot)) {
+        if (err instanceof Error && err.message.startsWith("CANARY_ABORT:")) throw err;
+        throw new Error(`CANARY_ABORT: ${shot.shotId} 素材镜失败，已停止后续渲染`, { cause: err });
+      }
     }
   }
   if (materialShots().length > 0) log(`素材镜：${materialShots().length} 镜（生成输入 → 生成式镜头，禁止静态直出）`);
@@ -4811,7 +4821,12 @@ if (STAGES.has("videos")) {
         });
       }
     }
-    if (!approved) log(`⛔ 镜头 ${shot.shotId} 重跑 ${MAX_ATTEMPTS} 次仍未过监制`);
+    if (!approved) {
+      log(`⛔ 镜头 ${shot.shotId} 重跑 ${MAX_ATTEMPTS} 次仍未过监制`);
+      if (isAssetShot(shot)) {
+        throw new Error(`CANARY_ABORT: ${shot.shotId} 真人镜未过监制，已停止后续渲染以节省算力`);
+      }
+    }
   }
 }
 
@@ -5893,6 +5908,8 @@ if (STAGES.has("bgm") && existsSync(danmakuOut)) {
    * 前置探测的结论单独留痕（preselectTool）。
    */
   const bgmToolOk = existsSync(out) || result.ok;
+  const bgmStemsVerified = !bgmDeclaredOff && !BGM_DECLARED_PROGRAM_MIX && existsSync(out);
+  const bgmSourceAuthority = bgmStemsVerified ? "signed-stems" : "declared-unverified";
   /** 配乐层状态（交付清单留痕）：声明式直混 / 工位判定无需配乐 / 签章路径，三态如实写 */
   bgmManifestInfo = {
     layer: bgmDeclaredOff ? "off" : "on",
@@ -5904,8 +5921,8 @@ if (STAGES.has("bgm") && existsSync(danmakuOut)) {
         ? "配乐工位按「不劣化优先」判定无需配乐（人声太满 / 无可闻窗口），且曲库无网格相容音乐床——不伪造音乐轨"
         : "本机无独立音轨签发者（WORKLOOM_AUDIO_STEM_SIGNING_SECRET 未配置）→ 声明式关闭配乐层，不冒充签章分轨")
       : null,
-    sourceAuthority: bgmDeclaredOff ? "declared-unverified" : "signed-stems",
-    stemsVerified: !bgmDeclaredOff,
+    sourceAuthority: bgmSourceAuthority,
+    stemsVerified: bgmStemsVerified,
     output: existsSync(out) ? basename(out) : null,
     evidence: bgmDetail.slice(-400)
   };
@@ -6010,13 +6027,15 @@ if (STAGES.has("bgm") && existsSync(danmakuOut)) {
     evidence: {
       genre, mood, policy, via: bgmVia, loudness: mixLufs, measured: measured.detail, tool: `bgm-bridge ${bgmVia}`,
       /** 音轨来源口径（如实）：声明式直混 = 独立分轨未取证，不得被读成"签章通过" */
-      sourceAuthority: BGM_DECLARED_PROGRAM_MIX ? "declared-unverified" : "signed-stems",
-      stemsVerified: !BGM_DECLARED_PROGRAM_MIX,
+      sourceAuthority: bgmSourceAuthority,
+      stemsVerified: bgmStemsVerified,
       /** 自动择曲前置探测的结论（失败不影响"混音已产出"这一事实，但必须留痕） */
       preselectTool: { ok: result.ok, detail: String(result.out ?? "").slice(-300) },
       ...(bgmDeclaredOff ? {
         applicable: false, attempted: true,
-        skipReason: "独立音轨签章签发者未接入：按 fail-closed 纪律关闭配乐层（bgm_layer=false），不伪造干净轨；接入签发者后重跑 bgm 可补回音乐层",
+        skipReason: bgmNoBgmDeclared
+          ? "工位判定无需配乐：关闭配乐层（bgm_layer=false），不伪造音乐轨"
+          : "独立音轨签章签发者未接入：按 fail-closed 纪律关闭配乐层（bgm_layer=false），不伪造干净轨；接入签发者后重跑 bgm 可补回音乐层",
         layer: { bgm: false, dialogue: true },
         toolError: bgmDetail.slice(-400)
       } : {})

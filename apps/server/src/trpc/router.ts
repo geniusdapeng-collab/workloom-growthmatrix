@@ -3861,6 +3861,7 @@ const captainRouter = router({
     try {
       await client.query("BEGIN");
       await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
+      await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]);
       const tiers = await client.query<{ tier: string; n: string }>(
         `SELECT tier, count(*)::text AS n FROM approvals WHERE workspace_id=$1 AND status='pending' GROUP BY 1`,
         [scope.workspaceId],
@@ -3875,8 +3876,8 @@ const captainRouter = router({
         [scope.workspaceId],
       );
       const agents = await client.query<{ id: string; preset_key: string; name: string; alias: string | null }>(
-        // 欢迎仪式必须拿到完整编制；固定 12 会静默裁掉大型 Bundle 的成员。
-        `SELECT id, preset_key, name, alias FROM agents WHERE workspace_id=$1 AND status='ready' ORDER BY id LIMIT 64`,
+        // 欢迎仪式与剧场均展示当前工作区完整在岗编制，人数由装配结果决定。
+        `SELECT id, preset_key, name, alias FROM agents WHERE workspace_id=$1 AND status='ready' ORDER BY id`,
         [scope.workspaceId],
       );
       const grades = await client.query<{ agent_id: string; grade: string }>(

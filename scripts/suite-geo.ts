@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import { judge, type RuntimeRule } from "@workloom/base/fence-engine";
 import { composeWorkforce } from "@workloom/base/bundles";
 import { parseWorkforcePresets } from "../packages/industry-contract/src/index.js";
+import { FILM_CLI_STAGES } from "../packages/video-studio/src/film-worker-runtime.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, "..");
@@ -515,6 +516,79 @@ const SERVER_ERROR_TELEMETRY_SQL = `(
   AND NOT (payload->'decision' ?| ARRAY['tool','kind','params'])
   AND NOT (payload ?| ARRAY['receipt','model_trace'])
 )`;
+// Invocation cancellation and film-job creation are internal control receipts,
+// not completed supplier actions. Match the exact emitted contracts; merely
+// naming an object film_job/agent_invocation never earns a receipt exemption.
+// CASE guards keep malformed JSON negative controls from aborting the query.
+const AGENT_CONTROL_EVENT_SQL = `(
+  payload->'who'->>'type' = 'human'
+  AND payload->'context'->>'channel' = 'inapp'
+  AND payload->'context'->>'tenant_id' = tenant_id
+  AND payload->'context'->>'workspace_id' = workspace_id
+  AND EXISTS (SELECT 1 FROM members m JOIN workspaces w ON w.id=m.workspace_id
+    WHERE m.member_no=payload->'who'->>'id'
+      AND m.workspace_id=payload->'context'->>'workspace_id'
+      AND w.tenant_id=payload->'context'->>'tenant_id')
+  AND payload->'rule_impact' = '[]'::jsonb
+  AND CASE WHEN jsonb_typeof(payload->'decision') = 'object'
+    THEN (payload->'decision') - ARRAY['action','after'] = '{}'::jsonb ELSE false END
+  AND jsonb_typeof(payload->'decision'->'after') = 'object'
+  AND NOT (payload ?| ARRAY['receipt','model_trace'])
+  AND (
+    (payload->'object'->>'type' = 'film_job'
+      AND payload->'decision'->>'action' = 'film.start'
+      AND session_id IS NULL
+      AND jsonb_typeof(payload->'object'->'id') = 'string'
+      AND jsonb_typeof(payload->'decision'->'after'->'jobId') = 'string'
+      AND payload->'object'->>'id' = payload->'decision'->'after'->>'jobId'
+      AND payload->'object'->>'id' ~ '^FJ-[a-z0-9]+-[a-z0-9]{1,8}$'
+      AND CASE WHEN jsonb_typeof(payload->'decision'->'after') = 'object'
+        THEN (payload->'decision'->'after') - ARRAY['jobId','projectId','stages','inputSha256','workerEntrySha256','budgetCny'] = '{}'::jsonb ELSE false END
+      AND jsonb_typeof(payload->'decision'->'after'->'projectId') = 'string'
+      AND payload->'decision'->'after'->>'projectId' ~ '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'
+      AND position('..' in payload->'decision'->'after'->>'projectId') = 0
+      AND jsonb_typeof(payload->'decision'->'after'->'inputSha256') = 'string'
+      AND jsonb_typeof(payload->'decision'->'after'->'workerEntrySha256') = 'string'
+      AND payload->'decision'->'after'->>'inputSha256' ~ '^[a-f0-9]{64}$'
+      AND payload->'decision'->'after'->>'workerEntrySha256' ~ '^[a-f0-9]{64}$'
+      AND CASE WHEN jsonb_typeof(payload->'decision'->'after'->'budgetCny') = 'number'
+        THEN (payload->'decision'->'after'->>'budgetCny')::numeric >= 0 ELSE false END
+      AND CASE WHEN jsonb_typeof(payload->'decision'->'after'->'stages') = 'array'
+        THEN jsonb_array_length(payload->'decision'->'after'->'stages') BETWEEN 1 AND ${FILM_CLI_STAGES.length}
+          AND '${JSON.stringify(FILM_CLI_STAGES)}'::jsonb @> (payload->'decision'->'after'->'stages')
+          AND (SELECT count(DISTINCT stage) FROM jsonb_array_elements(payload->'decision'->'after'->'stages') stage)
+            = jsonb_array_length(payload->'decision'->'after'->'stages')
+        ELSE false END)
+    OR (payload->'object'->>'type' = 'agent_invocation'
+      AND payload->'decision'->>'action' = 'thread.cancel'
+      AND jsonb_typeof(payload->'object'->'id') = 'string'
+      AND jsonb_typeof(payload->'decision'->'after'->'invocationId') = 'string'
+      AND payload->'object'->>'id' = payload->'decision'->'after'->>'invocationId'
+      AND payload->'object'->>'id' ~ '^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$'
+      AND payload->'decision'->'after'->'rollbackExternalActions' = 'false'::jsonb
+      AND (
+        (session_id IS NULL
+          AND CASE WHEN jsonb_typeof(payload->'decision'->'after') = 'object'
+            THEN (payload->'decision'->'after') - ARRAY['invocationId','state','cancelledBeforeCreation','rollbackExternalActions'] = '{}'::jsonb ELSE false END
+          AND payload->'decision'->'after'->>'state' = 'cancelled'
+          AND payload->'decision'->'after'->'cancelledBeforeCreation' = 'true'::jsonb)
+        OR (session_id = payload->'decision'->'after'->>'threadId'
+          AND session_id ~ '^T-[1-9][0-9]*$'
+          AND CASE WHEN jsonb_typeof(payload->'decision'->'after') = 'object'
+            THEN (payload->'decision'->'after') - ARRAY['invocationId','threadId','state','alreadyTerminal','rollbackExternalActions','stopping'] = '{}'::jsonb ELSE false END
+          AND payload->'decision'->'after'->>'state' IN ('completed','failed','cancelled')
+          AND jsonb_typeof(payload->'decision'->'after'->'alreadyTerminal') = 'boolean'
+          AND (payload->'decision'->'after'->'alreadyTerminal' = 'true'::jsonb
+            OR payload->'decision'->'after'->>'state' = 'cancelled')
+          AND payload->'decision'->'after'->>'stopping' = 'before-next-quest-step')
+        OR (session_id IS NULL
+          AND CASE WHEN jsonb_typeof(payload->'decision'->'after') = 'object'
+            THEN (payload->'decision'->'after') - ARRAY['invocationId','state','alreadyTerminal','rollbackExternalActions'] = '{}'::jsonb ELSE false END
+          AND payload->'decision'->'after'->>'state' IN ('resolved','failed','unknown','cancelled')
+          AND payload->'decision'->'after'->'alreadyTerminal' = 'true'::jsonb)
+      ))
+  )
+)`;
 /**
  * 平台系统对象（不属于行业对象模型，事件合规检查统一豁免）：
  *   thread/task/approval/conversation = 门禁活火事件（dispatch/quest/审批流）
@@ -548,12 +622,14 @@ e("ws-geo 事件 ≥60 条且五元字段完整（容忍门禁活火写入）", 
     AND payload->'decision'->'after' IS NOT NULL
     AND COALESCE(payload->'object'->>'type','') <> ALL($2::text[])
     AND NOT COALESCE(${SERVER_ERROR_TELEMETRY_SQL}, false)
+    AND NOT COALESCE(${AGENT_CONTROL_EVENT_SQL}, false)
     AND (payload->>'who' IS NULL OR payload->>'object' IS NULL OR payload->>'decision' IS NULL OR payload->>'receipt' IS NULL OR payload->>'model_trace' IS NULL)`, [WS, [...SYSTEM_TYPES]]);
   assert(Number(bad.rows[0].n) === 0, `五元缺失 ${bad.rows[0].n} 条`);
 });
 e("事件 GEO 对象类型全部在对象模型内（系统对象豁免）", async () => {
   const r = await q(`SELECT DISTINCT payload->'object'->>'type' t FROM biz_events WHERE workspace_id=$1
-    AND NOT COALESCE(${SERVER_ERROR_TELEMETRY_SQL}, false)`, [WS]);
+    AND NOT COALESCE(${SERVER_ERROR_TELEMETRY_SQL}, false)
+    AND NOT COALESCE(${AGENT_CONTROL_EVENT_SQL}, false)`, [WS]);
   for (const row of r.rows) assert(objectTypes.has(row.t) || SYSTEM_TYPES.has(row.t), `事件对象 ${row.t} 未在对象模型`);
 });
 e("事件 who 全部在编制内（系统/人类豁免）", async () => {
@@ -567,9 +643,16 @@ e("事件 who 全部在编制内（系统/人类豁免）", async () => {
     // render-operator = 渲染提交的生成池计量主体（gen.degraded / 提交留痕；2026-09-20 真机测试增补）
     "render-operator",
   ]);
-  const r = await q(`SELECT DISTINCT payload->'who'->>'id' id FROM biz_events WHERE workspace_id=$1
+  const composedPresetKeys = new Set(composeWorkforce("geo-growthmatrix").presets.keys());
+  const members = await q(`SELECT member_no FROM members WHERE workspace_id=$1`, [WS]);
+  const memberKeys = new Set(members.rows.map(row => row.member_no));
+  const r = await q(`SELECT DISTINCT payload->'who'->>'type' type, payload->'who'->>'id' id FROM biz_events WHERE workspace_id=$1
     AND NOT COALESCE(${SERVER_ERROR_TELEMETRY_SQL}, false)`, [WS]);
-  for (const row of r.rows) assert(presetKeys.has(row.id) || SYSTEM_ACTORS.has(row.id) || String(row.id).startsWith("MEM-"), `who=${row.id} 不在编制`);
+  for (const row of r.rows) assert(
+    row.type === "agent" && composedPresetKeys.has(row.id)
+      || row.type === "system" && SYSTEM_ACTORS.has(row.id)
+      || row.type === "human" && memberKeys.has(row.id),
+    `who=${row.type}/${row.id} 不在组合编制或当前工作区成员内`);
 });
 e("rule_impact 引用的规则存在且级别一致", async () => {
   const r = await q(`SELECT DISTINCT ri->>'rule_id' rid, ri->>'result' res FROM biz_events, jsonb_array_elements(payload->'rule_impact') ri WHERE workspace_id=$1`, [WS]);
@@ -622,6 +705,79 @@ e("系统名字不能豁免行业动作、外部工具或作用域错配", async
     { ...original, rule_impact: [{ rule_id: "G9", result: "pass" }] },
   );
   for (const [index, payload] of variants.entries()) assert(!(await telemetryAllowed(payload)), `伪装遥测反例 ${index + 1} 获得豁免`);
+});
+type ControlFixture = { payload: Record<string, unknown>; sessionId: string | null };
+const cancellationFixture = (after: Record<string, unknown>, sessionId: string | null = null): ControlFixture => ({
+  payload: {
+    who: { type: "human", id: "MEM-G01" },
+    context: { tenant_id: TENANT, workspace_id: WS, channel: "inapp" },
+    object: { type: "agent_invocation", id: "12345678-1234-4123-8123-123456789abc" },
+    decision: { action: "thread.cancel", after: { invocationId: "12345678-1234-4123-8123-123456789abc", rollbackExternalActions: false, ...after } },
+    rule_impact: [],
+  }, sessionId,
+});
+const controlFixtures = (): ControlFixture[] => [
+  { payload: {
+    who: { type: "human", id: "MEM-G01" },
+    context: { tenant_id: TENANT, workspace_id: WS, channel: "inapp" },
+    object: { type: "film_job", id: "FJ-matrix01-12345678" },
+    decision: { action: "film.start", after: { jobId: "FJ-matrix01-12345678", projectId: "matrix-control-fixture",
+      stages: ["spec"], budgetCny: 0, inputSha256: "a".repeat(64), workerEntrySha256: "b".repeat(64) } }, rule_impact: [],
+  }, sessionId: null },
+  cancellationFixture({ state: "cancelled", cancelledBeforeCreation: true }),
+  cancellationFixture({ threadId: "T-203", state: "cancelled", alreadyTerminal: false, stopping: "before-next-quest-step" }, "T-203"),
+  ...["completed", "failed", "cancelled"].map(state => cancellationFixture({ threadId: "T-203", state, alreadyTerminal: true, stopping: "before-next-quest-step" }, "T-203")),
+  ...["resolved", "failed", "unknown", "cancelled"].map(state => cancellationFixture({ state, alreadyTerminal: true })),
+];
+async function controlAllowed(fixture: ControlFixture) {
+  const result = await q(`SELECT COALESCE(${AGENT_CONTROL_EVENT_SQL}, false) allowed
+    FROM (SELECT $1::jsonb payload, $2::text tenant_id, $3::text workspace_id, $4::text session_id) fixture`,
+    [JSON.stringify(fixture.payload), TENANT, WS, fixture.sessionId]);
+  return result.rows[0]?.allowed === true;
+}
+e("影片认领与三种任务取消契约可留内部回执，保留租户成员边界", async () => {
+  for (const [index, fixture] of controlFixtures().entries())
+    assert(await controlAllowed(fixture), `合法控制回执 ${index + 1} 被误判为供应商动作`);
+});
+e("控制对象不能豁免外部动作、伪装成员、错配或缺损字段", async () => {
+  const variants: ControlFixture[] = [];
+  const change = (fixture: ControlFixture, mutate: (payload: Record<string, any>) => void) => {
+    const copy = structuredClone(fixture);
+    mutate(copy.payload);
+    variants.push(copy);
+  };
+  for (const fixture of controlFixtures()) {
+    for (const field of ["action", "tool", "kind", "params"]) change(fixture, p => { p.decision[field] = "publish.execute"; });
+    change(fixture, p => { p.who.type = "agent"; });
+    change(fixture, p => { p.who.id = "MEM-unknown"; });
+    change(fixture, p => { p.context.tenant_id = "another-tenant"; });
+    change(fixture, p => { p.context.workspace_id = "another-workspace"; });
+    change(fixture, p => { p.context.channel = "external"; });
+    change(fixture, p => { p.object.id = "wrong-id"; });
+    change(fixture, p => { p.receipt = { synced: true }; });
+    change(fixture, p => { p.model_trace = {}; });
+    change(fixture, p => { p.rule_impact = [{ rule_id: "G9", result: "pass" }]; });
+    change(fixture, p => { p.decision.after.externalAction = "publish.execute"; });
+    for (const value of [null, "bad", 1, [], {}]) change(fixture, p => { p.decision.after = value; });
+    for (const value of [null, "bad", 1, []]) change(fixture, p => { p.decision = value; });
+    const after = (fixture.payload.decision as { after: Record<string, unknown> }).after;
+    for (const field of Object.keys(after)) change(fixture, p => { delete p.decision.after[field]; });
+    variants.push({ ...structuredClone(fixture), sessionId: fixture.sessionId === null ? "T-203" : "T-204" });
+  }
+  const film = controlFixtures()[0]!;
+  for (const [field, values] of Object.entries({
+    stages: [[], ["spec", "spec"], ["external-publish"], [1], "spec", {}],
+    budgetCny: [-1, "0", null, {}], inputSha256: ["bad", 123], workerEntrySha256: ["bad", null],
+    projectId: ["../escape", "", 123], jobId: ["FJ-other-12345678", 123],
+  })) for (const value of values) change(film, p => { p.decision.after[field] = value; });
+  const bound = controlFixtures()[2]!;
+  change(bound, p => { p.decision.after.rollbackExternalActions = true; });
+  change(bound, p => { p.decision.after.stopping = "rollback-paid-action"; });
+  change(bound, p => { p.decision.after.alreadyTerminal = "false"; });
+  change(bound, p => { p.decision.after.state = "running"; });
+  change(bound, p => { p.decision.after.state = "completed"; });
+  for (const [index, fixture] of variants.entries())
+    assert(!(await controlAllowed(fixture)), `控制事件负对照 ${index + 1} 获得回执豁免`);
 });
 
 /* ================= 执行 ================= */
