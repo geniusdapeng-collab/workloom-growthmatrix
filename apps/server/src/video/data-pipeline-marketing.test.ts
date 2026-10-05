@@ -63,11 +63,23 @@ async function run(extra: string[] = []) {
     "--no-portraits", ...extra];
   try { await import(cliEntry); }
   catch (error) {
-    const failure = JSON.parse(await readFile(path.join(root, "failure.json"), "utf8"));
+    let failure: { error: string };
+    try { failure = JSON.parse(await readFile(path.join(root, "failure.json"), "utf8")); }
+    catch (readError) { if ((readError as NodeJS.ErrnoException).code === "ENOENT") throw error; throw readError; }
     throw new Error(`${error instanceof Error ? error.message : String(error)}: ${failure.error}`);
   }
 }
 describe("营销CLI复用正式事实与G1", () => {
+  it.each(["tenantId", "workspaceId"])("恢复%s不同在构造创作工位前拒绝，不能按旧scope偷渡", async key => {
+    await run(); const source = root, previous = JSON.parse(await readFile(path.join(source, "meta.json"), "utf8"));
+    previous.marketingSource.scope[key] = "foreign";
+    await writeFile(path.join(source, "meta.json"), JSON.stringify(previous));
+    vi.resetModules(); root = path.join(source, "resumed");
+    try {
+      await expect(run(["--resume-preproduction", source])).rejects.toThrow("RESUME_SCOPE_CHANGED");
+      expect(fixture.configs).toHaveLength(1);
+    } finally { root = source; }
+  });
   it("完整G1通过后才构造VideoStudio，保存最终镜头事实资格且不提交渲染", async () => {
     await run();
     expect(fixture.configs).toHaveLength(1); expect(fixture.configs[0].deferRender).toBe(true);

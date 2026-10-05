@@ -4,7 +4,7 @@ import { resolveGate } from "./gates.js";
 import { autoApproveHandler, runWithConfirmationHandler } from "./confirmation.js";
 import { WorkloomLLMEngine } from "./llm-adapter.js";
 import { buildRenderScript, loadPromptLengthSpec } from "./render-scripts.js";
-import { VideoStudio, type ApprovalCallback, type EventSink } from "./studio.js";
+import { VideoStudio, type ApprovalCallback, type EventSink, type StudioConfig } from "./studio.js";
 import { filmCanonicalJson } from "./film-worker-channel.js";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -343,13 +343,13 @@ describe("既有人验定妆照只读复用", () => {
  describe("营销只消费宿主绑定回填", () => {
   const rawJson = JSON.stringify({ A1: { identity: { name: "本次商品" } }, A2: { reviews: [] }, A3: { competitors: [] } });
   const sha256 = createHash("sha256").update(rawJson).digest("hex");
-  function marketing(verifiedRaw?: { projectId: string; rawJson: string; sha256: string; productQuery: Record<string, unknown> }) {
+  function marketing(verifiedRaw?: { projectId: string; rawJson: string; sha256: string; productQuery: Record<string, unknown> }, extra: Partial<StudioConfig> = {}) {
     const assemblyJson = JSON.stringify({ ok: true, chain: { ok: true }, envelopes: [1, 2, 3, 4, 5], dossier: {}, cards: {} });
     return new VideoStudio({ llm: new WorkloomLLMEngine({ baseUrl: "https://example.invalid", apiKey: "test-only", model: "test" }),
       workDir: "/unused/marketing-test", onApproval: async () => ({ approved: true }), log: () => undefined,
       dataMining: { mode: "api", raw: { A1: { identity: { name: "旧缓存商品" } } }, storeRoot: "/unused/current-attempt", verifiedRaw,
         ...(verifiedRaw ? { verifiedDossier: { projectId: verifiedRaw.projectId, productQuery: verifiedRaw.productQuery,
-          assemblyJson, sha256: createHash("sha256").update(assemblyJson).digest("hex"), rawSha256: verifiedRaw.sha256 } } : {}) } });
+          assemblyJson, sha256: createHash("sha256").update(assemblyJson).digest("hex"), rawSha256: verifiedRaw.sha256 } } : {}) }, ...extra });
   }
   it.each(["missing", "wrong-project", "wrong-hash", "missing-stage"])("%s在vendor构造与create之前拒绝", async kind => {
     let proof = { projectId: "P1", rawJson, sha256, productQuery: { name: "本次商品" } };
@@ -392,5 +392,21 @@ describe("既有人验定妆照只读复用", () => {
     await expect(marketing({ projectId: "P1", rawJson, sha256: createHash("sha256").update(rawJson).digest("hex"), productQuery: { name: "本次商品" } })
       .runPreproduction({ projectId: "P1", intent: "营销", isMarketing: true, resume: { result: previous as any, sha256 } })).rejects.toThrow("RESUME_UNVERIFIED");
     expect(studioMocks.construct).not.toHaveBeenCalled(); expect(studioMocks.create).not.toHaveBeenCalled();
+  });
+  it.each(["bound", "shots", "film", "g7", "reason"])("最终事实门拒绝恢复%s：保持原G1–G7对象，只有完整绑定可接续", async kind => {
+    const previous = resumeFixture(); previous.success = true; previous.confirmations.prompts.approved = true;
+    previous.confirmations.preproduction = { approved: true };
+    previous.stages.productionEngine.formalFilmCandidate = { projectId: "P1", shots: previous.stages.productionEngine.shots };
+    const rejection = { reason: "最终事实门实际拒绝：不支持99档", sourceShotsSha256: createHash("sha256").update(filmCanonicalJson(previous.stages.productionEngine.shots)).digest("hex"),
+      sourceFilmSha256: createHash("sha256").update(filmCanonicalJson(previous.stages.productionEngine.formalFilmCandidate)).digest("hex") };
+    if (kind === "shots") rejection.sourceShotsSha256 = "0".repeat(64);
+    if (kind === "film") rejection.sourceFilmSha256 = "0".repeat(64);
+    if (kind === "g7") previous.confirmations.preproduction.approved = false;
+    if (kind === "reason") rejection.reason = "";
+    const pending = marketing({ projectId: "P1", rawJson, sha256, productQuery: { name: "本次商品" } }, { finalFactRejection: rejection })
+      .runPreproduction({ projectId: "P1", intent: "营销", isMarketing: true, resume: { result: previous as any,
+        sha256: createHash("sha256").update(filmCanonicalJson(previous)).digest("hex") } });
+    if (kind === "bound") { expect((await pending).success).toBe(true); expect(studioMocks.create).not.toHaveBeenCalled(); }
+    else { await expect(pending).rejects.toThrow("RESUME_UNVERIFIED"); expect(studioMocks.construct).not.toHaveBeenCalled(); }
   });
 });

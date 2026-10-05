@@ -67,7 +67,8 @@ export function applyPromptCorrection(original: Obj[], response: Obj, metadata: 
     if (!Array.isArray(blocks) || blocks.some((block: Obj) => !block || typeof block.text !== "string" || typeof block.speaker !== "string")) throw new Error("PROMPT_CORRECTION_DIALOGUE_INVALID");
     const spoken = blocks.map((block: Obj) => block.text).join("");
     const visible = spoken.replace(/[\s\p{P}\p{S}]/gu, "");
-    if (visible.length > Math.floor(Math.max(0, Number(shot.duration) - .4) * speed)) throw new Error(`PROMPT_DIALOGUE_DURATION_INVALID:${id(shot)}`);
+    const speechBudget = Math.floor(Math.max(0, Number(shot.duration) - .4) * speed);
+    if (visible.length > speechBudget) throw new Error(`PROMPT_DIALOGUE_DURATION_INVALID:${id(shot)}:实际${visible.length}字，预算${speechBudget}字；台词=${spoken}`);
     if (spoken && fields.dialogue !== spoken) throw new Error("PROMPT_CORRECTION_DIALOGUE_MISMATCH");
     if (blocks.some((block: Obj) => block.speaker !== metadata.characterArchive?.name && block.speaker !== metadata.characterArchive?.id)) throw new Error("PROMPT_CORRECTION_CAST_CHANGED");
     const runtime: Obj = {};
@@ -87,6 +88,7 @@ export function installVendorPromptReviewBridge(system: PromptReviewTarget, opti
   metadata: Obj; reviewedFacts?: Obj; llm: Pick<WorkloomLLMEngine, "reason">;
   workDir: string; projectId: string; log?: (line: string) => void;
   reuseGeneratedCandidate?: boolean; reusedPortraits?: Obj | null;
+  initialRejection?: { reason: string; candidate: Obj };
   prepareFinalCandidate?: (production: Obj, script: Obj, timing: Obj, confirmations: Obj) => Promise<Obj>;
 }): () => void {
   if (![system.create, system._confirmPrompts, system._confirmPreproductionResult].every(fn => typeof fn === "function")) throw new Error("PROMPT_REVIEW_BRIDGE_UNAVAILABLE");
@@ -137,6 +139,8 @@ export function installVendorPromptReviewBridge(system: PromptReviewTarget, opti
       note: "完整实际镜头、逐镜提示词及原剧本。shots/prompts相同数组只呈现一次，逐值相同的字段别名只呈现fields原键；原决定记录按摘要绑定，当前完整稿仍送本次原G7。没有截断独有创意或剧本。portraitGeneration是旧新出图阶段；reusedPortraits是已登记且人验的既有资产，没有新出图或新造G5裁决。sceneType是原分镜叙事节拍标签，不是G1商品冲突字段。此处尚未渲染、听音或验收成片。" });
   };
   let active = true, attempted = false, actual: Obj | undefined, pendingActualRejection: { verdict: GateVerdict; candidate: Obj } | undefined;
+  if (options.initialRejection) pendingActualRejection = { verdict: { approved: false, reason: options.initialRejection.reason },
+    candidate: snapshot(options.initialRejection.candidate) };
   const context = { brief: options.metadata.brief, characterArchive: options.metadata.characterArchive,
     products: options.metadata.products ?? null, usage: options.metadata.marketingUsage ?? null, reviewedFacts: options.reviewedFacts ?? null };
   context.brief ??= null; context.characterArchive ??= null;
@@ -164,10 +168,12 @@ export function installVendorPromptReviewBridge(system: PromptReviewTarget, opti
       maximumSpokenCharacters: Math.floor(Math.max(0, Number(shot.duration) - .4) * Number.parseFloat(String(options.metadata.characterArchive?.persona?.speechRate ?? "3.2"))) }));
     const instruction = `正式提示词修订工位。当前G6拒绝理由：${verdict.reason ?? "未通过"}。只输出完整JSON {shots:[{shotId,duration,fields,prompt,dialogueBlocks:[{speaker,type,emotion,text}]}]}。
 顶层只有shots。每个镜头对象恰好五个键shotId/duration/fields/prompt/dialogueBlocks，禁止额外sceneType等键。fields只有该镜requiredFields内的键，全部为非空字符串；dialogueBlocks只在镜头顶层，绝不能复制进fields。无人无对白镜fields.dialogue写“无对白”，不能空字符串。口播上限按maximumSpokenCharacters逐镜计算，中文标点不计；字段对白与块text拼接一致，绝不能超限。
+口播字数逐个字符计算，型号中的每个英文字母和数字也各计一个字，不能将DEMO-T001整个型号算成一个词。删除标点和空白后先自行计数；超过预算就由你缩短实际台词，不改时长、不把不完整句硬塞进镜头。型号可留在已审产品说明，不必为口播重复拼读。
 每个原镜号恰好一次，时长严格不变，fields包含原镜全部字段；sceneType为opening时另外补齐title_content/subtitle_content/title_animation/title_font_design/opening_audio_design五个真实片头计划字段，其余镜不添加。标题仅用于封面/旁挂设计，视频母版和生成镜内不绘字；开场音频仅环境音或人声，音乐留后期。所有字段为完整中文字符串；prompt包含与这些字段相符的完整最终生成指令（1200–3500字）。只修正实际矛盾，保留原剧本的产品宣传目的；禁止把过程元数据、JSON、属性ID或修订要求当动作/台词。技术格式MP4/H.264/fps/K/asset引用允许原准确语法，创意和对白中文，不再添加“禁止所有英文”自相矛盾规则。分辨率只写明确1080×1920，不写8K或4K超采样。
 以登记人物appearance及唯一wardrobe为实际造型，全片不换发型衣装；无人产品镜没有手/人体/访客，允许CEO画外音。所有口播只取本次G1支持事实，删除未支持效果标题。每镜口播字数不超过floor((duration-0.4)*${Number.parseFloat(String(options.metadata.characterArchive?.persona?.speechRate ?? "3.2"))})，必须真正缩短台词，不改时长；每个对白块speaker为登记角色名，fields.dialogue等于块text拼接，无对白用空块和明确无对白字符串。
 镜内audio仅同期人声、真实环境音，不含音乐/BGM/BPM；配乐留正式后期。每镜时间轴始终在0至本镜duration内。无人镜的action/timeline/composition/mood一致保持无人，不能包含手掌、人体、面部、眼神、身影进出或脚步表演；只允许产品、机位、真实环境的可执行运动，不能靠“窗光一秒内扫动”冒充真实运动。基调按明确轻快明朗，不沿用冷静庄重或怀旧模板。商品外观按登记图，不拼造两块屏幕一体机械结构，不把选配单/双屏说成即时切换。保留既有合法引用，不新造定妆照路径。原稿fields、prompt中不存在的商品性能绝不可新增。
 同一个真实柜台空间的台面、背景、窗光方向/色温/时段、产品与人物左右位置必须逐镜统一；相邻硬切不能无依据翻转站位。每个prompt中的对白、舞台动作与fields.action/timeline保持完全一致，不能保留旧稿动作副本。未被G1逐条支持的机身不变、效果承诺等短语必须由模型删去；只介绍明确支持的配置与摄像头角度，不新增效果推断。
+片头及商品文案只采用本次G1逐条登记的名称与事实，不把原意图中的品牌/功能当商品事实。登记表演者姓名只用于角色身份及说话人，不能转成商品品牌或名称。无人镜声音不加入脚步/人物表演，与无人动作一致；环境合同中新造的房卡道具或机械结构不是商品事实，只按中性场景道具维持原镜头目的。
 配置可选并不证明“机身不变”“即时切换”等效果，未被G1明确支持的事实绝不添加。
 必须精确遵守的逐镜输出契约：${filmCanonicalJson(contract)}
 实际受审制作输入：${filmCanonicalJson(context)}

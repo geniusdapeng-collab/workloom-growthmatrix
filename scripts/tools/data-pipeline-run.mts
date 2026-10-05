@@ -21,6 +21,7 @@
  *     [--project VID-AUDIT-01] [--work-dir .vm-work] [--out outputs/VID-AUDIT-01] \
  *     [--keys-file ~/.workloom/live.env] [--metadata-file request-metadata.json] [--product-archive id]
  *     [--tenant cli-local] [--workspace cli-local] [--no-portraits] [--producer-retry 0] [--json]
+ *     [--resume-preproduction <原未渲染且真实拒绝的产物目录>]
  *
  * 退出码：0=跑通；2=缺 LLM 配置；3=分流判定为"需澄清"（这是**正确行为**，不是失败）；
  *        4=运行失败（vendor 抛错）。
@@ -57,7 +58,7 @@ import {
   type ExecutorLlm,
   type SearchHit,
 } from "../../apps/server/src/video/data-mining-executor.js";
-import { authorizeMarketingFacts, finalizeMarketingFacts, prepareMarketingFacts, restoreReviewedMarketingFacts } from "../../apps/server/src/video/marketing-authority.js";
+import { authorizeMarketingFacts, finalizeMarketingFacts, prepareMarketingFacts, restoreReviewedMarketingFacts, restoreMarketingOutputRejection } from "../../apps/server/src/video/marketing-authority.js";
 import { exportPreproductionFilm, preparePreproductionFilmCandidate } from "../../packages/video-studio/src/film-shotlist.js";
 import { loadProductArchive, productPhotoPath } from "../../packages/video-studio/src/product-archive.js";
 import { filmCanonicalJson } from "../../packages/video-studio/src/film-worker-channel.js";
@@ -304,14 +305,16 @@ const hostRunId = `RUN-${randomUUID()}`;
 const factsRoot = join(OUT_DIR, "marketing", hostRunId);
 const resumeDir = arg("--resume-preproduction") ? resolve(REPO_ROOT, arg("--resume-preproduction")) : "";
 const previousMeta = resumeDir ? JSON.parse(readFileSync(join(resumeDir, "meta.json"), "utf8")) : null;
-const previousResult = resumeDir ? JSON.parse(readFileSync(join(resumeDir, "result.json"), "utf8")) : null;
+const previousResult = resumeDir ? JSON.parse(readFileSync(join(resumeDir, existsSync(join(resumeDir, "result.json")) ? "result.json" : "preproduction-result.json"), "utf8")) : null;
 if (resumeDir && (PRODUCER !== "review" || decision.route !== "marketing" || previousMeta.projectId !== PROJECT
   || previousMeta.intent !== PIPELINE_INTENT || previousMeta.pipeline !== "marketing" || previousMeta.renderSubmitted !== false
   || !/^RUN-[a-f0-9-]{36}$/.test(previousMeta.hostRunId))) throw new Error("PREPRODUCTION_RESUME_SCOPE_CHANGED");
 let marketingSource = resumeDir ? previousMeta.marketingSource ?? { root: join(resumeDir, "marketing", previousMeta.hostRunId),
   scope: { tenantId: arg("--tenant", "cli-local"), workspaceId: arg("--workspace", "cli-local"), projectId: PROJECT, runId: previousMeta.hostRunId, attempt: 1 } } : null;
+if (marketingSource && (marketingSource.scope.tenantId !== arg("--tenant", "cli-local")
+  || marketingSource.scope.workspaceId !== arg("--workspace", "cli-local") || marketingSource.scope.projectId !== PROJECT)) throw new Error("PREPRODUCTION_RESUME_SCOPE_CHANGED：恢复不能跨租户、工作区或项目");
 const requestMeta = { projectId: PROJECT, intent: PIPELINE_INTENT, intentRaw: INTENT, pipeline: decision.route,
-  producerMode: PRODUCER, portraitsEnabled: Boolean(portraits?.enabled), renderSubmitted: false, hostRunId };
+  producerMode: PRODUCER, portraitsEnabled: Boolean(portraits?.enabled), renderSubmitted: false, hostRunId, factOutputId: hostRunId };
 writeFileSync(join(OUT_DIR, "meta.json"), `${JSON.stringify({ ...requestMeta, marketingSource }, null, 2)}\n`, "utf8");
 let result: Awaited<ReturnType<VideoStudio["runPreproduction"]>>;
 try {
@@ -320,12 +323,22 @@ try {
   const maxAttempts = retry + 1;
   const runOnce = async (attempt: number): Promise<Awaited<ReturnType<VideoStudio["runPreproduction"]>>> => {
     let dataMining: StudioConfig["dataMining"];
+    let finalFactRejection: StudioConfig["finalFactRejection"];
     let marketing: Awaited<ReturnType<typeof prepareMarketingFacts>> | undefined;
     if (decision.route === "marketing") {
       if (resumeDir) {
         const restored = await restoreReviewedMarketingFacts({ root: marketingSource.root, scope: marketingSource.scope, metadata: seeded, intent: PIPELINE_INTENT });
         marketing = restored;
         dataMining = (await import("../../apps/server/src/video/marketing-authority.js")).marketingStudioDataMining(restored);
+        if (previousResult.success === true) {
+          const previousProduction = previousResult.stages?.productionEngine, previousFilm = previousProduction?.formalFilmCandidate;
+          const rejection = await restoreMarketingOutputRejection(restored, previousFilm.shots.map((shot: Record<string, unknown>) => ({
+            shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot })), previousMeta.factOutputId);
+          finalFactRejection = { reason: rejection.reason,
+            sourceShotsSha256: createHash("sha256").update(filmCanonicalJson(previousProduction.shots)).digest("hex"),
+            sourceFilmSha256: createHash("sha256").update(filmCanonicalJson(previousFilm)).digest("hex") };
+          log(`  [最终事实门] 复读${rejection.shotId}实际拒绝，反馈原同阶段模型；不重跑上游、不提交渲染`);
+        }
         const record = { at: stamp(), gate: "G1_DOSSIER", vendorType: "host-source-dossier-resume", reused: true, sourceRunId: previousMeta.hostRunId,
           ...restored.verdict };
         gateRecords.push(record); appendFileSync(gatesFile, `${JSON.stringify(record)}\n`, "utf8");
@@ -355,6 +368,7 @@ try {
     const studio = new VideoStudio({ llm, workDir: WORK_DIR, onApproval, onEvent,
       totalDeadlineMs: Number(process.env.VM_TOTAL_DEADLINE_MS ?? 3_600_000),
       deferRender: true, portraits, dataMining, log: (line) => console.log(line),
+      ...(finalFactRejection ? { finalFactRejection } : {}),
       prepareFilmCandidate: async (production, _script, _timing, confirmations) => preparePreproductionFilmCandidate({ production, confirmations,
         projectId: PROJECT, metadata: seeded, product, llm, onApproval: onFilmApproval,
         onArtifact: (name, value) => writeFileSync(join(OUT_DIR, name), `${JSON.stringify(value, null, 2)}\n`, "utf8") }),
@@ -370,7 +384,7 @@ try {
       if (marketing) {
         const saved = await finalizeMarketingFacts(marketing, film.shots.map(shot => ({
           shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot,
-        })));
+        })), process.env, hostRunId);
         current.marketingFacts = { root: marketing.root, ...saved, scope: marketing.bundle.scope };
         film.marketingFacts = current.marketingFacts;
       }
@@ -419,6 +433,7 @@ writeFileSync(join(OUT_DIR, "meta.json"), `${JSON.stringify({
   portraitsEnabled: Boolean(portraits?.enabled),
   renderSubmitted: false,
   hostRunId,
+  factOutputId: hostRunId,
   ...(resumeDir ? { resumedFrom: { dir: resumeDir, hostRunId: previousMeta.hostRunId,
     resultSha256: createHash("sha256").update(filmCanonicalJson(previousResult)).digest("hex") } } : {}),
   marketingFacts: result.marketingFacts ?? null,

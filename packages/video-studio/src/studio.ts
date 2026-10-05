@@ -114,6 +114,8 @@ export interface StudioConfig {
   reusePortraits?: { libraryRoot: string };
   /** 正式完整镜头合同补全在原G7之前执行；失败不能进入最终确认或渲染。 */
   prepareFilmCandidate?: (production: Record<string, any>, script: Record<string, any>, timing: Record<string, any>, confirmations: Record<string, any>) => Promise<Record<string, any>>;
+  /** 宿主复读当前最终事实门的真实拒绝后装配；用于正式同阶段修订，不能获得批准。 */
+  finalFactRejection?: { sourceShotsSha256: string; sourceFilmSha256: string; reason: string };
   /**
    * 渲染移交宿主 render-operator（融合设计 §6：vendor 只做预生产，渲染由 render-operator
    * 按 G8 围栏提交）。true 时 vendor Layer 3 只做校验不提交 —— 避免同一批镜头被
@@ -246,15 +248,20 @@ export class VideoStudio {
     }
     if (input.resume) {
       const previous = input.resume.result as Record<string, any>;
+      const earlyRejection = previous.success === false && (previous.confirmations?.prompts?.approved === false
+        || previous.confirmations?.prompts?.approved === true && previous.confirmations?.preproduction?.approved === false);
+      const lateRejection = cfg.finalFactRejection && previous.success === true && previous.confirmations?.prompts?.approved === true
+        && previous.confirmations?.preproduction?.approved === true && cfg.finalFactRejection.reason.trim()
+        && createHash("sha256").update(filmCanonicalJson(previous.stages?.productionEngine?.shots ?? null)).digest("hex") === cfg.finalFactRejection.sourceShotsSha256
+        && createHash("sha256").update(filmCanonicalJson(previous.stages?.productionEngine?.formalFilmCandidate ?? null)).digest("hex") === cfg.finalFactRejection.sourceFilmSha256;
       if (!input.isMarketing || !verified || createHash("sha256").update(filmCanonicalJson(previous)).digest("hex") !== input.resume.sha256
-        || previous.success !== false || !(previous.confirmations?.prompts?.approved === false
-          || (previous.confirmations?.prompts?.approved === true && previous.confirmations?.preproduction?.approved === false))
+        || !(earlyRejection || lateRejection) || cfg.finalFactRejection && !lateRejection
         || ["creativeTheme", "requirementList", "prd"].some(key => previous.confirmations?.[key]?.approved !== true)
         || filmCanonicalJson(previous.stages?.dataMining?.data) !== filmCanonicalJson(JSON.parse(cfg.dataMining?.verifiedDossier?.assemblyJson ?? "null"))
         || filmCanonicalJson(previous.confirmations?.prd?.prd) !== filmCanonicalJson(previous.stages?.prdGeneration?.data)
         || !Array.isArray(previous.stages?.productionEngine?.prompts) || !previous.stages.productionEngine.prompts.length
         || ["renderingEngine", "render", "postProduction"].some(key => key in previous.stages)) {
-        throw new Error("PREPRODUCTION_RESUME_UNVERIFIED：仅接受原G1–G4已批准、未渲染且G6拒绝的完整本次对象");
+        throw new Error("PREPRODUCTION_RESUME_UNVERIFIED：只接受原G1–G4已批准、未渲染且当前实际拒绝的完整对象");
       }
     }
     const reusedPortraits = cfg.reusePortraits ? readReusedPortraitEvidence(cfg.reusePortraits.libraryRoot, metadata.characterArchive as Record<string, any>) : null;
@@ -473,7 +480,11 @@ export class VideoStudio {
           { llm: cfg.llm, workDir: cfg.workDir, projectId: input.projectId }));
         keep(installVendorPromptReviewBridge(system as unknown as PromptReviewTarget, { metadata, llm: cfg.llm,
           reviewedFacts: cfg.dataMining?.verifiedDossier ? JSON.parse(cfg.dataMining.verifiedDossier.assemblyJson).dossier : undefined,
-          workDir: cfg.workDir, projectId: input.projectId, log, reusedPortraits, reuseGeneratedCandidate: Boolean(input.resume), prepareFinalCandidate: cfg.prepareFilmCandidate }));
+          workDir: cfg.workDir, projectId: input.projectId, log, reusedPortraits,
+          reuseGeneratedCandidate: Boolean(input.resume) && !cfg.finalFactRejection,
+          ...(cfg.finalFactRejection && input.resume ? { initialRejection: { reason: cfg.finalFactRejection.reason,
+            candidate: (input.resume.result.stages?.productionEngine as Record<string, any>).formalFilmCandidate } } : {}),
+          prepareFinalCandidate: cfg.prepareFilmCandidate }));
         /** 实例级放宽 rhythmProfiles（standard 12 / slow 15 → 模型上限），否则 30s 单镜会被重新夹紧 */
         applyDurationPolicyToManager(
           (system as unknown as { durationConstraintManager?: unknown }).durationConstraintManager,

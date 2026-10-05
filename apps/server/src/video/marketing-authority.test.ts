@@ -4,7 +4,7 @@ import { mkdtemp, realpath, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { prepareMarketingFacts, authorizeMarketingFacts, finalizeMarketingFacts, verifyMarketingFacts, restoreReviewedMarketingFacts, type PreparedMarketingFacts } from "./marketing-authority.js";
+import { prepareMarketingFacts, authorizeMarketingFacts, finalizeMarketingFacts, verifyMarketingFacts, restoreReviewedMarketingFacts, restoreMarketingOutputRejection, type PreparedMarketingFacts } from "./marketing-authority.js";
 import { fetchMarketingSource, requestSource } from "./marketing-source-fetcher.js";
 import { canonicalRenderJson, renderSha256 } from "./gen/compiled-request.js";
 const scope = { tenantId: "tenant-a", workspaceId: "ws-a", projectId: "P1", runId: "RUN1", attempt: 1 };
@@ -83,6 +83,38 @@ describe("营销事实宿主完整执行", () => {
     await expect(readFile(path.join(root, `${prepared.prefix}-facts.json`))).rejects.toMatchObject({ code: "ENOENT" });
     const rejected = JSON.parse(await readFile(path.join(root, `${prepared.prefix}-shot-1.verdict.json`), "utf8"));
     expect(rejected).toMatchObject({ scope, shotId: "S1", verdict: { approved: false, status: "failed", score: 10 } });
+  });
+  it("最终事实真实拒绝可复读反馈；新输出审核单独落盘，旧失败不覆盖也不复用批准", async () => {
+    const prepared = await prepare(); rejectJudge = true;
+    await expect(finalizeMarketingFacts(prepared, shots, env)).rejects.toThrow("PROMPT_FACTS_REJECTED");
+    const rejected = await restoreMarketingOutputRejection(prepared, shots);
+    expect(rejected).toMatchObject({ shotId: "S1", verdict: { approved: false, via: "llm", status: "failed" } });
+    const oldReceipt = await readFile(path.join(root, `${prepared.prefix}-shot-1.verdict.json`), "utf8");
+    rejectJudge = false; const outputId = "RUN-11111111-1111-4111-8111-111111111111";
+    const saved = await finalizeMarketingFacts(prepared, shots, env, outputId);
+    expect(saved.ref).toBe(`${prepared.prefix}-output-${outputId}-facts.json`);
+    expect((await verifyMarketingFacts({ root, ...saved, scope, shots })).outputReviews).toHaveLength(1);
+    expect(await readFile(path.join(root, `${prepared.prefix}-shot-1.verdict.json`), "utf8")).toBe(oldReceipt);
+    await expect(restoreMarketingOutputRejection(prepared, shots, outputId)).rejects.toThrow("REJECTION_REQUIRED");
+  });
+  it.each(["shot", "fields", "scope", "hash", "approval", "mock"])("输出拒绝%s变化不能取得同阶段修订资格", async kind => {
+    const prepared = await prepare(); rejectJudge = true;
+    await expect(finalizeMarketingFacts(prepared, shots, env)).rejects.toThrow("PROMPT_FACTS_REJECTED");
+    const file = path.join(root, `${prepared.prefix}-shot-1.verdict.json`), receipt = JSON.parse(await readFile(file, "utf8"));
+    const current = structuredClone(shots);
+    if (kind === "shot") current[0]!.prompt += "变化";
+    if (kind === "fields") current[0]!.fields.规格 = "99档";
+    if (kind === "scope") receipt.scope.workspaceId = "other";
+    if (kind === "hash") receipt.contentSha256 = "0".repeat(64);
+    if (kind === "approval") receipt.verdict.approved = true;
+    if (kind === "mock") receipt.verdict.via = "fallback";
+    await writeFile(file, JSON.stringify(receipt));
+    await expect(restoreMarketingOutputRejection(prepared, current)).rejects.toThrow();
+  });
+  it.each(["../escape", "", "RUN-not-uuid"])("输出标识%s不能逃离档案或冒充新执行", async outputId => {
+    if (!outputId) outputId = "RUN-../";
+    const prepared = await prepare();
+    await expect(finalizeMarketingFacts(prepared, shots, env, outputId)).rejects.toThrow("OUTPUT_SCOPE_INVALID");
   });
   it("原文支持被拒绝时仍保存完整评分、问题和裁决，不能制造事实包", async () => {
     rejectJudge = true;

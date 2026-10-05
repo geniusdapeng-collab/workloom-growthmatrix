@@ -9,6 +9,20 @@ const original = () => [{ shotId: "S1", duration: 4, fields: { character: "出�
 const candidate = () => ({ shots: [{ shotId: "S1", duration: 4, fields: { character: "出镜人物", action: "修订动作", dialogue: "双屏可选。", audio: "同期人声" },
   prompt: "修订完整提示词".repeat(200), dialogueBlocks: [{ speaker: "出镜人物", type: "口播", emotion: "明朗", text: "双屏可选。" }] }] });
 describe("原G6同阶段模型修订与消费绑定", () => {
+  it("宿主复读的最终事实真实拒绝驱动模型修订，原G6只审核新稿，不复用原批准", async () => {
+    const root = mkdtempSync(join(tmpdir(), "fact-prompt-repair-")), prompts = original();
+    const confirm = vi.fn(async (_shots: unknown) => ({ approved: true })), reason = vi.fn(async (_prompt: string) => ({ success: true, data: candidate() }));
+    const system = { create: vi.fn(async () => ({})), _confirmPrompts: confirm, _confirmPreproductionResult: vi.fn(async () => ({ approved: true })) };
+    const restore = installVendorPromptReviewBridge(system, { metadata, llm: { reason }, projectId: "P1", workDir: root,
+      initialRejection: { reason: "最终商品事实门实际拒绝：入住效果没有来源", candidate: { shots: original() } } });
+    try {
+      expect((await system._confirmPrompts(prompts)).approved).toBe(true);
+      expect(reason).toHaveBeenCalledOnce(); expect(reason.mock.calls[0]?.[0]).toContain("入住效果没有来源");
+      expect(confirm).toHaveBeenCalledExactlyOnceWith(expect.arrayContaining([expect.objectContaining({ action: "修订动作" })]));
+      const scope = join(root, "prompt-corrections", readdirSync(join(root, "prompt-corrections"))[0]!);
+      expect(JSON.parse(readFileSync(join(scope, "rejected.json"), "utf8")).verdict).toMatchObject({ approved: false });
+    } finally { restore(); rmSync(root, { recursive: true, force: true }); }
+  });
   it("新稿不携带旧增强层冲突副本，原运行标识保留且原稿可按摘要追溯", () => {
     const src: any = original(); src[0].title = "旧未支持效果"; src[0].characterDescs = "旧长裤";
     src[0].audioLayer = "旧镜内BGM"; src[0].sceneType = "opening";
