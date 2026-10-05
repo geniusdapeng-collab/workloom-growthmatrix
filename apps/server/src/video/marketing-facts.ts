@@ -23,9 +23,11 @@ const a3 = z.object({ competitors: z.array(z.object({ name: text, price_band: te
   viral_patterns: z.array(z.object({ pattern: text, sample_count: z.number().int().positive(), source_url: url }).strict()).max(10).optional(),
   weakness_notes: text.optional(),
 }).strict()).max(3), adjacent_notes: z.array(z.unknown()).max(0).optional() }).strict();
+// 模型常把不适用的可选说明输出为空串；只归一成“未填写”，空站仍由下方证据规则拒绝。
+const optionalReason = z.preprocess(value => typeof value === "string" && !value.trim() ? undefined : value, text.optional());
 export const extractionSchema = z.object({ payload: z.unknown(), citations: z.array(z.object({
   pointer: z.string().min(1).max(500), sourceId: z.string().min(1).max(100), quote: z.string().min(1).max(6000),
-}).strict()).max(200), noEvidenceReason: text.optional() }).strict();
+}).strict()).max(200), noEvidenceReason: optionalReason }).strict();
 export interface ClaimEvidence {
   claimId: string; stage: IntelStage; pointer: string; value: string | number | boolean;
   sourceId: string; textSha256: string; quote: string; quoteStart: number; quoteEnd: number;
