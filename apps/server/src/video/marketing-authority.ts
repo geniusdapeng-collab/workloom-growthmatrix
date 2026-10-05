@@ -95,6 +95,10 @@ function accepted(verdict: ProducerVerdict | undefined, file: string, hash: stri
   return Boolean(verdict?.status === "passed" && verdict.approved === true && verdict.via === "llm" && verdict.degraded === false
     && verdict.model && verdict.evidence?.some(item => item.path === file && item.sha256 === hash && item.scope === "complete-text"));
 }
+function rejected(verdict: ProducerVerdict, file: string, hash: string): boolean {
+  return verdict.status === "failed" && verdict.approved === false && verdict.via === "llm" && verdict.degraded === false && Boolean(verdict.model)
+    && Boolean(verdict.evidence?.some(item => item.path === file && item.sha256 === hash && item.scope === "complete-text"));
+}
 async function writeBound(root: string, ref: string, bytes: string | Buffer): Promise<{ ref: string; path: string; sha256: string }> {
   const file = path.resolve(root, ref);
   if (!file.startsWith(`${root}${path.sep}`) || ref.split(/[\\/]/).some(part => part === "..")) fail("MARKETING_PATH_INVALID", "来源证据必须留在本次项目档案");
@@ -339,6 +343,7 @@ async function verifyOutputVisualEvidence(bundle: MarketingFactsBundle, referenc
 export async function restoreMarketingOutputRejection(prepared: PreparedMarketingFacts,
   shots: Array<{ shotId: string; prompt: string; fields: unknown }>, outputId?: string, sceneBible?: SceneBible): Promise<{ shotId: string; reason: string; verdict: ProducerVerdict }> {
   const prefix = outputPrefix(prepared, outputId);
+  const rejections: Array<{ shotId: string; reason: string; verdict: ProducerVerdict }> = [];
   for (const [index, shot] of shots.entries()) {
     const receiptPath = path.join(prepared.root, `${prefix}-shot-${index + 1}.verdict.json`);
     let receipt: { scope: MarketingScope; shotId: string; contentSha256: string; verdict: ProducerVerdict };
@@ -359,12 +364,11 @@ export async function restoreMarketingOutputRejection(prepared: PreparedMarketin
       fail("MARKETING_OUTPUT_REJECTION_UNBOUND", "拒绝回执与当前完整镜头或商品证据不同");
     }
     const verdict = receipt.verdict;
-    if (verdict.status === "failed" && verdict.approved === false && verdict.via === "llm" && verdict.degraded === false && verdict.model
-      && verdict.evidence?.some(item => item.path === file && item.sha256 === receipt.contentSha256 && item.scope === "complete-text")) {
-      return { shotId: shot.shotId, verdict, reason: `最终商品事实门实际拒绝(${shot.shotId},score=${verdict.score})：${verdict.reason}；${verdict.issues.join("；")}` };
-    }
-    if (!accepted(verdict, file, receipt.contentSha256)) fail("MARKETING_OUTPUT_REJECTION_UNVERIFIED", "输出回执不是本次真实通过或拒绝");
+    if (rejected(verdict, file, receipt.contentSha256)) rejections.push({ shotId: shot.shotId, verdict,
+      reason: `最终商品事实门实际拒绝(${shot.shotId},score=${verdict.score})：${verdict.reason}；${verdict.issues.join("；")}` });
+    else if (!accepted(verdict, file, receipt.contentSha256)) fail("MARKETING_OUTPUT_REJECTION_UNVERIFIED", "输出回执不是本次真实通过或拒绝");
   }
+  if (rejections.length) return { ...rejections[0]!, reason: rejections.map(item => item.reason).join("\n") };
   fail("MARKETING_OUTPUT_REJECTION_REQUIRED", "没有当前最终镜头的真实事实拒绝");
 }
 
@@ -376,6 +380,7 @@ export async function finalizeMarketingFacts(prepared: PreparedMarketingFacts, s
   const visualReferences = await loadProductVisualReferences(prepared.bundle.sources);
   if (visualReferences.length) prepared.bundle.visualReferences = visualReferences;
   if (sceneBible) prepared.bundle.outputSceneBible = structuredClone(sceneBible);
+  const rejections: string[] = [];
   for (const [index, item] of shots.entries()) {
     const shot = { shotId: item.shotId, prompt: item.prompt, fields: item.fields };
     if (!shot.prompt.trim()) fail("MARKETING_PROMPTS_INVALID", "营销镜头正文为空");
@@ -389,20 +394,28 @@ export async function finalizeMarketingFacts(prepared: PreparedMarketingFacts, s
       requiredCheckIds: ["marketing-current-facts"], minScore: 85,
       rubric: ["逐句核对shot.prompt与全部结构fields中的商品事实、数字、价格、效果、评价和竞品主张。功能、规格、认证、效果只以sourceClaims为依据；商品外形、屏幕物理排布与摄像头位置可对照本次真实送审的登记产品基准图，图像不能证明功能或性能",
         "必须遵守restrictions；不得把用户意图、推断、生成情节、广告愿望、缺证据或无冲突当成事实支持；任一未支持或夸大主张必须拒绝",
+        "negative/禁用清单/限制说明中明确否定的词句不是肯定宣传主张；须核对实际台词、字幕、画面动作是否正向宣称或演示，不能因负面约束逐字写出禁词而判作违规",
         "创意可以使用虚构人物与非事实的镜头设计，但不得以画面演示暗示没有来源的商品性能、认证或真实人物背书"],
       context: { purpose: "marketing-final-fact-review", shotId: shot.shotId, scope: prepared.bundle.scope,
-        performerIdentity: performer ? { id: performer.id, name: performer.name, authorization: performer.authorization } : null,
+        performerIdentity: performer ? { id: performer.id, name: performer.name, identity: performer.identity ?? null,
+          appearance: performer.appearance ?? null, wardrobe: performer.wardrobe ?? null, authorization: performer.authorization } : null,
         visualScope: "visualReferences是另行校验并实际送审的登记产品基准图；sourceClaims.images为空仅表示文字采集站没有公网图片，不表示本次没有收到登记图。不能由图推断功能、认证、规格、原PDF已复核或产物已生成。",
         designScope: "当前审核的是生成前的创意合同。场景时段、光线色温、光比、光圈、运镜位移、空间尺寸属于虚构画面设计，不是商品属性或已实拍事实；无需用成片证明这些设计已经执行。它们与商品事实有冲突时仍应拒绝，产物质量由后续真实渲染证据核验。",
         identityScope: "这是本次G1请求绑定的明确授权表演角色，仅用于识别speaker/character；不是商品品牌、功能、效果或真实顾客评价的证据。其姓名不能证明商品名称或领先性。" },
     });
     await writeBound(prepared.root, `${prefix}-shot-${index + 1}.verdict.json`, canonicalRenderJson({
       scope: prepared.bundle.scope, shotId: shot.shotId, contentSha256: evidence.sha256, verdict }));
-    if (!accepted(verdict, evidence.path, evidence.sha256)) fail("MARKETING_PROMPT_FACTS_REJECTED", `营销镜头事实未通过：${verdict.reason}`);
+    if (!accepted(verdict, evidence.path, evidence.sha256)) {
+      if (!rejected(verdict, evidence.path, evidence.sha256)) fail("MARKETING_PROMPT_FACTS_REJECTED", `营销镜头事实未验证：${verdict.reason}`);
+      await verifyOutputVisualEvidence(prepared.bundle, prepared.bundle.visualReferences, verdict);
+      rejections.push(`${shot.shotId}：${verdict.reason}；${verdict.issues.join("；")}`);
+      continue; // 完整检查其余镜头，反馈真实全片问题；有任一拒绝绝不保存成功facts。
+    }
     await verifyOutputVisualEvidence(prepared.bundle, prepared.bundle.visualReferences, verdict);
     prepared.bundle.outputReviews.push({ shotId: shot.shotId, promptSha256: renderSha256(shot.prompt), fieldsSha256: renderSha256(canonicalRenderJson(shot.fields)),
       ref: evidence.ref, sha256: evidence.sha256, verdict });
   }
+  if (rejections.length) fail("MARKETING_PROMPT_FACTS_REJECTED", `营销镜头事实未通过：${rejections.join("\n")}`);
   const saved = await writeBound(prepared.root, `${prefix}-facts.json`, canonicalRenderJson(prepared.bundle));
   await verifyMarketingFacts({ root: prepared.root, ref: saved.ref, sha256: saved.sha256, scope: prepared.bundle.scope, shots, sceneBible });
   return { ref: saved.ref, sha256: saved.sha256 };

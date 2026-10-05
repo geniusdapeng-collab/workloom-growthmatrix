@@ -84,6 +84,15 @@ describe("营销事实宿主完整执行", () => {
     const rejected = JSON.parse(await readFile(path.join(root, `${prepared.prefix}-shot-1.verdict.json`), "utf8"));
     expect(rejected).toMatchObject({ scope, shotId: "S1", verdict: { approved: false, status: "failed", score: 10 } });
   });
+  it("逐镜真实拒绝全量留证并聚合反馈，不因首镜失败漏掉其余镜头，也不产生成功包", async () => {
+    const prepared = await prepare(); rejectJudge = true;
+    const current = [shots[0]!, { ...shots[0]!, shotId: "S2", prompt: "另一镜错误主张" }];
+    await expect(finalizeMarketingFacts(prepared, current, env)).rejects.toThrow("PROMPT_FACTS_REJECTED");
+    const rejection = await restoreMarketingOutputRejection(prepared, current);
+    expect(rejection.reason).toContain("实际拒绝(S1"); expect(rejection.reason).toContain("实际拒绝(S2");
+    expect(modelCalls).toHaveLength(5); // 三次来源支持审核与两次真实输出审核。
+    await expect(readFile(path.join(root, `${prepared.prefix}-facts.json`))).rejects.toMatchObject({ code: "ENOENT" });
+  });
   it("最终事实真实拒绝可复读反馈；新输出审核单独落盘，旧失败不覆盖也不复用批准", async () => {
     const prepared = await prepare(); rejectJudge = true;
     await expect(finalizeMarketingFacts(prepared, shots, env)).rejects.toThrow("PROMPT_FACTS_REJECTED");
@@ -165,9 +174,10 @@ describe("营销事实宿主完整执行", () => {
   });
 });
 
-async function prepareRegistered(): Promise<PreparedMarketingFacts> {
+async function prepareRegistered(characterArchive?: Record<string, unknown>): Promise<PreparedMarketingFacts> {
   return prepareMarketingFacts({ scope, root, intent: "介绍DEMO-T001，仅使用登记摘录支持的事实", env,
-    metadata: { productArchive: { id: "demo-t001" }, dataMining: { name: "示例品牌 台式双屏自助机", model: "DEMO-T001" } },
+    metadata: { productArchive: { id: "demo-t001" }, dataMining: { name: "示例品牌 台式双屏自助机", model: "DEMO-T001" },
+      ...(characterArchive ? { characterArchive } : {}) },
     llm: { reason: async prompt => {
       extractionCalls.push(prompt);
       const sources = JSON.parse(/当前阶段：A1\n(.*)$/s.exec(prompt)![1]!).sources;
@@ -177,6 +187,15 @@ async function prepareRegistered(): Promise<PreparedMarketingFacts> {
     } }, dependencies: { search: async () => [], fetchSource: async () => { throw new Error("测试不允许公网来源传输"); } } });
 }
 describe("登记档案复用正式营销宿主资格", () => {
+  it("事实门读取原G1明确角色性别/外貌/衣装，角色属性不当作商品功能证据", async () => {
+    const prepared = await prepareRegistered({ id: "ceo", name: "出镜人物", identity: { gender: "female" },
+      appearance: { hair: "登记黑发" }, wardrobe: [{ detail: "登记黑色套装" }], authorization: { evidence: "asset://test-person" } });
+    await finalizeMarketingFacts(prepared, shots, env);
+    const request = JSON.stringify(modelCalls.at(-1));
+    expect(request).toContain('gender'); expect(request).toContain('female');
+    expect(request).toContain("登记黑发"); expect(request).toContain("登记黑色套装");
+    expect(prepared.bundle.stages[0]!.facts.claims.some(claim => claim.value === "female")).toBe(false);
+  });
   it("完整场景圣经随最终镜头传入材质合同，审核后改空间或漏传圣经必须拒绝", async () => {
     const prepared = await prepareRegistered();
     const sceneBible = { spaceId: "frontdesk", space: { building: "本片设计酒店前台" },

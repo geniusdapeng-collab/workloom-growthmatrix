@@ -371,6 +371,7 @@ try {
       ...(finalFactRejection ? { finalFactRejection } : {}),
       prepareFilmCandidate: async (production, _script, _timing, confirmations) => preparePreproductionFilmCandidate({ production, confirmations,
         projectId: PROJECT, metadata: seeded, product, llm, onApproval: onFilmApproval,
+        factRejection: finalFactRejection?.reason,
         onArtifact: (name, value) => writeFileSync(join(OUT_DIR, name), `${JSON.stringify(value, null, 2)}\n`, "utf8") }),
       ...(!PORTRAITS_ENABLED && seeded.characterArchive ? { reusePortraits: { libraryRoot: join(REPO_ROOT, "bundles/ai-video/library/characters") } } : {}) });
     const current = await studio.runPreproduction({ projectId: PROJECT, intent: PIPELINE_INTENT, metadata: seeded,

@@ -156,12 +156,14 @@ export function verifyOpeningCaption(document: Obj): { shotId: string; text: str
 
 async function generateFilmEnvironment(mapped: FilmShotlist, input: {
   prd: Obj; metadata: Obj; llm: Pick<WorkloomLLMEngine, "reason">; onArtifact?: (name: string, value: unknown) => Promise<void> | void;
+  factRejection?: string;
 }): Promise<FilmShotlist> {
   const contract = `正式成片导出工位。下面是已生成镜头及完整PRD，不能改台词、时长、动作、人物或商品事实。只输出JSON：
 {sceneBible:{spaceId:string,space:{building:string,orientation?:string,timeOfDay?:string},materials:[{item,material,finish?,wear?}],practicalLights:[{type,kelvin?,direction?}],traces:string[],environmentProfile:{setting:'interior'|'exterior'|'studio'|'product',condition:'used'|'new'|'maintained'|'sterile'|'natural'},otherSpaces?:[]},
 hook:{type:'question'|'conflict'|'counterintuitive'|'benefit'|'result-first'|'suspense'|'number'|'scene-shock',promise:string,payoffShotId:string,firstShotTemplate:{visual:string,line:string,lineSec:number},sfx:{kind:'impact'|'whoosh'|'riser',atSec:number}},
 shots:[{shotId:原镜号,sceneId:所用空间ID,propInteraction?:[{prop,purpose:'operate'|'present'|'shared-view'|'rest',orientation,operatedBy,screenFacing:'operator'|'audience'|'shared'|'away',contact,occlusion?}],environmentProfile?:对象,visibleMaterials?:string[],devices?:[{category,model}]}]}
 环境补充是待渲染的创作布景，不冒称实拍记录。各镜维持原设计的空间连续性；可见材质、实际光源与使用状态须具体；不同空间分别列otherSpaces，不能共享错误布景。屏幕道具操作/展示须声明朝向/操作者/接触且符合原动作。设备型号必须与原卡或登记productRef一致，不能自创。
+当前document是实际修订后的完整镜头设计，优先于较早PRD的布景模板。sceneBible只登记document.scene/props/lighting已有的可见物件与光源；不得新增原镜没有的柔光箱、射灯、百叶窗、金属收边、产品脚垫或物理结构。材质/产品颜色只从当前实际镜头已有描述提取，不根据类别或旧PRD猜测。逐镜引用不同可见子集，但光源类型/方向/色温与当前lighting完全一致，绝不把旧拒绝内容重新填回。
 environmentProfile恰好两个键setting和condition。condition选择一个枚举字符串；例如{"setting":"interior","condition":"used"}，不能增加maintained等第三个键。visibleMaterials每一项必须逐字等于当前sceneId的materials数组中某项item，不能写材质描述或未登记物件；需要可见物件就先在materials登记它。otherSpaces内的对象直接放spaceId/building/orientation/timeOfDay/materials/practicalLights/traces/environmentProfile，不额外嵌套space。
 devices仅原卡已有设备年代策略声明时原样保留，否则空数组；本次产品由productRef、产品原图及G1事实约束，不能把DEMO-T001塞入消费电子设备年代目录或编造型号类别。propInteraction仍完整核对实际产品展示、操作者、朝向和接触。
 propInteraction中的purpose与screenFacing按真实镜头用途填写：屏幕朝向镜头/观众时为present与audience，即使CEO站在旁边指示也不是shared-view。只有原动作明确双方共同观看屏幕时才用shared-view与shared，orientation同时明确双方可见；不能一边写朝向镜头一边写shared。无屏幕道具仍按实际接触与承重描述，不编造功能。
@@ -169,7 +171,8 @@ propInteraction中的purpose与screenFacing按真实镜头用途填写：屏幕�
   const hookContract = "\n钩子promise必须忠实复述首镜实际景别和动作，远景不能称特写，静态光源不能称一秒扫动；不要添加未出现在原设计的动作。首镜无对白时lineSec必须等于min(首镜duration,3)，它是旁挂字幕在场窗口而非口播时长。";
   let feedback = "", lastError: unknown;
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const response = await input.llm.reason(`${contract}${hookContract}\n${filmCanonicalJson({ document: mapped, prd: input.prd, usage: input.metadata.marketingUsage })}${feedback}`,
+    const response = await input.llm.reason(`${contract}${hookContract}\n${filmCanonicalJson({ document: mapped, prd: input.prd, usage: input.metadata.marketingUsage,
+      actualFinalFactRejection: input.factRejection ?? null })}${feedback}`,
       { forceJson: true, maxTokens: 8192, temperature: .1, thinking: { type: "disabled" } });
     await input.onArtifact?.(`film-environment-response-${attempt}.json`, response);
     if (!response.success) throw new Error(`FILM_ENVIRONMENT_GENERATION_FAILED：${response.error}`);
@@ -186,6 +189,7 @@ propInteraction中的purpose与screenFacing按真实镜头用途填写：屏幕�
 export async function preparePreproductionFilmCandidate(input: {
   production: Obj; confirmations: Obj; projectId: string; metadata: Obj; product?: LoadedProductArchive;
   llm: Pick<WorkloomLLMEngine, "reason">; onApproval: ApprovalCallback; onArtifact?: (name: string, value: unknown) => Promise<void> | void;
+  factRejection?: string;
 }): Promise<FilmShotlist> {
   if (input.confirmations.prompts?.approved !== true || input.confirmations.prd?.approved !== true || !input.confirmations.prd.prd
     || hash(input.production.shots) !== hash(input.production.prompts)) throw new Error("FILM_CANDIDATE_UNVERIFIED：需本次原G4/G6真实批准且当前镜头/提示词一致");

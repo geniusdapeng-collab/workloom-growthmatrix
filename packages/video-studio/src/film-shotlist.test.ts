@@ -94,9 +94,12 @@ it("无对白首镜只复用实际片头旁挂计划，不新增口播；冒造�
 it("正式补全位于原G7之前，不伪造总体success；批准后导出同一候选不重新模型生成", async () => {
   const production = { shots: [raw()], prompts: [raw()] }, prd = result().stages.prdGeneration.data;
   const confirmations = { prd: { approved: true, prd }, prompts: { approved: true } };
-  const reason = vi.fn(async () => ({ success: true, data: environment() })), onApproval = vi.fn(async () => ({ approved: true }));
-  const candidate = await preparePreproductionFilmCandidate({ production, confirmations, projectId: "P1", metadata: metadata(), llm: { reason }, onApproval });
+  const reason = vi.fn(async (_prompt: string) => ({ success: true, data: environment() })), onApproval = vi.fn(async () => ({ approved: true }));
+  const candidate = await preparePreproductionFilmCandidate({ production, confirmations, projectId: "P1", metadata: metadata(), llm: { reason }, onApproval,
+    factRejection: "真实事实门拒绝：不得重新填回无据的防滑脚垫" });
   expect(reason).toHaveBeenCalledOnce(); expect(onApproval).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ gate: "G6_PROMPT" }));
+  expect(reason.mock.calls[0]![0]).toContain("真实事实门拒绝：不得重新填回无据的防滑脚垫");
+  expect(reason.mock.calls[0]![0]).toContain("当前document是实际修订后的完整镜头设计");
   const complete: any = result(); complete.stages.productionEngine = { ...production, formalFilmCandidate: candidate };
   complete.confirmations = { ...confirmations, preproduction: { approved: true } };
   expect(await exportPreproductionFilm({ result: complete, projectId: "P1", metadata: metadata(), llm: { reason }, onApproval })).toEqual(candidate);
