@@ -584,7 +584,8 @@ if (sourceDocument.schemaVersion === "workloom.film-shotlist/v1" && sourceDocume
   if (!proof || typeof proof.root !== "string" || typeof proof.ref !== "string" || typeof proof.sha256 !== "string"
     || proof.scope?.projectId !== PROJECT || !Array.isArray(sourceDocument.shots)) throw new Error("MARKETING_FACTS_REQUIRED：正式营销成片缺本项目完整最终事实资格");
   await verifyMarketingFacts({ root: proof.root, ref: proof.ref, sha256: proof.sha256, scope: proof.scope,
-    shots: sourceDocument.shots.map(shot => ({ shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot })) });
+    shots: sourceDocument.shots.map(shot => ({ shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot })),
+    sceneBible: sourceDocument.sceneBible as SceneBible | undefined });
 }
 
 /* ================= 阶段日志 ================= */

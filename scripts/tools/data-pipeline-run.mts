@@ -333,7 +333,7 @@ try {
         if (previousResult.success === true) {
           const previousProduction = previousResult.stages?.productionEngine, previousFilm = previousProduction?.formalFilmCandidate;
           const rejection = await restoreMarketingOutputRejection(restored, previousFilm.shots.map((shot: Record<string, unknown>) => ({
-            shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot })), previousMeta.factOutputId);
+            shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot })), previousMeta.factOutputId, previousFilm.sceneBible);
           finalFactRejection = { reason: rejection.reason,
             sourceShotsSha256: createHash("sha256").update(filmCanonicalJson(previousProduction.shots)).digest("hex"),
             sourceFilmSha256: createHash("sha256").update(filmCanonicalJson(previousFilm)).digest("hex") };
@@ -384,7 +384,7 @@ try {
       if (marketing) {
         const saved = await finalizeMarketingFacts(marketing, film.shots.map(shot => ({
           shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot,
-        })), process.env, hostRunId);
+        })), process.env, hostRunId, film.sceneBible);
         current.marketingFacts = { root: marketing.root, ...saved, scope: marketing.bundle.scope };
         film.marketingFacts = current.marketingFacts;
       }

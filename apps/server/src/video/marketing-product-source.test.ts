@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { assertProductSourceQuery, loadRegisteredProductSource, verifyArchivedProductSource } from "./marketing-product-source.js";
+import { assertProductSourceQuery, loadRegisteredProductSource, loadProductVisualReferences, verifyArchivedProductSource } from "./marketing-product-source.js";
 import { canonicalRenderJson } from "./gen/compiled-request.js";
 
 const builtin = fileURLToPath(new URL("../../../../bundles/ai-video/library/products/demo-t001/", import.meta.url));
@@ -18,6 +18,20 @@ const load = (selector: unknown = { id: "demo-t001" }) => loadRegisteredProductS
 async function save() { await writeFile(path.join(root, "demo-t001/profile.json"), JSON.stringify(profile)); }
 
 describe("登记客户商品摘录来源", () => {
+  it("登记图像从受控库复读，与归档来源和实际图像字节绑定；不能插入任意路径", async () => {
+    const source = (await load())!;
+    const refs = await loadProductVisualReferences([source.snapshot], { libraryRoot: root });
+    expect(refs).toHaveLength(profile.photos.length);
+    expect(refs[0]).toMatchObject({ sourceId: source.snapshot.sourceId, archiveSha256: source.snapshot.rawSha256,
+      path: path.join(root, "demo-t001", profile.photos[0].file), sha256: profile.photos[0].sha256 });
+    profile.displayName += "变更"; await save();
+    await expect(loadProductVisualReferences([source.snapshot], { libraryRoot: root })).rejects.toThrow("MARKETING_VISUAL_SOURCE_CHANGED");
+  });
+  it("登记图像实际字节变化不能复用视觉证明", async () => {
+    const source = (await load())!;
+    await writeFile(path.join(root, "demo-t001", profile.photos[0].file), "changed-image");
+    await expect(loadProductVisualReferences([source.snapshot], { libraryRoot: root })).rejects.toThrow("MARKETING_ARCHIVE_INVALID");
+  });
   it("读取真实登记字节/商品图片，仅摘录入正文，保留原件未重开与机器映射未核实", async () => {
     const source = (await load())!;
     expect(source.rawBytes.equals(await readFile(path.join(root, "demo-t001/profile.json")))).toBe(true);

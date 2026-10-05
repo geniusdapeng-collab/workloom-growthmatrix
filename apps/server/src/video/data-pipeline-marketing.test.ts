@@ -91,6 +91,7 @@ describe("营销CLI复用正式事实与G1", () => {
     expect(result.marketingFacts.scope).toMatchObject({ projectId: "CLI-P1", tenantId: "cli-local", workspaceId: "cli-local", attempt: 1 });
     const facts = JSON.parse(await readFile(path.join(result.marketingFacts.root, result.marketingFacts.ref), "utf8"));
     expect(facts.outputReviews).toHaveLength(1);
+    expect(facts.outputSceneBible.spaceId).toBe("frontdesk");
     expect(facts.sources[0].archive.originalReopened).toBe(false);
     expect(JSON.parse(await readFile(path.join(root, "meta.json"), "utf8")).renderSubmitted).toBe(false);
     expect(process.exitCode).toBe(0);

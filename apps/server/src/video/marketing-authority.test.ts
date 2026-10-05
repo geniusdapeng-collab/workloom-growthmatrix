@@ -177,6 +177,52 @@ async function prepareRegistered(): Promise<PreparedMarketingFacts> {
     } }, dependencies: { search: async () => [], fetchSource: async () => { throw new Error("测试不允许公网来源传输"); } } });
 }
 describe("登记档案复用正式营销宿主资格", () => {
+  it("完整场景圣经随最终镜头传入材质合同，审核后改空间或漏传圣经必须拒绝", async () => {
+    const prepared = await prepareRegistered();
+    const sceneBible = { spaceId: "frontdesk", space: { building: "本片设计酒店前台" },
+      materials: [{ item: "柜台", material: "实木" }, { item: "隔窗", material: "玻璃" }],
+      practicalLights: [{ type: "窗光" }], traces: [], environmentProfile: { setting: "interior", condition: "maintained" } } as const;
+    const current = [{ shotId: "S1", prompt: "出镜人物在设计酒店柜台旁展示台式双屏自助机。", fields: {
+      shotId: "S1", sceneId: "frontdesk", scene: "出镜人物在柜台旁", character: "出镜人物", action: "保持站姿",
+      environmentProfile: { setting: "interior", condition: "maintained" }, visibleMaterials: ["柜台", "隔窗"] } }];
+    const bible = structuredClone(sceneBible) as any;
+    const saved = await finalizeMarketingFacts(prepared, current, env, undefined, bible);
+    const checked = await verifyMarketingFacts({ root, ...saved, scope, shots: current, sceneBible: bible });
+    expect(checked.outputReviews[0]!.verdict.contractHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(JSON.stringify(modelCalls.at(-1))).toContain("实木");
+    await expect(verifyMarketingFacts({ root, ...saved, scope, shots: current })).rejects.toThrow("SCENE_CONTRACT_CHANGED");
+    bible.space.building = "不同空间";
+    await expect(verifyMarketingFacts({ root, ...saved, scope, shots: current, sceneBible: bible })).rejects.toThrow("SCENE_CONTRACT_CHANGED");
+  });
+  it("最终审核真实送入登记图片，完整文字与独立视觉摘要同时绑定；不把图片升格为功能claims", async () => {
+    const prepared = await prepareRegistered();
+    const saved = await finalizeMarketingFacts(prepared, shots, env);
+    const bundle = await verifyMarketingFacts({ root, ...saved, scope, shots });
+    expect(bundle.visualReferences).toHaveLength(2);
+    const contents = modelCalls.at(-1).messages.flatMap((message: any) => Array.isArray(message.content) ? message.content : []);
+    expect(contents.filter((item: any) => item.type === "image_url")).toHaveLength(2);
+    expect(bundle.outputReviews[0]!.verdict.evidence!.filter(item => item.scope === "reference-image")).toHaveLength(2);
+    expect(prepared.bundle.stages[0]!.facts.payload.images).toEqual([]);
+    const receipt = JSON.parse(await readFile(path.join(root, bundle.outputReviews[0]!.ref), "utf8"));
+    expect(receipt.visualReferences).toEqual(bundle.visualReferences);
+  });
+  it.each(["photo-sha", "image-not-received"])("最终视觉%s变化不能获得通过凭据", async kind => {
+    const prepared = await prepareRegistered(), saved = await finalizeMarketingFacts(prepared, shots, env);
+    const bundle = prepared.bundle;
+    if (kind === "photo-sha") bundle.visualReferences![0]!.sha256 = "0".repeat(64);
+    else bundle.outputReviews[0]!.verdict.evidence = bundle.outputReviews[0]!.verdict.evidence!.filter(item => item.scope !== "reference-image");
+    const content = canonicalRenderJson(bundle); await writeFile(path.join(root, saved.ref), content);
+    await expect(verifyMarketingFacts({ root, ref: saved.ref, sha256: renderSha256(content), scope, shots })).rejects.toThrow(/MARKETING_VISUAL_(SOURCE_CHANGED|REVIEW_UNBOUND)/);
+  });
+  it("带视觉证据的真实拒绝可以复读，但不能复制缺失图像证据的裁决", async () => {
+    const prepared = await prepareRegistered(); rejectJudge = true;
+    await expect(finalizeMarketingFacts(prepared, shots, env)).rejects.toThrow("MARKETING_PROMPT_FACTS_REJECTED");
+    expect((await restoreMarketingOutputRejection(prepared, shots)).verdict.approved).toBe(false);
+    const file = path.join(root, `${prepared.prefix}-shot-1.verdict.json`), receipt = JSON.parse(await readFile(file, "utf8"));
+    receipt.verdict.evidence = receipt.verdict.evidence.filter((item: any) => item.scope !== "reference-image");
+    await writeFile(file, JSON.stringify(receipt));
+    await expect(restoreMarketingOutputRejection(prepared, shots)).rejects.toThrow("MARKETING_VISUAL_REVIEW_UNBOUND");
+  });
   it("恢复G6只复读真实G1/来源与装订，不重复模型或自报最终镜头资格", async () => {
     const prepared = await prepareRegistered(); await authorizeMarketingFacts(prepared, env);
     const input = JSON.parse(prepared.g1Content), calls = modelCalls.length;
