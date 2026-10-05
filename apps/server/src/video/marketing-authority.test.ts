@@ -59,6 +59,17 @@ describe("营销事实宿主完整执行", () => {
     const prepared = await prepare(); rejectJudge = true;
     await expect(finalizeMarketingFacts(prepared, [{ ...shots[0]!, prompt: "全市场第一，零噪音" }], env)).rejects.toThrow("MARKETING_PROMPT_FACTS_REJECTED");
     await expect(readFile(path.join(root, `${prepared.prefix}-facts.json`))).rejects.toMatchObject({ code: "ENOENT" });
+    const rejected = JSON.parse(await readFile(path.join(root, `${prepared.prefix}-shot-1.verdict.json`), "utf8"));
+    expect(rejected).toMatchObject({ scope, shotId: "S1", verdict: { approved: false, status: "failed", score: 10 } });
+  });
+  it("原文支持被拒绝时仍保存完整评分、问题和裁决，不能制造事实包", async () => {
+    rejectJudge = true;
+    await expect(prepare()).rejects.toThrow("MARKETING_SUPPORT_REJECTED");
+    const rejected = JSON.parse(await readFile(path.join(root, "stages/preproduction/attempt-1.marketing-A1.verdict.json"), "utf8"));
+    expect(rejected).toMatchObject({ scope, verdict: { approved: false, status: "failed", score: 10,
+      issues: ["来源不支持此主张"] } });
+    expect(rejected.contentSha256).toMatch(/^[a-f0-9]{64}$/);
+    await expect(readFile(path.join(root, "stages/preproduction/attempt-1.marketing-facts.json"))).rejects.toMatchObject({ code: "ENOENT" });
   });
   it.each(["raw", "text", "review", "prompt", "fields", "scope", "attempt", "expired", "claim-offset"])("%s变化不能复用营销事实资格", async kind => {
     const prepared = await prepare(), saved = await finalizeMarketingFacts(prepared, shots, env); let hash = saved.sha256;
@@ -80,6 +91,15 @@ describe("营销事实宿主完整执行", () => {
   });
   it("重复attempt写盘失败必须终止，不能当抓源失败换候选", async () => {
     await prepare(); await expect(prepare()).rejects.toMatchObject({ code: "EEXIST" });
+  });
+  it("引文失败前保存完整模型提取回包，不能只留下解析异常", async () => {
+    await expect(prepare({ badQuote: true })).rejects.toThrow("MARKETING_CITATION_INVALID");
+    const saved = JSON.parse(await readFile(path.join(root, "stages/preproduction/attempt-1.marketing-A1.extraction.json"), "utf8"));
+    expect(saved.scope).toEqual(scope);
+    expect(saved.content).toBeNull();
+    expect(saved.data.citations).toHaveLength(3);
+    expect(saved.data.citations.every((item: { quote: string }) => item.quote === "不存在的事实")).toBe(true);
+    expect(modelCalls).toHaveLength(0);
   });
   it.each(["empty", "fetch-failed"])("A1 %s在失败前保存完整发现诊断", async kind => {
     await expect(prepare({ noSearch: kind === "empty", fetchFailure: kind === "fetch-failed" })).rejects.toThrow("MARKETING_A1_UNVERIFIED");
@@ -107,6 +127,14 @@ describe("登记档案复用正式营销宿主资格", () => {
     const prepared = await prepareRegistered();
     expect(prepared.bundle.stages[0]!.discovery.sourceMode).toBe("registered-primary");
     expect(prepared.bundle.sources[0]!.archive?.originalReopened).toBe(false);
+    expect(prepared.bundle.productQuery).toEqual({ name: "台式双屏自助机", model: "DEMO-T001" });
+    expect(prepared.bundle.sourceQuery).toMatchObject({ name: "示例品牌 台式双屏自助机", model: "DEMO-T001" });
+    expect(prepared.bundle.dossier.identity).toMatchObject({ name: "台式双屏自助机", brand: "", category: "",
+      specs: { 摄像头: "角度可调节" } });
+    expect(prepared.bundle.dossier.gaps).not.toContain('规格 "摄像头" 无来源，置信度降级');
+    expect(prepared.bundle.dossier.provenance).toEqual(expect.arrayContaining([expect.objectContaining({
+      claim_ref: "identity.specs.摄像头", source_url: expect.stringMatching(/^workloom-archive:/),
+    })]));
     expect(extractionCalls).toHaveLength(1);
     expect(extractionCalls[0]).not.toContain("前置2MP双目人脸识别");
     const qualified = await authorizeMarketingFacts(prepared, env);
