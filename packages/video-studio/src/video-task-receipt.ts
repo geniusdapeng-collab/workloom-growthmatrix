@@ -37,6 +37,16 @@ function parseReceipt(text: string, projectId: string, shotId: string, requestSh
   return value;
 }
 
+/** 后期只读入口：核对原请求和成功任务；没有submit/poll回调，不能产生第二笔提交。 */
+export async function verifyExistingSuccessfulVideoTask(input: {
+  root: string; projectId: string; shotId: string; body: Record<string, unknown>;
+}): Promise<{ taskId: string; requestSha256: string }> {
+  const requestSha256 = hash(filmCanonicalJson(input.body));
+  const value = parseReceipt(await readFile(videoTaskReceiptPath(input.root, input.projectId, input.shotId), "utf8"), input.projectId, input.shotId, requestSha256);
+  if (value.state !== "succeeded" || !value.taskId) throw new Error("VIDEO_TASK_SUCCESS_REQUIRED：后期只接受已有成功任务，不提交或猜测恢复");
+  return { taskId: value.taskId, requestSha256 };
+}
+
 export async function resumeOrSubmitVideoTask(input: {
   root: string; projectId: string; shotId: string; body: Record<string, unknown>; transport: VideoTaskTransport;
   pollIntervalMs?: number; timeoutMs?: number; wait?: (milliseconds: number) => Promise<void>;

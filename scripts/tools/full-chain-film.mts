@@ -31,7 +31,8 @@
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { auditFilmRedlines, PROMPT_REDLINE_POLICY_VERSION } from "../../packages/video-studio/src/prompt-redlines.js";
-import { resumeOrSubmitVideoTask } from "../../packages/video-studio/src/video-task-receipt.js";
+import { resumeOrSubmitVideoTask, videoTaskReceiptPath } from "../../packages/video-studio/src/video-task-receipt.js";
+import { assertReviewedSurfaceRepair, assertSurfaceRepairOrigin, executeSurfaceRepair, inspectSurfaceRepair, qualifyReviewedSurfacePost } from "../../packages/video-studio/src/video-surface-repair.js";
 import { buildRenderReferences } from "../../packages/video-studio/src/render-reference.js";
 import { assetIdOf, assertShotMatchesCertifiedAsset, isRealPersonAssetRef, loadRealPersonAssets,
   identityAnchorPath, identityReviewContext, realPersonUsageReceipt } from "../../packages/video-studio/src/real-person-asset.js";
@@ -47,7 +48,7 @@ import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import YAML from "yaml";
 import { filmReviewContracts, loadOrCreateFilmAuthorContext, reviewFilmStage } from "../../packages/video-studio/src/film-contracts.js";
-import { buildProducerReviewContract, type ProducerGateOptions } from "../../packages/video-studio/src/producer-gate.js";
+import { buildProducerReviewContract, reviewStage as reviewLocalization, type ProducerGateOptions } from "../../packages/video-studio/src/producer-gate.js";
 import { assessPortraitDecision } from "../../packages/video-studio/src/portrait-decision.js";
 import { executeRevision } from "../../packages/video-studio/src/revision-executor.js";
 import { assessVoiceArtifact, fingerprintFile, fingerprintText, promoteDubCandidate, type VoiceArtifactRecord } from "./film-voice-artifact.js";
@@ -513,8 +514,14 @@ const SUBTITLE_MODE = (() => {
   return value as "sidecar" | "burn" | "both";
 })();
 
-const VALID_STAGES = new Set(["cine-kb", "continuity", "micromotion", "spec", "plates", "material-gen", "videos", "voice", "compose", "color", "subtitle", "danmaku", "bgm", "sfx", "cover", "mux", "master", "deliver", "revise"]);
+const VALID_STAGES = new Set(["cine-kb", "continuity", "micromotion", "spec", "plates", "material-gen", "surface-repair", "identity-check", "videos", "voice", "compose", "color", "subtitle", "danmaku", "bgm", "sfx", "cover", "mux", "master", "deliver", "revise"]);
 for (const stage of STAGES) if (!VALID_STAGES.has(stage)) throw new Error(`UNKNOWN_STAGE: ${stage}`);
+if (STAGES.has("surface-repair") && (STAGES.size !== 1 || ONLY.length !== 1 || DRY_RUN)) {
+  throw new Error("SURFACE_REPAIR_SCOPE: 必须仅选择一个已生成且真实拒绝的镜头；本地修复不得同次触发生成或交付阶段");
+}
+if (STAGES.has("identity-check") && (STAGES.size !== 1 || ONLY.length !== 1 || DRY_RUN)) {
+  throw new Error("IDENTITY_CHECK_SCOPE: 仅复核一个已生成、已有真实后期审核的镜头；不触发新渲染或整片交付");
+}
 if (STAGES.has("deliver")) STAGES.add("master");
 assertSelectedShotStageScope(STAGES, ONLY);
 if (!DRY_RUN && (ACCEPT_REJECTED.length || ALLOW_FALLBACK_APPROVE || flag("--accept-env-defects") || flag("--accept-av-sync-drift"))) {
@@ -524,6 +531,10 @@ const LOG_DIR = join(WORK_DIR, "logs", PROJECT);
 const STAGE_LOG = join(LOG_DIR, "stages.jsonl");
 const PLATE_DIR = join(WORK_DIR, "plates", PROJECT);
 const CLIP_DIR = join(WORK_DIR, "clips", PROJECT);
+const qualifiedSurfacePosts = new Map<string, { qualification: Awaited<ReturnType<typeof qualifyReviewedSurfacePost>>; identity: StageRecord }>();
+const productionClipPaths = new Map<string, string>();
+/** 局部处理不覆盖模型原片；下游只通过该入口读取已核实的生产副本。 */
+function productionClipFile(shotId: string): string { return productionClipPaths.get(shotId) ?? join(CLIP_DIR, `${shotId}.mp4`); }
 const POST_DIR = QUALITY === "uhd" ? join(WORK_DIR, "post", PROJECT, "uhd") : join(WORK_DIR, "post", PROJECT);
 const PROMPT_DIR = join(WORK_DIR, "prompts", PROJECT);
 /** 成片交付路径（模板块与交付包/返修块共用；模板块内部变量名保持 `deliverable` 不变） */
@@ -671,7 +682,11 @@ const ROUTE_PREFLIGHT: RoutePreflightResult = (() => {
 log(`✅ 分流前置：${ROUTE_PREFLIGHT.kind}（来源：${ROUTE_PREFLIGHT.source}）`
   + `${ROUTE_PREFLIGHT.productAnchor ? ` · 商品锚点「${ROUTE_PREFLIGHT.productAnchor}」` : ""}`);
 
-const lineageComponentHash = sha256FileSync(join(REPO_ROOT, "scripts/tools/full-chain-film.mts"));
+const lineageComponentHash = productionHash({
+  film: sha256FileSync(join(REPO_ROOT, "scripts/tools/full-chain-film.mts")),
+  surfaceRepair: sha256FileSync(join(REPO_ROOT, "packages/video-studio/src/video-surface-repair.ts")),
+  videoReceipt: sha256FileSync(join(REPO_ROOT, "packages/video-studio/src/video-task-receipt.ts")),
+});
 const SCENE_BIBLE_FILE = arg("--scene-bible");
 const sceneBible: SceneBible | null = SCENE_BIBLE_FILE
   ? JSON.parse(readFileSync(abs(SCENE_BIBLE_FILE), "utf8")) as SceneBible
@@ -834,7 +849,7 @@ function recordGate(input: {
   const event = buildGateEvent({ projectId: PROJECT, ...input });
   const scopeShotId = input.shotIds?.length === 1 ? input.shotIds[0]! : null;
   const gateStage = `gate:${event.stepKey}:${String(input.evidence?.mode ?? "")}`;
-  const gatePaths = (input.shotIds ?? []).flatMap((id) => [join(PROMPT_DIR, `${id}.txt`), join(PLATE_DIR, `${id}-plate.png`), join(CLIP_DIR, `${id}.mp4`)].filter((file) => existsSync(file)));
+  const gatePaths = (input.shotIds ?? []).flatMap((id) => [join(PROMPT_DIR, `${id}.txt`), join(PLATE_DIR, `${id}-plate.png`), productionClipFile(id)].filter((file) => existsSync(file)));
   const material = input.evidence?.material as Record<string, unknown> | undefined;
   for (const value of [input.evidence?.photo, input.evidence?.promptFile, material?.photo, material?.prepared, material?.promptFile]) {
     if (typeof value === "string" && value) gatePaths.push(abs(value));
@@ -1937,16 +1952,16 @@ async function download(url: string, file: string): Promise<string> {
 }
 
 /** 逐镜视频提交（Seedance 异步任务制） */
-async function arkVideo(options: {
+function arkVideoBody(options: {
   shotId: string; prompt: string; firstFrame?: string; refs: string[]; seconds: number; generateAudio: boolean; seed?: number;
-}): Promise<{ taskId: string; url: string; lastFrame: string | null }> {
+}): Record<string, unknown> {
   const content: Array<Record<string, unknown>> = [{ type: "text", text: options.prompt }];
   if (options.firstFrame) content.push({ type: "image_url", image_url: { url: options.firstFrame }, role: "first_frame" });
   for (const ref of options.refs.slice(0, 3)) {
     if (ref === options.firstFrame) continue;
     content.push({ type: "image_url", image_url: { url: ref }, role: "reference_image" });
   }
-  const body = {
+  return {
       model: VIDEO_MODEL,
       content,
       duration: options.seconds,
@@ -1962,6 +1977,11 @@ async function arkVideo(options: {
       return_last_frame: true,
       ...(options.seed ? { seed: options.seed } : {})
   };
+}
+async function arkVideo(options: {
+  shotId: string; prompt: string; firstFrame?: string; refs: string[]; seconds: number; generateAudio: boolean; seed?: number;
+}): Promise<{ taskId: string; url: string; lastFrame: string | null }> {
+  const body = arkVideoBody(options);
   return resumeOrSubmitVideoTask({ root: join(WORK_DIR, "render-task-receipts"), projectId: PROJECT, shotId: options.shotId, body,
     transport: {
       submit: async request => {
@@ -2075,7 +2095,7 @@ function srtTime(seconds: number): string {
  * 与"新渲一版"走同一套判据，避免复用路径松于生产路径。
  */
 function cachedShotSettings(shot: ShotCard): { frames: string[]; checks: Array<{ id: string; pass: boolean; detail: string; hard?: boolean }> } {
-  const clip = join(CLIP_DIR, `${shot.shotId}.mp4`);
+  const clip = productionClipFile(shot.shotId);
   const duration = Number(shot.duration ?? 5);
   const info = probe(clip);
   const actual = Number(info.duration ?? 0);
@@ -3421,13 +3441,159 @@ if (["videos", "material-gen"].some((stage) => STAGES.has(stage))) {
 }
 
 
+if (STAGES.has("surface-repair")) {
+  const shot = materialShots().find(item => item.shotId === ONLY[0]);
+  if (!shot) throw new Error("SURFACE_REPAIR_MATERIAL_REQUIRED：当前只支持已生成的商品素材镜");
+  const card = shot as Record<string, unknown>, photo = abs(readMaterialSpec(card).photo), person = realPersons.get(String(shot.shotId));
+  const reference = buildRenderReferences({ shot: card, productImage: dataUrl(photo), asset: person?.asset });
+  const promptFile = join(PROMPT_DIR, `${shot.shotId}.txt`), savedPrompt = readFileSync(promptFile, "utf8");
+  if (!savedPrompt.endsWith("\n")) throw new Error("SURFACE_REPAIR_PROMPT_REQUIRED：缺原提交提示词字节");
+  const prompt = savedPrompt.slice(0, -1); // 仅移除正式写文件时添加的一个换行，不重新生成/改写创作正文。
+  const body = arkVideoBody({ shotId: shot.shotId, prompt, refs: reference.refs, seconds: renderSecondsFor(Number(shot.duration ?? 5)),
+    generateAudio: ENV.SEEDANCE_GENERATE_AUDIO !== "0", seed: 20260926 });
+  const old = readStageHistory().filter(row => row.stage === "identity-fact" && row.shotId === shot.shotId).at(-1);
+  if (!old) throw new Error("SURFACE_REPAIR_REFUSAL_REQUIRED：缺原片的真实事实拒绝");
+  const submitted = readStageHistory().filter(row => row.stage === "gate" && row.shotId === shot.shotId
+    && row.stepKey === "material-generate" && row.evidence.mode === "submit").at(-1);
+  if (!submitted?.lineage || !submitted.ok || submitted.degraded) throw new Error("SURFACE_REPAIR_SUBMISSION_REQUIRED：缺原提交门");
+  const inputClip = join(CLIP_DIR, `${shot.shotId}.mp4`), receiptFile = videoTaskReceiptPath(join(WORK_DIR, "render-task-receipts"), PROJECT, shot.shotId);
+  const taskId = assertSurfaceRepairOrigin({ projectId: PROJECT, shotId: shot.shotId, sourceHash: sourceHashFor(shot.shotId, "identity-fact"),
+    clip: inputClip, previous: old, submission: submitted.lineage, promptFile,
+    taskReceipt: JSON.parse(readFileSync(receiptFile, "utf8")), expectedRequestSha256: productionHash(body) });
+  const directory = join(WORK_DIR, "surface-repair", PROJECT, shot.shotId, randomUUID());
+  const inspected = inspectSurfaceRepair({ ffmpeg: FFMPEG, ffprobe: FFPROBE, input: inputClip, directory,
+    projectId: PROJECT, shotId: shot.shotId, taskId, sourceHash: sourceHashFor(shot.shotId, "identity-fact") });
+  rememberInputs("surface-localization", [inputClip, inspected.planFile, inspected.plan.maskFile, ...inspected.previews], shot.shotId);
+  const localization = await reviewLocalization({ stage: "shot", projectId: PROJECT,
+    artifacts: [{ path: inspected.planFile, kind: "json" }, ...inspected.previews.map(path => ({ path, kind: "image" as const }))],
+    deterministic: [{ id: "all-frames-located", hard: true, pass: inspected.plan.frames.length === inspected.plan.media.frames,
+      detail: `全部${inspected.plan.frames.length}帧已解码、定位并检查连续性；红色仅示意拟虚化区域` }],
+    requiredCheckIds: ["all-frames-located"], rubric: [
+      "这是动态局部后期定位计划，不是成片或身份审核。图像中的红色半透明叠加就是该帧实际mask，非固定包围框；逐张检查其仅覆盖屏幕显示内容，不能覆盖脸、头发、人体、衣服、手、摄像头或读卡扫描面板。",
+      "JSON的frames坐标单位是decodeWidth×decodeHeight缩略解码坐标，由mask映射到原视频；摄像机推进时屏幕在画面移动，所以每帧坐标可以连续变化。不能把整段位置的并集当作实际处理范围。像素前景孔洞以红色实际覆盖为准，不能按矩形假定手部被覆盖。",
+      "屏幕可能局部出画；仍入画的界面文字、图标和LOGO必须完整覆盖。真实手部遮挡应保留，不得把文字图标当作前景挖空而留下清晰界面。",
+      "定位不准确、遮挡保护不足或可读内容覆盖不完整必须拒绝；不评论人物身份、商品副设备或影片审美。审批只允许生成独立后期副本，不能把整片事实门改成通过。"],
+    context: { taskId, sourceHash: inspected.plan.sourceHash, operation: "红色逐帧mask范围内虚化独立副本；原片和台词不变",
+      coordinateUnits: `${inspected.plan.decodeWidth}×${inspected.plan.decodeHeight}解码坐标；预览红色为实际每帧mask而非JSON矩形并集` },
+    env: ENV, allowFallbackApprove: false, log });
+  writeFileSync(join(directory, "localization-verdict.json"), `${JSON.stringify(localization, null, 2)}\n`, { flag: "wx" });
+  record({ stage: "surface-localization", shotId: shot.shotId, invoked: true, ok: localization.approved, cached: false,
+    degraded: localization.degraded, attempt: 1, ms: localization.ms, artifact: inspected.planFile,
+    evidence: { outputFiles: inspected.previews, taskId, planSha256: sha256FileSync(inspected.planFile) }, verdict: localization });
+  if (!localization.approved) throw new Error(`SURFACE_LOCALIZATION_REJECTED：${localization.reason}`);
+  const started = Date.now(), output = join(directory, `${shot.shotId}.screen-repaired.mp4`);
+  rememberInputs("surface-repair", [inputClip, inspected.planFile, inspected.plan.maskFile], shot.shotId);
+  const repaired = executeSurfaceRepair({ ffmpeg: FFMPEG, ffprobe: FFPROBE, ...inspected, localization, output });
+  const frameFiles: string[] = [];
+  for (const [i, fraction] of [0, .25, .5, .75, .98].entries()) {
+    const file = join(directory, `repaired-${i}.jpg`);
+    run(FFMPEG, ["-y", "-ss", String(inspected.plan.media.duration * fraction), "-i", output, "-frames:v", "1", "-vf", "scale=720:-2", "-q:v", "3", file]);
+    frameFiles.push(file);
+  }
+  const checked = await reviewLocalization({ stage: "shot", projectId: PROJECT,
+    artifacts: frameFiles.map(path => ({ path, kind: "image" as const })),
+    deterministic: [{ id: "local-only", pass: repaired.outsideMeanError <= 3, hard: true,
+      detail: `120帧区域外平均灰度差${repaired.outsideMeanError.toFixed(3)}；帧数、时长、分辨率与原音频摘要一致` }],
+    requiredCheckIds: ["local-only"], referenceImages: inspected.previews,
+    rubric: ["只审核实际屏幕后期结果：屏幕应仅保留虚化光影，不再出现可读文字、图标、LOGO；边框、机身、摄像头和扫描面板必须保留。",
+      "人物的脸、衣服和手不能被误虚化；对照计划红色标记，局部之外保持原片。不能据屏幕修复就声称人物身份、副设备或整片已合格。"],
+    env: ENV, allowFallbackApprove: false, log });
+  writeFileSync(join(directory, "surface-verdict.json"), `${JSON.stringify(checked, null, 2)}\n`, { flag: "wx" });
+  record({ stage: "surface-repair", shotId: shot.shotId, invoked: true, ok: checked.approved, cached: false, degraded: checked.degraded,
+    attempt: 1, ms: Date.now() - started, artifact: output, evidence: { ...repaired, taskId, outputFiles: frameFiles,
+      original: inputClip, originalSha256: inspected.plan.inputSha256, plan: inspected.planFile, maskSha256: inspected.plan.maskSha256 }, verdict: checked });
+  if (!checked.approved) throw new Error(`SURFACE_RESULT_REJECTED：${checked.reason}`);
+  log(`本地屏幕修复副本完成：${output}；尚未获得完整身份与产品合同资格，不能直接接入整片交付`);
+}
+
+if (STAGES.has("identity-check")) {
+  const shot = materialShots().find(item => item.shotId === ONLY[0]), person = realPersons.get(ONLY[0]!);
+  if (!shot || !person) throw new Error("IDENTITY_CHECK_PERSON_REQUIRED：缺该素材镜的明确登记真人");
+  const old = readStageHistory().filter(row => row.stage === "surface-repair" && row.shotId === shot.shotId).at(-1);
+  if (!old) throw new Error("IDENTITY_CHECK_REPAIR_REQUIRED：缺真实受审的屏幕修复副本");
+  const clip = assertReviewedSurfaceRepair({ projectId: PROJECT, shotId: shot.shotId, sourceHash: sourceHashFor(shot.shotId, "surface-repair"), row: old });
+  const entry = characters.get(String((shot as Record<string, unknown>).characterId ?? sourceDocument.character?.id ?? ""));
+  if (!entry) throw new Error("IDENTITY_CHECK_ARCHIVE_REQUIRED");
+  const profileFile = join(entry.dir, "profile.json"), profile = JSON.parse(readFileSync(profileFile, "utf8"));
+  if (profile.authorization?.evidence !== `asset://${person.asset.assetId}`) throw new Error("IDENTITY_CHECK_ARCHIVE_REFERENCE_CHANGED");
+  const ownerLedger = join(entry.dir, "gates.jsonl");
+  const owner = readFileSync(ownerLedger, "utf8").split("\n").filter(Boolean).map(line => JSON.parse(line))
+    .filter(item => item.stepKey === "g5-portrait-confirm").at(-1);
+  if (assessPortraitDecision(owner).kind !== "human" || assessPortraitDecision(owner).blocking) throw new Error("IDENTITY_CHECK_OWNER_PORTRAITS_REQUIRED");
+  const angles = ["front", "threeQuarter", "closeup"].map(angle => entry.files[angle]);
+  if (angles.some(file => !file || !existsSync(file) || statSync(file).size <= 50_000)) throw new Error("IDENTITY_CHECK_ANGLE_EVIDENCE_REQUIRED");
+  const anchor = realPersonAnchors.get(shot.shotId)!, photo = abs(readMaterialSpec(shot as Record<string, unknown>).photo);
+  const references = [anchor.path, ...angles as string[], photo];
+  const directory = join(WORK_DIR, "identity-check", PROJECT, shot.shotId, randomUUID());
+  mkdirSync(directory, { recursive: true });
+  const frameFiles: string[] = [];
+  for (const [i, fraction] of [0, .25, .5, .75, .98].entries()) {
+    const file = join(directory, `frame-${i}.jpg`);
+    run(FFMPEG, ["-y", "-ss", String(Number(shot.duration ?? 5) * fraction), "-i", clip, "-frames:v", "1", "-q:v", "3", file]);
+    frameFiles.push(file);
+    if ([0, 2, 4].includes(i)) {
+      const crop = join(directory, `face-region-${i}.jpg`);
+      run(FFMPEG, ["-y", "-i", file, "-vf", "crop=iw*0.6:ih*0.45:iw*0.4:ih*0.15", "-frames:v", "1", "-q:v", "3", crop]);
+      frameFiles.push(crop);
+    }
+  }
+  rememberInputs("identity-fact", [clip, ...references, profileFile, ownerLedger], shot.shotId);
+  const identity = await reviewFilmStage(filmContractSource, { stage: "shot", projectId: PROJECT,
+    artifacts: frameFiles.map(path => ({ path, kind: "image" as const })), referenceImages: references, batchSize: 12,
+    deterministic: [{ id: "registered-person-reference", pass: true, hard: true,
+      detail: "已生成任务复用原平台授权人物请求；副本有真实局部后期裁决，当前JPEG角度照已核验字节及既有人验声明，不冒充历史PNG摘要或本次平台核验" }],
+    requiredCheckIds: ["registered-person-reference"], rubric: [
+      "只核对当前镜头的事实性身份与产品外观合同，不评审好看、运镜、节奏和配乐。不同人必须拒绝，证据不足写明并拒绝，不猜测同一人。",
+      "参考1为原身份基准照；参考2/3/4分别是同一主档已由产品所有者验收的正面/三分之四/特写。当前造型按原镜头和主档肩长深色直发、黑色粗花呢套装。根据同角度五官、脸型、眉眼、鼻唇关系比较身份；不能仅因原基准盘发和当前直发区别猜测换人。",
+      "最后参考为完整商品原图。按当前源合同核对可见屏幕数量、机身、摄像头与扫描面板；副设备未显示或構型不明须保留证据不足，不自行解释或补造。",
+      "本次副本仅修复屏幕UI；仍需核对画面无可读文字、图标与LOGO以及当前全部硬合同。抽帧和面部区域裁剪来自同一已有视频，不是重新生成或修脸。"],
+    context: { shotId: shot.shotId, identity: identityReviewContext(person.asset), anchor,
+      appearance: profile.appearance, wardrobe: profile.wardrobe, referenceRoles: ["原身份基准", "既有人验正面", "既有人验三分之四", "既有人验特写", "商品原图"],
+      taskId: old.evidence.taskId, originalClip: old.evidence.original, screenRepair: { path: clip, sha256: sha256FileSync(clip), score: old.verdict?.score },
+      note: "原拒绝完整保留；新裁决只基于同一片段的实际新证据。不改变门槛、原镜合同、画面或任务请求。" },
+    env: ENV, allowFallbackApprove: false, log });
+  writeFileSync(join(directory, "identity-verdict.json"), `${JSON.stringify(identity, null, 2)}\n`, { flag: "wx" });
+  record({ stage: "identity-fact", shotId: shot.shotId, invoked: true, ok: identity.approved, cached: false,
+    degraded: identity.degraded, attempt: 1, ms: identity.ms, artifact: clip,
+    evidence: { taskId: old.evidence.taskId, original: old.evidence.original, originalSha256: old.evidence.originalSha256,
+      surfaceRepair: old.artifact, outputFiles: frameFiles, referenceImages: references }, verdict: identity });
+  if (!identity.approved) throw new Error(`REAL_PERSON_FACT_UNVERIFIED：${shot.shotId} ${identity.reason}`);
+}
+
+if (!["surface-repair", "identity-check"].some(stage => STAGES.has(stage))) {
+  for (const shot of materialShots()) {
+    const history = readStageHistory();
+    const repair = history.filter(row => row.stage === "surface-repair" && row.shotId === shot.shotId).at(-1);
+    if (!repair) continue;
+    const identity = history.filter(row => row.stage === "identity-fact" && row.shotId === shot.shotId).at(-1);
+    if (!identity) throw new Error(`SURFACE_POST_IDENTITY_REQUIRED：${shot.shotId}缺当前真实身份裁决`);
+    const photo = abs(readMaterialSpec(shot as Record<string, unknown>).photo), person = realPersons.get(shot.shotId);
+    const reference = buildRenderReferences({ shot: shot as Record<string, unknown>, productImage: dataUrl(photo), asset: person?.asset });
+    const promptFile = join(PROMPT_DIR, `${shot.shotId}.txt`), savedPrompt = readFileSync(promptFile, "utf8");
+    if (!savedPrompt.endsWith("\n")) throw new Error("SURFACE_POST_PROMPT_REQUIRED：缺原提交正文");
+    const body = arkVideoBody({ shotId: shot.shotId, prompt: savedPrompt.slice(0, -1), refs: reference.refs,
+      seconds: renderSecondsFor(Number(shot.duration ?? 5)), generateAudio: ENV.SEEDANCE_GENERATE_AUDIO !== "0", seed: 20260926 });
+    const qualification = await qualifyReviewedSurfacePost({ projectId: PROJECT, shotId: shot.shotId,
+      sourceHash: sourceHashFor(shot.shotId, "identity-fact"),
+      contractHash: buildProducerReviewContract(filmReviewContracts(filmContractSource, shot.shotId)).contractHash,
+      receiptRoot: join(WORK_DIR, "render-task-receipts"), body, repair, identity });
+    const productionClip = join(CLIP_DIR, `${shot.shotId}.local-post.mp4`);
+    if (!STAGES.has("material-gen") && !artifactReusable("material-gen", productionClip, undefined, shot.shotId)) {
+      throw new Error(`SURFACE_POST_MATERIAL_VERIFY_REQUIRED：${shot.shotId}先以material-gen --material-post-only完成原始运动/场景/生成溯源复检`);
+    }
+    qualifiedSurfacePosts.set(shot.shotId, { qualification, identity });
+    productionClipPaths.set(shot.shotId, productionClip);
+  }
+}
+
 if (STAGES.has("material-gen")) {
   for (const shot of materialShots()) {
     const shotStarted = Date.now();
     const card = shot as Record<string, unknown>;
     const spec = readMaterialSpec(card);
     const photo = abs(spec.photo);
-    const clip = join(CLIP_DIR, `${shot.shotId}.mp4`);
+    const clip = productionClipFile(shot.shotId);
+    const qualifiedPost = qualifiedSurfacePosts.get(shot.shotId);
     const duration = Number(shot.duration ?? 5);
     /** 生成输入（按目标画幅准备的素材副本）：**不是成片内容**，只是给模型的首帧 */
     const prepared = join(PLATE_DIR, `${shot.shotId}-material.jpg`);
@@ -3452,8 +3618,8 @@ if (STAGES.has("material-gen")) {
        * 机位/视差/环境运动由模型构建（不再走"把参考图当首帧做动效"的老路）。
        * 重跑轮会在循环里升级强度并写入同一文件（`let` 是因为提交门要读当前轮提示词）。
        */
-      let prompt = materialPrompt("standard");
-      writeFileSync(promptFile, `${prompt}\n`, "utf8");
+      let prompt = qualifiedPost ? readFileSync(promptFile, "utf8").slice(0, -1) : materialPrompt("standard");
+      if (!qualifiedPost) writeFileSync(promptFile, `${prompt}\n`, "utf8");
       const promptIntent = prompt;
       rememberInputs("material-gen", [photo, prepared, promptFile], shot.shotId);
       const materialSha = sha256FileSync(photo);
@@ -3461,7 +3627,7 @@ if (STAGES.has("material-gen")) {
        * G-MAT1 提交门（mode=submit）：素材用途 + 素材/提示词齐备 + 画幅时长约束。
        * 这一门是**素材镜唯一的"花钱前"闸门**（素材镜不进 G8 渲染提交，判据不同）。
        */
-      const submitGate = recordGate({
+      const submitGate = qualifiedPost ? null : recordGate({
         stepKey: "material-generate",
         sourceStage: "material-gen",
         shotIds: [shot.shotId],
@@ -3492,7 +3658,7 @@ if (STAGES.has("material-gen")) {
           promptFile, promptChars: prompt.trim().length, model: VIDEO_MODEL, seconds: duration
         }
       });
-      if (!submitGate.approved) {
+      if (submitGate && !submitGate.approved) {
         record({
           stage: "material-gen", shotId: shot.shotId, invoked: false, ok: false, cached: false, degraded: false, attempt: 1,
           ms: Date.now() - shotStarted, artifact: null, evidence: { gateBlocked: "material-generate", reason: submitGate.reason },
@@ -3501,9 +3667,9 @@ if (STAGES.has("material-gen")) {
         throw new Error(`MATERIAL_SUBMIT_BLOCKED：${shot.shotId}`);
       }
       /** 原始渲染产物（未做速度坡道）：留档，便于"坡道参数换一版"而不重新烧额度 */
-      const rawClip = join(CLIP_DIR, `${shot.shotId}.raw.mp4`);
-      let renderTaskId: string | null = null;
-      let renderModel: string | null = null;
+      const rawClip = qualifiedPost?.qualification.clip ?? join(CLIP_DIR, `${shot.shotId}.raw.mp4`);
+      let renderTaskId: string | null = qualifiedPost?.qualification.taskId ?? null;
+      let renderModel: string | null = qualifiedPost ? VIDEO_MODEL : null;
       /**
        * 复用判据（2026-09-25 收口）：只有**原始渲染产物**在盘上、且阶段日志里能查到它的任务号时才复用
        * （坡道是后期层，每次按当前参数重算即可；旧管线留下的 `<shot>.mp4` 没有 raw 与溯源 → 重新生成）。
@@ -3529,7 +3695,7 @@ if (STAGES.has("material-gen")) {
         renderTaskId = (lastEvidence?.taskId as string | undefined) ?? null;
         renderModel = (lastEvidence?.model as string | undefined) ?? null;
       }
-      const attempts = Math.max(1, MAX_ATTEMPTS);
+      const attempts = qualifiedPost ? 1 : Math.max(1, MAX_ATTEMPTS);
       let accepted = false;
       let usedAttempt = 0;
       let lastVerdict: ProducerVerdict | null = null;
@@ -3551,10 +3717,11 @@ if (STAGES.has("material-gen")) {
          * 重跑必须"带变更"：第 2 次起把运动强度档位升到 assertive，并把上一轮监制/机检的问题写进提示词
          * （沿用视频镜的 `retryInstruction`，避免"重采样碰运气"白烧额度）。
          */
-        const attemptPrompt = materialPrompt(usedAttempt > 1 ? "assertive" : "standard")
+        const attemptPrompt = qualifiedPost ? prompt : materialPrompt(usedAttempt > 1 ? "assertive" : "standard")
           + (usedAttempt > 1 ? `\n${retryInstruction(lastVerdict, usedAttempt, attempts)}\n【运动机检未过】${lastMotionVerdict.detail}` : "");
-        writeFileSync(promptFile, `${attemptPrompt}\n`, "utf8");
-        rememberInputs("material-gen", [photo, prepared, promptFile], shot.shotId);
+        if (!qualifiedPost) writeFileSync(promptFile, `${attemptPrompt}\n`, "utf8");
+        rememberInputs("material-gen", [photo, prepared, promptFile,
+          ...(qualifiedPost ? [qualifiedPost.qualification.original, rawClip] : [])], shot.shotId);
         try {
           /**
            * 渲染（有新任务就重新提交；复用路径直接用盘上的 raw）。prompt 变量用于提交门证据，
@@ -3607,10 +3774,10 @@ if (STAGES.has("material-gen")) {
            * 原始渲染用**模型端口径**（mean ≥8，坡道只要 ≥1.25）：速度坡道由后期负责；
            * 成片用完整口径（mean ≥8 且 ramp ≥1.8）。两者分开，才不会"匀速但运动充分"被误杀。
            */
-          lastRawMotion = measureMotionRichness(rawClip);
+          lastRawMotion = measureMotionRichness(qualifiedPost?.qualification.original ?? rawClip);
           lastMotionVerdict = assessMotionRichness(lastRawMotion, { ...motionPolicy, minRampRatio: 0 });
           // 后期速度坡道按意图或显式参数启用；不能补偿未验证的模型生成或物理质量。
-          const rampedClip = join(CLIP_DIR, `${shot.shotId}.ramped.mp4`);
+          const rampedClip = join(CLIP_DIR, `${shot.shotId}${qualifiedPost ? ".local-post" : ""}.ramped.mp4`);
           lastRamp = useSpeedRamp
             ? applySpeedRamp(rawClip, rampedClip, { durationSec: duration })
             : (() => {
@@ -3664,6 +3831,13 @@ if (STAGES.has("material-gen")) {
           /** 场景构建判据：这一镜是"构建出来的视频场景"还是"参考图被推动"（material-scene/v1） */
           const independence = measureReferenceIndependence(clip, prepared, duration, shot.shotId);
           const independenceVerdict = assessReferenceIndependence(independence, REFERENCE_INDEPENDENCE_POLICY);
+          const originalReuse = qualifiedPost ? measureMaterialReuse(qualifiedPost.qualification.original, prepared, duration, `${shot.shotId}/original-${RUN_ID}`) : null;
+          const originalReuseVerdict = originalReuse ? assessMaterialReuse(originalReuse.samples, { durationSec: duration }) : null;
+          const originalIndependence = qualifiedPost ? measureReferenceIndependence(qualifiedPost.qualification.original, prepared, duration, `${shot.shotId}/original-${RUN_ID}`) : null;
+          const originalIndependenceVerdict = originalIndependence ? assessReferenceIndependence(originalIndependence, REFERENCE_INDEPENDENCE_POLICY) : null;
+          const originalSceneChecks = qualifiedPost ? [{ id: "original-scene-constructed", hard: true,
+            pass: originalReuseVerdict!.passed && originalIndependenceVerdict!.independent,
+            detail: `局部后期不能代替原模型场景证据：${originalReuseVerdict!.detail}；${originalIndependenceVerdict!.detail}` }] : [];
           lastMotion = measureMotionRichness(clip);
           {
             const rampOk = !useSpeedRamp || (Number.isFinite(lastMotion.rampRatio) && lastMotion.rampRatio >= MATERIAL_MOTION_POLICY.minRampRatio);
@@ -3674,7 +3848,7 @@ if (STAGES.has("material-gen")) {
                 + `；坡道段 ${(lastRamp?.segments ?? []).map((s) => `${s.from}–${s.to}s @${s.speed.toFixed(2)}x`).join(" / ")}`
             };
           }
-          const framesDir = join(WORK_DIR, "frames", PROJECT, shot.shotId);
+          const framesDir = join(WORK_DIR, "frames", PROJECT, shot.shotId, ...(qualifiedPost ? [`post-${RUN_ID}`] : []));
           mkdirSync(framesDir, { recursive: true });
           const frameFiles: string[] = [];
           for (const [i, at] of [0.2, 1.6, 3.0, Math.max(0.6, duration - 0.4)].entries()) {
@@ -3683,9 +3857,17 @@ if (STAGES.has("material-gen")) {
             frameFiles.push(file);
           }
           lastFrames = frameFiles;
-          if (person) {
+          if (person && qualifiedPost && sha256FileSync(clip) === sha256FileSync(qualifiedPost.qualification.clip)) {
+            const previous = qualifiedPost.identity;
+            rememberInputs("identity-fact", [...previous.lineage!.inputs.map(file => file.path), clip], shot.shotId);
+            record({ stage: "identity-fact", shotId: shot.shotId, invoked: false, ok: true, cached: true,
+              degraded: false, attempt: 1, ms: 0, artifact: qualifiedPost.qualification.clip,
+              evidence: { ...previous.evidence, outputFiles: [clip, ...frameFiles], previousDecisionAt: previous.at,
+                reuseProof: "当前完整合同与受审片段逐字节相同；原真实模型裁决和原证据完整复读，未调用生成或伪造新模型审核" },
+              verdict: previous.verdict, note: "复用同一受审副本的真实身份裁决；只重建当前后期血缘" });
+          } else if (person) {
             const anchor = realPersonAnchors.get(String(shot.shotId))!;
-            rememberInputs("identity-fact", [anchor.path, photo], shot.shotId);
+            rememberInputs("identity-fact", [clip, anchor.path, photo], shot.shotId);
             const identity = await reviewFilmStage(filmContractSource, {
               stage: "shot", projectId: PROJECT,
               artifacts: frameFiles.map(file => ({ path: file, kind: "image" as const })),
@@ -3722,6 +3904,7 @@ if (STAGES.has("material-gen")) {
             ],
             referenceImages: [prepared],
             deterministic: [
+              ...originalSceneChecks,
               { id: "duration", pass: Math.abs(Number(lastInfo.duration ?? 0) - duration) <= 0.6, detail: `期望 ${duration}s 实测 ${Number(lastInfo.duration ?? 0).toFixed(2)}s`, hard: true },
               { id: "resolution", pass: Number(lastInfo.width ?? 0) >= 720 && Number(lastInfo.height ?? 0) >= 720, detail: `${lastInfo.width}x${lastInfo.height}`, hard: true },
               { id: "audio-track", pass: Boolean(lastInfo.hasAudio), detail: lastInfo.hasAudio ? `音轨 ${lastInfo.acodec}` : "缺音轨（配音环节会补旁白）", hard: false },
@@ -3761,6 +3944,7 @@ if (STAGES.has("material-gen")) {
             sourceStage: "material-gen",
             shotIds: [shot.shotId],
             checks: [
+              ...originalSceneChecks,
               { id: "generation-provenance", pass: provenance.ok, hard: true, detail: provenance.detail },
               { id: "not-static-display", pass: lastReuseVerdict.passed, hard: true, detail: lastReuseVerdict.detail },
               {
@@ -3780,6 +3964,7 @@ if (STAGES.has("material-gen")) {
             evidence: {
               mode: "verify", attempt: usedAttempt, material: photo, materialSha256: materialSha, outputSha256: lastOutputSha,
               taskId: renderTaskId, model: renderModel, reuseSamples: lastReuse.samples,
+              ...(qualifiedPost ? { originalReuse, originalIndependence, originalClip: qualifiedPost.qualification.original } : {}),
               reuseVerdict: lastReuseVerdict.detail, photoTailTrim,
               motion: lastMotion, rawMotion: lastRawMotion, speedRamp: lastRamp, cameraMove,
               note: "素材镜复检口径：生成溯源 + 复用度实测 + **运动强度/速度坡道实测** + 监制"
@@ -3788,10 +3973,11 @@ if (STAGES.has("material-gen")) {
           accepted = lastVerdict.approved && verifyGate.approved;
           void lastRampVerdict;
           record({
-            stage: "material-gen", shotId: shot.shotId, invoked: true, ok: accepted, cached: false,
+            stage: "material-gen", shotId: shot.shotId, invoked: !qualifiedPost, ok: accepted, cached: Boolean(qualifiedPost),
             degraded: lastVerdict.degraded, attempt: usedAttempt, ms: Date.now() - shotStarted, artifact: clip,
             evidence: {
               ...lastInfo, outputFiles: [rawClip, prepared], taskId: renderTaskId, model: renderModel, material: photo, materialSha256: materialSha,
+              ...(qualifiedPost ? { localPost: { ...qualifiedPost.qualification, reviewedSha256: sha256FileSync(rawClip) } } : {}),
               outputSha256: lastOutputSha, raw: rawClip, promptChars: attemptPrompt.trim().length, reuse: lastReuse.samples,
               reuseVerdict: lastReuseVerdict.detail, motion: lastMotion, rawMotion: lastRawMotion,
               motionVerdict: lastMotionVerdict.detail, rampVerdict: lastRampVerdict.detail,
@@ -3807,7 +3993,7 @@ if (STAGES.has("material-gen")) {
           }
         } catch (err) {
           record({
-            stage: "material-gen", shotId: shot.shotId, invoked: true, ok: false, cached: false, degraded: false, attempt: usedAttempt,
+            stage: "material-gen", shotId: shot.shotId, invoked: !qualifiedPost, ok: false, cached: false, degraded: false, attempt: usedAttempt,
             ms: Date.now() - shotStarted, artifact: null,
             evidence: { error: err instanceof Error ? err.message.slice(0, 300) : String(err), attempt: usedAttempt }, verdict: null
           });
@@ -3817,7 +4003,7 @@ if (STAGES.has("material-gen")) {
       if (!accepted) log(`  ⚠ ${shot.shotId} 素材镜 ${usedAttempt} 次尝试仍未达标：${lastMotionVerdict.detail}`);
     } catch (err) {
       record({
-        stage: "material-gen", shotId: shot.shotId, invoked: true, ok: false, cached: false, degraded: false, attempt: 1,
+        stage: "material-gen", shotId: shot.shotId, invoked: !qualifiedPost, ok: false, cached: false, degraded: false, attempt: 1,
         ms: Date.now() - shotStarted, artifact: null,
         evidence: { error: err instanceof Error ? err.message.slice(0, 300) : String(err) }, verdict: null
       });
@@ -3919,7 +4105,7 @@ if (STAGES.has("videos")) {
   ) || null;
   const materialGateVerified = (shotId: string): boolean => stageApproved("gate:material-generate:verify", [shotId]);
   const materialReady = materialShots().every((s) => {
-    const clip = join(CLIP_DIR, `${s.shotId}.mp4`);
+    const clip = productionClipFile(s.shotId);
     return existsSync(clip) && statSync(clip).size > 100_000 && materialGateVerified(s.shotId);
   });
   const micromotionEvidence = STAGES.has("micromotion")
@@ -4011,7 +4197,7 @@ if (STAGES.has("videos")) {
     ? (["front", "closeup"].map((a) => lead.files[a]).filter(Boolean) as string[])
     : [];
   for (const shot of shots) {
-    const clip = join(CLIP_DIR, `${shot.shotId}.mp4`);
+    const clip = productionClipFile(shot.shotId);
     const duration = Number(shot.duration ?? 5);
     /**
      * 素材镜：片段已在 `material-gen` 阶段生成并过 G-MAT1（生成溯源 + 非静态直出 + 保真评审），
@@ -4391,7 +4577,7 @@ function latestVoiceRecord(shotId: string): StageRecord | null {
 
 /** 合成只采用与当前原片、台词和音色匹配且曾通过核验的配音版。 */
 function clipFor(shot: ShotCard): string {
-  const raw = join(CLIP_DIR, `${shot.shotId}.mp4`);
+  const raw = productionClipFile(shot.shotId);
   const voiced = voicedFile(shot.shotId);
   const status = assessVoiceArtifact({
     record: latestVoiceRecord(shot.shotId), projectId: PROJECT, shotId: shot.shotId,
@@ -4413,7 +4599,7 @@ if (STAGES.has("voice")) {
     });
   } else {
     for (const shot of shots) {
-      const raw = join(CLIP_DIR, `${shot.shotId}.mp4`);
+      const raw = productionClipFile(shot.shotId);
       const text = dialogueText(shot);
       const speaker = String((shot.dialogue ?? [])[0]?.speaker ?? "旁白");
       if (!existsSync(raw)) {
@@ -4640,7 +4826,7 @@ if (STAGES.has("compose") && !DRY_RUN) {
   /** 合成必须使用当前镜头产物及通过回执；素材镜还必须通过 G-MAT1。 */
   const blocked = shots.filter((shot) => {
     const generated = isMaterialShot(shot) ? stageApproved("gate:material-generate:verify", [shot.shotId])
-      : artifactReusable("shot", join(CLIP_DIR, `${shot.shotId}.mp4`), undefined, shot.shotId);
+      : artifactReusable("shot", productionClipFile(shot.shotId), undefined, shot.shotId);
     return !generated || (dialogueText(shot).length > 0 && !stageApproved("voice", [shot.shotId]));
   }).map((shot) => shot.shotId);
   if (blocked.length) log(`⛔ 缺少当前镜头或人声的通过回执，合成中止：${blocked.join("、")}`);
@@ -6790,7 +6976,7 @@ if (STAGES.has("master") && existsSync(scored) && !DRY_RUN) {
   const voiceArtifactFailures: Array<{ shotId: string; reason: string }> = [];
   const coverage: typeof narrationCoverage = [];
   for (const shot of dialogueShots) {
-    const raw = join(CLIP_DIR, `${shot.shotId}.mp4`);
+    const raw = productionClipFile(shot.shotId);
     const voiced = voicedFile(shot.shotId);
     const last = latestVoiceByShot.get(shot.shotId) ?? null;
     const current = assessVoiceArtifact({
@@ -7443,7 +7629,7 @@ if (STAGES.has("revise") && !DRY_RUN) {
     const started = Date.now();
     const plan = buildRevisionPlan({
       note,
-      shots: shots.map((shot) => ({ shotId: shot.shotId, clipPath: join(CLIP_DIR, `${shot.shotId}.mp4`) })),
+      shots: shots.map((shot) => ({ shotId: shot.shotId, clipPath: productionClipFile(shot.shotId) })),
       hasher: (file) => (existsSync(file) ? createHash("sha256").update(readFileSync(file)).digest("hex") : "missing")
     });
     const report = buildRevisionReport(plan, note);
@@ -7474,7 +7660,7 @@ if (STAGES.has("revise") && !DRY_RUN) {
     else if (flag("--execute-revision")) {
       const execution = await executeRevision({
         note,
-        shots: shotlist.shots.map((shot) => ({ shotId: shot.shotId, clipPath: join(CLIP_DIR, `${shot.shotId}.mp4`) })),
+        shots: shotlist.shots.map((shot) => ({ shotId: shot.shotId, clipPath: productionClipFile(shot.shotId) })),
         onStep: async (step, index) => {
           const originalArgs = process.argv.slice(2);
           const childArgs: string[] = [];
@@ -7526,7 +7712,7 @@ log(`阶段日志：${STAGE_LOG}`);
 for (const [stage, s] of byStage) log(`  · ${stage.padEnd(14)} invoked=${s.invoked} ok=${s.ok} failed=${s.failed} degraded=${s.degraded} cached=${s.cached}`);
 
 if (!DRY_RUN) {
-  const aliases: Record<string, string[]> = { spec: ["prompt-review", "prompt-package"], plates: ["keyframe"], videos: ["shot"], "material-gen": ["material-gen"], voice: ["voice"], continuity: ["continuity"] };
+  const aliases: Record<string, string[]> = { spec: ["prompt-review", "prompt-package"], plates: ["keyframe"], videos: ["shot"], "material-gen": ["material-gen"], "identity-check": ["identity-fact"], voice: ["voice"], continuity: ["continuity"] };
   const notApplicable = (stage: string): boolean =>
     (stage === "material-gen" && materialShots().length === 0)
     || (stage === "mux" && SUBTITLE_MODE === "burn")

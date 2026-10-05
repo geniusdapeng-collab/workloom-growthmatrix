@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
-import { resumeOrSubmitVideoTask, videoTaskReceiptPath } from "./video-task-receipt.js";
+import { resumeOrSubmitVideoTask, verifyExistingSuccessfulVideoTask, videoTaskReceiptPath } from "./video-task-receipt.js";
 const roots: string[] = [];
 afterEach(async () => { for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true }); });
 async function setup() {
@@ -54,4 +54,15 @@ it("并发调用只有持锁者能提交", async () => {
   const running = resumeOrSubmitVideoTask(input); await ready;
   await expect(resumeOrSubmitVideoTask(input)).rejects.toThrow("LOCKED"); release(); await running;
   expect(input.transport.submit).toHaveBeenCalledTimes(1);
+});
+it("本地后期只读已成功回执，不泄露URL或再次调用提交/轮询；缺失、不同正文、未成功都拒绝", async () => {
+  const input = await setup();
+  await expect(verifyExistingSuccessfulVideoTask(input)).rejects.toThrow();
+  await expect(resumeOrSubmitVideoTask({ ...input, timeoutMs: 0 })).rejects.toThrow("轮询超时");
+  await expect(verifyExistingSuccessfulVideoTask(input)).rejects.toThrow("SUCCESS_REQUIRED");
+  await resumeOrSubmitVideoTask(input);
+  const value = await verifyExistingSuccessfulVideoTask(input);
+  expect(value.taskId).toBe("paid-1"); expect(Object.keys(value).sort()).toEqual(["requestSha256", "taskId"]);
+  await expect(verifyExistingSuccessfulVideoTask({ ...input, body: { changed: true } })).rejects.toThrow("RECEIPT_CHANGED");
+  expect(input.transport.submit).toHaveBeenCalledTimes(1); expect(input.transport.poll).toHaveBeenCalledTimes(1);
 });
