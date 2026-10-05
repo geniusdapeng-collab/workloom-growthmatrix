@@ -6,9 +6,9 @@ import { installVendorRequirementBridge, type RequirementBridgeTarget } from "./
 const discovery = () => ({
   audienceProfile: { primaryAudience: { interestTags: ["酒店"] } },
   sceneStructure: { sceneCount: 1, totalDuration: 30,
-    opening: { duration: 5, purpose: "CEO看向镜头介绍台式设备", keyElements: ["酒店柜台", "双屏自助机"] },
-    scenes: [{ duration: 20, purpose: "CEO指向摄像头展示调节位置", keyElements: ["摄像头"] }],
-    ending: { duration: 5, purpose: "CEO点头致意并收束介绍", keyElements: ["双屏自助机"] } },
+    opening: { duration: 5, purpose: "CEO看向镜头介绍台式设备", keyElements: ["酒店柜台", "双屏自助机"], props: ["酒店柜台", "双屏自助机"], actions: ["CEO看向镜头"] },
+    scenes: [{ duration: 20, purpose: "CEO指向摄像头展示调节位置", keyElements: ["摄像头"], props: ["摄像头"], actions: ["CEO指向摄像头"] }],
+    ending: { duration: 5, purpose: "CEO点头致意并收束介绍", keyElements: ["双屏自助机"], props: ["双屏自助机"], actions: ["CEO点头致意"] } },
   riskAssessment: { businessConstraints: ["不编造节省时间效果"] }, referenceCases: {},
 });
 const metadata = (name = "出镜人物") => ({ characterArchive: { id: "demo-character", name,
@@ -123,10 +123,52 @@ describe("真实异步需求转换接缝", () => {
       _extractJsonObject: vi.fn(function(this: { marker: string }) { return this.marker; }) };
     const scene = { llmEngine: llm }; system.requirementDiscoveryEngine.agents = { scene };
     const restore = installVendorRequirementBridge(system, metadata());
-    const actual = (scene.llmEngine as typeof llm).reason("actual prompt", { forceJson: false, maxTokens: 4000 });
+    const actual = await (scene.llmEngine as typeof llm).reason("actual prompt", { forceJson: false, maxTokens: 4000 });
     expect(actual).toMatchObject({ success: false, error: "original", opts: { forceJson: true, thinking: { type: "disabled" }, maxTokens: 4000 } });
     expect((scene.llmEngine as typeof llm)._extractJsonObject()).toBe("original");
     restore(); expect(scene.llmEngine).toBe(llm);
+  });
+
+  it("模板场景向原场景模型反馈错误，实体和动作来自模型新输出而不是purpose拼接", async () => {
+    const system = target();
+    const copied = discovery().sceneStructure; copied.opening.purpose = "开场目的 —— 观众第一眼看到什么？为什么会被吸引？";
+    const llm = { reason: vi.fn().mockResolvedValueOnce({ success: true, content: JSON.stringify(copied) })
+      .mockResolvedValueOnce({ success: true, content: JSON.stringify(discovery().sceneStructure) }) };
+    const scene = { llmEngine: llm }; system.requirementDiscoveryEngine.agents = { scene };
+    const restore = installVendorRequirementBridge(system, metadata());
+    await expect((scene.llmEngine as typeof llm).reason("实际输入")).rejects.toThrow("purpose仍是模板问句");
+    await expect((scene.llmEngine as typeof llm).reason("实际输入")).resolves.toMatchObject({ success: true });
+    expect(llm.reason.mock.calls[1]![0]).toContain("上次实际字段错误");
+    expect(llm.reason.mock.calls[1]![0]).toContain("明确角色档案");
+    const data = await system.requirementDiscoveryEngine.discover({});
+    const list = system._convertDiscoveryToRequirementList(data, {});
+    const sheet = system._renderRequirementContract("", metadata(), list as Record<string, unknown>, data);
+    const props = sheet.split("\n").find((line) => line.startsWith("- **道具**"))!;
+    const actions = sheet.split("\n").find((line) => line.startsWith("- **动作**"))!;
+    expect(props).toContain("酒店柜台"); expect(props).not.toContain("CEO指向");
+    expect(actions).toContain("CEO指向摄像头"); expect(actions).not.toContain("展示调节位置");
+    expect(sheet).toContain("原始意图禁用项不得进入画面或口播"); restore();
+  });
+
+  it.each(["props", "actions"])("缺少模型%s不把旧keyElements或purpose充成完整契约", async (field) => {
+    const data = discovery(); delete (data.sceneStructure.opening as Record<string, unknown>)[field];
+    const system = target(); system.requirementDiscoveryEngine.discover = vi.fn(async () => data);
+    const convert = system._convertDiscoveryToRequirementList;
+    const restore = installVendorRequirementBridge(system, metadata());
+    await expect(system.requirementDiscoveryEngine.discover({})).rejects.toThrow(`.${field}必须`);
+    expect(convert).not.toHaveBeenCalled(); restore();
+  });
+
+  it("非JSON模型返回与关闭中的模型调用不产生合格场景", async () => {
+    const system = target(); let release!: (result: unknown) => void;
+    const llm = { reason: vi.fn().mockResolvedValueOnce({ success: true, content: "bad json" })
+      .mockImplementationOnce(() => new Promise((resolve) => { release = resolve; })) };
+    const scene = { llmEngine: llm }; system.requirementDiscoveryEngine.agents = { scene };
+    const restore = installVendorRequirementBridge(system, metadata());
+    await expect((scene.llmEngine as typeof llm).reason("输入")).rejects.toThrow("不是JSON");
+    const pending = (scene.llmEngine as typeof llm).reason("输入"); restore();
+    release({ success: true, content: JSON.stringify(discovery().sceneStructure) });
+    await expect(pending).rejects.toThrow("CLOSED");
   });
 
   it("关闭时仍在执行的转换不得返回已批准式生成物", async () => {

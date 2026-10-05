@@ -48,13 +48,38 @@ function nodes(discovery: Recordish): Array<{ label: string; data: Recordish }> 
   ];
 }
 
+/** Validate actual scene-agent JSON before vendor can substitute copied examples as content. */
+function sceneContractIssue(value: unknown): string | null {
+  try {
+    const scene = object(value, "sceneStructure");
+    for (const { label, data } of nodes({ sceneStructure: scene })) {
+      const purpose = text(data.purpose);
+      if (!purpose || /^(开场目的|场景目的|结尾目的)\s*[—-]/.test(purpose)) return `${label}.purpose仍是模板问句，必须回答实际画面、作用和观众感受`;
+      for (const field of ["props", "actions"] as const) {
+        const items = data[field];
+        if (!Array.isArray(items) || !items.length || items.some((item) => !text(item))) return `${label}.${field}必须包含本次生成的非空字符串，不能用purpose或keyElements充数`;
+      }
+      if (!Number.isFinite(Number(data.duration)) || Number(data.duration) <= 0) return `${label}.duration必须为正数`;
+    }
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+}
+
+const SCENE_CONTRACT = `\n\n【宿主场景字段契约】
+继续使用上面的开场、主体和结尾结构与本次原始故事。范例中的“开场目的/场景目的/结尾目的 —— …”是问题说明，禁止原样复制；purpose必须写本次场景实际承担的叙事作用与观众感受。
+每个opening/scenes[i]/ending增加props:string[]（仅可见的实体名称，禁止动作、构图、效果句）及actions:string[]（角色或摄影机的实际动作，禁止目的问句）。keyElements继续按原格式输出，不可替代props/actions。
+只使用原始意图允许宣传的商品特征。原始意图禁止的宣称优先于历史摘要卡候选；档案记录不代表本片允许口播或演示。没有竞品证据时，摘要中的“差异化空位/竞品没讲的”仅代表档案特征，不得输出比较优势。
+机身结构、可动部件与产品操作不能凭想象新增；不把可选配置写成未获支持的机械变形或现场切换。所有字段必须来自本次模型实际创作，不能留模板、占位符或元问题。`;
+
 /** Show only actual structured source values; no regex extraction from arbitrary request sentences. */
 export function renderStructuredRequirementContract(metadata: Recordish, list: Recordish, discovery: Recordish): string {
   const scenes = nodes(discovery);
   const characters = Array.isArray(list.characters) ? list.characters.map((value) => object(value, "character")) : [];
   const brief = metadata.brief ? object(metadata.brief, "brief") : {};
-  const props = [...new Set([text(brief.product), ...scenes.flatMap(({ data }) => strings(data.keyElements))].filter(Boolean))];
-  const actions = scenes.map(({ label, data }) => `${label}：${text(data.purpose)}`).filter((item) => !item.endsWith("："));
+  const props = [...new Set([text(brief.product), ...scenes.flatMap(({ data }) => strings(data.props))].filter(Boolean))];
+  const actions = scenes.flatMap(({ label, data }) => strings(data.actions).map((action) => `${label}：${action}`));
   const line = (label: string, items: string[]): string => `- **${label}**（${items.length}）：${items.length ? items.join("；") : "未提取到，须由本次审核判断"}`;
   const constraints = strings(list.contentConstraints);
   return `\n\n---\n\n## 四、需求契约（结构化生成物与明确角色档案）\n\n${[
@@ -62,7 +87,7 @@ export function renderStructuredRequirementContract(metadata: Recordish, list: R
     line("场景", scenes.map(({ label, data }) => `${label}（${Number(data.duration)}s）：${text(data.purpose)}`)),
     line("道具", props),
     line("动作", actions),
-  ].join("\n")}\n\n- 业务约束：${constraints.length ? constraints.join("；") : "未提取到"}\n- 口径：${Number(list.targetDuration)}s / ${text(brief.aspectRatio) || text(list.aspectRatio)} / ${text(brief.platform) || text(list.platform)}\n- 来源：角色来自明确请求档案，场景、实物元素和行为来自本次洞察生成物；动作逐场保留完整目的，不猜测截断词。批准仍由原有G3审核作出。\n`;
+  ].join("\n")}\n\n- 业务约束：${constraints.length ? constraints.join("；") : "未提取到"}\n- 口径：${Number(list.targetDuration)}s / ${text(brief.aspectRatio) || text(list.aspectRatio)} / ${text(brief.platform) || text(list.platform)}\n- 来源：角色来自明确请求档案；场景、道具、动作分别来自本次模型的purpose、props、actions字段，不猜测截断词，不把动作句充作道具。批准仍由原有G3审核作出。\n- 事实与使用边界：档案原文记录不等于本片使用许可；原始意图禁用项不得进入画面或口播。缺少竞品证据时，上游历史摘要中的“差异化空位（竞品没讲的）”仅作登记特征参考，不构成比较事实。创作场景、灯光与动作是待审核方案，不宣称已核实为真实拍摄记录。\n`;
 }
 
 export function installVendorRequirementBridge(
@@ -81,11 +106,25 @@ export function installVendorRequirementBridge(
   const sceneAgent = engine.agents?.scene;
   const sceneLLM = sceneAgent?.llmEngine;
   let active = true;
+  let sceneFeedback = "";
   if (sceneAgent && sceneLLM && typeof sceneLLM.reason === "function") {
     sceneAgent.llmEngine = new Proxy(sceneLLM, {
       get(target, key) {
-        if (key === "reason") return (prompt: unknown, options: Recordish = {}) =>
-          (target.reason as (p: unknown, o: Recordish) => unknown).call(target, prompt, { ...options, forceJson: true, thinking: { type: "disabled" } });
+        if (key === "reason") return async (prompt: unknown, options: Recordish = {}) => {
+          if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
+          const augmented = `${String(prompt)}${SCENE_CONTRACT}\n明确角色档案：${JSON.stringify(cast)}${sceneFeedback ? `\n上次实际字段错误：${sceneFeedback}；请针对错误重新生成，不复制旧输出。` : ""}`;
+          const result = await (target.reason as (p: unknown, o: Recordish) => unknown).call(target, augmented, { ...options, forceJson: true, thinking: { type: "disabled" } });
+          if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
+          if (result && typeof result === "object" && (result as Recordish).success === true) {
+            let parsed: unknown;
+            try { parsed = JSON.parse(String((result as Recordish).content)); }
+            catch { throw new Error("REQUIREMENT_SCENE_INVALID: 场景结果不是JSON"); }
+            const issue = sceneContractIssue(parsed);
+            if (issue) { sceneFeedback = issue; throw new Error(`REQUIREMENT_SCENE_INVALID: ${issue}`); }
+            sceneFeedback = "";
+          }
+          return result;
+        };
         const value = Reflect.get(target, key, target);
         return typeof value === "function" ? value.bind(target) : value;
       },
@@ -94,6 +133,8 @@ export function installVendorRequirementBridge(
   engine.discover = async function awaitedDiscovery(upstream) {
     if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
     const discovery = object(await originalDiscover.call(this, upstream), "discovery");
+    const issue = sceneContractIssue(discovery.sceneStructure);
+    if (issue) throw new Error(`REQUIREMENT_SCENE_INVALID: ${issue}`);
     const list = object(await originalConvert.call(system, discovery, upstream), "requirementList");
     if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
     if (cast.length || metadata.characters !== undefined) list.characters = structuredClone(cast);
