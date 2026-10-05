@@ -535,6 +535,10 @@ export class VideoStudio {
           if (!input.resume) return system.create(input.intent, metadata, createOptions);
           log("[studio] 正式恢复G6阶段：复读原G1资格与G2–G4完整对象；不重新生成上游，不提交渲染");
           const previous = structuredClone(input.resume.result) as Record<string, any>;
+          // 正式修订会改变受审镜头；旧逐镜事实/导出地址与旧完整候选不可继承成当前资格。
+          delete previous.marketingFacts; delete previous.filmShotlist;
+          delete previous.stages.productionEngine.formalFilmCandidate;
+          previous.confirmations.preproduction = { approved: false, reason: "正式G6修订后等待原G7重新审核" };
           const current = system as unknown as PromptReviewTarget;
           const production = previous.stages.productionEngine;
           const verdict = await current._confirmPrompts(production.prompts);

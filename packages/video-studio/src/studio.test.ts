@@ -374,11 +374,16 @@ describe("既有人验定妆照只读复用", () => {
       confirmations: { creativeTheme: { approved: true }, requirementList: { approved: true }, prd: { approved: true, prd }, prompts: { approved: false } } };
   }
   it("真实G1绑定前期对象恢复原G6/G7，不调用vendor.create或重复上游生成", async () => {
-    const previous = resumeFixture(), sha256 = createHash("sha256").update(filmCanonicalJson(previous)).digest("hex");
+    const previous = resumeFixture(); previous.marketingFacts = { sha256: "旧事实资格" }; previous.filmShotlist = { path: "旧稿地址" };
+    previous.stages.productionEngine.formalFilmCandidate = { shots: "历史候选" };
+    const sha256 = createHash("sha256").update(filmCanonicalJson(previous)).digest("hex");
     const result = await marketing({ projectId: "P1", rawJson, sha256: createHash("sha256").update(rawJson).digest("hex"), productQuery: { name: "本次商品" } })
       .runPreproduction({ projectId: "P1", intent: "营销", isMarketing: true, resume: { result: previous as any, sha256 } });
     expect(result.success).toBe(true); expect(studioMocks.create).not.toHaveBeenCalled(); expect(previous.success).toBe(false);
     expect((result as any).confirmations.prompts.approved).toBe(true); expect((result as any).confirmations.preproduction.approved).toBe(true);
+    expect((result as any).marketingFacts).toBeUndefined(); expect((result as any).filmShotlist).toBeUndefined();
+    expect((result.stages!.productionEngine as any).formalFilmCandidate).toBeUndefined();
+    expect(previous.marketingFacts.sha256).toBe("旧事实资格");
     expect(studioMocks.disposed).toEqual([...studioMocks.installed].reverse());
   });
   it.each(["hash", "assembly", "prd", "upstream", "render", "already-success"])("恢复%s失配在vendor构造和新审批前拒绝", async kind => {

@@ -4,7 +4,7 @@ import { mkdtemp, realpath, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { prepareMarketingFacts, authorizeMarketingFacts, finalizeMarketingFacts, verifyMarketingFacts, restoreReviewedMarketingFacts, restoreMarketingOutputRejection, type PreparedMarketingFacts } from "./marketing-authority.js";
+import { prepareMarketingFacts, authorizeMarketingFacts, finalizeMarketingFacts, verifyMarketingFacts, restoreReviewedMarketingFacts, restoreMarketingOutputRejection, restoreMarketingReviewTransportCheckpoint, type PreparedMarketingFacts } from "./marketing-authority.js";
 import { fetchMarketingSource, requestSource } from "./marketing-source-fetcher.js";
 import { canonicalRenderJson, renderSha256 } from "./gen/compiled-request.js";
 const scope = { tenantId: "tenant-a", workspaceId: "ws-a", projectId: "P1", runId: "RUN1", attempt: 1 };
@@ -187,6 +187,46 @@ async function prepareRegistered(characterArchive?: Record<string, unknown>): Pr
     } }, dependencies: { search: async () => [], fetchSource: async () => { throw new Error("测试不允许公网来源传输"); } } });
 }
 describe("登记档案复用正式营销宿主资格", () => {
+  it("外部事实审核超时只接续未完成镜；已通过完整正文/图像重新核验，旧失败回执不覆盖", async () => {
+    const prepared = await prepareRegistered(), original = structuredClone(prepared);
+    const current = [shots[0]!, { ...shots[0]!, shotId: "S2" }, { ...shots[0]!, shotId: "S3" }];
+    const oldId = "RUN-11111111-1111-4111-8111-111111111111", nextId = "RUN-22222222-2222-4222-8222-222222222222";
+    const transport = globalThis.fetch; let unavailable = true;
+    vi.stubGlobal("fetch", vi.fn(async (url, init) => {
+      const request = JSON.parse(String(init!.body));
+      const actualText = request.messages.flatMap((message: any) => typeof message.content === "string" ? [message.content]
+        : message.content.filter((part: any) => part.type === "text").map((part: any) => part.text)).join("");
+      if (unavailable && actualText.includes('"shotId":"S2"')) throw new Error("The operation was aborted due to timeout");
+      return transport(url, init);
+    }));
+    await expect(finalizeMarketingFacts(prepared, current, env, oldId)).rejects.toThrow("PROMPT_FACTS_REJECTED");
+    const prefix = `${prepared.prefix}-output-${oldId}`, oldReceipt = await readFile(path.join(root, `${prefix}-shot-2.verdict.json`), "utf8");
+    const checkpoint = await restoreMarketingReviewTransportCheckpoint(original, current, oldId);
+    expect(checkpoint.passed.map(item => item.shotId)).toEqual(["S1"]); expect(checkpoint.reason).toContain("timeout");
+    unavailable = false; const calls = modelCalls.length;
+    const saved = await finalizeMarketingFacts(original, current, env, nextId, undefined, { outputId: oldId });
+    expect(modelCalls.length - calls).toBe(2);
+    const verified = await verifyMarketingFacts({ root, ...saved, scope, shots: current });
+    expect(verified.outputReviews[0]!.ref).toBe(`${prefix}-shot-1.review.json`);
+    expect(verified.outputReviews[1]!.ref).toContain(nextId); expect(verified.outputReviews).toHaveLength(3);
+    expect(await readFile(path.join(root, `${prefix}-shot-2.verdict.json`), "utf8")).toBe(oldReceipt);
+  });
+  it.each(["fields", "scope", "hash", "evidence", "real-rejection", "not-transport", "score"])("审核接续%s变化或非传输拒绝不能复用通过", async kind => {
+    const prepared = await prepareRegistered(), oldId = "RUN-11111111-1111-4111-8111-111111111111";
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("The operation was aborted due to timeout"); }));
+    await expect(finalizeMarketingFacts(prepared, shots, env, oldId)).rejects.toThrow("PROMPT_FACTS_REJECTED");
+    const file = path.join(root, `${prepared.prefix}-output-${oldId}-shot-1.verdict.json`), receipt = JSON.parse(await readFile(file, "utf8"));
+    const current = structuredClone(shots);
+    if (kind === "fields") current[0]!.fields.规格 = "999档";
+    if (kind === "scope") receipt.scope.workspaceId = "other";
+    if (kind === "hash") receipt.contentSha256 = "0".repeat(64);
+    if (kind === "evidence") receipt.verdict.evidence = [];
+    if (kind === "real-rejection") Object.assign(receipt.verdict, { via: "llm", status: "failed", degraded: false, score: 10 });
+    if (kind === "not-transport") receipt.verdict.reason = "JSON输出不满足合同";
+    if (kind === "score") Object.assign(receipt.verdict, { via: "llm", status: "passed", degraded: false, approved: true, score: 84 });
+    await writeFile(file, JSON.stringify(receipt));
+    await expect(restoreMarketingReviewTransportCheckpoint(prepared, current, oldId)).rejects.toThrow();
+  });
   it("事实门读取原G1明确角色性别/外貌/衣装，角色属性不当作商品功能证据", async () => {
     const prepared = await prepareRegistered({ id: "ceo", name: "出镜人物", identity: { gender: "female" },
       appearance: { hair: "登记黑发" }, wardrobe: [{ detail: "登记黑色套装" }], authorization: { evidence: "asset://test-person" } });

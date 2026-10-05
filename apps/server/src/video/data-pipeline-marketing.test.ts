@@ -4,13 +4,21 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const fixture = vi.hoisted(() => ({ configs: [] as any[], inputs: [] as any[], results: [] as any[], rejectG1: false, rejectFinal: false }));
+const fixture = vi.hoisted(() => ({ configs: [] as any[], inputs: [] as any[], results: [] as any[], rejectG1: false, rejectFinal: false, transportFinal: false, prepareCandidate: false }));
 vi.mock("../../../../packages/video-studio/src/index.js", async importOriginal => {
   const original = await importOriginal<any>();
   return { ...original, installVendorEngineBridge: () => () => undefined,
     VideoStudio: class {
-      constructor(config: unknown) { fixture.configs.push(config); }
-      async runPreproduction(input: unknown) { fixture.inputs.push(input); return structuredClone(fixture.results.shift()); }
+      constructor(private config: any) { fixture.configs.push(config); }
+      async runPreproduction(input: unknown) {
+        fixture.inputs.push(input); const result = structuredClone(fixture.results.shift());
+        if (fixture.prepareCandidate) {
+          result.stages.dataMining = { data: JSON.parse(this.config.dataMining.verifiedDossier.assemblyJson) };
+          const production = result.stages.productionEngine; production.prompts = structuredClone(production.shots);
+          production.formalFilmCandidate = await this.config.prepareFilmCandidate(production, {}, {}, result.confirmations);
+        }
+        return result;
+      }
     } };
 });
 vi.mock("./data-mining-executor.js", async importOriginal => ({
@@ -24,7 +32,7 @@ const successful = () => ({ success: true, stages: { productionEngine: { shots: 
     action: "出镜人物指向摄像头", character: "出镜人物", dialogue: "出镜人物|独白|从容|看看这台双屏机。|LIP_SYNC:YES" } }] } } });
 const rejected = () => ({ success: false, stages: {}, confirmations: { theme: { approved: false, reason: "producer-rejected" } } });
 beforeEach(async () => {
-  vi.resetModules(); fixture.configs = []; fixture.inputs = []; fixture.results = [successful()]; fixture.rejectG1 = false; fixture.rejectFinal = false;
+  vi.resetModules(); fixture.configs = []; fixture.inputs = []; fixture.results = [successful()]; fixture.rejectG1 = false; fixture.rejectFinal = false; fixture.transportFinal = false; fixture.prepareCandidate = false;
   root = await realpath(await mkdtemp(path.join(tmpdir(), "data-pipeline-cli-")));
   argv = process.argv; exitCode = process.exitCode;
   vi.stubEnv("LLM_BASE_URL", "https://judge.example.test"); vi.stubEnv("LLM_API_KEY", "test-only"); vi.stubEnv("LLM_MODEL", "test-judge");
@@ -46,6 +54,7 @@ beforeEach(async () => {
         shots: [{ shotId: "S1", sceneId: "frontdesk" }] };
     } else {
       const content = JSON.stringify(message);
+      if (fixture.transportFinal && content.includes("marketing-final-fact-review")) throw new Error("The operation was aborted due to timeout");
       const approved = !(fixture.rejectG1 && content.includes("G1_DOSSIER") || fixture.rejectFinal && content.includes("marketing-final-fact-review"));
       result = { approved, score: approved ? 96 : 10, issues: approved ? [] : ["测试：事实不支持"], suggestions: [], reason: approved ? "测试：逐项支持" : "测试：事实不支持" };
     }
@@ -70,6 +79,28 @@ async function run(extra: string[] = []) {
   }
 }
 describe("营销CLI复用正式事实与G1", () => {
+  it.each(["recover", "changed-prd", "rendered"])("最终事实传输%s：复用真实完整预制，只恢复外部审核，不再构造创作引擎", async state => {
+    const complete: any = successful(); complete.stages.prdGeneration = { data: {} };
+    complete.confirmations = { creativeTheme: { approved: true }, requirementList: { approved: true }, prd: { approved: true, prd: {} },
+      prompts: { approved: true }, preproduction: { approved: true } };
+    fixture.results = [complete]; fixture.prepareCandidate = true; fixture.transportFinal = true;
+    await expect(run()).rejects.toThrow("exit:4");
+    const source = root, previous = JSON.parse(await readFile(path.join(source, "preproduction-result.json"), "utf8"));
+    if (state === "changed-prd") previous.stages.prdGeneration.data = { changed: true };
+    if (state === "rendered") previous.stages.renderingEngine = { submitted: true };
+    await writeFile(path.join(source, "preproduction-result.json"), JSON.stringify(previous));
+    fixture.transportFinal = false; vi.resetModules(); root = path.join(source, "resumed");
+    try {
+      if (state === "recover") {
+        await run(["--resume-preproduction", source]);
+        const current = JSON.parse(await readFile(path.join(root, "result.json"), "utf8"));
+        expect(current.success).toBe(true); expect(current.stages.productionEngine).toEqual(previous.stages.productionEngine);
+        expect(JSON.parse(await readFile(path.join(root, "final-facts-resume.json"), "utf8")).reason).toContain("timeout");
+        expect(JSON.parse(await readFile(path.join(root, "meta.json"), "utf8")).renderSubmitted).toBe(false);
+      } else await expect(run(["--resume-preproduction", source])).rejects.toThrow("RESUME_UNVERIFIED");
+      expect(fixture.configs).toHaveLength(1); expect(fixture.inputs).toHaveLength(1);
+    } finally { root = source; }
+  });
   it.each(["actual-redline", "changed-ready", "changed-proof", "not-rejected"])("成功预制恢复%s：仅真实冻结红线可进入修订工位", async state => {
     const first: any = successful();
     if (state !== "not-rejected") first.stages.productionEngine.shots[0].fields.props = "柜台上可见屏幕";

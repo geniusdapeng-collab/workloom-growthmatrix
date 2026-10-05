@@ -372,10 +372,46 @@ export async function restoreMarketingOutputRejection(prepared: PreparedMarketin
   fail("MARKETING_OUTPUT_REJECTION_REQUIRED", "没有当前最终镜头的真实事实拒绝");
 }
 
-export async function finalizeMarketingFacts(prepared: PreparedMarketingFacts, shots: Array<{ shotId: string; prompt: string; fields: unknown }>, env: NodeJS.ProcessEnv = process.env, outputId?: string, sceneBible?: SceneBible): Promise<{ ref: string; sha256: string }> {
+/** 仅恢复同一完整稿的真实传输失败；已通过正文逐字复核，旧拒绝/未知结果不能变成批准。 */
+export async function restoreMarketingReviewTransportCheckpoint(prepared: PreparedMarketingFacts,
+  shots: Array<{ shotId: string; prompt: string; fields: unknown }>, outputId: string, sceneBible?: SceneBible): Promise<{ passed: OutputReview[]; reason: string }> {
+  const prefix = outputPrefix(prepared, outputId), passed: OutputReview[] = [], failures: string[] = [];
+  const references = await loadProductVisualReferences(prepared.bundle.sources);
+  for (const [index, shot] of shots.entries()) {
+    const receiptPath = path.join(prepared.root, `${prefix}-shot-${index + 1}.verdict.json`);
+    let receipt: { scope: MarketingScope; shotId: string; contentSha256: string; verdict: ProducerVerdict };
+    try {
+      if (await realpath(receiptPath) !== receiptPath) fail("MARKETING_PATH_INVALID", "审核接续回执经过符号链接");
+      receipt = JSON.parse(await readFile(receiptPath, "utf8"));
+    } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") continue; throw error; }
+    const ref = `${prefix}-shot-${index + 1}.review.json`, file = path.join(prepared.root, ref);
+    const bytes = await readBound(prepared.root, ref, receipt.contentSha256);
+    if (canonicalRenderJson(receipt.scope) !== canonicalRenderJson(prepared.bundle.scope) || receipt.shotId !== shot.shotId
+      || bytes.toString("utf8") !== outputReviewContent(prepared.bundle, shot, references, sceneBible)) {
+      fail("MARKETING_REVIEW_RESUME_CHANGED", "审核接续的完整镜头、来源、图像、场景或scope已经改变");
+    }
+    const verdict = receipt.verdict;
+    await verifyOutputVisualEvidence(prepared.bundle, references.length ? references : undefined, verdict);
+    if (accepted(verdict, file, receipt.contentSha256) && verdict.score >= 85) {
+      passed.push({ shotId: shot.shotId, promptSha256: renderSha256(shot.prompt), fieldsSha256: renderSha256(canonicalRenderJson(shot.fields)),
+        ref, sha256: receipt.contentSha256, verdict });
+    } else if (verdict.status === "unverified" && verdict.approved === false && verdict.degraded === true && verdict.via === "fallback"
+      && verdict.rerun === true && verdict.score === 0 && Array.isArray(verdict.hardFailures) && !verdict.hardFailures.length && verdict.model
+      && /timeout|timed out|fetch failed|ECONN|socket|network|aborted/i.test(verdict.reason)
+      && verdict.evidence?.some(item => item.path === file && item.sha256 === receipt.contentSha256 && item.scope === "complete-text")) {
+      failures.push(`${shot.shotId}：${verdict.reason}`);
+    } else fail("MARKETING_REVIEW_RESUME_UNVERIFIED", "本次实际模型拒绝、确定性失败或不完整证据不能按传输失败接续");
+  }
+  if (!failures.length) fail("MARKETING_REVIEW_RESUME_REQUIRED", "没有当前完整稿的真实外部审核传输失败");
+  return { passed, reason: failures.join("；") };
+}
+
+export async function finalizeMarketingFacts(prepared: PreparedMarketingFacts, shots: Array<{ shotId: string; prompt: string; fields: unknown }>, env: NodeJS.ProcessEnv = process.env, outputId?: string, sceneBible?: SceneBible, recovery?: { outputId: string }): Promise<{ ref: string; sha256: string }> {
   if (!shots.length || new Set(shots.map(shot => shot.shotId)).size !== shots.length) fail("MARKETING_PROMPTS_INVALID", "营销镜头为空或镜头标识重复");
   const prefix = outputPrefix(prepared, outputId);
   if (prepared.bundle.outputReviews.length) fail("MARKETING_PROMPTS_ALREADY_REVIEWED", "输出审核必须从原完整G1对象开始，不叠加旧镜头批准");
+  if (recovery && (!outputId || outputId === recovery.outputId)) fail("MARKETING_REVIEW_RESUME_SCOPE_INVALID", "审核接续必须使用新的宿主RUN，保留旧失败回执");
+  const checkpoint = recovery ? await restoreMarketingReviewTransportCheckpoint(prepared, shots, recovery.outputId, sceneBible) : null;
   const performer = JSON.parse(prepared.g1Content).requestedMetadata?.characterArchive;
   const visualReferences = await loadProductVisualReferences(prepared.bundle.sources);
   if (visualReferences.length) prepared.bundle.visualReferences = visualReferences;
@@ -384,6 +420,8 @@ export async function finalizeMarketingFacts(prepared: PreparedMarketingFacts, s
   for (const [index, item] of shots.entries()) {
     const shot = { shotId: item.shotId, prompt: item.prompt, fields: item.fields };
     if (!shot.prompt.trim()) fail("MARKETING_PROMPTS_INVALID", "营销镜头正文为空");
+    const completed = checkpoint?.passed.find(review => review.shotId === shot.shotId);
+    if (completed) { prepared.bundle.outputReviews.push(structuredClone(completed)); continue; }
     const evidence = await writeBound(prepared.root, `${prefix}-shot-${index + 1}.review.json`, outputReviewContent(prepared.bundle, shot, visualReferences, sceneBible));
     const fields = shot.fields && typeof shot.fields === "object" && !Array.isArray(shot.fields) ? shot.fields as RecordValue : null;
     const verdict = await reviewStage({ stage: "prompt", projectId: prepared.bundle.scope.projectId, env,
