@@ -963,6 +963,8 @@ entry.HyperrealitySystem = class OfflineSystem {
  prdGenerator = { generate: async () => { throw new Error("offline phase3 fixture must not generate PRD"); }, generateMarkdown: () => "offline",
   agent2: { _buildPrompt: () => "offline" }, agent3: { _buildPrompt: () => "offline" } };
  async _confirmPRD() { throw new Error("offline phase3 fixture must not review PRD"); }
+ async _confirmPrompts() { throw new Error("offline phase3 fixture must not review prompts"); }
+ async _confirmPreproductionResult() { throw new Error("offline phase3 fixture must not review final production"); }
  requirementDiscoveryEngine = { discover: async () => { throw new Error("offline phase3 fixture must not call discovery"); } };
  async _convertDiscoveryToRequirementList() { throw new Error("offline phase3 fixture must not convert requirements"); }
  _renderRequirementContract() { throw new Error("offline phase3 fixture must not render requirements"); }

@@ -89,6 +89,12 @@ vi.mock("./theme-bridge.js", () => ({
     return () => { studioMocks.disposed.push("theme"); };
   }
 }));
+vi.mock("./prompt-review-bridge.js", () => ({
+  installVendorPromptReviewBridge: () => {
+    studioMocks.installed.push("prompt-review");
+    return () => { studioMocks.disposed.push("prompt-review"); };
+  }
+}));
 
 beforeEach(() => {
   studioMocks.construct.mockReset();

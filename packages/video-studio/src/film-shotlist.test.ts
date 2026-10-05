@@ -15,6 +15,27 @@ it("正式生成物原样映射字段与口播；不编创意，绑定明确档�
   expect(document.shots[0]).toMatchObject({ shotId: "S01", action: raw().fields.action, costume: "黑色套装", assetRef: "asset://registered-person",
     dialogue: [{ speaker: "出镜人物", text: "看看这台双屏机。" }], prompt: raw().prompt });
 });
+it("正式修订后的纯台词字段优先于历史block文本，唯一说话人来自原block", () => {
+  const r: any = result();
+  r.stages.productionEngine.shots[0].fields.dialogue = "本次正式修订台词。";
+  r.stages.productionEngine.shots[0].dialogueBlocks = [{ speaker: "出镜人物", type: "monologue", emotion: "calm", line: "旧版本台词。" }];
+  const before = structuredClone(r);
+  const doc = mapPreproductionFilm({ result: r, metadata: metadata(), projectId: "P1" });
+  expect(doc.shots[0]!.dialogue).toEqual([{ speaker: "出镜人物", text: "本次正式修订台词。", type: "monologue", emotion: "calm" }]);
+  expect(r).toEqual(before);
+  r.stages.productionEngine.shots[0].dialogueBlocks.push({ speaker: "未知第二人", line: "别的台词" });
+  expect(() => mapPreproductionFilm({ result: r, metadata: metadata(), projectId: "P1" })).toThrow("唯一正式说话人");
+});
+it("原卡明确无人产品镜保持无人；全片主要人物不能丢失或换人", () => {
+  const r: any = result(); r.stages.productionEngine.shots[0].duration = 15;
+  const productShot = { ...raw(), shot_id: "S02", duration: 15, fields: { ...raw().fields, character: "无角色出场，不适用", dialogue: "" } };
+  r.stages.productionEngine.shots.push(productShot);
+  const doc = mapPreproductionFilm({ result: r, metadata: metadata(), projectId: "P1" });
+  expect(doc.shots[1]!.character).toBe("无角色出场，不适用");
+  expect(doc.shots[1]!.assetRef).toBeUndefined(); expect(doc.shots[0]!.assetRef).toBe("asset://registered-person");
+  r.stages.productionEngine.shots[0].fields.character = "无角色出场，不适用";
+  expect(() => mapPreproductionFilm({ result: r, metadata: metadata(), projectId: "P1" })).toThrow("全片没有明确主要人物");
+});
 it.each(["failed", "short", "duration", "cast", "duplicate", "degraded"])("%s输入拒绝，不补造镜头/台词/时长", kind => {
   const r: any = result();
   if (kind === "failed") r.success = false;

@@ -40,6 +40,7 @@ import { runWithReviewedMarketingDossier, validateReviewedMarketingDossier, type
 import { filmCanonicalJson } from "./film-worker-channel.js";
 import { installVendorPrdBridge, type PrdBridgeTarget } from "./prd-bridge.js";
 import { installVendorThemeBridge, type ThemeBridgeTarget } from "./theme-bridge.js";
+import { installVendorPromptReviewBridge, type PromptReviewTarget } from "./prompt-review-bridge.js";
 
 /** vendor 引擎暴露的最小结构（HyperrealitySystem 实例方法） */
 interface HyperrealitySystemLike {
@@ -234,7 +235,8 @@ export class VideoStudio {
         contentMd: `${req.content}${cfg.dataMining?.verifiedDossier && gate !== "G1_DOSSIER"
           ? `\n\n## 本次G1已审完整装订快照（当前设计依据，未宣称成片已生成）\n${JSON.stringify(JSON.parse(cfg.dataMining.verifiedDossier.assemblyJson),
             (_key, value) => value === null ? "未提供（原档案空值）" : value)}\n档案原文/引用是商品口径；Brief、人物档案、布景与设计约束仅是明确制作输入。当前主题/需求/PRD不是最终逐镜产物或视觉实测，不能要求尚未生成的产物来证明已完成。\n`
-          : ""}`,
+          : ""}${["G6_PROMPT", "G7_FINAL"].includes(gate) ? `\n\n## 明确制作合同与登记造型（事实原文仍以G1为准）\n${JSON.stringify({ brief: metadata.brief ?? null,
+            characterArchive: metadata.characterArchive ?? null, referenceAssets: metadata.referenceAssets ?? null, usage: metadata.marketingUsage ?? null })}\n技术格式与登记引用保留实际MP4/H.264/fps/asset语法；创意与对白中文。无人产品镜可有出镜人物画外音，但不能混入人体动作。\n` : ""}`,
         runId: req.runId ?? runId
       });
       await emit({
@@ -410,6 +412,9 @@ export class VideoStudio {
         keep(installVendorPrdBridge(system as unknown as PrdBridgeTarget, metadata, log, cfg.dataMining?.verifiedDossier
           ? (JSON.parse(cfg.dataMining.verifiedDossier.assemblyJson) as Record<string, unknown>).dossier as Record<string, unknown> : undefined,
           { llm: cfg.llm, workDir: cfg.workDir, projectId: input.projectId }));
+        keep(installVendorPromptReviewBridge(system as unknown as PromptReviewTarget, { metadata, llm: cfg.llm,
+          reviewedFacts: cfg.dataMining?.verifiedDossier ? JSON.parse(cfg.dataMining.verifiedDossier.assemblyJson).dossier : undefined,
+          workDir: cfg.workDir, projectId: input.projectId, log }));
         /** 实例级放宽 rhythmProfiles（standard 12 / slow 15 → 模型上限），否则 30s 单镜会被重新夹紧 */
         applyDurationPolicyToManager(
           (system as unknown as { durationConstraintManager?: unknown }).durationConstraintManager,

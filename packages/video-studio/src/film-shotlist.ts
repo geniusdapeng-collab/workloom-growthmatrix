@@ -16,8 +16,18 @@ export interface FilmShotlist extends Obj {
 }
 function dialogueOf(shot: Obj): Obj[] {
   if (Array.isArray(shot.dialogue)) return structuredClone(shot.dialogue);
-  if (Array.isArray(shot.dialogueBlocks) && shot.dialogueBlocks.length) return shot.dialogueBlocks.map((block: Obj) => ({ ...block, text: text(block.text ?? block.line) }));
-  if (!text(shot.dialogue)) return [];
+  const blocks: Obj[] = Array.isArray(shot.dialogueBlocks) ? shot.dialogueBlocks : [];
+  if (!text(shot.dialogue)) return blocks.map((block: Obj) => ({ ...block, text: text(block.text ?? block.line) }));
+  if (!shot.dialogue.includes("|")) {
+    // Phase3/3.5 can revise the dialogue field while the prior block text stays
+    // unchanged. Keep the actual reviewed field; blocks supply speaker metadata.
+    const speakers = [...new Set(blocks.map(block => text(block.speaker)).filter(Boolean))];
+    if (speakers.length !== 1) throw new Error("FILM_DIALOGUE_UNSTRUCTURED：本次台词缺少唯一正式说话人");
+    const types = [...new Set(blocks.map(block => text(block.type)).filter(Boolean))];
+    const emotions = [...new Set(blocks.map(block => text(block.emotion)).filter(Boolean))];
+    return [{ speaker: speakers[0], text: text(shot.dialogue),
+      ...(types.length === 1 ? { type: types[0] } : {}), ...(emotions.length === 1 ? { emotion: emotions[0] } : {}) }];
+  }
   return shot.dialogue.split(/\s*\|\|\s*/).map((line: string) => {
     const parts = line.split("|");
     if (parts.length < 4) throw new Error("FILM_DIALOGUE_UNSTRUCTURED：台词没有正式说话人/类型/情绪/原文结构");
@@ -49,8 +59,12 @@ export function mapPreproductionFilm(input: {
     delete mapped.fields; delete mapped.shot_id;
     // 明确角色身份只做引用映射，外观与台词仍来自正式生成物；角色丢失不凭空增补。
     if (cast.id) {
-      if (![cast.id, cast.name].filter(Boolean).some(name => mapped.character.includes(String(name)))) throw new Error(`FILM_CAST_CHANGED：${shotId}未包含明确角色`);
-      mapped.characterId = cast.id; mapped.assetRef = assetRef;
+      const noPerson = /^(?:无角色出场|无人物|无人出镜|无角色|无出镜人物)(?:[，,；;。\s].*|$)/.test(mapped.character);
+      if (noPerson) { delete mapped.characterId; delete mapped.assetRef; }
+      else {
+        if (![cast.id, cast.name].filter(Boolean).some(name => mapped.character.includes(String(name)))) throw new Error(`FILM_CAST_CHANGED：${shotId}未包含明确角色`);
+        mapped.characterId = cast.id; mapped.assetRef = assetRef;
+      }
     }
     if (product && hero) {
       mapped.productRef = product.archive.id; mapped.photo = productPhotoPath(product, hero);
@@ -60,6 +74,7 @@ export function mapPreproductionFilm(input: {
     }
     return mapped;
   });
+  if (cast.id && !shots.some((shot: Obj) => shot.characterId === cast.id)) throw new Error("FILM_CAST_CHANGED：全片没有明确主要人物出镜");
   if (new Set(shots.map((shot: Obj) => shot.shotId)).size !== shots.length) throw new Error("FILM_SHOT_DUPLICATE");
   const durationSeconds = shots.reduce((sum: number, shot: Obj) => sum + shot.duration, 0);
   const target = Number(brief.duration ?? brief.durationSec ?? prd.productPositioning?.targetDuration);
