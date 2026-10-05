@@ -19,7 +19,8 @@
  *     [--product "米家空气净化器 4 Lite"] [--brand 米家] [--category 空气净化器] \
  *     [--route auto|marketing|narrative] [--producer review|auto] \
  *     [--project VID-AUDIT-01] [--work-dir .vm-work] [--out outputs/VID-AUDIT-01] \
- *     [--keys-file ~/.workloom/live.env] [--no-portraits] [--refresh-dossier] [--json]
+ *     [--keys-file ~/.workloom/live.env] [--metadata-file request-metadata.json] [--product-archive id]
+ *     [--tenant cli-local] [--workspace cli-local] [--no-portraits] [--producer-retry 0] [--json]
  *
  * 退出码：0=跑通；2=缺 LLM 配置；3=分流判定为"需澄清"（这是**正确行为**，不是失败）；
  *        4=运行失败（vendor 抛错）。
@@ -27,6 +28,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
+import { randomUUID } from "node:crypto";
 import {
   VideoStudio,
   WorkloomLLMEngine,
@@ -51,11 +53,11 @@ import {
   type ProducerMode,
 } from "../../apps/server/src/video/gate-policy.js";
 import {
-  createDataMiningExecutor,
   primeSearchCache,
   type ExecutorLlm,
   type SearchHit,
 } from "../../apps/server/src/video/data-mining-executor.js";
+import { authorizeMarketingFacts, finalizeMarketingFacts, prepareMarketingFacts } from "../../apps/server/src/video/marketing-authority.js";
 
 const REPO_ROOT = resolve(import.meta.dirname ?? process.cwd(), "../..");
 
@@ -104,6 +106,12 @@ const PROFILE = {
   platform: arg("--platform", "douyin"),
   goal: arg("--goal", "seeding"),
 };
+const metadataFile = arg("--metadata-file");
+const inputMetadata: Record<string, unknown> = metadataFile
+  ? JSON.parse(readFileSync(resolve(REPO_ROOT, metadataFile), "utf8"))
+  : {};
+if (!inputMetadata || typeof inputMetadata !== "object" || Array.isArray(inputMetadata)) throw new Error("--metadata-file 必须是 JSON 对象");
+if (arg("--product-archive")) inputMetadata.productArchive = { id: arg("--product-archive") };
 
 const loadedKeys = loadKeys(KEYS_FILE);
 log(`密钥装载：${loadedKeys} 项（来自 ${KEYS_FILE.replace(homedir(), "~")}；已在环境里的不覆盖）`);
@@ -153,7 +161,7 @@ const routeExplicit = ROUTE_ARG === "marketing" || ROUTE_ARG === "narrative" ? R
 const decision = await routeVideoPipeline(
   {
     text: INTENT,
-    metadata: arg("--product") ? { dataMining: { name: arg("--product"), brand: arg("--brand"), category: arg("--category") } } : undefined,
+    metadata: { ...inputMetadata, ...(arg("--product") ? { dataMining: { name: arg("--product"), brand: arg("--brand"), category: arg("--category"), model: arg("--model") } } : {}) },
     explicit: routeExplicit,
   },
   { llmCall: async (prompt: string) => (await llm.reason(prompt, { forceJson: true, temperature: 0.1, maxTokens: 512 })).content ?? "" },
@@ -170,11 +178,12 @@ if (decision.route === "clarify") {
 /* ================= ② 装配 metadata（营销路由激活情报层 / 叙事路由显式关闭） ================= */
 
 const brief: Record<string, unknown> = {
+  ...(inputMetadata.brief && typeof inputMetadata.brief === "object" && !Array.isArray(inputMetadata.brief) ? inputMetadata.brief as Record<string, unknown> : {}),
   duration: Number(arg("--duration", "30")) || 30,
   platform: arg("--platform", "douyin"),
   goal: arg("--goal", "seeding"),
 };
-const seeded = applyRouteToMetadata({ brief }, decision);
+const seeded = applyRouteToMetadata({ ...inputMetadata, brief }, decision);
 if (arg("--product") && decision.product) {
   // CLI 显式给出的商品信息优先（用户口径 > 抽取结果）
   seeded.dataMining = {
@@ -250,24 +259,6 @@ const onEvent: EventSink = (e) => {
 
 /* ================= ④ 跑批（不提交渲染） ================= */
 
-const dataMining: StudioConfig["dataMining"] = decision.route === "marketing"
-  ? {
-      mode: "api",
-      executor: createDataMiningExecutor({
-        llm: llm as unknown as ExecutorLlm,
-        log,
-        searchCacheFile: SEARCH_CACHE_FILE,
-        searchPaceMs: Number(arg("--search-pace-ms", "1200")) || 1_200,
-      }) as unknown as (
-        stage: string,
-        plan: Record<string, unknown>,
-      ) => Promise<Record<string, unknown> | null>,
-      refresh: flag("--refresh-dossier"),
-      storeRoot: join(WORK_DIR, "dossiers", "audit"),
-      staleAfterDays: 30,
-    }
-  : undefined;
-
 const portraits: StudioConfig["portraits"] = PORTRAITS_ENABLED && process.env.VOLCENGINE_ARK_API_KEY
   ? {
       enabled: true,
@@ -288,45 +279,62 @@ const portraits: StudioConfig["portraits"] = PORTRAITS_ENABLED && process.env.VO
 const PIPELINE_INTENT = buildPipelineIntent(INTENT, PROFILE);
 log(`创作意图（下行）：${PIPELINE_INTENT.replace(/\n/g, " ")}`);
 
-installVendorEngineBridge(llm);
-const studio = new VideoStudio({
-  llm,
-  workDir: WORK_DIR,
-  onApproval,
-  onEvent,
-  totalDeadlineMs: Number(process.env.VM_TOTAL_DEADLINE_MS ?? 3_600_000),
-  deferRender: true, // 本工具的铁律：不提交生产渲染
-  portraits,
-  dataMining,
-  log: (line) => console.log(line),
-});
-
+const disposeLlmBridge = installVendorEngineBridge(llm);
 log(`启动数据管线：project=${PROJECT} | 管线=${decision.route} | 定妆照=${portraits?.enabled ? "开" : "关"} | 提交渲染=否`);
 const startedAt = Date.now();
+const hostRunId = `RUN-${randomUUID()}`;
+const factsRoot = join(OUT_DIR, "marketing", hostRunId);
 let result: Awaited<ReturnType<VideoStudio["runPreproduction"]>>;
 try {
-  const maxAttempts = Math.max(1, Number(arg("--producer-retry", "1")) + 1);
-  result = await studio.runPreproduction({
-    projectId: PROJECT,
-    intent: PIPELINE_INTENT,
-    metadata: seeded,
-    isMarketing: decision.route === "marketing",
-  });
+  const retry = Number(arg("--producer-retry", "0"));
+  if (!Number.isInteger(retry) || retry < 0 || retry > 10) throw new Error("--producer-retry 必须为 0–10 的整数");
+  const maxAttempts = retry + 1;
+  const runOnce = async (attempt: number): Promise<Awaited<ReturnType<VideoStudio["runPreproduction"]>>> => {
+    let dataMining: StudioConfig["dataMining"];
+    let marketing: Awaited<ReturnType<typeof prepareMarketingFacts>> | undefined;
+    if (decision.route === "marketing") {
+      mkdirSync(factsRoot, { recursive: true });
+      marketing = await prepareMarketingFacts({
+        scope: { tenantId: arg("--tenant", "cli-local"), workspaceId: arg("--workspace", "cli-local"), projectId: PROJECT, runId: hostRunId, attempt },
+        root: factsRoot, metadata: seeded, intent: PIPELINE_INTENT, llm: llm as unknown as ExecutorLlm,
+        searchCacheFile: SEARCH_CACHE_FILE, searchPaceMs: Number(arg("--search-pace-ms", "1200")) || 1_200, log,
+      });
+      const authority = await authorizeMarketingFacts(marketing);
+      dataMining = authority.dataMining;
+      const record = { at: stamp(), gate: "G1_DOSSIER", vendorType: "host-source-dossier", runId: hostRunId, attempt, ...authority.verdict };
+      gateRecords.push(record);
+      appendFileSync(gatesFile, `${JSON.stringify(record)}\n`, "utf8");
+      log(`  [gate G1_DOSSIER] 完整宿主事实审核通过（via=${authority.verdict.via}，score=${authority.verdict.score}）`);
+    }
+    const studio = new VideoStudio({ llm, workDir: WORK_DIR, onApproval, onEvent,
+      totalDeadlineMs: Number(process.env.VM_TOTAL_DEADLINE_MS ?? 3_600_000),
+      deferRender: true, portraits, dataMining, log: (line) => console.log(line) });
+    const current = await studio.runPreproduction({ projectId: PROJECT, intent: PIPELINE_INTENT, metadata: seeded,
+      isMarketing: decision.route === "marketing" });
+    if (marketing && current.success) {
+      const production = current.stages?.productionEngine as { shots?: Array<Record<string, unknown>> } | undefined;
+      const saved = await finalizeMarketingFacts(marketing, (production?.shots ?? []).map(shot => ({
+        shotId: String(shot.shot_id ?? shot.shotId ?? ""), prompt: String(shot.prompt ?? ""), fields: shot.fields ?? null,
+      })));
+      current.marketingFacts = { root: factsRoot, ...saved, scope: marketing.bundle.scope };
+    }
+    return current;
+  };
+  result = await runOnce(1);
   let attempts = 1;
   while (attempts < maxAttempts && isProducerRejection(result)) {
     attempts += 1;
     log(`AI 监制打回 → 自动重跑第 ${attempts}/${maxAttempts} 次（打回理由见 gates.jsonl）`);
-    result = await studio.runPreproduction({
-      projectId: PROJECT,
-      intent: PIPELINE_INTENT,
-      metadata: seeded,
-      isMarketing: decision.route === "marketing",
-    });
+    result = await runOnce(attempts);
   }
   (result as Record<string, unknown>).producerAttempts = attempts;
 } catch (err) {
   log(`❌ 运行失败：${err instanceof Error ? err.message : String(err)}`);
+  writeFileSync(join(OUT_DIR, "failure.json"), `${JSON.stringify({ projectId: PROJECT, runId: hostRunId, pipeline: decision.route,
+    success: false, renderSubmitted: false, at: stamp(), error: err instanceof Error ? err.message : String(err) }, null, 2)}\n`, "utf8");
   process.exit(4);
+} finally {
+  disposeLlmBridge();
 }
 const elapsedMs = Date.now() - startedAt;
 
@@ -351,6 +359,8 @@ writeFileSync(join(OUT_DIR, "meta.json"), `${JSON.stringify({
   producerMode: PRODUCER,
   portraitsEnabled: Boolean(portraits?.enabled),
   renderSubmitted: false,
+  hostRunId,
+  marketingFacts: result.marketingFacts ?? null,
   startedAt: new Date(Date.now() - elapsedMs).toISOString(),
   finishedAt: stamp(),
   elapsedMs,
@@ -390,6 +400,7 @@ const summary = {
     : null,
   shots: shots.length,
   prompts: prompts.length,
+  marketingFacts: result.marketingFacts ?? null,
   gates: gateRecords.map((g) => ({ gate: g.gate, approved: g.approved, score: g.score })),
 };
 
@@ -404,3 +415,4 @@ else {
   log(`  镜头卡 ${summary.shots} 张 / 提示词 ${summary.prompts} 条 / 门记录 ${summary.gates.length} 条`);
   log(`产物目录：${OUT_DIR.replace(REPO_ROOT + "/", "")}（result.json / shots.json / meta.json / gates.jsonl / events.jsonl）`);
 }
+process.exitCode = result.success ? 0 : 4;
