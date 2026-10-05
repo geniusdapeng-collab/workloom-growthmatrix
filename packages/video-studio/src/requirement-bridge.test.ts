@@ -37,6 +37,22 @@ describe("真实异步需求转换接缝", () => {
     expect(llm.reason.mock.calls[1]![0]).toContain("实际场景时长合计40s");
     expect(wrong.opening.duration).toBe(10); restore();
   });
+  it("只去掉场景提示词中的固定10秒示例，真实模型分配与原输入保持不变", async () => {
+    const system = target();
+    const generated = discovery().sceneStructure;
+    const llm = { reason: vi.fn().mockResolvedValue({ success: true, content: JSON.stringify(generated) }) };
+    const scene = { llmEngine: llm }; system.requirementDiscoveryEngine.agents = { scene };
+    const restore = installVendorRequirementBridge(system, { ...metadata(), brief: { durationSec: 30 } });
+    const prompt = '{"opening":{"duration":10},"scenes":[{"duration":10}],"ending":{"duration":10}}原始故事和其他参数10';
+    const result = await (scene.llmEngine as typeof llm).reason(prompt);
+    const sent = llm.reason.mock.calls[0]![0];
+    expect(sent).not.toContain('"duration":10'); expect(sent).toContain('"duration":null');
+    expect(sent).toContain("剩余秒数分给scenes"); expect(sent).toContain("原始故事和其他参数10");
+    expect(prompt).toContain('"duration":10');
+    expect(JSON.parse(result.content)).toEqual(generated);
+    expect(generated.opening.duration).toBe(5); expect(generated.scenes[0]!.duration).toBe(20);
+    restore();
+  });
   it("discover直到原始转换完成才返回，同步消费者得到完整对象并继承明确档案", async () => {
     let release!: () => void;
     const pending = new Promise<void>((r) => { release = r; });

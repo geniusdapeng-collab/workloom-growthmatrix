@@ -117,7 +117,11 @@ export function installVendorRequirementBridge(
       get(target, key) {
         if (key === "reason") return async (prompt: unknown, options: Recordish = {}) => {
           if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
-          const augmented = `${String(prompt)}${SCENE_CONTRACT}\n明确角色档案：${JSON.stringify(cast)}\n明确时长：${Number.isFinite(targetDuration) ? `${targetDuration}秒；所有opening+scenes+ending的duration相加必须等于该值` : "按上游目标时长，totalDuration必须等于各场景实际总和"}\n独立登记资产核验：${JSON.stringify(metadata.referenceAssets ?? null)}\n只使用明确人物，不新增经营者、客人或未登记的单屏参考图片。${sceneFeedback ? `\n上次实际字段错误：${sceneFeedback}；请针对错误重新生成，不复制旧输出。` : ""}`;
+          // The vendor's shape example repeats 10s in every node and says two nodes
+          // while also requiring a middle array. Those sample values are not a plan.
+          // Remove only example defaults; actual allocation stays with SceneArchitect.
+          const shapePrompt = String(prompt).replace(/"duration"\s*:\s*10(?=\s*[,}])/g, '"duration":null');
+          const augmented = `${shapePrompt}${SCENE_CONTRACT}\n明确角色档案：${JSON.stringify(cast)}\n明确时长：${Number.isFinite(targetDuration) ? `${targetDuration}秒；所有opening+scenes+ending的duration相加必须等于该值` : "按上游目标时长，totalDuration必须等于各场景实际总和"}\n时长分配口径：示例的null仅表示待模型分配，不是合法输出。先按本次叙事自行确定主体场景数量和opening/ending时长，再将目标总时长减去opening.duration和ending.duration，剩余秒数分给scenes；返回前按实际数组逐项加总。不得将主体场景总和当作整片总和，也不得每增加一场就复制旧10秒。sceneCount为opening、scenes所有元素、ending的合计数量；示例计数不约束本次真实数量。每个duration最终必须是正数，totalDuration最终必须等于逐项加总与明确目标。\n独立登记资产核验：${JSON.stringify(metadata.referenceAssets ?? null)}\n只使用明确人物，不新增经营者、客人或未登记的单屏参考图片。${sceneFeedback ? `\n上次实际字段错误：${sceneFeedback}；请针对错误重新生成，不复制旧输出。` : ""}`;
           const result = await (target.reason as (p: unknown, o: Recordish) => unknown).call(target, augmented, { ...options, forceJson: true, thinking: { type: "disabled" } });
           if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
           if (result && typeof result === "object" && (result as Recordish).success === true) {
