@@ -30,6 +30,7 @@ export interface MarketingFactsBundle {
   sourceQuery?: RecordValue; rawFormat?: typeof MARKETING_VENDOR_RAW_FORMAT;
   sources: ArchivedSource[]; stages: StageFactsReport[]; rawByAgent: Record<IntelStage, RecordValue>;
   rawSha256: string; dossier: RecordValue; cards: RecordValue; dossierSha256: string;
+  assembly?: RecordValue; assemblySha256?: string;
   restrictions: string[]; g1ContentSha256: string; outputReviews: OutputReview[];
 }
 export interface PreparedMarketingFacts {
@@ -37,10 +38,47 @@ export interface PreparedMarketingFacts {
   root: string; prefix: string;
 }
 interface DossierEngine {
+  a5: { bind(input: RecordValue): { dossier: RecordValue; cards: RecordValue; saved?: unknown }; store?: { save(dossier: RecordValue): unknown } };
   plan(input: RecordValue): { trace_id: string; plans: Record<IntelStage, DataMiningStagePlan> };
   assemble(trace: string, input: RecordValue, raw: Record<IntelStage, RecordValue>): {
     ok?: boolean; dossier?: RecordValue; cards?: RecordValue; chain?: { ok?: boolean }; errors?: unknown[];
   };
+}
+
+/** 使用政策只能收窄宣传面；不改来源、claims、证据等级或原五站执行结果。 */
+function installDossierUsagePolicy(collector: DossierEngine, metadata: RecordValue, noCompetitors: boolean): () => void {
+  const policy = metadata.marketingUsage === undefined ? {} : object(metadata.marketingUsage, "营销使用政策");
+  const terms = policy.forbiddenTerms ?? [];
+  if (!Array.isArray(terms) || terms.length > 40 || terms.some(term => typeof term !== "string" || !term.trim() || term.length > 80)) {
+    fail("MARKETING_USAGE_INVALID", "禁用宣传词必须是最多40个非空短文本，不能提供事实或批准");
+  }
+  if (Object.keys(policy).some(key => key !== "forbiddenTerms")) fail("MARKETING_USAGE_INVALID", "营销使用政策只接受forbiddenTerms");
+  const blocked = (value: unknown): boolean => (terms as string[]).some(term => canonicalRenderJson(value).includes(term.trim()));
+  const binder = collector.a5, original = binder.bind, store = binder.store;
+  binder.bind = function (input) {
+    const bounded = { ...input, verified: structuredClone(object(input.verified, "A4已验证包")),
+      pros: (input.pros as unknown[]).filter(item => !blocked(item)), cons: (input.cons as unknown[]).filter(item => !blocked(item)),
+      gaps: [...(input.gaps as unknown[]), ...(terms.length ? [`用户限制：宣传面排除 ${terms.join("、")}；原来源/claims完整保留，限制不改变事实真伪`] : [])] };
+    const verified = bounded.verified, identity = object(verified.identity, "A4商品身份");
+    identity.official_selling_points = (identity.official_selling_points as unknown[]).filter(item => !blocked(item));
+    identity.specs = Object.fromEntries(Object.entries(object(identity.specs, "A4规格")).filter(([key, value]) => !blocked({ [key]: value })));
+    if (noCompetitors) verified.differentiation = { our_opening: [], crowded_points: [], weakness_openings: [] };
+    // 原装订器仍执行schema/钩子/摘要卡；先阻止其过早保存，补齐准确交接说明后再保存同一产物。
+    binder.store = undefined;
+    let result: ReturnType<typeof original>;
+    try { result = original.call(binder, bounded); } finally { binder.store = store; }
+    const cards = result.cards, portrait = object(cards.portrait_manifest, "图档交接卡");
+    if (!Array.isArray(portrait.reference_images) || !portrait.reference_images.length) {
+      portrait.handoff_note = "本事实档案没有图像；不能据此免检索或宣称图档已齐。登记商品图由独立资产校验与实际生成请求绑定。";
+    }
+    const brief = object(cards.brief_card, "Brief摘要卡");
+    brief.evidence_note = `${String(brief.evidence_note)}；identity.official_selling_points中reported单源主张未升格为官方确认卖点；规格仍以保存claims为依据`;
+    const prd = object(cards.prd_card, "PRD摘要卡");
+    prd.compliance_redlines = [...new Set([...(prd.compliance_redlines as string[]), ...(terms as string[]).map(term => `宣传禁用：${term}`)])];
+    if (store) result.saved = store.save(result.dossier);
+    return result;
+  };
+  return () => { binder.bind = original; binder.store = store; };
 }
 function fail(code: string, message: string): never { throw new SubmissionError(code, message); }
 function object(value: unknown, name: string): RecordValue {
@@ -168,14 +206,19 @@ export async function prepareMarketingFacts(input: {
         const facts = validateStageFacts(stage, { payload, citations: [], noEvidenceReason: "本次未取得可核实正文；不能生产用户口碑、评分、对比或竞品主张" }, []);
         reports.push({ stage, facts, sourceIds: [], discovery }); return facts.payload;
       }
-      const prompt = `${extractionContract}\n本次查询线索（不是事实）：${canonicalRenderJson(product)}\n当前阶段：${stage}\n` +
+      const prompt = `${extractionContract}\n本次查询线索（不是事实）：${canonicalRenderJson(product)}\n` +
+        `本片原始意图仅用于确定采集关注点，不是事实来源：${input.intent}\nA1应完整提取原文确有支持且意图要使用的特征，每项单独引文；原文没支持的意图不能补编。\n` +
+        (primary ? "当前为登记客户摘录，不是官宣网页：A1的official_selling_points保持空数组，特征仅放identity.specs的独立字符串/数字/布尔值，每个允许特征单独一项，不把禁用宣称拼在同一个规格值里。这不提升或删除原文证据，只保持准确证据类别。\n" : "") +
+        `当前阶段：${stage}\n` +
         canonicalRenderJson({ sources: pages, plan: stagePlan });
       if (prompt.length > 90_000) fail("MARKETING_REVIEW_TOO_LARGE", "完整来源超单次提取预算，禁止裁剪来源后声称核实");
-      const result = await input.llm.reason(prompt, { forceJson: true, temperature: 0, maxTokens: 8192 });
-      if (!result?.success) fail("MARKETING_EXTRACTION_UNVERIFIED", `事实提取失败：${result?.error ?? "空回包"}`);
+      const extractionOptions = { forceJson: true, temperature: 0, maxTokens: 8192, thinking: { type: "disabled" } };
+      const result = await input.llm.reason(prompt, extractionOptions);
       // 完整模型回包先留证；格式/引文拒绝不能只剩解析异常，亦不得靠重试覆盖本次失败。
       await writeBound(root, `${prefix}-${stage}.extraction.json`, canonicalRenderJson({ scope, productQuery: product,
-        sourceIds: pages.map(page => page.sourceId), content: result.content ?? null, data: result.data ?? null }));
+        sourceIds: pages.map(page => page.sourceId), success: result?.success ?? false, error: result?.error ?? null,
+        content: result?.content ?? null, data: result?.data ?? null }));
+      if (!result?.success) fail("MARKETING_EXTRACTION_UNVERIFIED", `事实提取失败：${result?.error ?? "空回包"}`);
       let parsed: unknown;
       try { parsed = result.data ?? JSON.parse(result.content ?? ""); }
       catch { fail("MARKETING_EXTRACTION_UNVERIFIED", "事实提取不是可核实JSON"); }
@@ -206,7 +249,10 @@ export async function prepareMarketingFacts(input: {
     raw[stage] = payload;
   }
   const projection = projectMarketingDossierInput(reports.map(report => report.facts), sources);
-  const assembled = collector.assemble(plan.trace_id, projection.input, projection.rawByAgent);
+  const restoreUsage = installDossierUsagePolicy(collector, input.metadata, reports.some(report => report.stage === "A3" && report.facts.status === "no_evidence"));
+  let assembled: ReturnType<DossierEngine["assemble"]>;
+  try { assembled = collector.assemble(plan.trace_id, projection.input, projection.rawByAgent); }
+  finally { restoreUsage(); }
   if (assembled.ok !== true || assembled.chain?.ok !== true || !assembled.dossier || !assembled.cards) fail("MARKETING_DOSSIER_UNVERIFIED", "情报五站未完成有效档案装订");
   const restrictions = reports.filter(report => report.facts.status === "no_evidence").map(report => report.stage === "A2"
     ? "没有可核实用户评价：禁止用户口碑、评分、人数、销量或使用效果共识主张" : "没有可核实竞品证据：禁止对比、竞品弱点或市场领先主张");
@@ -214,7 +260,10 @@ export async function prepareMarketingFacts(input: {
     collectedAt: new Date().toISOString(), policyVersion: "source-claims/v1", productQuery: projection.input, sourceQuery: product,
     rawFormat: MARKETING_VENDOR_RAW_FORMAT, sources, stages: reports, rawByAgent: projection.rawByAgent,
     rawSha256: renderSha256(canonicalRenderJson(projection.rawByAgent)), dossier: assembled.dossier, cards: assembled.cards,
-    dossierSha256: renderSha256(canonicalRenderJson(assembled.dossier)), restrictions, g1ContentSha256: "", outputReviews: [] };
+    dossierSha256: renderSha256(canonicalRenderJson(assembled.dossier)),
+    assembly: assembled as RecordValue, assemblySha256: renderSha256(canonicalRenderJson(assembled)),
+    restrictions: [...restrictions, ...((input.metadata.marketingUsage as { forbiddenTerms?: string[] } | undefined)?.forbiddenTerms ?? []).map(term => `宣传禁用：${term}`)],
+    g1ContentSha256: "", outputReviews: [] };
   const { g1ContentSha256: _selfHash, ...factsForG1 } = bundle;
   const g1Content = canonicalRenderJson({ facts: factsForG1, requestedIntent: input.intent, requestedMetadata: input.metadata,
     instruction: "用户意图、sourceQuery与Brief仅是需求/查询线索；productQuery和rawByAgent仅从已核实claims投影，规格的source_url由同项claim指向实际保存来源。逐项完整溯源见stages[].facts.claims，vendor dossier.provenance是旧格式的子集。G1正文的摘要由外层artifact证据绑定，正文不包含自身摘要以避免循环。下游创意必须遵守restrictions" });
@@ -232,7 +281,10 @@ export async function authorizeMarketingFacts(prepared: PreparedMarketingFacts, 
   if (renderSha256(prepared.g1Content) !== prepared.bundle.g1ContentSha256 || renderSha256(rawJson) !== prepared.bundle.rawSha256
     || canonicalRenderJson(content.facts?.rawByAgent) !== rawJson
     || canonicalRenderJson(content.facts?.scope) !== canonicalRenderJson(prepared.bundle.scope)
-    || canonicalRenderJson(content.facts?.productQuery) !== canonicalRenderJson(prepared.bundle.productQuery)) {
+    || canonicalRenderJson(content.facts?.productQuery) !== canonicalRenderJson(prepared.bundle.productQuery)
+    || canonicalRenderJson(content.facts?.assembly) !== canonicalRenderJson(prepared.bundle.assembly)
+    || canonicalRenderJson(content.facts?.dossier) !== canonicalRenderJson(prepared.bundle.dossier)
+    || canonicalRenderJson(content.facts?.cards) !== canonicalRenderJson(prepared.bundle.cards)) {
     fail("MARKETING_G1_UNBOUND", "G1完整内容与当前作用域、事实回填或商品查询不一致");
   }
   const artifact = await writeBound(prepared.root, `${prepared.prefix}-G1.review.json`, prepared.g1Content);
@@ -246,9 +298,21 @@ export async function authorizeMarketingFacts(prepared: PreparedMarketingFacts, 
     contentSha256: artifact.sha256, verdict }));
   if (!accepted(verdict, artifact.path, artifact.sha256)) fail("MARKETING_G1_UNVERIFIED", `完整宿主G1未通过：${verdict.reason}`);
   await readBound(prepared.root, artifact.ref, artifact.sha256);
-  return { verdict, dataMining: { mode: "api", refresh: true, storeRoot: prepared.storeRoot,
-    verifiedRaw: { projectId: prepared.bundle.scope.projectId, rawJson, sha256: prepared.bundle.rawSha256,
-      productQuery: structuredClone(prepared.bundle.productQuery) } } };
+  return { verdict, dataMining: marketingStudioDataMining(prepared) };
+}
+
+/** 仅在正式宿主的完整G1通过后调用；cfg不接收浏览器自报资格。 */
+export function marketingStudioDataMining(prepared: PreparedMarketingFacts): NonNullable<StudioConfig["dataMining"]> {
+  const { bundle } = prepared;
+  if (!bundle.assembly || bundle.assembly.ok !== true || (bundle.assembly.chain as RecordValue)?.ok !== true
+    || renderSha256(canonicalRenderJson(bundle.assembly)) !== bundle.assemblySha256
+    || canonicalRenderJson(bundle.assembly.dossier) !== canonicalRenderJson(bundle.dossier)
+    || canonicalRenderJson(bundle.assembly.cards) !== canonicalRenderJson(bundle.cards)) fail("MARKETING_G1_UNBOUND", "受审装订快照已改变");
+  return { mode: "api", refresh: true, storeRoot: prepared.storeRoot,
+    verifiedRaw: { projectId: bundle.scope.projectId, rawJson: canonicalRenderJson(prepared.raw), sha256: bundle.rawSha256,
+      productQuery: structuredClone(bundle.productQuery) },
+    verifiedDossier: { projectId: bundle.scope.projectId, assemblyJson: canonicalRenderJson(bundle.assembly), sha256: bundle.assemblySha256!,
+      rawSha256: bundle.rawSha256, productQuery: structuredClone(bundle.productQuery) } };
 }
 
 export async function finalizeMarketingFacts(prepared: PreparedMarketingFacts, shots: Array<{ shotId: string; prompt: string; fields: unknown }>, env: NodeJS.ProcessEnv = process.env): Promise<{ ref: string; sha256: string }> {
@@ -324,6 +388,9 @@ export async function verifyMarketingFacts(input: {
       || canonicalRenderJson(projected.input) !== canonicalRenderJson(bundle.productQuery)) fail("MARKETING_FACTS_CHANGED", "下游回填/身份与已审核事实投影不一致");
   }
   if (renderSha256(canonicalRenderJson(bundle.rawByAgent)) !== bundle.rawSha256 || renderSha256(canonicalRenderJson(bundle.dossier)) !== bundle.dossierSha256) fail("MARKETING_FACTS_CHANGED", "营销原始回填或档案摘要不一致");
+  if (bundle.assembly && (renderSha256(canonicalRenderJson(bundle.assembly)) !== bundle.assemblySha256
+    || canonicalRenderJson(bundle.assembly.dossier) !== canonicalRenderJson(bundle.dossier)
+    || canonicalRenderJson(bundle.assembly.cards) !== canonicalRenderJson(bundle.cards))) fail("MARKETING_FACTS_CHANGED", "受审五站装订快照与最终事实包不同");
   if (bundle.outputReviews.length !== input.shots.length) fail("MARKETING_PROMPTS_UNVERIFIED", "并非每个最终镜头都有事实审核");
   for (const item of input.shots) {
     const shot = { shotId: item.shotId, prompt: item.prompt, fields: item.fields };

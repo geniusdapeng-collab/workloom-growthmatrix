@@ -49,7 +49,7 @@ function nodes(discovery: Recordish): Array<{ label: string; data: Recordish }> 
 }
 
 /** Validate actual scene-agent JSON before vendor can substitute copied examples as content. */
-function sceneContractIssue(value: unknown): string | null {
+function sceneContractIssue(value: unknown, targetDuration?: number): string | null {
   try {
     const scene = object(value, "sceneStructure");
     for (const { label, data } of nodes({ sceneStructure: scene })) {
@@ -61,6 +61,9 @@ function sceneContractIssue(value: unknown): string | null {
       }
       if (!Number.isFinite(Number(data.duration)) || Number(data.duration) <= 0) return `${label}.duration必须为正数`;
     }
+    const total = nodes({ sceneStructure: scene }).reduce((sum, node) => sum + Number(node.data.duration), 0);
+    if (Number.isFinite(targetDuration) && Math.abs(total - targetDuration!) > .05) return `实际场景时长合计${total}s，必须由模型重新分配到明确目标${targetDuration}s；不能复制10秒示例`;
+    if (Math.abs(total - Number(scene.totalDuration)) > .05) return `totalDuration=${String(scene.totalDuration)}与实际场景总和${total}s不一致`;
     return null;
   } catch (error) {
     return error instanceof Error ? error.message : String(error);
@@ -103,6 +106,8 @@ export function installVendorRequirementBridge(
   const originalRender = system._renderRequirementContract;
   const cache = new WeakMap<Recordish, Recordish>();
   const cast = requestedCharacters(metadata);
+  const brief = metadata.brief ? object(metadata.brief, "brief") : {};
+  const targetDuration = Number(brief.duration ?? brief.durationSec);
   const sceneAgent = engine.agents?.scene;
   const sceneLLM = sceneAgent?.llmEngine;
   let active = true;
@@ -112,14 +117,14 @@ export function installVendorRequirementBridge(
       get(target, key) {
         if (key === "reason") return async (prompt: unknown, options: Recordish = {}) => {
           if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
-          const augmented = `${String(prompt)}${SCENE_CONTRACT}\n明确角色档案：${JSON.stringify(cast)}${sceneFeedback ? `\n上次实际字段错误：${sceneFeedback}；请针对错误重新生成，不复制旧输出。` : ""}`;
+          const augmented = `${String(prompt)}${SCENE_CONTRACT}\n明确角色档案：${JSON.stringify(cast)}\n明确时长：${Number.isFinite(targetDuration) ? `${targetDuration}秒；所有opening+scenes+ending的duration相加必须等于该值` : "按上游目标时长，totalDuration必须等于各场景实际总和"}\n独立登记资产核验：${JSON.stringify(metadata.referenceAssets ?? null)}\n只使用明确人物，不新增经营者、客人或未登记的单屏参考图片。${sceneFeedback ? `\n上次实际字段错误：${sceneFeedback}；请针对错误重新生成，不复制旧输出。` : ""}`;
           const result = await (target.reason as (p: unknown, o: Recordish) => unknown).call(target, augmented, { ...options, forceJson: true, thinking: { type: "disabled" } });
           if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
           if (result && typeof result === "object" && (result as Recordish).success === true) {
             let parsed: unknown;
             try { parsed = JSON.parse(String((result as Recordish).content)); }
             catch { throw new Error("REQUIREMENT_SCENE_INVALID: 场景结果不是JSON"); }
-            const issue = sceneContractIssue(parsed);
+            const issue = sceneContractIssue(parsed, targetDuration);
             if (issue) { sceneFeedback = issue; throw new Error(`REQUIREMENT_SCENE_INVALID: ${issue}`); }
             sceneFeedback = "";
           }
@@ -133,7 +138,7 @@ export function installVendorRequirementBridge(
   engine.discover = async function awaitedDiscovery(upstream) {
     if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
     const discovery = object(await originalDiscover.call(this, upstream), "discovery");
-    const issue = sceneContractIssue(discovery.sceneStructure);
+    const issue = sceneContractIssue(discovery.sceneStructure, targetDuration);
     if (issue) throw new Error(`REQUIREMENT_SCENE_INVALID: ${issue}`);
     const list = object(await originalConvert.call(system, discovery, upstream), "requirementList");
     if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");

@@ -231,6 +231,8 @@ export class WorkloomLLMEngine {
         this.stats.totalFailures++;
         return {
           success: false,
+          content: result.content,
+          usage: result.usage,
           error: `JSON 解析失败: ${err instanceof Error ? err.message : String(err)}`,
           retryable: true
         };
@@ -257,10 +259,43 @@ export class WorkloomLLMEngine {
 
   async reasonStructured(
     prompt: string,
-    _schema: unknown,
+    schema: unknown,
     options: LLMReasonOptions = {}
   ): Promise<LLMReasonResult> {
-    return this.reason(prompt, { ...options, forceJson: true });
+    // vendor 的 schema 同时包含真实镜头 ID 与字段结构。JSON 模式只保证语法，
+    // 丢掉该参数会让模型照搬系统提示中的 SC01，消费者按 S1 查找时读成空字段。
+    const structuredPrompt = schema == null ? prompt : [
+      prompt, "", "【硬性 JSON 输出要求】",
+      "只输出合法 JSON，不加代码块或解释。使用下列目标结构与实际 ID，填写字段值，不照搬空占位值。",
+      "required、requiredArrays、rejectEmptyArray 是校验规则，不是输出字段。",
+      "【目标JSON结构示例】", JSON.stringify(schema, null, 2),
+    ].join("\n");
+    const result = await this.reason(structuredPrompt, { ...options, temperature: options.temperature ?? 0.6, forceJson: true });
+    if (!result.success || !schema || typeof schema !== "object" || Array.isArray(schema)) return result;
+    const rules = schema as { required?: unknown; requiredArrays?: unknown; rejectEmptyArray?: unknown; shots?: unknown };
+    const data = result.data && typeof result.data === "object" && !Array.isArray(result.data)
+      ? result.data as Record<string, unknown> : {};
+    const required = Array.isArray(rules.required) ? rules.required.filter((key): key is string => typeof key === "string") : [];
+    const arrays = Array.isArray(rules.requiredArrays) ? rules.requiredArrays : [];
+    const invalid = required.filter((key) => {
+      const value = data[key];
+      return value == null || (typeof value === "string" && !value.trim())
+        || (arrays.includes(key) && !Array.isArray(value))
+        || (rules.rejectEmptyArray === true && Array.isArray(value) && value.length === 0);
+    });
+    // 单镜融合模板携带确切ID。根层shots非空不代表消费者能按该ID取到字段。
+    if (Array.isArray(rules.shots) && rules.shots.length && rules.shots.every(item => item && typeof item === "object"
+      && typeof item.shotId === "string" && item.fields && typeof item.fields === "object" && !Array.isArray(item.fields))) {
+      const expectedIds = rules.shots.map(item => item.shotId);
+      const rows = Array.isArray(data.shots) ? data.shots : [];
+      const ids = rows.map(item => item && typeof item === "object" ? item.shotId : undefined);
+      if (rows.length !== expectedIds.length || new Set(ids).size !== rows.length || ids.some(id => !expectedIds.includes(id))) invalid.push("shots[].shotId");
+      if (rows.some(item => !item || typeof item !== "object" || !item.fields || typeof item.fields !== "object"
+        || Array.isArray(item.fields) || !Object.values(item.fields).some(value => typeof value === "string" && value.trim()))) invalid.push("shots[].fields");
+    }
+    if (!invalid.length) return result;
+    this.stats.totalFailures++;
+    return { ...result, success: false, error: `JSON 缺少或违反必需字段: ${invalid.join(", ")}`, retryable: true };
   }
 
   /**
@@ -397,7 +432,7 @@ export function installVendorEngineBridge(engine: WorkloomLLMEngine): () => void
     redirect("reasonRaw", (prompt: unknown, options: unknown = {}) =>
       engine.reasonRaw(String(prompt ?? ""), options as LLMReasonOptions));
     redirect("reasonStructured", (prompt: unknown, schema: unknown, options: unknown = {}) =>
-      engine.reasonStructured(String(prompt ?? ""), { ...(options as LLMReasonOptions), ...(schema ? { responseFormat: { type: "json_object" } } : {}) }));
+      engine.reasonStructured(String(prompt ?? ""), schema, { ...(options as LLMReasonOptions), ...(schema ? { responseFormat: { type: "json_object" } } : {}) }));
     redirect("chat", (systemPrompt: unknown, userPrompt: unknown, temperature: unknown = 1) =>
       engine.chat(String(systemPrompt ?? ""), String(userPrompt ?? ""), Number(temperature) || 1));
     redirect("generate", (prompt: unknown, options: unknown = {}) =>

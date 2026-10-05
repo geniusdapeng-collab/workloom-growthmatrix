@@ -36,6 +36,10 @@ import {
 import { AUDIO_DISCIPLINE_CLAUSE, AUDIO_NEGATIVE_TERMS } from "./shot-spec.js";
 import { loadDurationRules } from "./duration-rules.js";
 import { installVendorRequirementBridge, type RequirementBridgeTarget } from "./requirement-bridge.js";
+import { runWithReviewedMarketingDossier, validateReviewedMarketingDossier, type ReviewedMarketingDossier, type MarketingDossierTarget } from "./marketing-dossier-bridge.js";
+import { filmCanonicalJson } from "./film-worker-channel.js";
+import { installVendorPrdBridge, type PrdBridgeTarget } from "./prd-bridge.js";
+import { installVendorThemeBridge, type ThemeBridgeTarget } from "./theme-bridge.js";
 
 /** vendor 引擎暴露的最小结构（HyperrealitySystem 实例方法） */
 interface HyperrealitySystemLike {
@@ -137,6 +141,7 @@ export interface StudioConfig {
     staleAfterDays?: number;
     /** 仅服务宿主在完整来源/G1通过后装配；浏览器metadata中的同名字段没有权限。 */
     verifiedRaw?: { projectId: string; rawJson: string; sha256: string; productQuery: Record<string, unknown> };
+    verifiedDossier?: ReviewedMarketingDossier;
   };
 }
 
@@ -199,6 +204,10 @@ export class VideoStudio {
       }
       metadata.dataMining = structuredClone(verified.productQuery);
       verifiedRaw = parsed;
+      validateReviewedMarketingDossier(cfg.dataMining?.verifiedDossier!, input.projectId, verified.sha256);
+      if (filmCanonicalJson(cfg.dataMining?.verifiedDossier?.productQuery) !== filmCanonicalJson(verified.productQuery)) {
+        throw new Error("MARKETING_G1_REQUIRED：受审档案商品查询与回填查询不同");
+      }
     }
     const log = cfg.log ?? ((line: string) => console.log(line));
     const require = createRequire(import.meta.url);
@@ -222,7 +231,10 @@ export class VideoStudio {
         gate,
         vendorType: req.type,
         title: `预生产确认门 · ${gate}`,
-        contentMd: req.content,
+        contentMd: `${req.content}${cfg.dataMining?.verifiedDossier && gate !== "G1_DOSSIER"
+          ? `\n\n## 本次G1已审完整装订快照（当前设计依据，未宣称成片已生成）\n${JSON.stringify(JSON.parse(cfg.dataMining.verifiedDossier.assemblyJson),
+            (_key, value) => value === null ? "未提供（原档案空值）" : value)}\n档案原文/引用是商品口径；Brief、人物档案、布景与设计约束仅是明确制作输入。当前主题/需求/PRD不是最终逐镜产物或视觉实测，不能要求尚未生成的产物来证明已完成。\n`
+          : ""}`,
         runId: req.runId ?? runId
       });
       await emit({
@@ -394,6 +406,10 @@ export class VideoStudio {
           durationConstraint: { maxSingleShot, minSingleShot }
         });
         keep(installVendorRequirementBridge(system as unknown as RequirementBridgeTarget, metadata, log));
+        keep(installVendorThemeBridge(system as unknown as ThemeBridgeTarget, metadata));
+        keep(installVendorPrdBridge(system as unknown as PrdBridgeTarget, metadata, log, cfg.dataMining?.verifiedDossier
+          ? (JSON.parse(cfg.dataMining.verifiedDossier.assemblyJson) as Record<string, unknown>).dossier as Record<string, unknown> : undefined,
+          { llm: cfg.llm, workDir: cfg.workDir, projectId: input.projectId }));
         /** 实例级放宽 rhythmProfiles（standard 12 / slow 15 → 模型上限），否则 30s 单镜会被重新夹紧 */
         applyDurationPolicyToManager(
           (system as unknown as { durationConstraintManager?: unknown }).durationConstraintManager,
@@ -440,7 +456,14 @@ export class VideoStudio {
           const modelName = portraitCfg && portraitCfg.enabled !== false ? portraitCfg.model : "未指定模型";
           log(`[studio] 定妆照真实出图已启用（${modelName}，产物根 ${charactersDir}）`);
         }
-        const result = await system.create(input.intent, metadata, createOptions);
+        const execute = () => system.create(input.intent, metadata, createOptions);
+        const result = input.isMarketing ? await runWithReviewedMarketingDossier({
+          proof: cfg.dataMining!.verifiedDossier!, projectId: input.projectId, rawSha256: verified!.sha256,
+          system: system as unknown as MarketingDossierTarget,
+        }, execute) : await execute();
+        if ((result.stages?.prdGeneration as { degraded?: boolean } | undefined)?.degraded === true) {
+          throw new Error("PRD_REVIEW_REQUIRED：正式PRD生成或重审失败，vendor兜底稿不得交给下游成片");
+        }
         if (portraitRuntime) {
           const index = portraitRuntime.snapshot();
           const characters = Object.keys(index.characters).length;

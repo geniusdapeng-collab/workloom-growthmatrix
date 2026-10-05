@@ -20,7 +20,8 @@ vi.mock("./data-mining-executor.js", async importOriginal => ({
 let root: string, argv: string[], exitCode: typeof process.exitCode;
 const cliEntry = new URL("../../../../scripts/tools/data-pipeline-run.mts", import.meta.url).href;
 const successful = () => ({ success: true, stages: { productionEngine: { shots: [{ shot_id: "S1", duration: 30,
-  prompt: "展示台式双屏自助机DEMO-T001可调节角度摄像头。", fields: { 商品型号: "DEMO-T001" } }] } } });
+  prompt: "展示台式双屏自助机DEMO-T001可调节角度摄像头。".repeat(60), fields: { 商品型号: "DEMO-T001", scene: "现代酒店柜台",
+    action: "出镜人物指向摄像头", character: "出镜人物", dialogue: "出镜人物|独白|从容|看看这台双屏机。|LIP_SYNC:YES" } }] } } });
 const rejected = () => ({ success: false, stages: {}, confirmations: { theme: { approved: false, reason: "producer-rejected" } } });
 beforeEach(async () => {
   vi.resetModules(); fixture.configs = []; fixture.inputs = []; fixture.results = [successful()]; fixture.rejectG1 = false; fixture.rejectFinal = false;
@@ -37,6 +38,12 @@ beforeEach(async () => {
       const source = JSON.parse(/当前阶段：A1\n(.*)$/s.exec(message)![1]!).sources[0];
       result = { payload: { identity: { name: "台式双屏自助机", model: "DEMO-T001", specs: { 摄像头: "角度可调节" } }, images: [] },
         citations: ["/identity/name", "/identity/model", "/identity/specs/摄像头"].map(pointer => ({ pointer, sourceId: source.sourceId, quote: source.text })) };
+    } else if (typeof message === "string" && message.includes("正式成片导出工位")) {
+      result = { sceneBible: { spaceId: "frontdesk", space: { building: "本片设计酒店前台", orientation: "东侧窗" },
+        materials: [{ item: "柜台", material: "实木" }, { item: "隔窗", material: "玻璃" }], practicalLights: [{ type: "窗光" }],
+        traces: [], environmentProfile: { setting: "interior", condition: "maintained" } },
+        hook: { type: "scene-shock", promise: "双屏机", payoffShotId: "S1", firstShotTemplate: { visual: "CEO在柜台介绍", line: "看看这台双屏机。", lineSec: 2 }, sfx: { kind: "impact", atSec: .1 } },
+        shots: [{ shotId: "S1", sceneId: "frontdesk" }] };
     } else {
       const content = JSON.stringify(message);
       const approved = !(fixture.rejectG1 && content.includes("G1_DOSSIER") || fixture.rejectFinal && content.includes("marketing-final-fact-review"));
@@ -54,13 +61,19 @@ async function run(extra: string[] = []) {
     "--product", "示例品牌 台式双屏自助机", "--model", "DEMO-T001", "--product-archive", "demo-t001",
     "--project", "CLI-P1", "--out", root, "--work-dir", path.join(root, "runtime"), "--keys-file", path.join(root, "no-secret-file"),
     "--no-portraits", ...extra];
-  await import(cliEntry);
+  try { await import(cliEntry); }
+  catch (error) {
+    const failure = JSON.parse(await readFile(path.join(root, "failure.json"), "utf8"));
+    throw new Error(`${error instanceof Error ? error.message : String(error)}: ${failure.error}`);
+  }
 }
 describe("营销CLI复用正式事实与G1", () => {
   it("完整G1通过后才构造VideoStudio，保存最终镜头事实资格且不提交渲染", async () => {
     await run();
     expect(fixture.configs).toHaveLength(1); expect(fixture.configs[0].deferRender).toBe(true);
     expect(fixture.configs[0].dataMining.verifiedRaw.projectId).toBe("CLI-P1");
+    expect(fixture.configs[0].dataMining.verifiedDossier.projectId).toBe("CLI-P1");
+    expect(JSON.parse(fixture.configs[0].dataMining.verifiedDossier.assemblyJson).chain.ok).toBe(true);
     const result = JSON.parse(await readFile(path.join(root, "result.json"), "utf8"));
     expect(result.success).toBe(true); expect(result.producerAttempts).toBe(1);
     expect(result.marketingFacts.scope).toMatchObject({ projectId: "CLI-P1", tenantId: "cli-local", workspaceId: "cli-local", attempt: 1 });

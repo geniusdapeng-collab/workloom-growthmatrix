@@ -22,9 +22,9 @@ beforeEach(async () => {
   vi.stubGlobal("fetch", vi.fn(async (_url, init) => { modelCalls.push(JSON.parse(String(init.body))); return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ approved: !rejectJudge, score: rejectJudge ? 10 : 96, issues: rejectJudge ? ["来源不支持此主张"] : [], suggestions: [], reason: rejectJudge ? "原文限定相冲突" : "逐项原文支持" }) } }] })); }));
 });
 afterEach(async () => { vi.unstubAllGlobals(); await rm(root, { recursive: true, force: true }); });
-async function prepare(options: { noSearch?: boolean; noAux?: boolean; badQuote?: boolean; modelFailure?: boolean; fetchFailure?: boolean; mode?: string; attempt?: number } = {}): Promise<PreparedMarketingFacts> {
+async function prepare(options: { noSearch?: boolean; noAux?: boolean; badQuote?: boolean; modelFailure?: boolean; fetchFailure?: boolean; mode?: string; attempt?: number; usage?: unknown } = {}): Promise<PreparedMarketingFacts> {
   let searches = 0;
-  return prepareMarketingFacts({ scope: { ...scope, attempt: options.attempt ?? 1 }, root, intent: "做一条风扇介绍", metadata: { brief: { product: "星野 F3", brand: "星野" } }, env: { ...env, ...(options.mode ? { VM_DATA_MINING_MODE: options.mode } : {}) },
+  return prepareMarketingFacts({ scope: { ...scope, attempt: options.attempt ?? 1 }, root, intent: "做一条风扇介绍", metadata: { brief: { product: "星野 F3", brand: "星野" }, ...(options.usage === undefined ? {} : { marketingUsage: options.usage }) }, env: { ...env, ...(options.mode ? { VM_DATA_MINING_MODE: options.mode } : {}) },
     llm: { reason: async prompt => {
       extractionCalls.push(prompt); if (options.modelFailure) return { success: false, error: "LLM unavailable" };
       const match = /当前阶段：(A[123])\n(.*)$/s.exec(prompt)!; const source = JSON.parse(match[2]!).sources[0];
@@ -40,6 +40,28 @@ async function prepare(options: { noSearch?: boolean; noAux?: boolean; badQuote?
 }
 const shots = [{ shotId: "S1", prompt: "窗边展示星野 F3 风扇，字幕说明风量 9 档。", fields: { 场景: "窗边", 产品: "星野 F3", 规格: "9 档" } }];
 describe("营销事实宿主完整执行", () => {
+  it("禁用规格不进入宣传档案或宣称上限，原始事实与引文继续保存", async () => {
+    const prepared = await prepare({ usage: { forbiddenTerms: ["9 档"] } });
+    expect((prepared.bundle.dossier.identity as any).specs).toEqual({});
+    expect((prepared.bundle.cards.prd_card as any).compliance_redlines).toContain("宣传禁用：9 档");
+    expect(prepared.raw.A1.identity).toMatchObject({ specs: { 风量: { value: "9 档" } } });
+    expect(prepared.bundle.stages[0]!.facts.claims.some(claim => claim.value === "9 档")).toBe(true);
+  });
+  it("用途限制只收窄宣传，真实五站完整执行；无竞品不虚构差异化，空图片交接如实", async () => {
+    const prepared = await prepare({ usage: { forbiddenTerms: ["风量 9 档"] } });
+    expect(prepared.raw.A1.identity).toHaveProperty("official_selling_points");
+    expect(prepared.bundle.stages[0]!.facts.claims.some(claim => claim.value === "风量 9 档")).toBe(true);
+    expect((prepared.bundle.dossier.identity as any).official_selling_points).toEqual([]);
+    expect(prepared.bundle.dossier.differentiation).toEqual({ our_opening: [], crowded_points: [], weakness_openings: [] });
+    expect(prepared.bundle.assembly).toMatchObject({ ok: true, chain: { ok: true } });
+    expect(prepared.bundle.assembly!.envelopes).toHaveLength(5);
+    expect((prepared.bundle.cards.portrait_manifest as any).handoff_note).toContain("没有图像");
+    const saved = JSON.parse(await readFile(path.join(prepared.storeRoot, String(prepared.bundle.assembly!.product_id), "dossier.json"), "utf8"));
+    expect(saved).toEqual(prepared.bundle.dossier);
+  });
+  it.each([{ forbiddenTerms: [""] }, { forbiddenTerms: "不是数组" }, { approved: true }])("无效使用政策不能获得档案：%j", async usage => {
+    await expect(prepare({ usage })).rejects.toThrow("MARKETING_USAGE_INVALID");
+  });
   it("真实HTTP正文→三站提取/完整支持审核→A1–A5→逐最终镜头事实审核→复读", async () => {
     const prepared = await prepare();
     expect(prepared.bundle.stages.map(stage => [stage.stage, stage.facts.status])).toEqual([["A1", "source_bound"], ["A2", "no_evidence"], ["A3", "no_evidence"]]);
@@ -140,6 +162,7 @@ describe("登记档案复用正式营销宿主资格", () => {
     const qualified = await authorizeMarketingFacts(prepared, env);
     expect(qualified.verdict).toMatchObject({ approved: true, status: "passed", via: "llm", degraded: false });
     expect(renderSha256(qualified.dataMining.verifiedRaw!.rawJson)).toBe(qualified.dataMining.verifiedRaw!.sha256);
+    expect(JSON.parse(qualified.dataMining.verifiedDossier!.assemblyJson)).toEqual(prepared.bundle.assembly);
     const output = [{ shotId: "S1", prompt: "展示台式双屏自助机DEMO-T001的可调节角度摄像头。", fields: { 型号: "DEMO-T001" } }];
     const saved = await finalizeMarketingFacts(prepared, output, env);
     expect((await verifyMarketingFacts({ root, ...saved, scope, shots: output })).restrictions).toHaveLength(2);
@@ -151,11 +174,13 @@ describe("登记档案复用正式营销宿主资格", () => {
     const receipt = JSON.parse(await readFile(path.join(root, `${prepared.prefix}-G1.verdict.json`), "utf8"));
     expect(receipt.verdict).toMatchObject({ approved: false, status: "failed", via: "llm" });
   });
-  it.each(["raw", "scope", "query"])("%s变化必须重审，不能复制已准备的G1", async kind => {
+  it.each(["raw", "scope", "query", "cards", "assembly"])("%s变化必须重审，不能复制已准备的G1", async kind => {
     const prepared = await prepareRegistered();
     if (kind === "raw") (prepared.raw.A1.identity as any).model = "DEMO-02";
     if (kind === "scope") prepared.bundle.scope.workspaceId = "other";
     if (kind === "query") prepared.bundle.productQuery.model = "DEMO-02";
+    if (kind === "cards") (prepared.bundle.cards.brief_card as any).product = "别的商品";
+    if (kind === "assembly") prepared.bundle.assembly!.trace_id = "changed";
     const calls = modelCalls.length;
     await expect(authorizeMarketingFacts(prepared, env)).rejects.toThrow("MARKETING_G1_UNBOUND");
     expect(modelCalls).toHaveLength(calls);

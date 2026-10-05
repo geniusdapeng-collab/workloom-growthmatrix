@@ -73,6 +73,22 @@ vi.mock("./requirement-bridge.js", () => ({
     return () => { studioMocks.disposed.push("requirement"); };
   }
 }));
+vi.mock("./marketing-dossier-bridge.js", async importOriginal => ({
+  ...await importOriginal<typeof import("./marketing-dossier-bridge.js")>(),
+  runWithReviewedMarketingDossier: async (_input: unknown, execute: () => Promise<unknown>) => execute(),
+}));
+vi.mock("./prd-bridge.js", () => ({
+  installVendorPrdBridge: () => {
+    studioMocks.installed.push("prd");
+    return () => { studioMocks.disposed.push("prd"); };
+  }
+}));
+vi.mock("./theme-bridge.js", () => ({
+  installVendorThemeBridge: () => {
+    studioMocks.installed.push("theme");
+    return () => { studioMocks.disposed.push("theme"); };
+  }
+}));
 
 beforeEach(() => {
   studioMocks.construct.mockReset();
@@ -293,9 +309,12 @@ describe("vendor 核心可加载", () => {
   const rawJson = JSON.stringify({ A1: { identity: { name: "本次商品" } }, A2: { reviews: [] }, A3: { competitors: [] } });
   const sha256 = createHash("sha256").update(rawJson).digest("hex");
   function marketing(verifiedRaw?: { projectId: string; rawJson: string; sha256: string; productQuery: Record<string, unknown> }) {
+    const assemblyJson = JSON.stringify({ ok: true, chain: { ok: true }, envelopes: [1, 2, 3, 4, 5], dossier: {}, cards: {} });
     return new VideoStudio({ llm: new WorkloomLLMEngine({ baseUrl: "https://example.invalid", apiKey: "test-only", model: "test" }),
       workDir: "/unused/marketing-test", onApproval: async () => ({ approved: true }), log: () => undefined,
-      dataMining: { mode: "api", raw: { A1: { identity: { name: "旧缓存商品" } } }, storeRoot: "/unused/current-attempt", verifiedRaw } });
+      dataMining: { mode: "api", raw: { A1: { identity: { name: "旧缓存商品" } } }, storeRoot: "/unused/current-attempt", verifiedRaw,
+        ...(verifiedRaw ? { verifiedDossier: { projectId: verifiedRaw.projectId, productQuery: verifiedRaw.productQuery,
+          assemblyJson, sha256: createHash("sha256").update(assemblyJson).digest("hex"), rawSha256: verifiedRaw.sha256 } } : {}) } });
   }
   it.each(["missing", "wrong-project", "wrong-hash", "missing-stage"])("%s在vendor构造与create之前拒绝", async kind => {
     let proof = { projectId: "P1", rawJson, sha256, productQuery: { name: "本次商品" } };

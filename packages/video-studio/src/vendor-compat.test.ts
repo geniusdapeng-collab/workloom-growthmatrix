@@ -959,6 +959,10 @@ const events = [];
 let installedAtCreate = false;
 let fail = false;
 entry.HyperrealitySystem = class OfflineSystem {
+ creativeThemeGenerator = { generate: async () => { throw new Error("offline phase3 fixture must not generate theme"); } };
+ prdGenerator = { generate: async () => { throw new Error("offline phase3 fixture must not generate PRD"); }, generateMarkdown: () => "offline",
+  agent2: { _buildPrompt: () => "offline" }, agent3: { _buildPrompt: () => "offline" } };
+ async _confirmPRD() { throw new Error("offline phase3 fixture must not review PRD"); }
  requirementDiscoveryEngine = { discover: async () => { throw new Error("offline phase3 fixture must not call discovery"); } };
  async _convertDiscoveryToRequirementList() { throw new Error("offline phase3 fixture must not convert requirements"); }
  _renderRequirementContract() { throw new Error("offline phase3 fixture must not render requirements"); }

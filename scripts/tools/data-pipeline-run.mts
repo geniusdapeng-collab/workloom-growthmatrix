@@ -58,6 +58,8 @@ import {
   type SearchHit,
 } from "../../apps/server/src/video/data-mining-executor.js";
 import { authorizeMarketingFacts, finalizeMarketingFacts, prepareMarketingFacts } from "../../apps/server/src/video/marketing-authority.js";
+import { exportPreproductionFilm } from "../../packages/video-studio/src/film-shotlist.js";
+import { loadProductArchive, productPhotoPath } from "../../packages/video-studio/src/product-archive.js";
 
 const REPO_ROOT = resolve(import.meta.dirname ?? process.cwd(), "../..");
 
@@ -184,6 +186,20 @@ const brief: Record<string, unknown> = {
   goal: arg("--goal", "seeding"),
 };
 const seeded = applyRouteToMetadata({ ...inputMetadata, brief }, decision);
+seeded.brief = { ...(seeded.brief as Record<string, unknown>), ...brief };
+const archiveId = String((seeded.productArchive as { id?: string } | undefined)?.id ?? "");
+if (archiveId && !/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(archiveId)) throw new Error("FILM_PRODUCT_INVALID：商品id不可包含路径");
+const product = archiveId ? loadProductArchive(join(REPO_ROOT, "bundles/ai-video/library/products", archiveId)) : undefined;
+if (archiveId && (!product || product.issues.some(issue => issue.hard))) throw new Error("FILM_PRODUCT_INVALID：指定商品档案或登记图片校验失败");
+if (product) seeded.referenceAssets = {
+  schemaVersion: "workloom.registered-product-reference/v1", productId: product.archive.id,
+  source: { kind: product.archive.source.kind, providedBy: product.archive.source.providedBy,
+    reviewStatus: product.archive.source.reviewStatus, extraction: product.archive.source.extraction }, issues: product.issues,
+  images: product.archive.photos.map(photo => ({ path: productPhotoPath(product, photo), sha256: photo.sha256,
+    bytes: photo.bytes, declaredWidth: photo.width, declaredHeight: photo.height, role: photo.role })),
+  verified: ["file-exists", "sha256-matches", "minimum-bytes"],
+  note: "本次独立读取并核验已登记客户商品图片；不是网络来源采集图片，不增加G1图数，不作为商品参数或原PDF证明。尺寸字段是档案登记值。",
+};
 if (arg("--product") && decision.product) {
   // CLI 显式给出的商品信息优先（用户口径 > 抽取结果）
   seeded.dataMining = {
@@ -247,8 +263,8 @@ const onApproval: ApprovalCallback = async (req) => {
   log(`  [gate ${gate}] ${approved ? "放行" : "打回"}（${verdict ? `监制 ${verdict.score} 分 / via=${verdict.via}` : PRODUCER === "auto" ? "auto" : "无监制"}）`);
   return {
     approved,
-    reason: verdict ? `${approved ? "producer-approved" : "producer-rejected"}(${gate} · score=${verdict.score})` : `auto(${gate})`,
-    ...(verdict?.suggestions?.length ? { suggestions: verdict.suggestions } : {}),
+    reason: verdict ? `${approved ? "producer-approved" : "producer-rejected"}(${gate} · score=${verdict.score})${approved ? "" : `：${verdict.reason}；${verdict.issues.join("；")}`}` : `auto(${gate})`,
+    ...(!approved && verdict?.suggestions?.length ? { suggestions: verdict.suggestions } : {}),
     ...(approved ? {} : { fatal: "producer_rejected" }),
   };
 };
@@ -276,7 +292,8 @@ const portraits: StudioConfig["portraits"] = PORTRAITS_ENABLED && process.env.VO
   : { enabled: false };
 
 /** 创作意图：清掉分流行指令 + 写入需求口径（时长/画幅/平台/目标） */
-const PIPELINE_INTENT = buildPipelineIntent(INTENT, PROFILE);
+const PIPELINE_INTENT = buildPipelineIntent(INTENT, PROFILE)
+  + (seeded.referenceAssets ? `\n\n【独立登记图片核验（视觉输入，不是商品事实）】${JSON.stringify(seeded.referenceAssets)}\nG1网络采集图数与这份已登记图片核验分别登记；只使用清单中的实际图片，不新造单屏版本参考图。` : "");
 log(`创作意图（下行）：${PIPELINE_INTENT.replace(/\n/g, " ")}`);
 
 const disposeLlmBridge = installVendorEngineBridge(llm);
@@ -311,12 +328,19 @@ try {
       deferRender: true, portraits, dataMining, log: (line) => console.log(line) });
     const current = await studio.runPreproduction({ projectId: PROJECT, intent: PIPELINE_INTENT, metadata: seeded,
       isMarketing: decision.route === "marketing" });
-    if (marketing && current.success) {
-      const production = current.stages?.productionEngine as { shots?: Array<Record<string, unknown>> } | undefined;
-      const saved = await finalizeMarketingFacts(marketing, (production?.shots ?? []).map(shot => ({
-        shotId: String(shot.shot_id ?? shot.shotId ?? ""), prompt: String(shot.prompt ?? ""), fields: shot.fields ?? null,
-      })));
-      current.marketingFacts = { root: factsRoot, ...saved, scope: marketing.bundle.scope };
+    if (current.success) {
+      if (archiveId && !product) throw new Error("FILM_PRODUCT_REQUIRED：指定商品档案未装载");
+      const film = await exportPreproductionFilm({ result: current, projectId: PROJECT, metadata: seeded, product, llm, onApproval,
+        onArtifact: (name, value) => writeFileSync(join(OUT_DIR, name), `${JSON.stringify(value, null, 2)}\n`, "utf8") });
+      if (marketing) {
+        const saved = await finalizeMarketingFacts(marketing, film.shots.map(shot => ({
+          shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot,
+        })));
+        current.marketingFacts = { root: factsRoot, ...saved, scope: marketing.bundle.scope };
+        film.marketingFacts = current.marketingFacts;
+      }
+      writeFileSync(join(OUT_DIR, "film-shotlist.json"), `${JSON.stringify(film, null, 2)}\n`, "utf8");
+      current.filmShotlist = { path: join(OUT_DIR, "film-shotlist.json"), shots: film.shots.length, durationSeconds: film.durationSeconds };
     }
     return current;
   };

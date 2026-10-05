@@ -16,7 +16,7 @@
  *     [--subtitle-mode sidecar|burn|both]   # 缺省 sidecar：字幕只做旁挂文件 + 软字幕轨，母版不烧字 \
  *     [--aspect 9:16|16:9|1:1|4:5] [--resolution 720p|1080p|2160p] [--quality hd|uhd] \
  *     [--enhance-kind live-action|animation] [--enhance-engine-dir <本地引擎目录>] \
- *     [--fps 30] [--max-attempts 2] \
+ *     [--fps 30] [--max-attempts 1] \
  *     [--keys-file ~/.workloom/live.env] [--brief <brief.json>] [--no-resume] [--dry-run]
  *
  * 封面平台化与知识库（2026-09-27）：
@@ -31,6 +31,12 @@
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { auditFilmRedlines, PROMPT_REDLINE_POLICY_VERSION } from "../../packages/video-studio/src/prompt-redlines.js";
+import { resumeOrSubmitVideoTask } from "../../packages/video-studio/src/video-task-receipt.js";
+import { buildRenderReferences } from "../../packages/video-studio/src/render-reference.js";
+import { assetIdOf, assertShotMatchesCertifiedAsset, isRealPersonAssetRef, loadRealPersonAssets,
+  identityAnchorPath, identityReviewContext, realPersonUsageReceipt } from "../../packages/video-studio/src/real-person-asset.js";
+import { loadProductArchive, productHeroPhoto, productPhotoPath } from "../../packages/video-studio/src/product-archive.js";
+import { verifyMarketingFacts, type MarketingScope } from "../../apps/server/src/video/marketing-authority.js";
 import { createHash, randomUUID } from "node:crypto";
 import {
   accessSync, appendFileSync, closeSync, constants as fsConstants, copyFileSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync,
@@ -217,7 +223,7 @@ if (!["live-action", "animation"].includes(ENHANCE_KIND)) {
 }
 const ENHANCE_ENGINE_DIR = arg("--enhance-engine-dir", "");
 const FPS = Number(arg("--fps", "30"));
-const MAX_ATTEMPTS = Number(arg("--max-attempts", "2"));
+const MAX_ATTEMPTS = Number(arg("--max-attempts", "1"));
 /** 转场淡入淡出时长（秒）：快剪片（小红书/瞭望塔风格）用 0.1–0.2，抒情片用 0.5 */
 const XFADE = Number(arg("--xfade", "0.5"));
 /**
@@ -570,6 +576,14 @@ const ARK_BASE = (ENV.ARK_BASE_URL ?? "https://ark.cn-beijing.volces.com/api/v3"
 const IMAGE_MODEL = ENV.SEEDREAM_MODEL ?? ENV.ARK_IMAGE_MODEL ?? "doubao-seedream-5-0-pro-260628";
 const VIDEO_MODEL = ENV.SEEDANCE_MODEL ?? ENV.ARK_VIDEO_MODEL ?? "doubao-seedance-2-5-260628";
 if (!ARK_KEY && !DRY_RUN && ["plates", "material-gen", "videos", "cover"].some((stage) => STAGES.has(stage))) throw new Error(`缺少火山方舟密钥（${KEYS_FILE} 的 VOLCENGINE_ARK_API_KEY / 环境变量）`);
+// 核对完整源片，而非--only选中的一镜；任何漂移都在付费调用之前拦住。
+if (sourceDocument.schemaVersion === "workloom.film-shotlist/v1" && sourceDocument.pipeline === "marketing") {
+  const proof = sourceDocument.marketingFacts as { root?: string; ref?: string; sha256?: string; scope?: MarketingScope } | undefined;
+  if (!proof || typeof proof.root !== "string" || typeof proof.ref !== "string" || typeof proof.sha256 !== "string"
+    || proof.scope?.projectId !== PROJECT || !Array.isArray(sourceDocument.shots)) throw new Error("MARKETING_FACTS_REQUIRED：正式营销成片缺本项目完整最终事实资格");
+  await verifyMarketingFacts({ root: proof.root, ref: proof.ref, sha256: proof.sha256, scope: proof.scope,
+    shots: sourceDocument.shots.map(shot => ({ shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot })) });
+}
 
 /* ================= 阶段日志 ================= */
 
@@ -1295,6 +1309,32 @@ const baseShots: ShotCard[] = sceneBible
   ? shotsSelected.map((shot) => expandShotWithBible(shot as ShotCard & Record<string, unknown>, sceneBible))
   : shotsSelected;
 const shots: ShotCard[] = scenePolicy ? baseShots.map((shot) => applyScenePolicy(shot, scenePolicy)) : baseShots;
+const realPersonLibrary = loadRealPersonAssets(resolve(arg("--real-person-library", join(REPO_ROOT, "bundles/ai-video/library/real-person-assets"))));
+const realPersons = new Map<string, (typeof realPersonLibrary.assets)[number]>();
+for (const shot of sourceDocument.shots ?? []) {
+  if (shot.assetRef === undefined) continue;
+  if (!isRealPersonAssetRef(shot.assetRef)) throw new Error(`REAL_PERSON_REFERENCE_INVALID：${String(shot.shotId)}`);
+  const entry = realPersonLibrary.byAssetId.get(assetIdOf(shot.assetRef));
+  if (!entry) throw new Error(`REAL_PERSON_UNREGISTERED：${String(shot.shotId)}引用不在真人主档`);
+  const defects = [...entry.issues, ...assertShotMatchesCertifiedAsset(shot, entry.asset)].filter(issue => issue.hard);
+  if (defects.length) throw new Error(`REAL_PERSON_INVALID：${defects.map(issue => issue.detail).join("；")}`);
+  realPersons.set(String(shot.shotId), entry);
+  record({ stage: "real-person-source", shotId: String(shot.shotId), invoked: true, ok: true, cached: false, degraded: false,
+    attempt: 1, ms: 0, artifact: join(entry.dir, "profile.json"),
+    evidence: realPersonUsageReceipt({ asset: entry.asset, projectId: PROJECT, shots: [String(shot.shotId)] }), verdict: null });
+}
+const canaryShotId = [...realPersons.keys()][0];
+for (const shot of shots) {
+  if (!shot.productRef) continue;
+  const id = typeof shot.productRef === "string" ? shot.productRef : String((shot.productRef as { id?: string }).id ?? "");
+  if (!/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(id)) throw new Error("PRODUCT_REFERENCE_INVALID");
+  const entry = loadProductArchive(join(REPO_ROOT, "bundles/ai-video/library/products", id), {
+    probeImage: file => { const info = probe(file); return { width: Number(info.width), height: Number(info.height) }; },
+  });
+  const hero = entry && productHeroPhoto(entry.archive);
+  if (!entry || !hero || entry.issues.some(issue => issue.hard) || abs(String(shot.photo)) !== productPhotoPath(entry, hero)
+    || shot.productPhotoSha256 !== hero.sha256) throw new Error(`PRODUCT_REFERENCE_CHANGED：${shot.shotId}的实际原图与登记主图不一致`);
+}
 
 /** 只有"要花钱生成"的阶段才让环境审计 fail-closed；纯后期复跑（compose/subtitle/mux…）不拦 */
 const ENV_AUDIT_STAGES = ["spec", "plates", "material-gen", "videos"] as const;
@@ -1620,6 +1660,27 @@ function loadCharacterRoot(root: string, library: Map<string, CharacterEntryLike
   return library;
 }
 const characters = loadCharacters();
+const realPersonAnchors = new Map<string, { path: string; source: string; sha256: string }>();
+for (const [shotId, person] of realPersons) {
+  let anchor = identityAnchorPath(person.asset, person.dir);
+  let source = "real-person-profile.anchorPhoto（本地登记，未实时核验平台）";
+  if (!anchor) {
+    const card = sourceDocument.shots!.find(shot => String(shot.shotId) === shotId)!;
+    const entry = characters.get(String(card.characterId ?? sourceDocument.character?.id ?? ""));
+    if (!entry) throw new Error(`REAL_PERSON_ANCHOR_REQUIRED：${shotId}缺明确角色档案`);
+    const profile = JSON.parse(readFileSync(join(entry.dir, "profile.json"), "utf8"));
+    const set = (profile.portraitSets ?? []).find((item: { active?: boolean }) => item.active);
+    const relativeAnchor = set?.anchors?.[0];
+    if (profile.authorization?.evidence !== `asset://${person.asset.assetId}` || typeof relativeAnchor !== "string") {
+      throw new Error(`REAL_PERSON_ANCHOR_REQUIRED：${shotId}基准照未与该真人授权引用绑定`);
+    }
+    anchor = resolve(entry.dir, relativeAnchor);
+    if (!anchor.startsWith(`${entry.dir}${sep}`)) throw new Error("REAL_PERSON_ANCHOR_OUTSIDE_ARCHIVE");
+    source = "已登记角色portraitSet.anchors；本次仅核对身份，不作为生成输入或实时平台证明";
+  }
+  if (!existsSync(anchor) || !statSync(anchor).isFile() || statSync(anchor).size < 20_000) throw new Error(`REAL_PERSON_ANCHOR_REQUIRED：${shotId}基准照不存在或不可用`);
+  realPersonAnchors.set(shotId, { path: anchor, source, sha256: sha256FileSync(anchor) });
+}
 /**
  * 选角（2026-09-24 规则）：
  *   ① 镜头卡/项目显式指定 → 用指定的；
@@ -1874,7 +1935,7 @@ async function download(url: string, file: string): Promise<string> {
 
 /** 逐镜视频提交（Seedance 异步任务制） */
 async function arkVideo(options: {
-  prompt: string; firstFrame?: string; refs: string[]; seconds: number; generateAudio: boolean; seed?: number;
+  shotId: string; prompt: string; firstFrame?: string; refs: string[]; seconds: number; generateAudio: boolean; seed?: number;
 }): Promise<{ taskId: string; url: string; lastFrame: string | null }> {
   const content: Array<Record<string, unknown>> = [{ type: "text", text: options.prompt }];
   if (options.firstFrame) content.push({ type: "image_url", image_url: { url: options.firstFrame }, role: "first_frame" });
@@ -1882,10 +1943,7 @@ async function arkVideo(options: {
     if (ref === options.firstFrame) continue;
     content.push({ type: "image_url", image_url: { url: ref }, role: "reference_image" });
   }
-  const submit = await fetch(`${ARK_BASE}/contents/generations/tasks`, {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${ARK_KEY}` },
-    body: JSON.stringify({
+  const body = {
       model: VIDEO_MODEL,
       content,
       duration: options.seconds,
@@ -1900,36 +1958,22 @@ async function arkVideo(options: {
       watermark: false,
       return_last_frame: true,
       ...(options.seed ? { seed: options.seed } : {})
-    }),
-    signal: AbortSignal.timeout(120_000)
+  };
+  return resumeOrSubmitVideoTask({ root: join(WORK_DIR, "render-task-receipts"), projectId: PROJECT, shotId: options.shotId, body,
+    transport: {
+      submit: async request => {
+        const response = await fetch(`${ARK_BASE}/contents/generations/tasks`, { method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${ARK_KEY}` },
+          body: JSON.stringify(request), signal: AbortSignal.timeout(120_000) });
+        return { ok: response.ok, status: response.status, text: await response.text() };
+      },
+      poll: async taskId => {
+        const response = await fetch(`${ARK_BASE}/contents/generations/tasks/${encodeURIComponent(taskId)}`, {
+          headers: { authorization: `Bearer ${ARK_KEY}` }, signal: AbortSignal.timeout(60_000) });
+        return { ok: response.ok, status: response.status, text: await response.text() };
+      },
+    },
   });
-  const submitText = await submit.text();
-  if (!submit.ok) throw new Error(`视频提交失败 HTTP ${submit.status}：${submitText.slice(0, 300)}`);
-  const submitJson = JSON.parse(submitText) as { id?: string; data?: { id?: string } };
-  const taskId = submitJson.id ?? submitJson.data?.id;
-  if (!taskId) throw new Error(`未返回 task_id：${submitText.slice(0, 200)}`);
-
-  const deadline = Date.now() + 20 * 60_000;
-  let last: Record<string, unknown> = {};
-  while (Date.now() < deadline) {
-    await new Promise((r) => setTimeout(r, 10_000));
-    const poll = await fetch(`${ARK_BASE}/contents/generations/tasks/${taskId}`, {
-      headers: { authorization: `Bearer ${ARK_KEY}` }, signal: AbortSignal.timeout(60_000)
-    });
-    const pollText = await poll.text();
-    try { last = JSON.parse(pollText) as Record<string, unknown>; } catch { last = { raw: pollText.slice(0, 200) }; }
-    const status = String(last.status ?? "");
-    if (status === "succeeded" || status === "success") {
-      const url = String((last.content as Record<string, unknown> | undefined)?.video_url ?? "");
-      const lastFrame = String((last.content as Record<string, unknown> | undefined)?.last_frame_url ?? "") || null;
-      if (!url) throw new Error(`任务成功但无 video_url：${pollText.slice(0, 200)}`);
-      return { taskId, url, lastFrame };
-    }
-    if (status === "failed" || status === "cancelled") {
-      throw new Error(`渲染任务 ${status}：${pollText.slice(0, 300)}`);
-    }
-  }
-  throw new Error(`轮询超时：${JSON.stringify(last).slice(0, 200)}`);
 }
 
 /* ================= 镜头文案与字幕 ================= */
@@ -3349,8 +3393,28 @@ function applyCameraMovePunchCut(input: string, output: string, options: {
   return { segments: plan, total: Number(Number(probe(output).duration ?? 0).toFixed(3)) };
 }
 
+/* ---------- 提示词红线门（G-RL1，T-2026-0929-0008）：花钱前清零屏幕文字/证件文字/道具重复/落幅/帧率 ---------- */
+if (["videos", "material-gen"].some((stage) => STAGES.has(stage))) {
+  const redlines = auditFilmRedlines(shots as unknown as Array<Record<string, unknown>>, { fps: FPS });
+  const checks = [
+    {
+      id: "redlines-clear", pass: redlines.hard.length === 0, hard: true,
+      detail: redlines.hard.length === 0
+        ? `${PROMPT_REDLINE_POLICY_VERSION}：${shots.length} 镜红线清零（soft ${redlines.soft.length} 项已记录）`
+        : redlines.hard.map((issue) => `${issue.id}｜${issue.detail}｜为什么：${issue.why}`).join("；")
+    },
+    ...(redlines.soft.length > 0 ? [{ id: "redlines-soft", pass: true, hard: false, detail: redlines.soft.map((i) => `${i.id}｜${i.detail}`).join("；") }] : [])
+  ];
+  const gate = recordGate({ stepKey: "g-prompt-redlines", sourceStage: "prompt", checks,
+    shotIds: shots.map((shot) => String(shot.shotId)),
+    evidence: { policy: PROMPT_REDLINE_POLICY_VERSION, perShot: redlines.perShot },
+    reason: redlines.hard.length === 0 ? `提示词红线 hard 0 · soft ${redlines.soft.length}` : `提示词红线未清零（${redlines.hard.length} 项 hard）` });
+  if (!gate.approved) throw new Error(`提示词红线未清零（花钱前拦住）：${redlines.hard.map((i) => `[${i.id}] ${i.detail}`).join("；")}`);
+  for (const issue of redlines.soft.slice(0, 6)) log(`⚠ 提示词红线（软）${issue.id}：${issue.detail}`);
+}
+
+
 if (STAGES.has("material-gen")) {
-  const { width: pw, height: ph } = SOURCE_SIZE;
   for (const shot of materialShots()) {
     const shotStarted = Date.now();
     const card = shot as Record<string, unknown>;
@@ -3361,29 +3425,27 @@ if (STAGES.has("material-gen")) {
     /** 生成输入（按目标画幅准备的素材副本）：**不是成片内容**，只是给模型的首帧 */
     const prepared = join(PLATE_DIR, `${shot.shotId}-material.jpg`);
     const promptFile = join(PROMPT_DIR, `${shot.shotId}.txt`);
-    const focus = { x: spec.focus?.x ?? 0.5, y: spec.focus?.y ?? 0.5 };
     if (!existsSync(photo)) {
       record({
         stage: "material-gen", shotId: shot.shotId, invoked: true, ok: false, cached: false, degraded: false, attempt: 1, ms: 0,
         artifact: null, evidence: { photo, missing: true, policy: MATERIAL_POLICY_VERSION }, verdict: null, note: "素材文件不存在"
       });
-      continue;
+      throw new Error(`MATERIAL_REFERENCE_MISSING：${shot.shotId}`);
     }
     try {
       // Preparation is deterministic and cheap; regenerate from the current reference instead of trusting an old file.
-      {
-        run(FFMPEG, ["-y", "-i", photo,
-          "-vf", `scale=${pw}:${ph}:force_original_aspect_ratio=increase,crop=${pw}:${ph}:(iw-${pw})*${focus.x}:(ih-${ph})*${focus.y}`,
-          "-q:v", "2", prepared]);
-      }
+      copyFileSync(photo, prepared); // reference_image不要求目标画幅；完整双屏原图不得裁掉机身。
+      const person = realPersons.get(String(shot.shotId));
+      const reference = buildRenderReferences({ shot: card, productImage: dataUrl(photo), asset: person?.asset });
+      const materialPrompt = (strength: "standard" | "assertive") => `${reference.prompt}\n\n${buildMaterialScenePrompt(card, {
+        aspect: ASPECT, resolution: SOURCE_RESOLUTION, durationSec: duration, title: shotlist.title, motionStrength: strength,
+      })}`;
       /**
        * 首轮提示词：**场景构建**口径（material-scene/v1）——参考图只作实景依据，
        * 机位/视差/环境运动由模型构建（不再走"把参考图当首帧做动效"的老路）。
        * 重跑轮会在循环里升级强度并写入同一文件（`let` 是因为提交门要读当前轮提示词）。
        */
-      let prompt = buildMaterialScenePrompt(card, {
-        aspect: ASPECT, resolution: SOURCE_RESOLUTION, durationSec: duration, title: shotlist.title
-      });
+      let prompt = materialPrompt("standard");
       writeFileSync(promptFile, `${prompt}\n`, "utf8");
       const promptIntent = prompt;
       rememberInputs("material-gen", [photo, prepared, promptFile], shot.shotId);
@@ -3399,7 +3461,7 @@ if (STAGES.has("material-gen")) {
         checks: [
           { id: "material-usage-declared", pass: spec.usage === "generation-reference", hard: true, detail: `用途声明 ${spec.usage}（只允许 generation-reference；禁止静态直出）` },
           { id: "material-file", pass: existsSync(photo) && statSync(photo).size > 20_000, hard: true, detail: `真实素材 ${basename(photo)}（${(statSync(photo).size / 1024).toFixed(0)}KB，sha256 ${materialSha.slice(0, 12)}）` },
-          { id: "material-prepared", pass: existsSync(prepared) && statSync(prepared).size > 50_000, hard: true, detail: `生成首帧已按 ${ASPECT} 准备（${pw}x${ph}，仅作生成输入）` },
+          { id: "material-prepared", pass: existsSync(prepared) && sha256FileSync(prepared) === materialSha, hard: true, detail: "完整参考原图已保留，未裁切屏幕/机身；只作生成输入，输出画幅由请求ratio锁定" },
           {
             id: "prompt-ready", pass: prompt.trim().length >= 400, hard: true,
             detail: `素材镜提示词 ${prompt.trim().length} 字（场景构建口径：实景依据 + 自选机位 + 视差 + 环境运动）`
@@ -3429,7 +3491,7 @@ if (STAGES.has("material-gen")) {
           ms: Date.now() - shotStarted, artifact: null, evidence: { gateBlocked: "material-generate", reason: submitGate.reason },
           verdict: null, note: "G-MAT1 提交门未通过：未向渲染服务提交"
         });
-        continue;
+        throw new Error(`MATERIAL_SUBMIT_BLOCKED：${shot.shotId}`);
       }
       /** 原始渲染产物（未做速度坡道）：留档，便于"坡道参数换一版"而不重新烧额度 */
       const rawClip = join(CLIP_DIR, `${shot.shotId}.raw.mp4`);
@@ -3456,7 +3518,7 @@ if (STAGES.has("material-gen")) {
          * 早先"取最后一条"会把溯源读空，进而误判"没有溯源"。
          */
         const history = readStageHistory().filter((r) => r.stage === "material-gen" && r.shotId === shot.shotId);
-        const lastEvidence = history.at(-1)?.evidence as Record<string, unknown> | undefined;
+        const lastEvidence = [...history].reverse().find(row => typeof row.evidence?.taskId === "string")?.evidence;
         renderTaskId = (lastEvidence?.taskId as string | undefined) ?? null;
         renderModel = (lastEvidence?.model as string | undefined) ?? null;
       }
@@ -3482,10 +3544,8 @@ if (STAGES.has("material-gen")) {
          * 重跑必须"带变更"：第 2 次起把运动强度档位升到 assertive，并把上一轮监制/机检的问题写进提示词
          * （沿用视频镜的 `retryInstruction`，避免"重采样碰运气"白烧额度）。
          */
-        const attemptPrompt = buildMaterialScenePrompt(card, {
-          aspect: ASPECT, resolution: SOURCE_RESOLUTION, durationSec: duration, title: shotlist.title,
-          motionStrength: usedAttempt > 1 ? "assertive" : "standard"
-        }) + (usedAttempt > 1 ? `\n${retryInstruction(lastVerdict, usedAttempt, attempts)}\n【运动机检未过】${lastMotionVerdict.detail}` : "");
+        const attemptPrompt = materialPrompt(usedAttempt > 1 ? "assertive" : "standard")
+          + (usedAttempt > 1 ? `\n${retryInstruction(lastVerdict, usedAttempt, attempts)}\n【运动机检未过】${lastMotionVerdict.detail}` : "");
         writeFileSync(promptFile, `${attemptPrompt}\n`, "utf8");
         rememberInputs("material-gen", [photo, prepared, promptFile], shot.shotId);
         try {
@@ -3502,7 +3562,13 @@ if (STAGES.has("material-gen")) {
               record({ stage: "material-gen", shotId: shot.shotId, invoked: false, ok: true, cached: false, degraded: false, attempt: usedAttempt, ms: 0, artifact: null, evidence: { dryRun: true }, verdict: null });
               break;
             }
+            if (person && canaryShotId !== shot.shotId && !stageApproved("identity-fact", [canaryShotId!])) {
+              throw new Error(`REAL_PERSON_CANARY_REQUIRED：先完成${canaryShotId}的真实身份核对，禁止连烧其余镜头`);
+            }
+            preflightSubmitGuard({ shotId: shot.shotId, stage: "material-gen", prompt: attemptPrompt,
+              fps: FPS, attempt: usedAttempt, prevFingerprint: null });
             const submitted = await arkVideo({
+              shotId: shot.shotId,
               prompt: attemptPrompt,
               /**
                * **不再用 first_frame**（2026-09-25 产品所有者口径）：参考图只作实景依据，
@@ -3510,7 +3576,7 @@ if (STAGES.has("material-gen")) {
                * first_frame 会把"这张照片"钉成首帧，正是"把图片动起来"的根源。
                */
               firstFrame: undefined,
-              refs: [dataUrl(prepared)],
+              refs: reference.refs,
               /** Seedance 时长下限 4s（见 `renderSecondsFor` 注释）：短镜先渲染 4s，再由下方变速归一化到目标时长 */
               seconds: renderSecondsFor(duration),
               generateAudio: ENV.SEEDANCE_GENERATE_AUDIO !== "0",
@@ -3610,6 +3676,28 @@ if (STAGES.has("material-gen")) {
             frameFiles.push(file);
           }
           lastFrames = frameFiles;
+          if (person) {
+            const anchor = realPersonAnchors.get(String(shot.shotId))!;
+            rememberInputs("identity-fact", [anchor.path, photo], shot.shotId);
+            const identity = await reviewFilmStage(filmContractSource, {
+              stage: "shot", projectId: PROJECT,
+              artifacts: frameFiles.map(file => ({ path: file, kind: "image" as const })),
+              referenceImages: [anchor.path, photo],
+              deterministic: [{ id: "registered-person-reference", pass: reference.refs[0] === `asset://${person.asset.assetId}`,
+                hard: true, detail: "实际请求同时携带登记真人引用与完整商品图" }],
+              requiredCheckIds: ["registered-person-reference"],
+              rubric: ["只核对事实性身份与产品外观合同：第1张参考是本人基准照，第2张是商品原图；抽帧应为同一位女性CEO和同一台双屏设备。",
+                "核对可见脸型/眉眼/鼻唇/发型及同一服装，无换人；产品屏幕数量、机身与摄像头结构按原图，不虚构机械变形。",
+                "不评审审美、运镜力度、节奏或配乐，不因个人风格偏好拒绝。看不清身份或结构时写明证据不足，不猜测。"],
+              context: { shotId: shot.shotId, identity: identityReviewContext(person.asset), anchor,
+                note: "第1张参考为已登记角色身份基准；第2张为商品原图。均未冒称本次实时平台核验。" },
+              env: ENV, allowFallbackApprove: false, log,
+            });
+            record({ stage: "identity-fact", shotId: shot.shotId, invoked: true, ok: identity.approved, cached: false,
+              degraded: identity.degraded, attempt: 1, ms: identity.ms, artifact: clip,
+              evidence: { outputFiles: frameFiles, anchor, assetId: person.asset.assetId, productPhotoSha256: materialSha }, verdict: identity });
+            if (!identity.approved) throw new Error(`REAL_PERSON_FACT_UNVERIFIED：${shot.shotId} ${identity.reason}`);
+          }
           lastVerdict = await reviewStage({
             stage: "shot", projectId: PROJECT,
             artifacts: [
@@ -3716,6 +3804,7 @@ if (STAGES.has("material-gen")) {
             ms: Date.now() - shotStarted, artifact: null,
             evidence: { error: err instanceof Error ? err.message.slice(0, 300) : String(err), attempt: usedAttempt }, verdict: null
           });
+          throw err; // 请求拒收、未知ACK或事实失败即停止，不能继续烧后面的镜头。
         }
       }
       if (!accepted) log(`  ⚠ ${shot.shotId} 素材镜 ${usedAttempt} 次尝试仍未达标：${lastMotionVerdict.detail}`);
@@ -3725,6 +3814,7 @@ if (STAGES.has("material-gen")) {
         ms: Date.now() - shotStarted, artifact: null,
         evidence: { error: err instanceof Error ? err.message.slice(0, 300) : String(err) }, verdict: null
       });
+      throw err;
     }
   }
   if (materialShots().length > 0) log(`素材镜：${materialShots().length} 镜（生成输入 → 生成式镜头，禁止静态直出）`);
@@ -3732,26 +3822,6 @@ if (STAGES.has("material-gen")) {
 
 
 /* ---------- ③ 逐镜视频（监制：shot） ---------- */
-/* ---------- 提示词红线门（G-RL1，T-2026-0929-0008）：花钱前清零屏幕文字/证件文字/道具重复/落幅/帧率 ---------- */
-if (["videos", "material-gen"].some((stage) => STAGES.has(stage))) {
-  const redlines = auditFilmRedlines(shots as unknown as Array<Record<string, unknown>>, { fps: FPS });
-  const checks = [
-    {
-      id: "redlines-clear", pass: redlines.hard.length === 0, hard: true,
-      detail: redlines.hard.length === 0
-        ? `${PROMPT_REDLINE_POLICY_VERSION}：${shots.length} 镜红线清零（soft ${redlines.soft.length} 项已记录）`
-        : redlines.hard.map((issue) => `${issue.id}｜${issue.detail}｜为什么：${issue.why}`).join("；")
-    },
-    ...(redlines.soft.length > 0 ? [{ id: "redlines-soft", pass: true, hard: false, detail: redlines.soft.map((i) => `${i.id}｜${i.detail}`).join("；") }] : [])
-  ];
-  const gate = recordGate({ stepKey: "g-prompt-redlines", sourceStage: "prompt", checks,
-    shotIds: shots.map((shot) => String(shot.shotId)),
-    evidence: { policy: PROMPT_REDLINE_POLICY_VERSION, perShot: redlines.perShot },
-    reason: redlines.hard.length === 0 ? `提示词红线 hard 0 · soft ${redlines.soft.length}` : `提示词红线未清零（${redlines.hard.length} 项 hard）` });
-  if (!gate.approved) throw new Error(`提示词红线未清零（花钱前拦住）：${redlines.hard.map((i) => `[${i.id}] ${i.detail}`).join("；")}`);
-  for (const issue of redlines.soft.slice(0, 6)) log(`⚠ 提示词红线（软）${issue.id}：${issue.detail}`);
-}
-
 /**
  * 提交前硬闸（T-2026-0929-0013，客户口径："问题要在提交提示词之前发现，不要反复重试烧钱"）：
  * 在**每一次真正花钱的提交之前**，对最终编译出来的提示词做确定性体检；命中红线即拒绝提交（fail-closed），
@@ -4081,6 +4151,7 @@ if (STAGES.has("videos")) {
         preflightSubmitGuard({ shotId: String(shot.shotId), stage: "videos", prompt: attemptPrompt, fps: FPS, attempt, prevFingerprint: lastPromptFingerprint });
         lastPromptFingerprint = promptFingerprint;
         const submitted = await arkVideo({
+          shotId: shot.shotId,
           prompt: attemptPrompt,
           firstFrame,
           refs: refs.map(dataUrl),
