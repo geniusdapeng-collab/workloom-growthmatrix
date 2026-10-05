@@ -67,6 +67,13 @@ vi.mock("./duration-rules.js", () => ({
   loadDurationRules: () => ({ modelMin: 4, modelMax: 30, sources: [], nonLive: [], blockers: [], aligned: true })
 }));
 
+vi.mock("./requirement-bridge.js", () => ({
+  installVendorRequirementBridge: () => {
+    studioMocks.installed.push("requirement");
+    return () => { studioMocks.disposed.push("requirement"); };
+  }
+}));
+
 beforeEach(() => {
   studioMocks.construct.mockReset();
   studioMocks.create.mockReset();
