@@ -2,6 +2,21 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { expect, it, vi } from "vitest";
 import { WorkloomLLMEngine } from "./llm-adapter.js";
+it("显式端点推理配置送入HTTP，单次选项优先；缺省不新增扩展，非法值拒绝", async () => {
+  const bodies: any[] = [];
+  vi.stubGlobal("fetch", vi.fn(async (_url: unknown, init: RequestInit) => {
+    bodies.push(JSON.parse(String(init.body))); return new Response(JSON.stringify({ choices: [{ message: { content: "{}" } }] }));
+  }));
+  try {
+    const env = { LLM_BASE_URL: "https://test.invalid", LLM_API_KEY: "test-only", LLM_MODEL: "test" };
+    await WorkloomLLMEngine.fromEnv(env)!.reason("json");
+    const configured = WorkloomLLMEngine.fromEnv({ ...env, LLM_THINKING_TYPE: "disabled" })!;
+    await configured.reason("json"); await configured.reason("json", { thinking: { type: "enabled" } });
+    expect(bodies[0]).not.toHaveProperty("thinking"); expect(bodies[1].thinking).toEqual({ type: "disabled" });
+    expect(bodies[2].thinking).toEqual({ type: "enabled" });
+    expect(() => WorkloomLLMEngine.fromEnv({ ...env, LLM_THINKING_TYPE: "typo" })).toThrow("LLM_THINKING_TYPE_INVALID");
+  } finally { vi.unstubAllGlobals(); }
+});
 it("非法JSON失败保存完整原始响应和计量，不修造事实或自动重试", async () => {
   const content = '{"claims":["unterminated"';
   const request = vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content } }], usage: { prompt_tokens: 12, completion_tokens: 3 } })));

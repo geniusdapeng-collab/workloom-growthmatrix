@@ -28,7 +28,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import {
   VideoStudio,
   WorkloomLLMEngine,
@@ -57,9 +57,10 @@ import {
   type ExecutorLlm,
   type SearchHit,
 } from "../../apps/server/src/video/data-mining-executor.js";
-import { authorizeMarketingFacts, finalizeMarketingFacts, prepareMarketingFacts } from "../../apps/server/src/video/marketing-authority.js";
-import { exportPreproductionFilm } from "../../packages/video-studio/src/film-shotlist.js";
+import { authorizeMarketingFacts, finalizeMarketingFacts, prepareMarketingFacts, restoreReviewedMarketingFacts } from "../../apps/server/src/video/marketing-authority.js";
+import { exportPreproductionFilm, preparePreproductionFilmCandidate } from "../../packages/video-studio/src/film-shotlist.js";
 import { loadProductArchive, productPhotoPath } from "../../packages/video-studio/src/product-archive.js";
+import { filmCanonicalJson } from "../../packages/video-studio/src/film-worker-channel.js";
 
 const REPO_ROOT = resolve(import.meta.dirname ?? process.cwd(), "../..");
 
@@ -301,6 +302,17 @@ log(`启动数据管线：project=${PROJECT} | 管线=${decision.route} | 定妆
 const startedAt = Date.now();
 const hostRunId = `RUN-${randomUUID()}`;
 const factsRoot = join(OUT_DIR, "marketing", hostRunId);
+const resumeDir = arg("--resume-preproduction") ? resolve(REPO_ROOT, arg("--resume-preproduction")) : "";
+const previousMeta = resumeDir ? JSON.parse(readFileSync(join(resumeDir, "meta.json"), "utf8")) : null;
+const previousResult = resumeDir ? JSON.parse(readFileSync(join(resumeDir, "result.json"), "utf8")) : null;
+if (resumeDir && (PRODUCER !== "review" || decision.route !== "marketing" || previousMeta.projectId !== PROJECT
+  || previousMeta.intent !== PIPELINE_INTENT || previousMeta.pipeline !== "marketing" || previousMeta.renderSubmitted !== false
+  || !/^RUN-[a-f0-9-]{36}$/.test(previousMeta.hostRunId))) throw new Error("PREPRODUCTION_RESUME_SCOPE_CHANGED");
+let marketingSource = resumeDir ? previousMeta.marketingSource ?? { root: join(resumeDir, "marketing", previousMeta.hostRunId),
+  scope: { tenantId: arg("--tenant", "cli-local"), workspaceId: arg("--workspace", "cli-local"), projectId: PROJECT, runId: previousMeta.hostRunId, attempt: 1 } } : null;
+const requestMeta = { projectId: PROJECT, intent: PIPELINE_INTENT, intentRaw: INTENT, pipeline: decision.route,
+  producerMode: PRODUCER, portraitsEnabled: Boolean(portraits?.enabled), renderSubmitted: false, hostRunId };
+writeFileSync(join(OUT_DIR, "meta.json"), `${JSON.stringify({ ...requestMeta, marketingSource }, null, 2)}\n`, "utf8");
 let result: Awaited<ReturnType<VideoStudio["runPreproduction"]>>;
 try {
   const retry = Number(arg("--producer-retry", "0"));
@@ -310,6 +322,15 @@ try {
     let dataMining: StudioConfig["dataMining"];
     let marketing: Awaited<ReturnType<typeof prepareMarketingFacts>> | undefined;
     if (decision.route === "marketing") {
+      if (resumeDir) {
+        const restored = await restoreReviewedMarketingFacts({ root: marketingSource.root, scope: marketingSource.scope, metadata: seeded, intent: PIPELINE_INTENT });
+        marketing = restored;
+        dataMining = (await import("../../apps/server/src/video/marketing-authority.js")).marketingStudioDataMining(restored);
+        const record = { at: stamp(), gate: "G1_DOSSIER", vendorType: "host-source-dossier-resume", reused: true, sourceRunId: previousMeta.hostRunId,
+          ...restored.verdict };
+        gateRecords.push(record); appendFileSync(gatesFile, `${JSON.stringify(record)}\n`, "utf8");
+        log(`  [gate G1_DOSSIER] 复读原真实G1裁决/完整来源/逐项引文与装订摘要（原score=${restored.verdict.score}）`);
+      } else {
       mkdirSync(factsRoot, { recursive: true });
       marketing = await prepareMarketingFacts({
         scope: { tenantId: arg("--tenant", "cli-local"), workspaceId: arg("--workspace", "cli-local"), projectId: PROJECT, runId: hostRunId, attempt },
@@ -322,12 +343,26 @@ try {
       gateRecords.push(record);
       appendFileSync(gatesFile, `${JSON.stringify(record)}\n`, "utf8");
       log(`  [gate G1_DOSSIER] 完整宿主事实审核通过（via=${authority.verdict.via}，score=${authority.verdict.score}）`);
+      }
+      marketingSource = { root: marketing.root, scope: marketing.bundle.scope };
+      writeFileSync(join(OUT_DIR, "meta.json"), `${JSON.stringify({ ...requestMeta, marketingSource }, null, 2)}\n`, "utf8");
     }
+    const onFilmApproval: ApprovalCallback = request => onApproval({ ...request, contentMd: filmCanonicalJson({
+      candidate: JSON.parse(request.contentMd), reviewedDossier: dataMining?.verifiedDossier ? JSON.parse(dataMining.verifiedDossier.assemblyJson) : null,
+      contract: { brief: seeded.brief ?? null, characterArchive: seeded.characterArchive ?? null,
+        referenceAssets: seeded.referenceAssets ?? null, usage: seeded.marketingUsage ?? null },
+      reviewScope: "本门是渲染前的当前完整设计合同，商品断言逐项对照本次G1。登记图片与网络采集图分别记账；人像使用既有人验图片。旁挂首句不新增口播，不在干净母版绘字。台词速率按明确角色档案上限校验，低于上限本身不是必须加快的理由。" }) });
     const studio = new VideoStudio({ llm, workDir: WORK_DIR, onApproval, onEvent,
       totalDeadlineMs: Number(process.env.VM_TOTAL_DEADLINE_MS ?? 3_600_000),
-      deferRender: true, portraits, dataMining, log: (line) => console.log(line) });
+      deferRender: true, portraits, dataMining, log: (line) => console.log(line),
+      prepareFilmCandidate: async (production, _script, _timing, confirmations) => preparePreproductionFilmCandidate({ production, confirmations,
+        projectId: PROJECT, metadata: seeded, product, llm, onApproval: onFilmApproval,
+        onArtifact: (name, value) => writeFileSync(join(OUT_DIR, name), `${JSON.stringify(value, null, 2)}\n`, "utf8") }),
+      ...(!PORTRAITS_ENABLED && seeded.characterArchive ? { reusePortraits: { libraryRoot: join(REPO_ROOT, "bundles/ai-video/library/characters") } } : {}) });
     const current = await studio.runPreproduction({ projectId: PROJECT, intent: PIPELINE_INTENT, metadata: seeded,
-      isMarketing: decision.route === "marketing" });
+      isMarketing: decision.route === "marketing", ...(resumeDir ? { resume: { result: previousResult,
+        sha256: createHash("sha256").update(filmCanonicalJson(previousResult)).digest("hex") } } : {}) });
+    writeFileSync(join(OUT_DIR, "preproduction-result.json"), `${JSON.stringify(current, null, 2)}\n`, "utf8");
     if (current.success) {
       if (archiveId && !product) throw new Error("FILM_PRODUCT_REQUIRED：指定商品档案未装载");
       const film = await exportPreproductionFilm({ result: current, projectId: PROJECT, metadata: seeded, product, llm, onApproval,
@@ -336,7 +371,7 @@ try {
         const saved = await finalizeMarketingFacts(marketing, film.shots.map(shot => ({
           shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot,
         })));
-        current.marketingFacts = { root: factsRoot, ...saved, scope: marketing.bundle.scope };
+        current.marketingFacts = { root: marketing.root, ...saved, scope: marketing.bundle.scope };
         film.marketingFacts = current.marketingFacts;
       }
       writeFileSync(join(OUT_DIR, "film-shotlist.json"), `${JSON.stringify(film, null, 2)}\n`, "utf8");
@@ -384,7 +419,10 @@ writeFileSync(join(OUT_DIR, "meta.json"), `${JSON.stringify({
   portraitsEnabled: Boolean(portraits?.enabled),
   renderSubmitted: false,
   hostRunId,
+  ...(resumeDir ? { resumedFrom: { dir: resumeDir, hostRunId: previousMeta.hostRunId,
+    resultSha256: createHash("sha256").update(filmCanonicalJson(previousResult)).digest("hex") } } : {}),
   marketingFacts: result.marketingFacts ?? null,
+  marketingSource,
   startedAt: new Date(Date.now() - elapsedMs).toISOString(),
   finishedAt: stamp(),
   elapsedMs,

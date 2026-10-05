@@ -74,4 +74,12 @@ describe("完整G1装订快照消费", () => {
     const p = proof(); p.assemblyJson = "{"; p.sha256 = hash(p.assemblyJson);
     expect(() => validateReviewedMarketingDossier(p, "P1", p.rawSha256)).toThrow();
   });
+  it("恢复只读同一已消费装订对象，不调用装订器或主题；改变对象在执行前拒绝", async () => {
+    const f = fixture(), execute = vi.fn(async () => "resume");
+    expect(await runWithReviewedMarketingDossier({ ...f.input, resumeAssembly: JSON.parse(f.input.proof.assemblyJson) }, execute)).toBe("resume");
+    expect(f.original).not.toHaveBeenCalled(); expect(f.theme).not.toHaveBeenCalled();
+    execute.mockClear();
+    await expect(runWithReviewedMarketingDossier({ ...f.input, resumeAssembly: { changed: true } }, execute)).rejects.toThrow("MARKETING_DOSSIER_CHANGED");
+    expect(execute).not.toHaveBeenCalled();
+  });
 });

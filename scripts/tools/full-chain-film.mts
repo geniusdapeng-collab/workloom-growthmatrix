@@ -90,6 +90,7 @@ import {
 import { normalizeShotIntent, shotIntentHash, type ShotIntentStatus } from "../../packages/video-studio/src/shot-intent.js";
 import { verifyAvSyncEvidence } from "../../packages/video-studio/src/av-sync.js";
 import { publishUhdDelivery, sha256UhdAsset } from "../../packages/video-studio/src/uhd-delivery.js";
+import { verifyOpeningCaption } from "../../packages/video-studio/src/film-shotlist.js";
 
 const REPO_ROOT = resolve(import.meta.dirname ?? process.cwd(), "../..");
 /** GUI 启动时 PATH 常不含工位 kit；只选经过仓内 pin 摘要核验的本机二进制。 */
@@ -151,6 +152,7 @@ if (!SHOTS_FILE || !existsSync(SHOTS_FILE)) throw new Error("需要 --shots <sho
 const sourceBytes = readFileSync(SHOTS_FILE);
 const sourceFileHash = createHash("sha256").update(sourceBytes).digest("hex");
 const sourceDocument = JSON.parse(sourceBytes.toString("utf8")) as Record<string, unknown> & { shots?: Array<Record<string, unknown>> };
+const OPENING_CAPTION = verifyOpeningCaption(sourceDocument);
 const PROJECT = arg("--project", basename(SHOTS_FILE, ".json"));
 if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(PROJECT) || PROJECT.includes("..")) throw new Error("PROJECT_ID_INVALID: 项目ID不能包含路径或特殊分隔符");
 const RUN_ID = randomUUID();
@@ -2034,6 +2036,10 @@ function buildSrt(): string {
   };
   shots.forEach((shot, index) => {
     const duration = Number(shot.duration ?? 5);
+    if (index === 0 && OPENING_CAPTION) {
+      if (shot.shotId !== OPENING_CAPTION.shotId || dialogueText(shot)) throw new Error("FILM_OPENING_CAPTION_CHANGED：旁挂首句不能替换或新增口播");
+      lines.push("1", `${srtTime(OPENING_CAPTION.startSec)} --> ${srtTime(OPENING_CAPTION.endSec)}`, wrapCue(OPENING_CAPTION.text), "");
+    }
     const text = dialogueText(shot);
     if (text) {
       /**

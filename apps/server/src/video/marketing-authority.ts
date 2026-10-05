@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { constants } from "node:fs";
-import { mkdir, open, realpath, writeFile } from "node:fs/promises";
+import { mkdir, open, realpath, writeFile, readFile } from "node:fs/promises";
 import { reviewStage, type ProducerVerdict, type StudioConfig } from "@hyperreality/video-studio";
 import { createDataMiningExecutor, createWebSearch, type DataMiningStagePlan, type ExecutorLlm, type IntelStage, type SearchFn, type SearchHit } from "./data-mining-executor.js";
 import { fetchMarketingSource, type SourceSnapshot } from "./marketing-source-fetcher.js";
@@ -351,6 +351,36 @@ export async function verifyMarketingFacts(input: {
   const expectedPrefix = `stages/preproduction/attempt-${input.scope.attempt}.marketing`;
   if (input.ref !== `${expectedPrefix}-facts.json`) fail("MARKETING_PATH_INVALID", "营销事实包不是当前执行产物");
   const bundle = JSON.parse((await readBound(input.root, input.ref, input.sha256)).toString("utf8")) as MarketingFactsBundle;
+  return verifyMarketingBundle(input, bundle);
+}
+
+/** 恢复仅复用真实G1前期资格；逐最终镜头的85分事实审核仍必须重新完成。 */
+export async function restoreReviewedMarketingFacts(input: {
+  root: string; scope: MarketingScope; metadata: RecordValue; intent: string;
+}): Promise<PreparedMarketingFacts & { verdict: ProducerVerdict }> {
+  const root = await realpath(input.root), prefix = `stages/preproduction/attempt-${input.scope.attempt}.marketing`;
+  const receiptPath = path.join(root, `${prefix}-G1.verdict.json`);
+  if (await realpath(receiptPath) !== receiptPath) fail("MARKETING_PATH_INVALID", "G1裁决经过符号链接");
+  const receipt = JSON.parse(await readFile(receiptPath, "utf8")) as { scope: MarketingScope; contentSha256: string; verdict: ProducerVerdict };
+  const ref = `${prefix}-G1.review.json`, artifactPath = path.join(root, ref);
+  if (canonicalRenderJson(receipt.scope) !== canonicalRenderJson(input.scope) || !accepted(receipt.verdict, artifactPath, receipt.contentSha256)) {
+    fail("MARKETING_G1_UNVERIFIED", "恢复缺少本次完整真实G1审核");
+  }
+  const g1Content = (await readBound(root, ref, receipt.contentSha256)).toString("utf8");
+  const content = JSON.parse(g1Content) as { facts: MarketingFactsBundle; requestedMetadata: RecordValue; requestedIntent: string };
+  if (canonicalRenderJson(content.requestedMetadata) !== canonicalRenderJson(input.metadata) || content.requestedIntent !== input.intent) {
+    fail("MARKETING_RESUME_INPUT_CHANGED", "恢复的明确人物/商品/制作合同或原意图已变化，必须重新预生产");
+  }
+  const bundle = { ...content.facts, g1ContentSha256: receipt.contentSha256 };
+  if (bundle.outputReviews.length) fail("MARKETING_RESUME_NOT_PREPRODUCTION", "G1原对象不应自报最终镜头资格");
+  await verifyMarketingBundle({ root, scope: input.scope, shots: [] }, bundle);
+  return { bundle, g1Content, raw: structuredClone(bundle.rawByAgent), root, prefix,
+    storeRoot: path.join(root, `${prefix}-dossier`), verdict: receipt.verdict };
+}
+
+async function verifyMarketingBundle(input: { root: string; scope: MarketingScope;
+  shots: Array<{ shotId: string; prompt: string; fields: unknown }> }, bundle: MarketingFactsBundle): Promise<MarketingFactsBundle> {
+  const expectedPrefix = `stages/preproduction/attempt-${input.scope.attempt}.marketing`;
   if (bundle.schemaVersion !== "workloom.marketing-facts/v1" || bundle.issuer !== "workloom.marketing-authority" || bundle.policyVersion !== "source-claims/v1"
     || canonicalRenderJson(bundle.scope) !== canonicalRenderJson(input.scope) || !Array.isArray(bundle.sources) || !Array.isArray(bundle.stages)
     || !Array.isArray(bundle.outputReviews) || !/^[a-f0-9]{64}$/.test(bundle.g1ContentSha256)) fail("MARKETING_FACTS_INVALID", "营销事实包身份或结构无效");

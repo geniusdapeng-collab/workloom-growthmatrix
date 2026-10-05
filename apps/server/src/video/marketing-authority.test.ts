@@ -4,7 +4,7 @@ import { mkdtemp, realpath, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { prepareMarketingFacts, authorizeMarketingFacts, finalizeMarketingFacts, verifyMarketingFacts, type PreparedMarketingFacts } from "./marketing-authority.js";
+import { prepareMarketingFacts, authorizeMarketingFacts, finalizeMarketingFacts, verifyMarketingFacts, restoreReviewedMarketingFacts, type PreparedMarketingFacts } from "./marketing-authority.js";
 import { fetchMarketingSource, requestSource } from "./marketing-source-fetcher.js";
 import { canonicalRenderJson, renderSha256 } from "./gen/compiled-request.js";
 const scope = { tenantId: "tenant-a", workspaceId: "ws-a", projectId: "P1", runId: "RUN1", attempt: 1 };
@@ -145,6 +145,27 @@ async function prepareRegistered(): Promise<PreparedMarketingFacts> {
     } }, dependencies: { search: async () => [], fetchSource: async () => { throw new Error("测试不允许公网来源传输"); } } });
 }
 describe("登记档案复用正式营销宿主资格", () => {
+  it("恢复G6只复读真实G1/来源与装订，不重复模型或自报最终镜头资格", async () => {
+    const prepared = await prepareRegistered(); await authorizeMarketingFacts(prepared, env);
+    const input = JSON.parse(prepared.g1Content), calls = modelCalls.length;
+    const restored = await restoreReviewedMarketingFacts({ root, scope, metadata: input.requestedMetadata, intent: input.requestedIntent });
+    expect(restored.bundle).toEqual(prepared.bundle); expect(restored.raw).toEqual(prepared.raw); expect(restored.verdict.approved).toBe(true);
+    expect(restored.bundle.outputReviews).toEqual([]); expect(modelCalls).toHaveLength(calls);
+  });
+  it.each(["source", "metadata", "intent", "scope", "g1-rejected", "g1-hash"])("恢复%s变化必须拒绝，不重新制作批准", async kind => {
+    const prepared = await prepareRegistered(); await authorizeMarketingFacts(prepared, env);
+    const original = JSON.parse(prepared.g1Content), request = { root, scope: { ...scope }, metadata: original.requestedMetadata, intent: original.requestedIntent };
+    if (kind === "source") await writeFile(path.join(root, prepared.bundle.sources[0]!.textRef), "变更原文");
+    if (kind === "metadata") request.metadata.characterArchive = { id: "另一人物" };
+    if (kind === "intent") request.intent += "另一营销意图";
+    if (kind === "scope") request.scope.workspaceId = "other";
+    if (kind.startsWith("g1-")) {
+      const file = path.join(root, `${prepared.prefix}-G1.verdict.json`), receipt = JSON.parse(await readFile(file, "utf8"));
+      if (kind === "g1-rejected") receipt.verdict.approved = false; else receipt.contentSha256 = "0".repeat(64);
+      await writeFile(file, JSON.stringify(receipt));
+    }
+    const calls = modelCalls.length; await expect(restoreReviewedMarketingFacts(request)).rejects.toThrow(); expect(modelCalls).toHaveLength(calls);
+  });
   it("无公网商品页仍完成来源审核/G1/逐镜审核与复读；原PDF未重开明确留痕", async () => {
     const prepared = await prepareRegistered();
     expect(prepared.bundle.stages[0]!.discovery.sourceMode).toBe("registered-primary");

@@ -48,6 +48,8 @@ export interface WorkloomLLMEngineConfig {
   fastModel?: string;
   timeoutMs?: number;
   maxTokens?: number;
+  /** 调用方显式选择端点支持的推理开关；缺省不向端点发送该扩展。 */
+  thinkingType?: "enabled" | "disabled";
   /**
    * v3.0 收口：注入路由配置后，全部 LLM 调用经 routeSmart
    * （场景 preproduction；opts.model===fastModel 的快速调用强制 L1 轻量档）——
@@ -70,7 +72,7 @@ interface ChatCompletionResponse {
 }
 
 export class WorkloomLLMEngine {
-  private readonly cfg: Required<Omit<WorkloomLLMEngineConfig, "router">> & { router?: WorkloomLLMEngineConfig["router"] };
+  private readonly cfg: Required<Omit<WorkloomLLMEngineConfig, "router" | "thinkingType">> & Pick<WorkloomLLMEngineConfig, "router" | "thinkingType">;
   readonly stats = { totalCalls: 0, totalFailures: 0 };
 
   get model(): string {
@@ -101,7 +103,10 @@ export class WorkloomLLMEngine {
     const apiKey = env.LLM_API_KEY;
     const model = env.LLM_MODEL;
     if (!baseUrl || !apiKey || !model) return null;
-    return new WorkloomLLMEngine({ baseUrl, apiKey, model });
+    const thinkingType = env.LLM_THINKING_TYPE;
+    if (thinkingType && thinkingType !== "enabled" && thinkingType !== "disabled") throw new Error("LLM_THINKING_TYPE_INVALID");
+    const selected: WorkloomLLMEngineConfig["thinkingType"] = thinkingType === "enabled" || thinkingType === "disabled" ? thinkingType : undefined;
+    return new WorkloomLLMEngine({ baseUrl, apiKey, model, ...(selected ? { thinkingType: selected } : {}) });
   }
 
   private async callChat(prompt: string, opts: LLMReasonOptions): Promise<LLMReasonResult> {
@@ -164,6 +169,7 @@ export class WorkloomLLMEngine {
     if (opts.forceJson) body.response_format = { type: "json_object" };
     else if (opts.responseFormat) body.response_format = opts.responseFormat;
     if (opts.thinking && typeof opts.thinking === "object") body.thinking = opts.thinking;
+    else if (this.cfg.thinkingType) body.thinking = { type: this.cfg.thinkingType };
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.cfg.timeoutMs);

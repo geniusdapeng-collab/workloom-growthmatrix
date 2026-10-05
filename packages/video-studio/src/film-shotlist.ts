@@ -16,9 +16,13 @@ export interface FilmShotlist extends Obj {
 }
 function dialogueOf(shot: Obj): Obj[] {
   if (Array.isArray(shot.dialogue)) return structuredClone(shot.dialogue);
+  if (/^[（(]?无(?:对白|台词)[）)]?[。.]?$/.test(text(shot.dialogue))) return [];
   const blocks: Obj[] = Array.isArray(shot.dialogueBlocks) ? shot.dialogueBlocks : [];
   if (!text(shot.dialogue)) return blocks.map((block: Obj) => ({ ...block, text: text(block.text ?? block.line) }));
   if (!shot.dialogue.includes("|")) {
+    if (blocks.length && blocks.map(block => text(block.text ?? block.line)).join("") === text(shot.dialogue)) {
+      return blocks.map(block => ({ ...structuredClone(block), text: text(block.text ?? block.line) }));
+    }
     // Phase3/3.5 can revise the dialogue field while the prior block text stays
     // unchanged. Keep the actual reviewed field; blocks supply speaker metadata.
     const speakers = [...new Set(blocks.map(block => text(block.speaker)).filter(Boolean))];
@@ -41,6 +45,11 @@ export function mapPreproductionFilm(input: {
   const stages = obj(input.result.stages), production = obj(stages.productionEngine), prd = obj(obj(stages.prdGeneration).data);
   if (!Array.isArray(production.shots) || !production.shots.length) throw new Error("FILM_SHOTS_REQUIRED");
   if (obj(stages.prdGeneration).degraded) throw new Error("FILM_PRD_UNVERIFIED：PRD曾降级，不能导出未审兜底稿");
+  return mapFormalProduction({ ...input, production, prd });
+}
+function mapFormalProduction(input: { production: Obj; prd: Obj; projectId: string; metadata: Obj; product?: LoadedProductArchive }): FilmShotlist {
+  const { production, prd } = input;
+  if (!Array.isArray(production.shots) || !production.shots.length) throw new Error("FILM_SHOTS_REQUIRED");
   const cast = obj(input.metadata.characterArchive), brief = obj(input.metadata.brief);
   const assetRef = text(obj(cast.authorization).evidence);
   if (cast.id && !isRealPersonAssetRef(assetRef)) throw new Error("FILM_CAST_ASSET_REQUIRED：明确真人档案缺平台引用");
@@ -56,6 +65,11 @@ export function mapPreproductionFilm(input: {
     if (prompt.length < 1200) throw new Error(`FILM_PROMPT_INCOMPLETE：${shotId}正式提示词不足1200字`);
     for (const key of ["scene", "action", "character"]) if (!text(flat[key])) throw new Error(`FILM_FIELD_REQUIRED：${shotId}.${key}`);
     const mapped: Obj = { ...flat, shotId, duration, prompt, dialogue: dialogueOf(flat) };
+    const speechRate = Number.parseFloat(String(cast.persona?.speechRate ?? "3.2"));
+    const speechChars = mapped.dialogue.map((block: Obj) => text(block.text)).join("").replace(/[\s\p{P}\p{S}]/gu, "").length;
+    if (!Number.isFinite(speechRate) || speechRate <= 0 || speechChars > Math.floor(Math.max(0, duration - .4) * speechRate)) {
+      throw new Error(`FILM_DIALOGUE_DURATION_INVALID：${shotId}台词${speechChars}字超出正式${duration}s口播预算`);
+    }
     delete mapped.fields; delete mapped.shot_id;
     // 明确角色身份只做引用映射，外观与台词仍来自正式生成物；角色丢失不凭空增补。
     if (cast.id) {
@@ -109,10 +123,81 @@ export function applyFilmEnvironment(document: FilmShotlist, generated: Obj, pla
   const defects = environmentDefects(expanded, next.sceneBible).filter(defect => defect.hard);
   const hookChecks = openingHookChecks({ shots: next.shots as any, hook, platform, shortForm: true }).filter(check => check.hard && !check.pass);
   if (defects.length || hookChecks.length) throw new Error(`FILM_ENVIRONMENT_INVALID：${[...defects, ...hookChecks].map(item => item.detail).join("；")}`);
-  const firstLines = next.shots[0]!.dialogue.map((line: Obj) => text(line.text)).join("");
-  if (!firstLines.includes(hook.firstShotTemplate!.line)) throw new Error("FILM_HOOK_DIALOGUE_CHANGED：钩子首句必须来自正式首镜台词，不能另写口播");
+  const first = next.shots[0]!, firstLines = first.dialogue.map((line: Obj) => text(line.text)).join("");
+  const hookLine = hook.firstShotTemplate!.line;
+  if (!firstLines.includes(hookLine)) {
+    const sourceField = ["subtitle_content", "title_content"].find(key => !firstLines && text(first[key]).includes(hookLine));
+    if (!sourceField) throw new Error("FILM_HOOK_DIALOGUE_CHANGED：钩子首句必须来自正式首镜对白或已生成片头旁挂计划，不能另写口播");
+    if (hook.firstShotTemplate?.lineSec !== Math.min(Number(first.duration), 3)) throw new Error("FILM_HOOK_CAPTION_TIMING_CHANGED：旁挂钩子窗口必须与首句合同一致");
+    next.openingCaption = { shotId: first.shotId, text: hookLine, sourceField, startSec: 0,
+      endSec: Math.min(Number(first.duration), 3), delivery: "sidecar-only" };
+    verifyOpeningCaption(next);
+  }
   next.exportProvenance.environmentSha256 = hash(generated);
+  next.exportProvenance.environmentContract = structuredClone(generated);
   return next;
+}
+
+export function verifyOpeningCaption(document: Obj): { shotId: string; text: string; startSec: number; endSec: number; sourceField: string; delivery: string } | null {
+  const caption = document.openingCaption;
+  if (caption === undefined) return null;
+  const first = document.shots?.[0];
+  if (!caption || typeof caption !== "object" || Array.isArray(caption) || !first || caption.shotId !== first.shotId
+    || caption.delivery !== "sidecar-only" || !["subtitle_content", "title_content"].includes(caption.sourceField)
+    || typeof caption.text !== "string" || !caption.text.trim() || caption.text.length > 18
+    || !text(first[caption.sourceField]).includes(caption.text) || document.hook?.firstShotTemplate?.line !== caption.text
+    || document.hook?.firstShotTemplate?.lineSec !== caption.endSec
+    || (first.dialogue ?? []).some((line: Obj) => text(line.text)) || caption.startSec !== 0
+    || !Number.isFinite(caption.endSec) || caption.endSec <= 0 || caption.endSec > Math.min(Number(first.duration), 3)) {
+    throw new Error("FILM_OPENING_CAPTION_CHANGED：旁挂首句不等于正式首镜片头计划/时间窗或混入新口播");
+  }
+  return caption;
+}
+
+async function generateFilmEnvironment(mapped: FilmShotlist, input: {
+  prd: Obj; metadata: Obj; llm: Pick<WorkloomLLMEngine, "reason">; onArtifact?: (name: string, value: unknown) => Promise<void> | void;
+}): Promise<FilmShotlist> {
+  const contract = `正式成片导出工位。下面是已生成镜头及完整PRD，不能改台词、时长、动作、人物或商品事实。只输出JSON：
+{sceneBible:{spaceId:string,space:{building:string,orientation?:string,timeOfDay?:string},materials:[{item,material,finish?,wear?}],practicalLights:[{type,kelvin?,direction?}],traces:string[],environmentProfile:{setting:'interior'|'exterior'|'studio'|'product',condition:'used'|'new'|'maintained'|'sterile'|'natural'},otherSpaces?:[]},
+hook:{type:'question'|'conflict'|'counterintuitive'|'benefit'|'result-first'|'suspense'|'number'|'scene-shock',promise:string,payoffShotId:string,firstShotTemplate:{visual:string,line:string,lineSec:number},sfx:{kind:'impact'|'whoosh'|'riser',atSec:number}},
+shots:[{shotId:原镜号,sceneId:所用空间ID,propInteraction?:[{prop,purpose:'operate'|'present'|'shared-view'|'rest',orientation,operatedBy,screenFacing:'operator'|'audience'|'shared'|'away',contact,occlusion?}],environmentProfile?:对象,visibleMaterials?:string[],devices?:[{category,model}]}]}
+环境补充是待渲染的创作布景，不冒称实拍记录。各镜维持原设计的空间连续性；可见材质、实际光源与使用状态须具体；不同空间分别列otherSpaces，不能共享错误布景。屏幕道具操作/展示须声明朝向/操作者/接触且符合原动作。设备型号必须与原卡或登记productRef一致，不能自创。
+environmentProfile恰好两个键setting和condition。condition选择一个枚举字符串；例如{"setting":"interior","condition":"used"}，不能增加maintained等第三个键。visibleMaterials每一项必须逐字等于当前sceneId的materials数组中某项item，不能写材质描述或未登记物件；需要可见物件就先在materials登记它。otherSpaces内的对象直接放spaceId/building/orientation/timeOfDay/materials/practicalLights/traces/environmentProfile，不额外嵌套space。
+devices仅原卡已有设备年代策略声明时原样保留，否则空数组；本次产品由productRef、产品原图及G1事实约束，不能把DEMO-T001塞入消费电子设备年代目录或编造型号类别。propInteraction仍完整核对实际产品展示、操作者、朝向和接触。
+propInteraction中的purpose与screenFacing按真实镜头用途填写：屏幕朝向镜头/观众时为present与audience，即使CEO站在旁边指示也不是shared-view。只有原动作明确双方共同观看屏幕时才用shared-view与shared，orientation同时明确双方可见；不能一边写朝向镜头一边写shared。无屏幕道具仍按实际接触与承重描述，不编造功能。
+钩子首句必须截取正式首镜台词已有的≤18字连续句段；首镜无对白时只能截取首镜已有subtitle_content或title_content，作为正式后期旁挂字幕，不新增口播或往干净母版绘字。兑现镜必须实际存在，不能许诺未获支持的效果。返回每个原镜号恰好一次，不可添加任何其他字段。`;
+  const hookContract = "\n钩子promise必须忠实复述首镜实际景别和动作，远景不能称特写，静态光源不能称一秒扫动；不要添加未出现在原设计的动作。首镜无对白时lineSec必须等于min(首镜duration,3)，它是旁挂字幕在场窗口而非口播时长。";
+  let feedback = "", lastError: unknown;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const response = await input.llm.reason(`${contract}${hookContract}\n${filmCanonicalJson({ document: mapped, prd: input.prd, usage: input.metadata.marketingUsage })}${feedback}`,
+      { forceJson: true, maxTokens: 8192, temperature: .1, thinking: { type: "disabled" } });
+    await input.onArtifact?.(`film-environment-response-${attempt}.json`, response);
+    if (!response.success) throw new Error(`FILM_ENVIRONMENT_GENERATION_FAILED：${response.error}`);
+    try { return applyFilmEnvironment(mapped, obj(response.data ?? JSON.parse(response.content ?? "")), text(obj(input.metadata.brief).platform)); }
+    catch (error) {
+      lastError = error; await input.onArtifact?.(`film-environment-contract-failure-${attempt}.json`, { error: error instanceof Error ? error.message : String(error) });
+      feedback = `\n上次响应未满足确定性合同：${error instanceof Error ? error.message : String(error)}。保持原镜头完全不变，修正矛盾字段后重新输出完整环境/钩子JSON。上次实际响应：${filmCanonicalJson(response.data ?? response.content)}`;
+    }
+  }
+  throw lastError;
+}
+
+/** G6已审后、原G7收口前的正式补全；不伪造overall success，不提交渲染。 */
+export async function preparePreproductionFilmCandidate(input: {
+  production: Obj; confirmations: Obj; projectId: string; metadata: Obj; product?: LoadedProductArchive;
+  llm: Pick<WorkloomLLMEngine, "reason">; onApproval: ApprovalCallback; onArtifact?: (name: string, value: unknown) => Promise<void> | void;
+}): Promise<FilmShotlist> {
+  if (input.confirmations.prompts?.approved !== true || input.confirmations.prd?.approved !== true || !input.confirmations.prd.prd
+    || hash(input.production.shots) !== hash(input.production.prompts)) throw new Error("FILM_CANDIDATE_UNVERIFIED：需本次原G4/G6真实批准且当前镜头/提示词一致");
+  const mapped = mapFormalProduction({ ...input, prd: input.confirmations.prd.prd });
+  const document = await generateFilmEnvironment(mapped, { ...input, prd: input.confirmations.prd.prd });
+  await input.onArtifact?.("film-shotlist-candidate.json", document);
+  const verdict = await input.onApproval({ gate: "G6_PROMPT", vendorType: "formal-film-export", title: "正式完整镜头与环境/钩子合同",
+    contentMd: filmCanonicalJson(document), runId: null });
+  if (!verdict.approved) throw Object.assign(new Error(`FILM_EXPORT_UNVERIFIED：补全合同未获得原G6批准${verdict.reason ?? ""}`),
+    { code: "FILM_EXPORT_UNVERIFIED", candidate: document, verdict });
+  document.exportProvenance.environmentReview = verdict;
+  return document;
 }
 
 export async function exportPreproductionFilm(input: {
@@ -120,17 +205,18 @@ export async function exportPreproductionFilm(input: {
   llm: Pick<WorkloomLLMEngine, "reason">; onApproval: ApprovalCallback; onArtifact?: (name: string, value: unknown) => Promise<void> | void;
 }): Promise<FilmShotlist> {
   const mapped = mapPreproductionFilm(input);
-  const contract = `正式成片导出工位。下面是已生成镜头及完整PRD，不能改台词、时长、动作、人物或商品事实。只输出JSON：
-{sceneBible:{spaceId:string,space:{building:string,orientation?:string,timeOfDay?:string},materials:[{item,material,finish?,wear?}],practicalLights:[{type,kelvin?,direction?}],traces:string[],environmentProfile:{setting:'interior'|'exterior'|'studio'|'product',condition:'used'|'new'|'maintained'|'sterile'|'natural'},otherSpaces?:[]},
-hook:{type:'question'|'conflict'|'counterintuitive'|'benefit'|'result-first'|'suspense'|'number'|'scene-shock',promise:string,payoffShotId:string,firstShotTemplate:{visual:string,line:string,lineSec:number},sfx:{kind:'impact'|'whoosh'|'riser',atSec:number}},
-shots:[{shotId:原镜号,sceneId:所用空间ID,propInteraction?:[{prop,purpose:'operate'|'present'|'shared-view'|'rest',orientation,operatedBy,screenFacing:'operator'|'audience'|'shared'|'away',contact,occlusion?}],environmentProfile?:对象,visibleMaterials?:string[],devices?:[{category,model}]}]}
-环境补充是待渲染的创作布景，不冒称实拍记录。各镜维持原设计的空间连续性；可见材质、实际光源与使用状态须具体；不同空间分别列otherSpaces，不能共享错误布景。屏幕道具操作/展示须声明朝向/操作者/接触且符合原动作。设备型号必须与原卡或登记productRef一致，不能自创。钩子首句必须截取正式首镜台词已有的≤18字连续句段（不另写）；兑现镜必须实际存在，不能许诺未获支持的效果。返回每个原镜号恰好一次，不可添加任何其他字段。`;
-  const response = await input.llm.reason(`${contract}\n${filmCanonicalJson({ document: mapped, prd: obj(obj(input.result.stages).prdGeneration).data,
-    usage: input.metadata.marketingUsage })}`, { forceJson: true, maxTokens: 8192, temperature: .1, thinking: { type: "disabled" } });
-  await input.onArtifact?.("film-environment-response.json", response);
-  if (!response.success) throw new Error(`FILM_ENVIRONMENT_GENERATION_FAILED：${response.error}`);
-  const generated = obj(response.data ?? JSON.parse(response.content ?? ""));
-  const document = applyFilmEnvironment(mapped, generated, text(obj(input.metadata.brief).platform));
+  const prepared = obj(obj(input.result.stages).productionEngine).formalFilmCandidate;
+  if (prepared) {
+    if (prepared.exportProvenance?.sourceShotsSha256 !== mapped.exportProvenance.sourceShotsSha256
+      || prepared.exportProvenance?.sourcePrdSha256 !== mapped.exportProvenance.sourcePrdSha256
+      || prepared.exportProvenance?.environmentReview?.approved !== true
+      || obj(input.result.confirmations).preproduction?.approved !== true) throw new Error("FILM_EXPORT_CHANGED：原G7受审完整合同与实际源不同");
+    const regenerated = applyFilmEnvironment(mapped, prepared.exportProvenance.environmentContract, text(obj(input.metadata.brief).platform));
+    regenerated.exportProvenance.environmentReview = structuredClone(prepared.exportProvenance.environmentReview);
+    if (filmCanonicalJson(regenerated) !== filmCanonicalJson(prepared)) throw new Error("FILM_EXPORT_CHANGED：导出完整合同不等于实际源与受审环境合同");
+    verifyOpeningCaption(prepared); return structuredClone(prepared);
+  }
+  const document = await generateFilmEnvironment(mapped, { ...input, prd: obj(obj(input.result.stages).prdGeneration).data });
   await input.onArtifact?.("film-shotlist-candidate.json", document);
   const complete = filmCanonicalJson(document);
   for (const gate of ["G6_PROMPT", "G7_FINAL"]) {

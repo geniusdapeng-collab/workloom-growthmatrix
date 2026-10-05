@@ -50,6 +50,8 @@ export async function runWithReviewedMarketingDossier<T>(input: {
   proof: ReviewedMarketingDossier; projectId: string; rawSha256: string; system: MarketingDossierTarget;
   /** 测试只替换vendor类型，不替换作用域、摘要或输入校验。 */
   prototype?: EnginePrototype;
+  /** 恢复时原创作确已消费的完整装订对象；必须逐字结构等于当前复读的G1快照。 */
+  resumeAssembly?: JsonObject;
 }, execute: () => Promise<T>): Promise<T> {
   const assembly = validateReviewedMarketingDossier(input.proof, input.projectId, input.rawSha256);
   const prototype = input.prototype ?? (createRequire(import.meta.url)(
@@ -57,6 +59,10 @@ export async function runWithReviewedMarketingDossier<T>(input: {
   ) as { JennyLoomEngine: { prototype: EnginePrototype } }).JennyLoomEngine.prototype;
   installDispatcher(prototype);
   const scope: Scope = { active: true, consumed: false, proof: structuredClone(input.proof), assembly };
+  if (input.resumeAssembly !== undefined) {
+    if (filmCanonicalJson(input.resumeAssembly) !== filmCanonicalJson(assembly)) throw new Error("MARKETING_DOSSIER_CHANGED：恢复对象未消费同一受审快照");
+    scope.consumed = true;
+  }
   const originalTheme = input.system._buildThemeInput;
   if (typeof originalTheme !== "function") throw new Error("MARKETING_DOSSIER_CONSUMER_MISSING：正式主题入口缺失");
   input.system._buildThemeInput = function (intent, metadata) {
