@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { applyFilmEnvironment, exportPreproductionFilm, mapPreproductionFilm, preparePreproductionFilmCandidate, verifyOpeningCaption } from "./film-shotlist.js";
+import { applyFilmEnvironment, exportPreproductionFilm, inspectFilmRenderRedlineRejection, mapPreproductionFilm, preparePreproductionFilmCandidate, verifyOpeningCaption } from "./film-shotlist.js";
 const metadata = () => ({ brief: { duration: 30, platform: "douyin", aspectRatio: "9:16", resolution: "1080p" },
   characterArchive: { id: "ceo", name: "出镜人物", authorization: { evidence: "asset://registered-person" } } });
 const raw = () => ({ shot_id: "S01", duration: 30, prompt: "正式完整提示词".repeat(220), fields: { scene: "柜台玻璃与实木", action: "出镜人物点头介绍", character: "出镜人物",
@@ -121,4 +121,27 @@ it("对应本次台词的实际块保留逐段情绪和已有时间码，不合�
     { speaker: "出镜人物", text: "角度可以调。", emotion: "自然", startSec: 3, endSec: 5 },
   ];
   expect(mapPreproductionFilm({ result: r, projectId: "P1", metadata: metadata() }).shots[0]!.dialogue).toEqual(r.stages.productionEngine.shots[0].dialogueBlocks);
+});
+it("正式预制在环境生成与G7之前拦真实红线，保留确定性回执，不冒充模型拒绝", async () => {
+  const row: any = raw(); row.fields.props = "柜台上的可见屏幕";
+  const production = { shots: [row], prompts: [row] }, prd = result().stages.prdGeneration.data;
+  const reason = vi.fn(), onApproval = vi.fn(), onArtifact = vi.fn();
+  await expect(preparePreproductionFilmCandidate({ production, confirmations: { prd: { approved: true, prd }, prompts: { approved: true } },
+    projectId: "P1", metadata: metadata(), llm: { reason }, onApproval, onArtifact })).rejects.toMatchObject({
+      code: "FILM_EXPORT_UNVERIFIED", verdict: { approved: false, via: "deterministic", reason: expect.stringContaining("screen-no-logo-negative") },
+    });
+  expect(reason).not.toHaveBeenCalled(); expect(onApproval).not.toHaveBeenCalled(); expect(onArtifact).toHaveBeenCalledOnce();
+});
+it("已成功冻结稿只能因重算真实红线恢复；改稿、事实资格变动或没有红线均拒绝", () => {
+  const r: any = result(); r.stages.productionEngine.shots[0].fields.props = "柜台上的可见屏幕";
+  const exported = mapPreproductionFilm({ result: r, metadata: metadata(), projectId: "P1" });
+  const proof = { root: "source", ref: "facts.json", sha256: "a".repeat(64) }, ready = { ...structuredClone(exported), marketingFacts: proof };
+  expect(inspectFilmRenderRedlineRejection(exported, ready, proof)).toContain("不是原G6/G7模型裁决");
+  for (const key of ["action", "duration", "prompt"]) {
+    const changed = structuredClone(ready); changed.shots[0]![key] = "改变";
+    expect(() => inspectFilmRenderRedlineRejection(exported, changed, proof)).toThrow("RESUME_CHANGED");
+  }
+  expect(() => inspectFilmRenderRedlineRejection(exported, ready, { ...proof, sha256: "b".repeat(64) })).toThrow("RESUME_CHANGED");
+  const clean = mapPreproductionFilm({ result: result(), metadata: metadata(), projectId: "P1" });
+  expect(() => inspectFilmRenderRedlineRejection(clean, { ...clean, marketingFacts: proof }, proof)).toThrow("NOT_REJECTED");
 });

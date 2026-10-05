@@ -70,6 +70,37 @@ async function run(extra: string[] = []) {
   }
 }
 describe("营销CLI复用正式事实与G1", () => {
+  it.each(["actual-redline", "changed-ready", "changed-proof", "not-rejected"])("成功预制恢复%s：仅真实冻结红线可进入修订工位", async state => {
+    const first: any = successful();
+    if (state !== "not-rejected") first.stages.productionEngine.shots[0].fields.props = "柜台上可见屏幕";
+    fixture.results = [first]; await run();
+    const source = root, previous = JSON.parse(await readFile(path.join(source, "result.json"), "utf8"));
+    const ready = JSON.parse(await readFile(path.join(source, "film-shotlist.json"), "utf8"));
+    const candidate = structuredClone(ready); delete candidate.marketingFacts;
+    previous.stages.prdGeneration = { data: {} };
+    previous.stages.productionEngine.formalFilmCandidate = candidate;
+    previous.confirmations = { prd: { approved: true, prd: {} }, prompts: { approved: true }, preproduction: { approved: true } };
+    // 此测试使用明确创作替身；受审完整环境由第一轮真实导出器生成并摘要绑定。
+    candidate.exportProvenance.environmentReview = { approved: true };
+    previous.stages.productionEngine.formalFilmCandidate = candidate;
+    ready.exportProvenance.environmentReview = { approved: true };
+    if (state === "changed-ready") ready.shots[0].action = "审核后改变动作";
+    if (state === "changed-proof") previous.marketingFacts.sha256 = "0".repeat(64);
+    await writeFile(path.join(source, "result.json"), JSON.stringify(previous));
+    await writeFile(path.join(source, "film-shotlist.json"), JSON.stringify(ready));
+    vi.resetModules(); root = path.join(source, "resumed"); fixture.results = [successful()];
+    try {
+      if (state === "actual-redline") {
+        await run(["--resume-preproduction", source]);
+        expect(fixture.configs).toHaveLength(2);
+        expect(fixture.configs[1].finalFactRejection.reason).toContain("正式渲染前确定性红线实际拒绝");
+        expect(fixture.inputs[1].resume.result.success).toBe(true);
+      } else {
+        await expect(run(["--resume-preproduction", source])).rejects.toThrow("exit:4");
+        expect(fixture.configs).toHaveLength(1);
+      }
+    } finally { root = source; }
+  });
   it.each(["tenantId", "workspaceId"])("恢复%s不同在构造创作工位前拒绝，不能按旧scope偷渡", async key => {
     await run(); const source = root, previous = JSON.parse(await readFile(path.join(source, "meta.json"), "utf8"));
     previous.marketingSource.scope[key] = "foreign";

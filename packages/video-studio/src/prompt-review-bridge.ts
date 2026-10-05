@@ -5,6 +5,7 @@ import { join } from "node:path";
 import type { WorkloomLLMEngine } from "./llm-adapter.js";
 import type { GateVerdict } from "./gates.js";
 import { filmCanonicalJson } from "./film-worker-channel.js";
+import { auditFilmRedlines } from "./prompt-redlines.js";
 type Obj = Record<string, any>;
 export interface PromptReviewTarget {
   create(...args: any[]): Promise<Obj>;
@@ -54,7 +55,7 @@ export function applyPromptCorrection(original: Obj[], response: Obj, metadata: 
   const byId = new Map(rows.map((row: Obj) => [id(row), row]));
   const speed = Number.parseFloat(String(metadata.characterArchive?.persona?.speechRate ?? "3.2"));
   if (!Number.isFinite(speed) || speed <= 0) throw new Error("PROMPT_SPEECH_RATE_INVALID");
-  return original.map(shot => {
+  const corrected = original.map(shot => {
     const row = byId.get(id(shot));
     if (!row || Number(row.duration) !== Number(shot.duration) || Object.keys(row).some(key => !["shotId", "duration", "fields", "prompt", "dialogueBlocks"].includes(key))) throw new Error(`PROMPT_CORRECTION_SCOPE_CHANGED:${id(shot)}:只允许shotId/duration/fields/prompt/dialogueBlocks且时长不变`);
     const fields = row.fields;
@@ -82,6 +83,9 @@ export function applyPromptCorrection(original: Obj[], response: Obj, metadata: 
     for (const [key, value] of Object.entries(fields)) next[key.replace(/_([a-z])/g, (_: string, c: string) => c.toUpperCase())] = value;
     return next;
   });
+  const redlines = auditFilmRedlines(corrected, { fps: 30 });
+  if (redlines.hard.length) throw new Error(`PROMPT_RENDER_REDLINE_REJECTED：${redlines.hard.map(issue => `[${issue.id}] ${issue.detail}`).join("；")}`);
+  return corrected;
 }
 
 export function installVendorPromptReviewBridge(system: PromptReviewTarget, options: {
@@ -162,11 +166,11 @@ export function installVendorPromptReviewBridge(system: PromptReviewTarget, opti
     const rejected = snapshot(reviewedPrompts);
     save("rejected.json", { projectId: options.projectId, prompts: rejected, verdict,
       ...(actualRejection ? { actualCompleteContractRejection: actualRejection } : {}) });
-    options.log?.("[prompt-review-bridge] G6拒绝后同阶段一次模型修订，完整稿再次送原G6/G7；不重跑上游");
+    options.log?.("[prompt-review-bridge] 实际提示词/完整合同拒绝后同阶段一次模型修订，完整稿再次送原G6/G7；不重跑上游");
     const contract = reviewedPrompts.map(shot => ({ shotId: id(shot), duration: shot.duration,
       requiredFields: [...new Set([...Object.keys(shot.fields ?? {}), ...(shot.sceneType === "opening" ? OPENING_FIELDS : [])])],
       maximumSpokenCharacters: Math.floor(Math.max(0, Number(shot.duration) - .4) * Number.parseFloat(String(options.metadata.characterArchive?.persona?.speechRate ?? "3.2"))) }));
-    const instruction = `正式提示词修订工位。当前G6拒绝理由：${verdict.reason ?? "未通过"}。只输出完整JSON {shots:[{shotId,duration,fields,prompt,dialogueBlocks:[{speaker,type,emotion,text}]}]}。
+    const instruction = `正式提示词修订工位。当前提示词/完整合同的实际拒绝理由（保留原裁决来源）：${verdict.reason ?? "未通过"}。只输出完整JSON {shots:[{shotId,duration,fields,prompt,dialogueBlocks:[{speaker,type,emotion,text}]}]}。
 顶层只有shots。每个镜头对象恰好五个键shotId/duration/fields/prompt/dialogueBlocks，禁止额外sceneType等键。fields只有该镜requiredFields内的键，全部为非空字符串；dialogueBlocks只在镜头顶层，绝不能复制进fields。无人无对白镜fields.dialogue写“无对白”，不能空字符串。口播上限按maximumSpokenCharacters逐镜计算，中文标点不计；字段对白与块text拼接一致，绝不能超限。
 口播字数逐个字符计算，型号中的每个英文字母和数字也各计一个字，不能将DEMO-T001整个型号算成一个词。删除标点和空白后先自行计数；超过预算就由你缩短实际台词，不改时长、不把不完整句硬塞进镜头。型号可留在已审产品说明，不必为口播重复拼读。
 每个原镜号恰好一次，时长严格不变，fields包含原镜全部字段；sceneType为opening时另外补齐title_content/subtitle_content/title_animation/title_font_design/opening_audio_design五个真实片头计划字段，其余镜不添加。标题仅用于封面/旁挂设计，视频母版和生成镜内不绘字；开场音频仅环境音或人声，音乐留后期。所有字段为完整中文字符串；prompt包含与这些字段相符的完整最终生成指令（1200–3500字）。只修正实际矛盾，保留原剧本的产品宣传目的；禁止把过程元数据、JSON、属性ID或修订要求当动作/台词。技术格式MP4/H.264/fps/K/asset引用允许原准确语法，创意和对白中文，不再添加“禁止所有英文”自相矛盾规则。分辨率只写明确1080×1920，不写8K或4K超采样。
@@ -175,6 +179,7 @@ export function installVendorPromptReviewBridge(system: PromptReviewTarget, opti
 同一个真实柜台空间的台面、背景、窗光方向/色温/时段、产品与人物左右位置必须逐镜统一；相邻硬切不能无依据翻转站位。每个prompt中的对白、舞台动作与fields.action/timeline保持完全一致，不能保留旧稿动作副本。未被G1逐条支持的机身不变、效果承诺等短语必须由模型删去；只介绍明确支持的配置与摄像头角度，不新增效果推断。
 片头及商品文案只采用本次G1逐条登记的名称与事实，不把原意图中的品牌/功能当商品事实。登记表演者姓名只用于角色身份及说话人，不能转成商品品牌或名称。无人镜声音不加入脚步/人物表演，与无人动作一致；环境合同中新造的房卡道具或机械结构不是商品事实，只按中性场景道具维持原镜头目的。
 配置可选并不证明“机身不变”“即时切换”等效果，未被G1明确支持的事实绝不添加。
+正式渲染红线必须在实际中文字段与最终prompt同时落实：凡屏幕入镜，scene/action/props/composition中明确“界面虚化不可辨认，只保留柔光光晕”，不改变真实屏幕尺寸、黑色边框或机器外形。negative明确“无界面文字、无屏幕可读文字、无图标、无LOGO”；不要只写英文负面约束。证件/单据如确有入镜，实际画面不可辨认，negative写“无证件文字、无可辨认号码”；卡片道具约束“无多余卡片”，不能为满足规则新添卡片。timeline要求定住则camera_movement同样写定住；constraint只写管线30fps。含手部/玻璃的实际镜头分别约束无多余手指/无第二张脸。所有约束必须与原动作和真实登记商品图相容。
 必须精确遵守的逐镜输出契约：${filmCanonicalJson(contract)}
 实际受审制作输入：${filmCanonicalJson(context)}
 原候选：${filmCanonicalJson(reviewedPrompts.map(shot => ({ shotId: id(shot), duration: shot.duration, fields: shot.fields,
@@ -222,7 +227,7 @@ export function installVendorPromptReviewBridge(system: PromptReviewTarget, opti
         if (rejected.code !== "FILM_EXPORT_UNVERIFIED" || rejected.verdict?.approved !== false || !rejected.candidate
           || rejected.candidate.exportProvenance?.sourceShotsSha256 !== createHash("sha256").update(filmCanonicalJson(production.shots)).digest("hex")) throw error;
         pendingActualRejection = { verdict: rejected.verdict, candidate: rejected.candidate };
-        options.log?.("[prompt-review-bridge] 完整合同的实际G6拒绝反馈给原同阶段模型；不伪造裁决、不重跑上游、不提交渲染");
+        options.log?.("[prompt-review-bridge] 完整合同的实际模型/确定性拒绝反馈给原同阶段模型；不伪造裁决、不重跑上游、不提交渲染");
         const verdict = await this._confirmPrompts(prompts);
         args[2].prompts = verdict;
         if (!verdict.approved) throw error;

@@ -7,12 +7,22 @@ import { environmentDefects, expandShotWithBible, validateSceneBible, type Scene
 import { openingHookChecks, validateHookCard, type HookCard } from "./opening-hook.js";
 import { productHeroPhoto, productPhotoPath, type LoadedProductArchive } from "./product-archive.js";
 import { isRealPersonAssetRef } from "./real-person-asset.js";
+import { auditFilmRedlines } from "./prompt-redlines.js";
 type Obj = Record<string, any>;
 const obj = (value: unknown): Obj => value && typeof value === "object" && !Array.isArray(value) ? value as Obj : {};
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const hash = (value: unknown) => createHash("sha256").update(filmCanonicalJson(value)).digest("hex");
 export interface FilmShotlist extends Obj {
   schemaVersion: "workloom.film-shotlist/v1"; projectId: string; shots: Obj[]; durationSeconds: number;
+}
+/** 只恢复实际冻结稿的确定性红线拒绝；不把原G6/G7批准改写成模型拒绝。 */
+export function inspectFilmRenderRedlineRejection(exported: FilmShotlist, ready: Obj, marketingFacts: Obj): string {
+  if (!marketingFacts || filmCanonicalJson({ ...exported, marketingFacts }) !== filmCanonicalJson(ready)) {
+    throw new Error("FILM_RENDER_RESUME_CHANGED：冻结镜头或事实资格不等于原受审导出物");
+  }
+  const verdict = auditFilmRedlines(exported.shots, { fps: 30 });
+  if (!verdict.hard.length) throw new Error("FILM_RENDER_RESUME_NOT_REJECTED：当前冻结稿没有实际渲染红线拒绝");
+  return `正式渲染前确定性红线实际拒绝（${verdict.policy}，不是原G6/G7模型裁决）：${verdict.hard.map(issue => `[${issue.id}] ${issue.detail}`).join("；")}`;
 }
 function dialogueOf(shot: Obj): Obj[] {
   if (Array.isArray(shot.dialogue)) return structuredClone(shot.dialogue);
@@ -194,6 +204,13 @@ export async function preparePreproductionFilmCandidate(input: {
   if (input.confirmations.prompts?.approved !== true || input.confirmations.prd?.approved !== true || !input.confirmations.prd.prd
     || hash(input.production.shots) !== hash(input.production.prompts)) throw new Error("FILM_CANDIDATE_UNVERIFIED：需本次原G4/G6真实批准且当前镜头/提示词一致");
   const mapped = mapFormalProduction({ ...input, prd: input.confirmations.prd.prd });
+  const redlines = auditFilmRedlines(mapped.shots, { fps: 30 });
+  if (redlines.hard.length) {
+    const reason = `渲染前确定性红线拒绝：${redlines.hard.map(issue => `[${issue.id}] ${issue.detail}`).join("；")}`;
+    await input.onArtifact?.("film-redline-rejection.json", { policy: redlines.policy, candidate: mapped, redlines });
+    throw Object.assign(new Error(`FILM_EXPORT_UNVERIFIED：${reason}`), { code: "FILM_EXPORT_UNVERIFIED", candidate: mapped,
+      verdict: { approved: false, reason, via: "deterministic" } });
+  }
   const document = await generateFilmEnvironment(mapped, { ...input, prd: input.confirmations.prd.prd });
   await input.onArtifact?.("film-shotlist-candidate.json", document);
   const verdict = await input.onApproval({ gate: "G6_PROMPT", vendorType: "formal-film-export", title: "正式完整镜头与环境/钩子合同",

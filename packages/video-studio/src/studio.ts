@@ -114,7 +114,7 @@ export interface StudioConfig {
   reusePortraits?: { libraryRoot: string };
   /** 正式完整镜头合同补全在原G7之前执行；失败不能进入最终确认或渲染。 */
   prepareFilmCandidate?: (production: Record<string, any>, script: Record<string, any>, timing: Record<string, any>, confirmations: Record<string, any>) => Promise<Record<string, any>>;
-  /** 宿主复读当前最终事实门的真实拒绝后装配；用于正式同阶段修订，不能获得批准。 */
+  /** 宿主复读最终事实门或重算冻结稿渲染红线的实际拒绝后装配；用于同阶段修订，不能获得批准。 */
   finalFactRejection?: { sourceShotsSha256: string; sourceFilmSha256: string; reason: string };
   /**
    * 渲染移交宿主 render-operator（融合设计 §6：vendor 只做预生产，渲染由 render-operator

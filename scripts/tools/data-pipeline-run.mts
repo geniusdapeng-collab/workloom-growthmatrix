@@ -58,8 +58,8 @@ import {
   type ExecutorLlm,
   type SearchHit,
 } from "../../apps/server/src/video/data-mining-executor.js";
-import { authorizeMarketingFacts, finalizeMarketingFacts, prepareMarketingFacts, restoreReviewedMarketingFacts, restoreMarketingOutputRejection } from "../../apps/server/src/video/marketing-authority.js";
-import { exportPreproductionFilm, preparePreproductionFilmCandidate } from "../../packages/video-studio/src/film-shotlist.js";
+import { authorizeMarketingFacts, finalizeMarketingFacts, prepareMarketingFacts, restoreReviewedMarketingFacts, restoreMarketingOutputRejection, verifyMarketingFacts } from "../../apps/server/src/video/marketing-authority.js";
+import { exportPreproductionFilm, inspectFilmRenderRedlineRejection, preparePreproductionFilmCandidate } from "../../packages/video-studio/src/film-shotlist.js";
 import { loadProductArchive, productPhotoPath } from "../../packages/video-studio/src/product-archive.js";
 import { filmCanonicalJson } from "../../packages/video-studio/src/film-worker-channel.js";
 
@@ -332,12 +332,23 @@ try {
         dataMining = (await import("../../apps/server/src/video/marketing-authority.js")).marketingStudioDataMining(restored);
         if (previousResult.success === true) {
           const previousProduction = previousResult.stages?.productionEngine, previousFilm = previousProduction?.formalFilmCandidate;
-          const rejection = await restoreMarketingOutputRejection(restored, previousFilm.shots.map((shot: Record<string, unknown>) => ({
-            shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot })), previousMeta.factOutputId, previousFilm.sceneBible);
-          finalFactRejection = { reason: rejection.reason,
+          if (!previousFilm) throw new Error("FILM_RENDER_RESUME_CHANGED：成功预制缺少原G7实际完整合同");
+          let reason: string;
+          if (previousResult.marketingFacts) {
+            const exported = await exportPreproductionFilm({ result: previousResult, projectId: PROJECT, metadata: seeded, product, llm, onApproval });
+            const ready = JSON.parse(readFileSync(join(resumeDir, "film-shotlist.json"), "utf8"));
+            const proof = previousResult.marketingFacts;
+            if (proof.root !== restored.root || filmCanonicalJson(proof.scope) !== filmCanonicalJson(restored.bundle.scope)) throw new Error("FILM_RENDER_RESUME_CHANGED：最终事实资格范围变化");
+            await verifyMarketingFacts({ ...proof, shots: exported.shots.map(shot => ({ shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot })), sceneBible: exported.sceneBible });
+            reason = inspectFilmRenderRedlineRejection(exported, ready, proof);
+          } else {
+            reason = (await restoreMarketingOutputRejection(restored, previousFilm.shots.map((shot: Record<string, unknown>) => ({
+              shotId: String(shot.shotId), prompt: String(shot.prompt), fields: shot })), previousMeta.factOutputId, previousFilm.sceneBible)).reason;
+          }
+          finalFactRejection = { reason,
             sourceShotsSha256: createHash("sha256").update(filmCanonicalJson(previousProduction.shots)).digest("hex"),
             sourceFilmSha256: createHash("sha256").update(filmCanonicalJson(previousFilm)).digest("hex") };
-          log(`  [最终事实门] 复读${rejection.shotId}实际拒绝，反馈原同阶段模型；不重跑上游、不提交渲染`);
+          log("  [最终合同门] 复读并重算冻结稿的实际事实/渲染红线拒绝，反馈原同阶段模型；不重跑上游、不提交渲染");
         }
         const record = { at: stamp(), gate: "G1_DOSSIER", vendorType: "host-source-dossier-resume", reused: true, sourceRunId: previousMeta.hostRunId,
           ...restored.verdict };

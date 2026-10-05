@@ -9,6 +9,15 @@ const original = () => [{ shotId: "S1", duration: 4, fields: { character: "出�
 const candidate = () => ({ shots: [{ shotId: "S1", duration: 4, fields: { character: "出镜人物", action: "修订动作", dialogue: "双屏可选。", audio: "同期人声" },
   prompt: "修订完整提示词".repeat(200), dialogueBlocks: [{ speaker: "出镜人物", type: "口播", emotion: "明朗", text: "双屏可选。" }] }] });
 describe("原G6同阶段模型修订与消费绑定", () => {
+  it("模型修稿必须真正补齐渲染红线，不能靠原模型批准豁免或宿主改词", () => {
+    const src: any = original(), response: any = candidate();
+    src[0].fields.props = "可见屏幕"; response.shots[0].fields.props = "可见屏幕";
+    expect(() => applyPromptCorrection(src, response, metadata)).toThrow("PROMPT_RENDER_REDLINE_REJECTED");
+    response.shots[0].fields.props = "可见屏幕，界面虚化不可辨认";
+    src[0].fields.negative = "旧负面"; response.shots[0].fields.negative = "无界面文字、无屏幕可读文字、无图标、无LOGO";
+    expect(applyPromptCorrection(src, response, metadata)[0]!.props).toContain("界面虚化不可辨认");
+    expect(src[0].fields.props).toBe("可见屏幕");
+  });
   it("宿主复读的最终事实真实拒绝驱动模型修订，原G6只审核新稿，不复用原批准", async () => {
     const root = mkdtempSync(join(tmpdir(), "fact-prompt-repair-")), prompts = original();
     const confirm = vi.fn(async (_shots: unknown) => ({ approved: true })), reason = vi.fn(async (_prompt: string) => ({ success: true, data: candidate() }));
