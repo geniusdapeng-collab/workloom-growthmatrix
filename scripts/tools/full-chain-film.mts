@@ -3101,11 +3101,9 @@ function measureMaterialReuse(clip: string, material: string, durationSec: numbe
     for (const pixels of candidatePixels) {
       const value = psnrGray(framePixels, pixels);
       if (best === null || value > best) best = value;
-      /** SSIM 只对"PSNR 已达视觉级"的候选计算（省 90% 计算量，不改变判定结果） */
-      if (value >= 22) {
-        const structural = ssimGray(framePixels, pixels, W, H);
-        if (bestSsim === null || structural > bestSsim) bestSsim = structural;
-      }
+      // 低PSNR也必须实际测SSIM；缺指标不能被当作“未复用”，完整性门会拒绝。
+      const structural = ssimGray(framePixels, pixels, W, H);
+      if (bestSsim === null || structural > bestSsim) bestSsim = structural;
     }
     samples.push({ atSec, bestPsnrDb: best, bestSsim });
   }
