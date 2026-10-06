@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 84,
+  "revision": 86,
   "tasks": {
     "132": {
       "number": 132,
@@ -659,7 +659,7 @@
     },
     "134": {
       "number": 134,
-      "status": "aligning",
+      "status": "parked",
       "firstSeen": 1791310212615,
       "attempts": {},
       "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -688,8 +688,8 @@
         "at": 1791315433896
       },
       "developerReview": null,
-      "error": "主干对齐失败：Command failed: git merge --no-ff --no-edit 8e27e21395dc0e38682225673317814ea2db15ce\n",
-      "blockedUntil": 1791314817727,
+      "error": "Command failed: git merge --no-ff --no-edit 8e27e21395dc0e38682225673317814ea2db15ce\n",
+      "blockedUntil": 1791316033896,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -5015,6 +5015,31 @@
       },
       "previous": "95b7b934519dbe0c409ed277dfc1d293d0f378020ea6384da69839fa62be325b",
       "digest": "bf35397b9884b5aafa16a8c265a9f836ea268deacd79ef42d307c03b1f570f7f"
+    },
+    {
+      "sequence": 85,
+      "at": "2026-10-06T19:37:13.896Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "Command failed: git merge --no-ff --no-edit 8e27e21395dc0e38682225673317814ea2db15ce\n",
+          "blockedUntil": 1791316033896
+        }
+      },
+      "previous": "bf35397b9884b5aafa16a8c265a9f836ea268deacd79ef42d307c03b1f570f7f",
+      "digest": "194e6d71c38996f7668723768423a8a85f2d0acb7dc488c9b74c6e02ee698696"
+    },
+    {
+      "sequence": 86,
+      "at": "2026-10-06T19:37:23.435Z",
+      "kind": "transaction",
+      "data": {
+        "id": "2d464f66-98f2-4ebc-8a14-cb17651e1073"
+      },
+      "previous": "194e6d71c38996f7668723768423a8a85f2d0acb7dc488c9b74c6e02ee698696",
+      "digest": "fe86355f4b3b60327480e8b8c1aba0fe8c10662613619432b1430637115ac15f"
     }
   ]
 }
