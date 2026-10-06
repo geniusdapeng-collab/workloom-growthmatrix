@@ -1,9 +1,10 @@
 /**
- * scripts/suite-geo.ts · WorkLoom GEO 双域深度测试套件（72 用例）
+ * scripts/suite-geo.ts · WorkLoom GEO 双域深度测试套件（用例数由实际注册导出）
  *
  * 覆盖：A Bundle 完整性 / B 围栏判定正反例 / C 种子与运行态 / D 管线节拍一致性 / E 事件留痕合规
  * 用法：pnpm suite:geo（要求 .env 就位、PG 已迁移 + pnpm db:seed:geo）
- * 纪律：只读校验 + 纯函数判定，不写业务表、不跨用例污染；失败不中断，末尾汇总。
+ * 纪律：查询与纯函数判定；种子幂等用例复跑本仓种子，只可在明确的验收库执行。
+ * 失败不中断，末尾汇总。
  */
 import pg from "pg";
 import YAML from "yaml";
@@ -12,6 +13,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { judge, type RuntimeRule } from "@workloom/base/fence-engine";
 import { composeWorkforce } from "@workloom/base/bundles";
+import { parseWorkforcePresets } from "../packages/industry-contract/src/index.js";
+import { FILM_CLI_STAGES } from "../packages/video-studio/src/film-worker-runtime.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, "..");
@@ -44,7 +47,8 @@ const q = async (text: string, params: unknown[] = []) => {
 
 /* ================= Bundle 资产装载 ================= */
 const bundleJson = JSON.parse(readFileSync(join(BUNDLE, "bundle.json"), "utf-8"));
-const presets = readdirSync(join(BUNDLE, "presets")).filter(f => f.endsWith(".yml")).sort()
+const presetFiles = readdirSync(join(BUNDLE, "presets")).filter(f => f.endsWith(".yml")).sort();
+const presets = presetFiles
   .map(f => YAML.parse(readFileSync(join(BUNDLE, "presets", f), "utf-8")));
 const fenceDoc = YAML.parse(readFileSync(join(BUNDLE, "fences/geo-growthmatrix-baseline.yml"), "utf-8"));
 const fenceRules: RuntimeRule[] = (fenceDoc.rules ?? []).map((r: { rule_id: string; name: string; level: RuntimeRule["level"]; is_baseline: boolean; match: { object_types: string[]; actions: string[] }; when: string }) => ({
@@ -94,13 +98,21 @@ a("bundle.json 声明的全部资产路径存在", () => {
     for (const p of paths) assert(existsSync(join(BUNDLE, p)), `缺失资产 ${p}`);
   }
 });
-a("27 个 preset（双域 16 + 视觉栈 2 + 获客用增 9，含 2 个 P2 条件岗）且 preset_key 唯一", () => {
-  assert(presets.length === 27, `期望 27，实际 ${presets.length}`);
-  assert(presetKeys.size === 27, "preset_key 重复");
+a("岗位清单与磁盘一致、标识唯一，保留 Matrix 自有三岗位", () => {
+  const declared = [...bundleJson.workloom.provides.presets].sort();
+  const actual = presetFiles.map(file => `presets/${file}`);
+  assert(declared.length > 0 && new Set(declared).size === declared.length, "岗位声明为空或重复");
+  assert(JSON.stringify(actual) === JSON.stringify(declared), `岗位声明与磁盘不一致：${actual.join(",")}`);
+  assert(presetKeys.size === presets.length, "preset_key 重复");
+  for (const key of ["content-calendar-officer", "cost-controller", "material-scout"])
+    assert(presetKeys.has(key), `Matrix 自有岗位丢失：${key}`);
 });
 a("preset 必填字段完整（含 prompt 三要素）", () => {
+  // 岗位治理与 write_back 的缺省语义由装配器使用的同一契约校验。
+  // 成本核算员没有写工具，合法的空回写列表不能被误报为缺字段。
+  parseWorkforcePresets(presets);
   for (const p of presets) {
-    for (const k of ["preset_key", "name", "version", "kind", "description", "fence_bindings", "tools", "prompt", "write_back"])
+    for (const k of ["preset_key", "name", "version", "kind", "description", "fence_bindings", "tools", "prompt"])
       assert(p[k] !== undefined, `${p.preset_key} 缺 ${k}`);
     assert(p.prompt.role && Array.isArray(p.prompt.goals) && Array.isArray(p.prompt.constraints), `${p.preset_key} prompt 缺 role/goals/constraints`);
     assert(p.prompt.goals.length >= 2 && p.prompt.constraints.length >= 2, `${p.preset_key} prompt 专业度不足（goals/constraints 过少）`);
@@ -320,7 +332,7 @@ c("工作区存在且行业为 geo-growthmatrix", async () => {
   const r = await q(`SELECT industry, stage FROM workspaces WHERE id=$1`, [WS]);
   assert(r.rows[0]?.industry === "geo-growthmatrix", `industry=${r.rows[0]?.industry}`);
 });
-c("组合编制全部 ready 落库（本包 27 岗 ⊆ 组合编制，无缺岗）", async () => {
+c("组合编制按装配器全部 ready 落库，本包无缺岗", async () => {
   /**
    * 2026-09-20 真机验收修复：花名册权威 = 装配器组合编制（geo-growthmatrix + hotel + ai-video，
    * 同名遮蔽按主包裁决），与基座 seed.ts（ws-yunqi 组合编制全员）同口径；seed-geo 已按组合编制上岗。
@@ -399,8 +411,26 @@ c("待批请示 tier 分层正确（G-GEO1→L2 / G12、G20→L4）", async () =
   assert(m["G-GEO1"] === "l2_captain" && m["G12"] === "l4_chairman" && m["G20"] === "l4_chairman", JSON.stringify(m));
 });
 c("账号指标时序 7 天 × 2 账号", async () => {
-  const r = await q(`SELECT count(*) n FROM account_metrics WHERE workspace_id=$1`, [WS]);
-  assert(Number(r.rows[0].n) === 14, `metrics=${r.rows[0].n}`);
+  // 种子按当前日期追加近七天样本，跨日复跑会保留更早的历史。
+  // 核验当前七天的每个账号/时点，不能把正常保留的旧历史报成重复样本。
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const day = new Date();
+    day.setDate(day.getDate() - i - 1);
+    day.setHours(20, 0, 0, 0);
+    return day.toISOString();
+  });
+  const r = await q(`SELECT platform, account_id, captured_at, count(*) n
+    FROM account_metrics WHERE workspace_id=$1 AND captured_at=ANY($2::timestamptz[])
+    AND ((platform='tiktok' AND account_id='@RuikeLaser')
+      OR (platform='youtube' AND account_id='@RuikeLaserOfficial'))
+    GROUP BY platform, account_id, captured_at`, [WS, days]);
+  const actual = new Map(r.rows.map(row => [
+    `${row.platform}/${row.account_id}/${new Date(row.captured_at).toISOString()}`, Number(row.n),
+  ]));
+  for (const [platform, account] of [["tiktok", "@RuikeLaser"], ["youtube", "@RuikeLaserOfficial"]]) {
+    for (const day of days) assert(actual.get(`${platform}/${account}/${day}`) === 1,
+      `${platform}/${account}/${day} 样本缺失或重复`);
+  }
 });
 c("种子幂等：复跑后事件数不膨胀", async () => {
   const before = await q(`SELECT count(*) n FROM biz_events WHERE workspace_id=$1`, [WS]);
@@ -417,11 +447,17 @@ c("哈希链完整（ws-geo 段）", async () => {
 
 /* ================= D · 管线节拍一致性 ================= */
 const d = C("D");
-d("4 条管线 YAML 可解析且 quest key 唯一", () => {
+d("管线清单与磁盘一致、quest key 唯一，保留内容日历", () => {
+  const declared = [...bundleJson.workloom.provides.pipelines].sort();
+  const actual = pipelines.map(p => `pipelines/${p.file}`).sort();
+  assert(declared.length > 0 && new Set(declared).size === declared.length, "管线声明为空或重复");
+  assert(JSON.stringify(actual) === JSON.stringify(declared), `管线声明与磁盘不一致：${actual.join(",")}`);
   const keys = pipelines.map(p => p.doc.quest);
-  assert(pipelines.length === 4 && new Set(keys).size === 4, keys.join(","));
+  assert(keys.every(key => typeof key === "string" && key.length > 0)
+    && new Set(keys).size === pipelines.length, `管线标识缺失或重复：${keys.join(",")}`);
+  assert(keys.includes("content-calendar"), "Matrix 内容日历管线丢失");
 });
-d("管线 owner 全部在 16 员编制内", () => {
+d("管线 owner 全部在本包编制内", () => {
   for (const p of pipelines) for (const s of p.doc.steps ?? [])
     assert(presetKeys.has(s.owner), `${p.doc.quest}/${s.step_key} owner=${s.owner} 不在编制`);
 });
@@ -461,6 +497,98 @@ d("月度回测节拍存在（每月 1 日）", async () => {
 
 /* ================= E · 事件留痕合规 ================= */
 const e = C("E");
+// apps/server/src/index.ts records server 5xx telemetry without a model or
+// external tool receipt. Match that complete contract, never a broad actor or
+// object-name exemption that could hide a real industry execution event.
+const SERVER_ERROR_TELEMETRY_SQL = `(
+  payload->'who'->>'type' = 'system' AND payload->'who'->>'id' = 'system'
+  AND payload->'object'->>'type' = 'server_request'
+  AND payload->'decision'->>'action' = 'system.error'
+  AND payload->'decision'->'after'->>'code' = 'INTERNAL_SERVER_ERROR'
+  AND payload->'object'->>'id' = payload->'decision'->'after'->>'ref'
+  AND payload->'object'->>'id' ~ '^[0-9a-f]{8}$'
+  AND jsonb_typeof(payload->'decision'->'after'->'message') = 'string'
+  AND length(payload->'decision'->'after'->>'message') <= 200
+  AND payload->'context'->>'channel' = 'server'
+  AND payload->'context'->>'tenant_id' = tenant_id
+  AND payload->'context'->>'workspace_id' = workspace_id
+  AND payload->'rule_impact' = '[]'::jsonb
+  AND NOT (payload->'decision' ?| ARRAY['tool','kind','params'])
+  AND NOT (payload ?| ARRAY['receipt','model_trace'])
+)`;
+// Invocation cancellation and film-job creation are internal control receipts,
+// not completed supplier actions. Match the exact emitted contracts; merely
+// naming an object film_job/agent_invocation never earns a receipt exemption.
+// CASE guards keep malformed JSON negative controls from aborting the query.
+const AGENT_CONTROL_EVENT_SQL = `(
+  payload->'who'->>'type' = 'human'
+  AND payload->'context'->>'channel' = 'inapp'
+  AND payload->'context'->>'tenant_id' = tenant_id
+  AND payload->'context'->>'workspace_id' = workspace_id
+  AND EXISTS (SELECT 1 FROM members m JOIN workspaces w ON w.id=m.workspace_id
+    WHERE m.member_no=payload->'who'->>'id'
+      AND m.workspace_id=payload->'context'->>'workspace_id'
+      AND w.tenant_id=payload->'context'->>'tenant_id')
+  AND payload->'rule_impact' = '[]'::jsonb
+  AND CASE WHEN jsonb_typeof(payload->'decision') = 'object'
+    THEN (payload->'decision') - ARRAY['action','after'] = '{}'::jsonb ELSE false END
+  AND jsonb_typeof(payload->'decision'->'after') = 'object'
+  AND NOT (payload ?| ARRAY['receipt','model_trace'])
+  AND (
+    (payload->'object'->>'type' = 'film_job'
+      AND payload->'decision'->>'action' = 'film.start'
+      AND session_id IS NULL
+      AND jsonb_typeof(payload->'object'->'id') = 'string'
+      AND jsonb_typeof(payload->'decision'->'after'->'jobId') = 'string'
+      AND payload->'object'->>'id' = payload->'decision'->'after'->>'jobId'
+      AND payload->'object'->>'id' ~ '^FJ-[a-z0-9]+-[a-z0-9]{1,8}$'
+      AND CASE WHEN jsonb_typeof(payload->'decision'->'after') = 'object'
+        THEN (payload->'decision'->'after') - ARRAY['jobId','projectId','stages','inputSha256','workerEntrySha256','budgetCny'] = '{}'::jsonb ELSE false END
+      AND jsonb_typeof(payload->'decision'->'after'->'projectId') = 'string'
+      AND payload->'decision'->'after'->>'projectId' ~ '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'
+      AND position('..' in payload->'decision'->'after'->>'projectId') = 0
+      AND jsonb_typeof(payload->'decision'->'after'->'inputSha256') = 'string'
+      AND jsonb_typeof(payload->'decision'->'after'->'workerEntrySha256') = 'string'
+      AND payload->'decision'->'after'->>'inputSha256' ~ '^[a-f0-9]{64}$'
+      AND payload->'decision'->'after'->>'workerEntrySha256' ~ '^[a-f0-9]{64}$'
+      AND CASE WHEN jsonb_typeof(payload->'decision'->'after'->'budgetCny') = 'number'
+        THEN (payload->'decision'->'after'->>'budgetCny')::numeric >= 0 ELSE false END
+      AND CASE WHEN jsonb_typeof(payload->'decision'->'after'->'stages') = 'array'
+        THEN jsonb_array_length(payload->'decision'->'after'->'stages') BETWEEN 1 AND ${FILM_CLI_STAGES.length}
+          AND '${JSON.stringify(FILM_CLI_STAGES)}'::jsonb @> (payload->'decision'->'after'->'stages')
+          AND (SELECT count(DISTINCT stage) FROM jsonb_array_elements(payload->'decision'->'after'->'stages') stage)
+            = jsonb_array_length(payload->'decision'->'after'->'stages')
+        ELSE false END)
+    OR (payload->'object'->>'type' = 'agent_invocation'
+      AND payload->'decision'->>'action' = 'thread.cancel'
+      AND jsonb_typeof(payload->'object'->'id') = 'string'
+      AND jsonb_typeof(payload->'decision'->'after'->'invocationId') = 'string'
+      AND payload->'object'->>'id' = payload->'decision'->'after'->>'invocationId'
+      AND payload->'object'->>'id' ~ '^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$'
+      AND payload->'decision'->'after'->'rollbackExternalActions' = 'false'::jsonb
+      AND (
+        (session_id IS NULL
+          AND CASE WHEN jsonb_typeof(payload->'decision'->'after') = 'object'
+            THEN (payload->'decision'->'after') - ARRAY['invocationId','state','cancelledBeforeCreation','rollbackExternalActions'] = '{}'::jsonb ELSE false END
+          AND payload->'decision'->'after'->>'state' = 'cancelled'
+          AND payload->'decision'->'after'->'cancelledBeforeCreation' = 'true'::jsonb)
+        OR (session_id = payload->'decision'->'after'->>'threadId'
+          AND session_id ~ '^T-[1-9][0-9]*$'
+          AND CASE WHEN jsonb_typeof(payload->'decision'->'after') = 'object'
+            THEN (payload->'decision'->'after') - ARRAY['invocationId','threadId','state','alreadyTerminal','rollbackExternalActions','stopping'] = '{}'::jsonb ELSE false END
+          AND payload->'decision'->'after'->>'state' IN ('completed','failed','cancelled')
+          AND jsonb_typeof(payload->'decision'->'after'->'alreadyTerminal') = 'boolean'
+          AND (payload->'decision'->'after'->'alreadyTerminal' = 'true'::jsonb
+            OR payload->'decision'->'after'->>'state' = 'cancelled')
+          AND payload->'decision'->'after'->>'stopping' = 'before-next-quest-step')
+        OR (session_id IS NULL
+          AND CASE WHEN jsonb_typeof(payload->'decision'->'after') = 'object'
+            THEN (payload->'decision'->'after') - ARRAY['invocationId','state','alreadyTerminal','rollbackExternalActions'] = '{}'::jsonb ELSE false END
+          AND payload->'decision'->'after'->>'state' IN ('resolved','failed','unknown','cancelled')
+          AND payload->'decision'->'after'->'alreadyTerminal' = 'true'::jsonb)
+      ))
+  )
+)`;
 /**
  * 平台系统对象（不属于行业对象模型，事件合规检查统一豁免）：
  *   thread/task/approval/conversation = 门禁活火事件（dispatch/quest/审批流）
@@ -493,11 +621,15 @@ e("ws-geo 事件 ≥60 条且五元字段完整（容忍门禁活火写入）", 
   const bad = await q(`SELECT count(*) n FROM biz_events WHERE workspace_id=$1
     AND payload->'decision'->'after' IS NOT NULL
     AND COALESCE(payload->'object'->>'type','') <> ALL($2::text[])
+    AND NOT COALESCE(${SERVER_ERROR_TELEMETRY_SQL}, false)
+    AND NOT COALESCE(${AGENT_CONTROL_EVENT_SQL}, false)
     AND (payload->>'who' IS NULL OR payload->>'object' IS NULL OR payload->>'decision' IS NULL OR payload->>'receipt' IS NULL OR payload->>'model_trace' IS NULL)`, [WS, [...SYSTEM_TYPES]]);
   assert(Number(bad.rows[0].n) === 0, `五元缺失 ${bad.rows[0].n} 条`);
 });
 e("事件 GEO 对象类型全部在对象模型内（系统对象豁免）", async () => {
-  const r = await q(`SELECT DISTINCT payload->'object'->>'type' t FROM biz_events WHERE workspace_id=$1`, [WS]);
+  const r = await q(`SELECT DISTINCT payload->'object'->>'type' t FROM biz_events WHERE workspace_id=$1
+    AND NOT COALESCE(${SERVER_ERROR_TELEMETRY_SQL}, false)
+    AND NOT COALESCE(${AGENT_CONTROL_EVENT_SQL}, false)`, [WS]);
   for (const row of r.rows) assert(objectTypes.has(row.t) || SYSTEM_TYPES.has(row.t), `事件对象 ${row.t} 未在对象模型`);
 });
 e("事件 who 全部在编制内（系统/人类豁免）", async () => {
@@ -511,8 +643,16 @@ e("事件 who 全部在编制内（系统/人类豁免）", async () => {
     // render-operator = 渲染提交的生成池计量主体（gen.degraded / 提交留痕；2026-09-20 真机测试增补）
     "render-operator",
   ]);
-  const r = await q(`SELECT DISTINCT payload->'who'->>'id' id FROM biz_events WHERE workspace_id=$1`, [WS]);
-  for (const row of r.rows) assert(presetKeys.has(row.id) || SYSTEM_ACTORS.has(row.id) || String(row.id).startsWith("MEM-"), `who=${row.id} 不在编制`);
+  const composedPresetKeys = new Set(composeWorkforce("geo-growthmatrix").presets.keys());
+  const members = await q(`SELECT member_no FROM members WHERE workspace_id=$1`, [WS]);
+  const memberKeys = new Set(members.rows.map(row => row.member_no));
+  const r = await q(`SELECT DISTINCT payload->'who'->>'type' type, payload->'who'->>'id' id FROM biz_events WHERE workspace_id=$1
+    AND NOT COALESCE(${SERVER_ERROR_TELEMETRY_SQL}, false)`, [WS]);
+  for (const row of r.rows) assert(
+    row.type === "agent" && composedPresetKeys.has(row.id)
+      || row.type === "system" && SYSTEM_ACTORS.has(row.id)
+      || row.type === "human" && memberKeys.has(row.id),
+    `who=${row.type}/${row.id} 不在组合编制或当前工作区成员内`);
 });
 e("rule_impact 引用的规则存在且级别一致", async () => {
   const r = await q(`SELECT DISTINCT ri->>'rule_id' rid, ri->>'result' res FROM biz_events, jsonb_array_elements(payload->'rule_impact') ri WHERE workspace_id=$1`, [WS]);
@@ -530,6 +670,114 @@ e("双入口询盘打标事件两种入口均在（social + ai_search）", async
   const r = await q(`SELECT DISTINCT payload->'decision'->'after'->>'entry' entry FROM biz_events WHERE workspace_id=$1 AND payload->'decision'->>'action'='inquiry.tag'`, [WS]);
   const entries = new Set(r.rows.map(x => x.entry));
   assert(entries.has("social") && entries.has("ai_search"), `入口不全：${[...entries].join(",")}`);
+});
+const telemetryFixture = () => ({
+  who: { type: "system", id: "system" },
+  context: { tenant_id: TENANT, workspace_id: WS, channel: "server", time: "2026-10-02T15:00:00Z" },
+  object: { type: "server_request", id: "a12b34c5" },
+  decision: { action: "system.error", after: { path: "fixture.read", code: "INTERNAL_SERVER_ERROR", ref: "a12b34c5", message: "controlled failure" } },
+  rule_impact: [],
+});
+async function telemetryAllowed(payload: Record<string, unknown>) {
+  const result = await q(`SELECT COALESCE(${SERVER_ERROR_TELEMETRY_SQL}, false) allowed
+    FROM (SELECT $1::jsonb payload, $2::text tenant_id, $3::text workspace_id) fixture`, [JSON.stringify(payload), TENANT, WS]);
+  return result.rows[0]?.allowed === true;
+}
+e("服务端 5xx 完整遥测契约可留痕，不伪造模型或供应商回执", async () => {
+  assert(await telemetryAllowed(telemetryFixture()), "服务端实际遥测契约被误判为行业执行");
+});
+e("系统名字不能豁免行业动作、外部工具或作用域错配", async () => {
+  const variants: Array<Record<string, unknown>> = [];
+  for (const field of ["action", "tool", "kind", "params"] as const) {
+    const payload = telemetryFixture();
+    variants.push({ ...payload, decision: { ...payload.decision, [field]: field === "action" ? "publish.execute" : "execution_started" } });
+  }
+  const original = telemetryFixture();
+  variants.push(
+    { ...original, who: { type: "agent", id: "system" } },
+    { ...original, object: { type: "publish_task", id: "a12b34c5" } },
+    { ...original, object: { type: "server_request", id: "deadbeef" } },
+    { ...original, context: { ...original.context, workspace_id: "another-workspace" } },
+    { ...original, context: { ...original.context, tenant_id: "another-tenant" } },
+    { ...original, decision: { ...original.decision, after: { ...original.decision.after, code: "FORBIDDEN" } } },
+    { ...original, receipt: { synced: true } },
+    { ...original, model_trace: { provider: "fixture" } },
+    { ...original, rule_impact: [{ rule_id: "G9", result: "pass" }] },
+  );
+  for (const [index, payload] of variants.entries()) assert(!(await telemetryAllowed(payload)), `伪装遥测反例 ${index + 1} 获得豁免`);
+});
+type ControlFixture = { payload: Record<string, unknown>; sessionId: string | null };
+const cancellationFixture = (after: Record<string, unknown>, sessionId: string | null = null): ControlFixture => ({
+  payload: {
+    who: { type: "human", id: "MEM-G01" },
+    context: { tenant_id: TENANT, workspace_id: WS, channel: "inapp" },
+    object: { type: "agent_invocation", id: "12345678-1234-4123-8123-123456789abc" },
+    decision: { action: "thread.cancel", after: { invocationId: "12345678-1234-4123-8123-123456789abc", rollbackExternalActions: false, ...after } },
+    rule_impact: [],
+  }, sessionId,
+});
+const controlFixtures = (): ControlFixture[] => [
+  { payload: {
+    who: { type: "human", id: "MEM-G01" },
+    context: { tenant_id: TENANT, workspace_id: WS, channel: "inapp" },
+    object: { type: "film_job", id: "FJ-matrix01-12345678" },
+    decision: { action: "film.start", after: { jobId: "FJ-matrix01-12345678", projectId: "matrix-control-fixture",
+      stages: ["spec"], budgetCny: 0, inputSha256: "a".repeat(64), workerEntrySha256: "b".repeat(64) } }, rule_impact: [],
+  }, sessionId: null },
+  cancellationFixture({ state: "cancelled", cancelledBeforeCreation: true }),
+  cancellationFixture({ threadId: "T-203", state: "cancelled", alreadyTerminal: false, stopping: "before-next-quest-step" }, "T-203"),
+  ...["completed", "failed", "cancelled"].map(state => cancellationFixture({ threadId: "T-203", state, alreadyTerminal: true, stopping: "before-next-quest-step" }, "T-203")),
+  ...["resolved", "failed", "unknown", "cancelled"].map(state => cancellationFixture({ state, alreadyTerminal: true })),
+];
+async function controlAllowed(fixture: ControlFixture) {
+  const result = await q(`SELECT COALESCE(${AGENT_CONTROL_EVENT_SQL}, false) allowed
+    FROM (SELECT $1::jsonb payload, $2::text tenant_id, $3::text workspace_id, $4::text session_id) fixture`,
+    [JSON.stringify(fixture.payload), TENANT, WS, fixture.sessionId]);
+  return result.rows[0]?.allowed === true;
+}
+e("影片认领与三种任务取消契约可留内部回执，保留租户成员边界", async () => {
+  for (const [index, fixture] of controlFixtures().entries())
+    assert(await controlAllowed(fixture), `合法控制回执 ${index + 1} 被误判为供应商动作`);
+});
+e("控制对象不能豁免外部动作、伪装成员、错配或缺损字段", async () => {
+  const variants: ControlFixture[] = [];
+  const change = (fixture: ControlFixture, mutate: (payload: Record<string, any>) => void) => {
+    const copy = structuredClone(fixture);
+    mutate(copy.payload);
+    variants.push(copy);
+  };
+  for (const fixture of controlFixtures()) {
+    for (const field of ["action", "tool", "kind", "params"]) change(fixture, p => { p.decision[field] = "publish.execute"; });
+    change(fixture, p => { p.who.type = "agent"; });
+    change(fixture, p => { p.who.id = "MEM-unknown"; });
+    change(fixture, p => { p.context.tenant_id = "another-tenant"; });
+    change(fixture, p => { p.context.workspace_id = "another-workspace"; });
+    change(fixture, p => { p.context.channel = "external"; });
+    change(fixture, p => { p.object.id = "wrong-id"; });
+    change(fixture, p => { p.receipt = { synced: true }; });
+    change(fixture, p => { p.model_trace = {}; });
+    change(fixture, p => { p.rule_impact = [{ rule_id: "G9", result: "pass" }]; });
+    change(fixture, p => { p.decision.after.externalAction = "publish.execute"; });
+    for (const value of [null, "bad", 1, [], {}]) change(fixture, p => { p.decision.after = value; });
+    for (const value of [null, "bad", 1, []]) change(fixture, p => { p.decision = value; });
+    const after = (fixture.payload.decision as { after: Record<string, unknown> }).after;
+    for (const field of Object.keys(after)) change(fixture, p => { delete p.decision.after[field]; });
+    variants.push({ ...structuredClone(fixture), sessionId: fixture.sessionId === null ? "T-203" : "T-204" });
+  }
+  const film = controlFixtures()[0]!;
+  for (const [field, values] of Object.entries({
+    stages: [[], ["spec", "spec"], ["external-publish"], [1], "spec", {}],
+    budgetCny: [-1, "0", null, {}], inputSha256: ["bad", 123], workerEntrySha256: ["bad", null],
+    projectId: ["../escape", "", 123], jobId: ["FJ-other-12345678", 123],
+  })) for (const value of values) change(film, p => { p.decision.after[field] = value; });
+  const bound = controlFixtures()[2]!;
+  change(bound, p => { p.decision.after.rollbackExternalActions = true; });
+  change(bound, p => { p.decision.after.stopping = "rollback-paid-action"; });
+  change(bound, p => { p.decision.after.alreadyTerminal = "false"; });
+  change(bound, p => { p.decision.after.state = "running"; });
+  change(bound, p => { p.decision.after.state = "completed"; });
+  for (const [index, fixture] of variants.entries())
+    assert(!(await controlAllowed(fixture)), `控制事件负对照 ${index + 1} 获得回执豁免`);
 });
 
 /* ================= 执行 ================= */

@@ -201,6 +201,28 @@ export const fenceDryRuns = pgTable("fence_dry_runs", {
 
 /* ---------- 会话与审批（M3 / M5） ---------- */
 
+/** Scoped durable CLI/MCP ownership; DDL/RLS/state guards live in 0055. */
+export const agentInvocations = pgTable("agent_invocations", {
+  id: text("id").primaryKey(),
+  tenantId: text("tenant_id").notNull().references(() => tenants.id),
+  workspaceId: text("workspace_id").notNull().references(() => workspaces.id),
+  memberNo: text("member_no").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  action: text("action").notNull(),
+  inputSha256: text("input_sha256").notNull(),
+  requestMeta: jsonb("request_meta").notNull().default({}),
+  ownerToken: text("owner_token").notNull(),
+  state: text("state").notNull().default("reserved"),
+  entityKind: text("entity_kind"),
+  entityId: text("entity_id"),
+  eventId: text("event_id"),
+  result: jsonb("result"),
+  failureCode: text("failure_code"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [unique("agent_invocations_scoped_key").on(t.tenantId, t.workspaceId, t.memberNo, t.idempotencyKey),
+  index("idx_agent_invocations_scope").on(t.tenantId, t.workspaceId, t.memberNo, t.updatedAt)]);
+
 /** 任务线程（F3.4 状态机；单工作区 ≤10 并发 G11） */
 export const threads = pgTable(
   "threads",

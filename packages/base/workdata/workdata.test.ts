@@ -107,13 +107,22 @@ describe("权限段①（F2.10/L9.1 复查位）", () => {
 describe("高风险授权段③（L3.5 + P1-8 验真）", () => {
   const desktop = { id: "desktop-agent", type: "agent" as const, highRisk: true, fenceBindings: ["R2"] };
   const scope = { tenantId: "tenant-demo", workspaceId: "ws-yunqi" };
+  /** 审批表桩：模拟 approvals 查询结果（P1-8 段③已改为查表验真） */
   /**
-   * 审批表桩：模拟 approvals 查询结果（P1-8 段③查表验真 + B-02 一次性消费）。
-   * 一次性消费走 `UPDATE approvals SET consumed_at …` 并看 rowCount——桩必须回传 rowCount，
-   * 否则消费被判 0 行（等价「已被消费」）而误拒。
+   * B-02（排雷台账）：验真通过后有一次**原子消费**写入
+   * （`UPDATE approvals SET consumed_at=now() ... WHERE consumed_at IS NULL`），
+   * rowCount=0 即「票据已被消费」拒绝。stub 必须区分这两条语句，
+   * 否则测试会把消费当成放行（旧 stub 对任何 SQL 都回同一组 rows，掩盖了消费语义）。
    */
-  const stubDb = (rows: Array<{ status: string; snapshot: unknown }>) =>
-    ({ query: async () => ({ rows, rowCount: rows.length }) }) as unknown as GatewayQueryable;
+  const stubDb = (rows: Array<{ status: string; snapshot: unknown }>, opts: { consumed?: boolean } = {}) =>
+    ({
+      query: async (sql: string) => {
+        if (/UPDATE approvals SET consumed_at/.test(sql)) {
+          return opts.consumed === true ? { rows: [], rowCount: 0 } : { rows: [], rowCount: 1 };
+        }
+        return { rows };
+      },
+    }) as unknown as GatewayQueryable;
   /** 一次性消费桩：第一次消费返回 1 行、再次消费返回 0 行（模拟 consumed_at 已置位） */
   const consumingStubDb = (rows: Array<{ status: string; snapshot: unknown }>) => {
     let consumed = false;
@@ -170,6 +179,15 @@ describe("高风险授权段③（L3.5 + P1-8 验真）", () => {
     const db = consumingStubDb([{ status: "approved", snapshot: {} }]);
     await expect(checkHighRiskAuthorization(db, scope, desktop, d(), "apr-once")).resolves.toBeUndefined();
     await expect(checkHighRiskAuthorization(db, scope, desktop, d(), "apr-once")).rejects.toThrow(/已被消费/);
+  });
+
+  it("票据一次性消费：已被消费的审批再次验真必须被拒（B-02 / L3.5 逐次授权）", async () => {
+    await expect(
+      checkHighRiskAuthorization(
+        stubDb([{ status: "approved", snapshot: {} }], { consumed: true }),
+        scope, desktop, d(), "apr-1",
+      ),
+    ).rejects.toThrow(/已被消费/);
   });
 
   it("非高危身份不查库直接放行", async () => {

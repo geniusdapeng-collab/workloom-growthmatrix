@@ -20,10 +20,14 @@ import {
   signDemoToken,
   type Identity,
 } from "@workloom/base/tenancy";
-import { gatewayAppend, gatewayAppendOnClient, MockEmbedder, upsertMemoryInTx } from "@workloom/base/workdata";
+import { gatewayAppend, gatewayAppendOnClient, insertWithReadableId, MockEmbedder, THREAD_ID_SOURCE, upsertMemoryInTx } from "@workloom/base/workdata";
+import { makeReadableId } from "@workloom/shared";
 import { capabilityWriteProcedure, protectedProcedure, publicProcedure, router, scopeOf, sessionProcedure, writeProcedure } from "./context.js";
 import { insertQueuedThread, mapDispatchDbError } from "../runtime/thread-admission.js";
+import { lockAgentInvocation, linkAgentInvocation } from "../agent/invocations.js";
+import { buildAgentRouter } from "./agent-router.js";
 import { accountsRouter } from "./accounts-router.js";
+import { assertDemoLoginAllowed, desktopLoginTarget } from "../service/desktop-auth.js";
 import {
   ApprovalError,
   batchApprove,
@@ -852,6 +856,7 @@ const authRouter = router({
   loginAs: publicProcedure
     .input(z.object({ workspaceSlug: z.string(), memberNo: z.string() }))
     .mutation(async ({ input }) => {
+      assertDemoLoginAllowed();
       const app = getAppPool();
       // 登录引导例外点（F7.1）：身份未建立前无法 set_config，workspace 解析走 owner 池
       const ws = await getOwnerPool().query<{ id: string; tenant_id: string }>(
@@ -876,6 +881,23 @@ const authRouter = router({
       };
       return { token: await signDemoToken(identity), identity };
     }),
+  desktopLogin: publicProcedure.mutation(async ({ ctx }) => {
+    const target = desktopLoginTarget(ctx.headers);
+    const ws = await getOwnerPool().query<{ id: string; tenant_id: string }>(
+      "SELECT id, tenant_id FROM workspaces WHERE slug=$1", [target.workspaceSlug],
+    );
+    const workspace = ws.rows[0];
+    if (!workspace) throw new TRPCError({ code: "NOT_FOUND", message: "本机工作区尚未就绪" });
+    const scope = { tenantId: workspace.tenant_id, workspaceId: workspace.id };
+    const member = await getMember(getAppPool(), scope, target.memberNo);
+    if (!member) throw new TRPCError({ code: "NOT_FOUND", message: "本机成员尚未就绪" });
+    const tenant = await getOwnerPool().query<{ plan: Identity["plan"] }>(
+      "SELECT plan FROM tenants WHERE id=$1", [scope.tenantId],
+    );
+    const identity: Identity = { ...scope, memberId: member.id, memberNo: member.memberNo,
+      name: member.name, role: member.role, plan: tenant.rows[0]?.plan ?? "community" };
+    return { token: await signDemoToken(identity), identity };
+  }),
   /** 版本切换演示（F12 权限态：社区版/Pro/Teams/VPC 实切，F7.2 能力矩阵即时生效）
    *  owner 专属；写 tenants.plan（登录引导例外点同口径走 owner 池）+ 留痕 plan.switch（G8）+ 重签 JWT */
   setPlan: protectedProcedure
@@ -1205,6 +1227,10 @@ const threadsRouter = router({
         await client.query("BEGIN");
         await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
         await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]);
+        if (ctx.agentInvocation) {
+          if (ctx.agentInvocation.memberNo !== ctx.identity.memberNo) throw new TRPCError({ code: "FORBIDDEN", message: "调用成员绑定不符" });
+          await lockAgentInvocation(client, scope, ctx.agentInvocation);
+        }
         /**
          * U-03（并发上限形同虚设）：上限判定必须与建档在同一串行点——
          * 此前 12 路并发同时读到 count<10 各自放行，实测占用冲到 13/10。
@@ -1222,8 +1248,7 @@ const threadsRouter = router({
         const conc = await client.query<{ c: string }>(
           `SELECT count(*) AS c FROM threads
             WHERE workspace_id=$1
-              AND (status='queued'
-                   OR (status='running' AND updated_at > now() - ($2::text || ' minutes')::interval))`,
+              AND status='running' AND updated_at > now() - ($2::text || ' minutes')::interval`,
           [scope.workspaceId, String(Number.isFinite(staleRunningMin) && staleRunningMin > 0 ? staleRunningMin : 10)],
         );
         if (Number(conc.rows[0]?.c ?? 0) >= MAX_CONCURRENT_THREADS) {
@@ -1238,11 +1263,14 @@ const threadsRouter = router({
          * X-07（第四轮实测，P2）：建档即写 agent_id——此前只有 runQuest 执行时才回填，
          * 排队中的线程在楼层上无归属（`agent_id IS NULL` 被过滤），客户看不到"谁在排这条队"。
          */
-        const ownerAgent = await client.query<{ id: string }>(
-          `SELECT id FROM agents WHERE workspace_id=$1 AND preset_key=$2 LIMIT 1`,
+        const ownerAgent = await client.query<{ id: string; status: string }>(
+          `SELECT id,status FROM agents WHERE workspace_id=$1 AND preset_key=$2 LIMIT 1 FOR SHARE`,
           [scope.workspaceId, presetKey],
         );
         const ownerAgentId = ownerAgent.rows[0]?.id ?? null;
+        if (ctx.agentInvocation && (!ownerAgentId || ownerAgent.rows[0]?.status !== "ready")) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "派单岗位不存在或尚未就绪，拒绝回落替代岗位" });
+        }
         /**
          * GR-02 第②条 + U-03：号源取号与插入封装进 `insertQueuedThread`——
          * 撞号在 SAVEPOINT 内回滚重试（此前 23505 后事务已中止，重试的取号 SELECT
@@ -1257,7 +1285,7 @@ const threadsRouter = router({
           agentId: ownerAgentId,
         });
         // D16（#1/A）：建线程与派遣事件同一事务（G8 留痕不再独立于状态）
-        await gatewayAppendOnClient(client, {
+        const dispatchEvent = await gatewayAppendOnClient(client, {
           ...scope,
           actor: { id: ctx.identity.memberNo, type: "human" },
           sessionId: threadId,
@@ -1275,6 +1303,7 @@ const threadsRouter = router({
           },
           rule_impact: [],
         });
+        if (ctx.agentInvocation) await linkAgentInvocation(client, ctx.agentInvocation, "thread", threadId, dispatchEvent.eventId);
         // A-08 修复：COMMIT 纳入 try 主体——此前在 finally 里 .catch(()=>undefined) 吞掉，
         // COMMIT 失败（连接断开/序列化冲突）时事务实际回滚但调用方按成功继续（幽灵账本）
         await client.query("COMMIT");
@@ -1580,8 +1609,8 @@ const threadsRouter = router({
           `SELECT payload FROM biz_events WHERE workspace_id=$1 AND session_id=$2 ORDER BY seq ASC`,
           [scope.workspaceId, input.threadId],
         );
-        const registered = artifactsOfEvents(r.rows.map((row) => row.payload))
-          .filter((item) => Boolean(ARTIFACT_MIME[extname(item.path).toLowerCase()]));
+        // Use the same original registration index advertised by artifacts().
+        const registered = artifactsOfEvents(r.rows.map((row) => row.payload));
         entry = registered[input.index];
       } catch (err) {
         await client.query("ROLLBACK").catch(() => undefined);
@@ -1689,16 +1718,6 @@ const threadsRouter = router({
 });
 
 /**
- * 步骤级审批通过 → Quest 自动续跑（2026-09-20 三合一真机修复）。
- *
- * 原语义：审批只改审批状态，用户还得回任务页点"继续推进"；生图/发布这类**半程任务**
- * 于是停在 waiting 态（实测："生成一张手冲咖啡图"批完不出图）。这里在审批落库后
- * 异步续跑一次（fire-and-forget）：
- *  - 只处理审批事件带 `decision.step_id` 与 `session_id`（线程）的步骤级审批；
- *  - 线程非 quest 模式或已完成 → 跳过；续跑仍走围栏/回执原语义（不伪造完成）；
- *  - 失败只落服务端日志，审批结果不变（用户仍可手动"继续推进"）。
- */
-/**
  * B-05/B-06 修复：批准后副作用统一钩子（单笔 decide / 批量 batchApprove / IM 手势回调三路同钩）。
  *  - 围栏激活：保持同步 await（既有验收口径：decide 返回即生效），失败隔离不反噬审批结果；
  *  - Quest 续跑：scheduleQuestResumeAfterApproval（内部自管 setTimeout/catch）；
@@ -1739,6 +1758,17 @@ async function runPostApprovalSideEffects(
     console.error(`[approvals] HR 汰换副作用失败 ${approvalId}（审批结果不变）：`, err instanceof Error ? err.message : err);
   }
 }
+
+/**
+ * 步骤级审批通过 → Quest 自动续跑（2026-09-20 三合一真机修复）。
+ *
+ * 原语义：审批只改审批状态，用户还得回任务页点"继续推进"；生图/发布这类**半程任务**
+ * 于是停在 waiting 态（实测："生成一张手冲咖啡图"批完不出图）。这里在审批落库后
+ * 异步续跑一次（fire-and-forget）：
+ *  - 只处理审批事件带 `decision.step_id` 与 `session_id`（线程）的步骤级审批；
+ *  - 线程非 quest 模式或已完成 → 跳过；续跑仍走围栏/回执原语义（不伪造完成）；
+ *  - 失败只落服务端日志，审批结果不变（用户仍可手动"继续推进"）。
+ */
 
 function scheduleQuestResumeAfterApproval(
   scope: { tenantId: string; workspaceId: string },
@@ -3073,12 +3103,16 @@ const rosterRouter = router({
  *  Mock 驱动默认（D4 同纪律：无真实凭据全流程可跑）；真实通道凭据在 dsh 设置页配置（dsh-im，D14），
  *  凭据永不经事件明文（L7.3）。server 层只做装配与错误映射，纪律全部内聚在 packages/base/im-channels。 */
 const imDriverKind = process.env.IM_DRIVER ?? "mock";
-const imDrivers = new Map<ApprovalChannel, MockChannelDriver>();
-function mockDriverFor(channel: ApprovalChannel): MockChannelDriver {
-  let d = imDrivers.get(channel);
+const imDrivers = new Map<string, MockChannelDriver>();
+function imDriverKey(scope: { tenantId: string; workspaceId: string }, channel: ApprovalChannel): string {
+  return JSON.stringify([scope.tenantId, scope.workspaceId, channel]);
+}
+function mockDriverFor(scope: { tenantId: string; workspaceId: string }, channel: ApprovalChannel): MockChannelDriver {
+  const key = imDriverKey(scope, channel);
+  let d = imDrivers.get(key);
   if (!d) {
     d = new MockChannelDriver(channel);
-    imDrivers.set(channel, d);
+    imDrivers.set(key, d);
   }
   return d;
 }
@@ -3171,7 +3205,7 @@ const imRouter = router({
         const sent = await sendApprovalCard(
           getGatewayPool(),
           scope,
-          mockDriverFor(input.channel),
+          mockDriverFor(scope, input.channel),
           { conversationId: input.conversationId },
           card,
           ctx.identity.memberNo,
@@ -3225,7 +3259,7 @@ const imRouter = router({
           getGatewayPool(),
           scope,
           input,
-          mockDriverFor(input.channel),
+          mockDriverFor(scope, input.channel),
           // B-05 修复：IM 手势批准与端内 decide 同钩子（批准≠执行断链对症）
           { onApproved: (id) => runPostApprovalSideEffects(scope, id) },
         );
@@ -3237,9 +3271,9 @@ const imRouter = router({
   /** mock 出站盒检视（IM_DRIVER=mock 联调/演示用；真实驱动下为空） */
   outbox: protectedProcedure
     .input(z.object({ channel: z.enum(["dingtalk", "wecom", "feishu"]) }))
-    .query(({ input }) => ({
+    .query(({ ctx, input }) => ({
       driver: imDriverKind,
-      outbox: imDrivers.get(input.channel)?.outbox ?? [],
+      outbox: imDrivers.get(imDriverKey(scopeOf(ctx.identity), input.channel))?.outbox ?? [],
     })),
 });
 
@@ -3827,6 +3861,7 @@ const captainRouter = router({
     try {
       await client.query("BEGIN");
       await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
+      await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]);
       const tiers = await client.query<{ tier: string; n: string }>(
         `SELECT tier, count(*)::text AS n FROM approvals WHERE workspace_id=$1 AND status='pending' GROUP BY 1`,
         [scope.workspaceId],
@@ -3841,8 +3876,8 @@ const captainRouter = router({
         [scope.workspaceId],
       );
       const agents = await client.query<{ id: string; preset_key: string; name: string; alias: string | null }>(
-        // 欢迎仪式必须拿到完整编制；固定 12 会静默裁掉大型 Bundle 的成员。
-        `SELECT id, preset_key, name, alias FROM agents WHERE workspace_id=$1 AND status='ready' ORDER BY id LIMIT 64`,
+        // 欢迎仪式与剧场均展示当前工作区完整在岗编制，人数由装配结果决定。
+        `SELECT id, preset_key, name, alias FROM agents WHERE workspace_id=$1 AND status='ready' ORDER BY id`,
         [scope.workspaceId],
       );
       const grades = await client.query<{ agent_id: string; grade: string }>(
@@ -4102,6 +4137,7 @@ export const appRouter = router({
   accounts: accountsRouter,
   members: membersRouter,
   threads: threadsRouter,
+  agent: buildAgentRouter({ dispatch: (ctx, input) => threadsRouter.createCaller(ctx).dispatch(input) }),
   approvals: approvalsRouter,
   inspection: inspectionRouter,
   skills: skillsRouter,

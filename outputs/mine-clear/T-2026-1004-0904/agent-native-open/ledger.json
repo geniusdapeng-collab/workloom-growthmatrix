@@ -1,0 +1,783 @@
+{
+  "schema": "workloom.mine-clear/ledger@1",
+  "task_id": "T-2026-1004-0904",
+  "repo": "growthmatrix",
+  "repo_path": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/growthmatrix",
+  "title": "Matrix CLI/MCP 与客户运行资产",
+  "created_at": "2026-10-04T17:24:08.024Z",
+  "updated_at": "2026-10-04T20:58:52.155Z",
+  "baseline": {
+    "audit": {
+      "commit": "42b09a2da7b9381924627306e227e987b6674148",
+      "branch": "task/T-2026-1004-0904",
+      "remote": "origin",
+      "fetched_at": "2026-10-04T17:24:07.934Z",
+      "fetch_status": "success",
+      "notes": "本地 HEAD 不是 origin/main 最新（云端 52b01ce9 / 本地 42b09a2d）——按 §1.2 先对齐基线"
+    },
+    "repair": {
+      "commit": null,
+      "reverified_problem_ids": []
+    },
+    "acceptance": {
+      "commit": null,
+      "is_descendant_of_repair": null
+    }
+  },
+  "environment": {
+    "kind": "local-preview",
+    "notes": ""
+  },
+  "invariants": [],
+  "cards": [
+    {
+      "id": "MC-107",
+      "kind": "problem",
+      "level": "L4",
+      "severity": "P1",
+      "batch": 3,
+      "state": "open",
+      "title": "Codex 缺少可执行的系统与指定岗位/影片阶段 CLI/MCP 及持久回执",
+      "root_cause": {
+        "file": "scripts/agent-capabilities.core.json",
+        "line": 1,
+        "commit": "42b09a2da7b9381924627306e227e987b6674148",
+        "symbol": "Matrix reviewed capability and runtime asset manifest"
+      },
+      "trigger_path": "Codex 缺少可执行的系统与指定岗位/影片阶段 CLI/MCP 及持久回执；实际旧入口失败，完整合同在干净修复提交与独立角色重跑。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "scripts/agent-capabilities.core.json:1@42b09a2da7b9381924627306e227e987b6674148",
+          "sha256": "48d78ddeca99bc02db78ccd20ea7f207ce3b6906ec896c7bff95826953d231cb"
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-agent-dispatch-missing-before.log",
+          "sha256": "cd894b519b8a908bc6eb509a8c25718cdb41b9229b4776d2c4781c352379ce69",
+          "commit": "42b09a2da7b9381924627306e227e987b6674148",
+          "note": "Observed clean 42b09a2da7b9381924627306e227e987b6674148 source receipt, preserved before this implementation. Fresh supplemental audit baseline; no inherited green."
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-agent-dispatch-missing-before.json",
+          "sha256": "d06bc4d170fcc1d5dac38238ce78b71274d1d2138d2f5b839589e9ed6443c516",
+          "commit": "42b09a2da7b9381924627306e227e987b6674148",
+          "note": "Observed clean 42b09a2da7b9381924627306e227e987b6674148 source receipt, preserved before this implementation. Fresh supplemental audit baseline; no inherited green."
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual Matrix commit and task-owned loopback/physical sandbox, no paid or customer I/O",
+          "expect": "Nonzero actual CLI/MCP transport and schema assertions pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --test scripts/agent-execution.test.mjs",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--test",
+              "scripts/agent-execution.test.mjs"
+            ]
+          },
+          "last_result": "not-run"
+        },
+        {
+          "kind": "sample",
+          "given": "Actual Matrix commit and task-owned loopback/physical sandbox, no paid or customer I/O",
+          "expect": "Nonzero durable invocation/API/PostgreSQL isolation and concurrency tests pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --env-file=.env /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/server exec vitest run src/agent/invocations.pg.test.ts src/trpc/agent-router.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "apps/server",
+              "exec",
+              "vitest",
+              "run",
+              "src/agent/invocations.pg.test.ts",
+              "src/trpc/agent-router.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        },
+        {
+          "kind": "sample",
+          "given": "Clean Matrix source, actual seeded employee registry, owned mock-only service and current ready-source binding",
+          "expect": "Every installed employee is invoked by the real CLI and replayed by the real MCP with the same scoped employee, entity and answer; stopped employees refuse without a substitute",
+          "command": "python3 work/matrix_cli_contract.py --group employees",
+          "exec": {
+            "file": "/Library/Developer/CommandLineTools/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_cli_contract.py",
+              "--group",
+              "employees"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --test scripts/agent-execution.test.mjs",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Explicit feature/native obligation in the owner request; recorded before source writes. Added an executable whole-roster transport contract before clean repair execution; the original dirty 84-employee receipt remains separate."
+    },
+    {
+      "id": "MC-108",
+      "kind": "problem",
+      "level": "L4",
+      "severity": "P1",
+      "batch": 3,
+      "state": "open",
+      "title": "本仓物理客户运行包缺少 CLI/MCP 与影片/技能运行资产的统一安装预检",
+      "root_cause": {
+        "file": "scripts/pack-electron-payload.sh",
+        "line": 1,
+        "commit": "42b09a2da7b9381924627306e227e987b6674148",
+        "symbol": "Matrix reviewed capability and runtime asset manifest"
+      },
+      "trigger_path": "本仓物理客户运行包缺少 CLI/MCP 与影片/技能运行资产的统一安装预检；实际旧入口失败，完整合同在干净修复提交与独立角色重跑。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "scripts/pack-electron-payload.sh:1@42b09a2da7b9381924627306e227e987b6674148",
+          "sha256": "0e91155a79c6147ee944e00987235caa9e5d8df368875970d8ad8e9a33441b01"
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-physical-runtime-first-clean-port.log",
+          "sha256": "a02a90a4b846e0ca16839b35d083263c240319e5ce1299164bc90d6516b7da2c",
+          "commit": "42b09a2da7b9381924627306e227e987b6674148",
+          "note": "Observed clean 42b09a2da7b9381924627306e227e987b6674148 source receipt, preserved before this implementation. Fresh supplemental audit baseline; no inherited green."
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-physical-runtime-first-clean-port.json",
+          "sha256": "8f34d097c4ea0f2c2f6a8f07fe304b0a0acbfef73fd4c350c647586e6450dc7e",
+          "commit": "42b09a2da7b9381924627306e227e987b6674148",
+          "note": "Observed clean 42b09a2da7b9381924627306e227e987b6674148 source receipt, preserved before this implementation. Fresh supplemental audit baseline; no inherited green."
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Actual Matrix commit and task-owned loopback/physical sandbox, no paid or customer I/O",
+          "expect": "Nonzero runtime assets and all-before-write source/destination path tests pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --test scripts/product-runtime-assets.test.mjs scripts/pack-workspace-modules.test.mjs",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--test",
+              "scripts/product-runtime-assets.test.mjs",
+              "scripts/pack-workspace-modules.test.mjs"
+            ]
+          },
+          "last_result": "not-run"
+        },
+        {
+          "kind": "sample",
+          "given": "Actual Matrix commit and task-owned loopback/physical sandbox, no paid or customer I/O",
+          "expect": "Actual source-bound Matrix physical imports and CLI/MCP work after relocation",
+          "command": "/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py --group physical",
+          "exec": {
+            "file": "/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_card_probe.py",
+              "--group",
+              "physical"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node --test scripts/product-runtime-assets.test.mjs scripts/pack-workspace-modules.test.mjs",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Explicit feature/native obligation in the owner request; recorded before source writes."
+    },
+    {
+      "id": "MC-109",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P1",
+      "batch": 1,
+      "state": "open",
+      "title": "混合格式产物的清单索引与取件索引不一致",
+      "root_cause": {
+        "file": "apps/server/src/trpc/router.ts",
+        "line": 1567,
+        "commit": "42b09a2da7b9381924627306e227e987b6674148",
+        "symbol": "threads.artifacts / artifactData"
+      },
+      "trigger_path": "混合格式产物的清单索引与取件索引不一致；固定 Git 原文的静态发现，与新功能测试联动复现。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/server/src/trpc/router.ts:1567@42b09a2da7b9381924627306e227e987b6674148",
+          "sha256": "964262ee29db87168d2c85b91a7f0a8a3ff92f06e607247804cca75fa3b491ba",
+          "note": "A: independently read original clean 42b Git blob; no imported pass"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Real app-role PostgreSQL fixtures and registered task-owned artifact bytes; mock IM only",
+          "expect": "Nonzero mixed-artifact and three-scope mock-outbox isolation tests pass",
+          "command": "node --env-file=.env /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/server exec vitest run src/trpc/router-isolation.pg.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "apps/server",
+              "exec",
+              "vitest",
+              "run",
+              "src/trpc/router-isolation.pg.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "node --env-file=.env /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/server exec vitest run src/trpc/router-isolation.pg.test.ts",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Dirty-source red execution matrix-legacy-router-isolation-red is retained outside this ledger with its real source_before/source_after. It is not relabeled as clean 42b runtime proof."
+    },
+    {
+      "id": "MC-110",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P0",
+      "batch": 1,
+      "state": "open",
+      "title": "IM 模拟出站盒缓存按通道共享，跨工作区泄露审批卡",
+      "root_cause": {
+        "file": "apps/server/src/trpc/router.ts",
+        "line": 3095,
+        "commit": "42b09a2da7b9381924627306e227e987b6674148",
+        "symbol": "imDrivers / im.outbox"
+      },
+      "trigger_path": "IM 模拟出站盒缓存按通道共享，跨工作区泄露审批卡；固定 Git 原文的静态发现，与新功能测试联动复现。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/server/src/trpc/router.ts:3095@42b09a2da7b9381924627306e227e987b6674148",
+          "sha256": "964262ee29db87168d2c85b91a7f0a8a3ff92f06e607247804cca75fa3b491ba",
+          "note": "A: independently read original clean 42b Git blob; no imported pass"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Real app-role PostgreSQL fixtures and registered task-owned artifact bytes; mock IM only",
+          "expect": "Nonzero mixed-artifact and three-scope mock-outbox isolation tests pass",
+          "command": "node --env-file=.env /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/server exec vitest run src/trpc/router-isolation.pg.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "apps/server",
+              "exec",
+              "vitest",
+              "run",
+              "src/trpc/router-isolation.pg.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "node --env-file=.env /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/server exec vitest run src/trpc/router-isolation.pg.test.ts",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Dirty-source red execution matrix-legacy-router-isolation-red is retained outside this ledger with its real source_before/source_after. It is not relabeled as clean 42b runtime proof."
+    },
+    {
+      "id": "MC-115",
+      "kind": "problem",
+      "level": "L4",
+      "severity": "P1",
+      "batch": 3,
+      "state": "open",
+      "title": "固定影片工位初始化后仍被旧未接线守卫拒绝，CLI/MCP 影片阶段不能执行",
+      "root_cause": {
+        "file": "scripts/tools/full-chain-film.mts",
+        "line": 138,
+        "commit": "42b09a2da7b9381924627306e227e987b6674148",
+        "symbol": "WORKER_MODE_NOT_WIRED guard after WORKER_RUNTIME.fromEnvironment"
+      },
+      "trigger_path": "Actual video.film.start CLI -> durable agent invocation -> registered film worker -> worker-mode full-chain entry throws at old guard. Dirty candidate actual red is preserved with its actual source binding outside the ledger.",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "scripts/tools/full-chain-film.mts:138@42b09a2da7b9381924627306e227e987b6674148",
+          "sha256": "accde12d0956560278c3ea467a00c124298892e9338fa6f55d0213f63aba8c22",
+          "note": "A: full 8218-line source read; frozen Git root cause also present at 42b. Actual candidate red receipt is not relabeled as a clean fixed-commit execution."
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Owned loopback service and audit PostgreSQL; no paid providers or customer data",
+          "expect": "Nonzero frozen-source, expired deadline, parent scope, channel and stage/artifact assertions pass",
+          "command": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C packages/video-studio exec vitest run src/film-worker-runtime.test.ts src/film-worker-channel.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "packages/video-studio",
+              "exec",
+              "vitest",
+              "run",
+              "src/film-worker-runtime.test.ts",
+              "src/film-worker-channel.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        },
+        {
+          "kind": "sample",
+          "given": "Owned loopback service and audit PostgreSQL; no paid providers or customer data",
+          "expect": "Actual clean product CLI and MCP execute three fixed stages, readable artifact hashes, replay and reject forbidden options",
+          "command": "/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_cli_contract.py --group film",
+          "exec": {
+            "file": "/usr/bin/python3",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_cli_contract.py",
+              "--group",
+              "film"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "/usr/bin/python3 /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix_cli_contract.py --group film",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Actual candidate failure: evidence/matrix-agent-real-cli-mcp-film.json and work/matrix-agent-sandbox-20261005/film-client-attempts/8b222ed4-d88e-4eb0-a688-50373b5119f0/failure.json. No thresholds or review gates weakened."
+    },
+    {
+      "id": "MC-116",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P0",
+      "batch": 1,
+      "state": "open",
+      "title": "巡检查重、建单、回链必须同事务；跨租户不可见，COMMIT 失败不得返回成功",
+      "root_cause": {
+        "file": "packages/base/inspection/dispatch.ts",
+        "line": 120,
+        "commit": "42b09a2da7b9381924627306e227e987b6674148",
+        "symbol": "巡检查重、建单、回链必须同事务；跨租户不可见，COMMIT 失败不得返回成功"
+      },
+      "trigger_path": "巡检查重、建单、回链必须同事务；跨租户不可见，COMMIT 失败不得返回成功；断言将在干净修复提交和独立验收角色实际重跑。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "packages/base/inspection/dispatch.ts:120@42b09a2da7b9381924627306e227e987b6674148",
+          "sha256": "9d4cfd496d7b818c82b3f3fd6b4a2e68ab561ef623bd6e2cfe2830c780401e74",
+          "note": "Fixed Git source finding, not dirty runtime acceptance."
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-inspection-transactions-red.json",
+          "sha256": "46a130809ac33e9ad8b88fa8e675aebf17fa76342754ed0cba37e4651219daa5",
+          "commit": "42b09a2da7b9381924627306e227e987b6674148",
+          "note": "Historical root run; exact source_before/source_after and dirty paths remain in this unchanged receipt. Not relabeled as clean audit execution."
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-inspection-concurrency-real-pg-red-command-corrected.json",
+          "sha256": "8ec83574d0cbae98160cd75d9f9af348236d78429f1f8bbf48e34d207306d8ae",
+          "commit": "42b09a2da7b9381924627306e227e987b6674148",
+          "note": "Historical root run; exact source_before/source_after and dirty paths remain in this unchanged receipt. Not relabeled as clean audit execution."
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Source-bound Matrix test; unique controlled local fixtures; no paid or customer data",
+          "expect": "Eight actual public-operation commit/rollback/discard and double-scope tests pass",
+          "command": "node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C packages/base exec vitest run inspection/transaction-failure.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "packages/base",
+              "exec",
+              "vitest",
+              "run",
+              "inspection/transaction-failure.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        },
+        {
+          "kind": "sample",
+          "given": "Source-bound Matrix test; unique controlled local fixtures; no paid or customer data",
+          "expect": "Five actual PostgreSQL concurrency, scope, linked-thread and atomic rollback tests pass",
+          "command": "node --env-file=.env /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C packages/base exec vitest run inspection/dispatch.pg.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "packages/base",
+              "exec",
+              "vitest",
+              "run",
+              "inspection/dispatch.pg.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C packages/base exec vitest run inspection/transaction-failure.test.ts",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Root recorded source observations before edits; dynamic failures are retained with actual dirty-tree source state. MC-116 is added before inspection implementation writes."
+    },
+    {
+      "id": "MC-111",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P1",
+      "batch": 1,
+      "state": "open",
+      "title": "物理复制必须先验证全部来源与目标，拒绝晚到坏路径和链接越界",
+      "root_cause": {
+        "file": "scripts/pack-workspace-modules.mjs",
+        "line": 18,
+        "commit": "42b09a2da7b9381924627306e227e987b6674148",
+        "symbol": "物理复制必须先验证全部来源与目标，拒绝晚到坏路径和链接越界"
+      },
+      "trigger_path": "物理复制必须先验证全部来源与目标，拒绝晚到坏路径和链接越界；断言将在干净修复提交和独立验收角色实际重跑。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "scripts/pack-workspace-modules.mjs:18@42b09a2da7b9381924627306e227e987b6674148",
+          "sha256": "b28d5fc4e31dadd2f9567f6e65da95cd1e2595a4097e2fc7c6d2935127cb313a",
+          "note": "Fixed Git source finding, not dirty runtime acceptance."
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Source-bound Matrix test; unique controlled local fixtures; no paid or customer data",
+          "expect": "Actual nonzero preflight/atomic-copy/source and destination symlink tests pass",
+          "command": "node --test scripts/pack-workspace-modules.test.mjs scripts/product-runtime-assets.test.mjs",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--test",
+              "scripts/pack-workspace-modules.test.mjs",
+              "scripts/product-runtime-assets.test.mjs"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "node --test scripts/pack-workspace-modules.test.mjs scripts/product-runtime-assets.test.mjs",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Root recorded source observations before edits; dynamic failures are retained with actual dirty-tree source state. MC-116 is added before inspection implementation writes."
+    },
+    {
+      "id": "MC-112",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P1",
+      "batch": 1,
+      "state": "open",
+      "title": "客户首启先验证运行资产，物理桥接读取完整数据库配置且不修改已有数据",
+      "root_cause": {
+        "file": "apps/desktop/electron/bootstrap.cjs",
+        "line": 1,
+        "commit": "42b09a2da7b9381924627306e227e987b6674148",
+        "symbol": "客户首启先验证运行资产，物理桥接读取完整数据库配置且不修改已有数据"
+      },
+      "trigger_path": "客户首启先验证运行资产，物理桥接读取完整数据库配置且不修改已有数据；断言将在干净修复提交和独立验收角色实际重跑。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/desktop/electron/bootstrap.cjs:1@42b09a2da7b9381924627306e227e987b6674148",
+          "sha256": "2647dd2753e17a9d3db8794abdfaa7a8089c712934e996d9171e2de14a265330",
+          "note": "Fixed Git source finding, not dirty runtime acceptance."
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-desktop-bridge-envfile-red.json",
+          "sha256": "01a8d852436e794eda2eb17b96c6704d91894b5cc2cf34d537b0be0f4c8b9ae4",
+          "commit": "42b09a2da7b9381924627306e227e987b6674148",
+          "note": "Historical root run; exact source_before/source_after and dirty paths remain in this unchanged receipt. Not relabeled as clean audit execution."
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-desktop-manifest-precommit-red.json",
+          "sha256": "05f231ff5a275b38a68c351cc27a6454f202315ccd2ebddfcbc9a86fe10d4008",
+          "commit": "42b09a2da7b9381924627306e227e987b6674148",
+          "note": "Historical root run; exact source_before/source_after and dirty paths remain in this unchanged receipt. Not relabeled as clean audit execution."
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Source-bound Matrix test; unique controlled local fixtures; no paid or customer data",
+          "expect": "Actual nonzero bootstrap, preflight and environment bridge tests pass",
+          "command": "node --test apps/desktop/electron/bootstrap.test.cjs apps/desktop/electron/bootstrap-preflight.test.cjs",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--test",
+              "apps/desktop/electron/bootstrap.test.cjs",
+              "apps/desktop/electron/bootstrap-preflight.test.cjs"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "node --test apps/desktop/electron/bootstrap.test.cjs apps/desktop/electron/bootstrap-preflight.test.cjs",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Root recorded source observations before edits; dynamic failures are retained with actual dirty-tree source state. MC-116 is added before inspection implementation writes."
+    },
+    {
+      "id": "MC-113",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P1",
+      "batch": 1,
+      "state": "open",
+      "title": "ASK 与联动工作区查询失败先回滚，回滚失败销毁连接而不污染池",
+      "root_cause": {
+        "file": "packages/runtime/src/ask.ts",
+        "line": 198,
+        "commit": "42b09a2da7b9381924627306e227e987b6674148",
+        "symbol": "ASK 与联动工作区查询失败先回滚，回滚失败销毁连接而不污染池"
+      },
+      "trigger_path": "ASK 与联动工作区查询失败先回滚，回滚失败销毁连接而不污染池；断言将在干净修复提交和独立验收角色实际重跑。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "packages/runtime/src/ask.ts:198@42b09a2da7b9381924627306e227e987b6674148",
+          "sha256": "4d526b819c8f39e6f23af2371eb7e3988271511d2bb06fc6911a47a11e0d5404",
+          "note": "Fixed Git source finding, not dirty runtime acceptance."
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-ask-pool-recovery-red.json",
+          "sha256": "4b87c2cf297976b00ab9e6e2102e583862d5f852cfa55aff29958fa344f3cc32",
+          "commit": "42b09a2da7b9381924627306e227e987b6674148",
+          "note": "Historical root run; exact source_before/source_after and dirty paths remain in this unchanged receipt. Not relabeled as clean audit execution."
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-thread-lookup-recovery-red.json",
+          "sha256": "c50fed721e7e9d61192d5df6d387a3f0ab6ecc49a0affd2e6a6d30fe6e17db50",
+          "commit": "42b09a2da7b9381924627306e227e987b6674148",
+          "note": "Historical root run; exact source_before/source_after and dirty paths remain in this unchanged receipt. Not relabeled as clean audit execution."
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Source-bound Matrix test; unique controlled local fixtures; no paid or customer data",
+          "expect": "Three actual ASK pool-recovery tests pass",
+          "command": "node --env-file=.env /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C packages/runtime exec vitest run src/ask-recovery.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "packages/runtime",
+              "exec",
+              "vitest",
+              "run",
+              "src/ask-recovery.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        },
+        {
+          "kind": "sample",
+          "given": "Source-bound Matrix test; unique controlled local fixtures; no paid or customer data",
+          "expect": "Four actual linked workspace/archive pool-recovery tests pass",
+          "command": "node --env-file=.env /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/server exec vitest run src/runtime/thread-runner-recovery.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "apps/server",
+              "exec",
+              "vitest",
+              "run",
+              "src/runtime/thread-runner-recovery.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "node --env-file=.env /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C packages/runtime exec vitest run src/ask-recovery.test.ts",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Root recorded source observations before edits; dynamic failures are retained with actual dirty-tree source state. MC-116 is added before inspection implementation writes."
+    },
+    {
+      "id": "MC-114",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P1",
+      "batch": 1,
+      "state": "open",
+      "title": "经营实况首次失败/后台失败/重试/慢请求与未登录都有可恢复状态",
+      "root_cause": {
+        "file": "apps/web/src/pages/p0/P0.tsx",
+        "line": 348,
+        "commit": "42b09a2da7b9381924627306e227e987b6674148",
+        "symbol": "经营实况首次失败/后台失败/重试/慢请求与未登录都有可恢复状态"
+      },
+      "trigger_path": "经营实况首次失败/后台失败/重试/慢请求与未登录都有可恢复状态；断言将在干净修复提交和独立验收角色实际重跑。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "apps/web/src/pages/p0/P0.tsx:348@42b09a2da7b9381924627306e227e987b6674148",
+          "sha256": "bd458a1a89da57fa49b3aa04b83fff7535139fcb5f0f2c8c3ab0843f225a4321",
+          "note": "Fixed Git source finding, not dirty runtime acceptance."
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-p0-load-recovery-red-fixture-corrected.json",
+          "sha256": "e383537ce773ac9244de123f4ca19ba467e5c89d0ab40933d0ff58f92c00fbbe",
+          "commit": "42b09a2da7b9381924627306e227e987b6674148",
+          "note": "Historical root run; exact source_before/source_after and dirty paths remain in this unchanged receipt. Not relabeled as clean audit execution."
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Source-bound Matrix test; unique controlled local fixtures; no paid or customer data",
+          "expect": "Five actual mounted-component load, retry, stale-data, slow-request and access tests pass",
+          "command": "node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/web exec vitest run src/pages/p0/P0.test.tsx",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "apps/web",
+              "exec",
+              "vitest",
+              "run",
+              "src/pages/p0/P0.test.tsx"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "node /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C apps/web exec vitest run src/pages/p0/P0.test.tsx",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Root recorded source observations before edits; dynamic failures are retained with actual dirty-tree source state. MC-116 is added before inspection implementation writes."
+    },
+    {
+      "id": "MC-117",
+      "kind": "problem",
+      "level": "L3",
+      "severity": "P1",
+      "batch": 1,
+      "state": "open",
+      "title": "同源巡检的异常查重与异常/通知/完成回执必须原子提交，竞争不重复告警",
+      "root_cause": {
+        "file": "packages/base/inspection/scan.ts",
+        "line": 206,
+        "commit": "42b09a2da7b9381924627306e227e987b6674148",
+        "symbol": "同源巡检的异常查重与异常/通知/完成回执必须原子提交，竞争不重复告警"
+      },
+      "trigger_path": "同源巡检的异常查重与异常/通知/完成回执必须原子提交，竞争不重复告警；断言将在干净修复提交和独立验收角色实际重跑。",
+      "evidence": [
+        {
+          "type": "code",
+          "ref": "packages/base/inspection/scan.ts:206@42b09a2da7b9381924627306e227e987b6674148",
+          "sha256": "5b8be0332da974c2c3ebf6d1f5e41953ddc69cec8282f14c4e153959405b82b2",
+          "note": "Fixed Git source finding, not dirty runtime acceptance."
+        },
+        {
+          "type": "runtime",
+          "ref": "evidence/matrix-inspection-scan-concurrent-red.json",
+          "sha256": "7d1bc3a0faca4ddf5262c003bc9a27b52858714b530fba0f6588789a79a5be00",
+          "commit": "42b09a2da7b9381924627306e227e987b6674148",
+          "note": "Historical root run; exact source_before/source_after and dirty paths remain in this unchanged receipt. Not relabeled as clean audit execution."
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "sample",
+          "given": "Source-bound Matrix test; unique controlled local fixtures; no paid or customer data",
+          "expect": "Three actual PostgreSQL scan concurrency, atomic commit refusal, retry and workspace controls pass",
+          "command": "node --env-file=.env /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C packages/base exec vitest run inspection/scan.pg.test.ts",
+          "exec": {
+            "file": "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node",
+            "args": [
+              "--env-file=.env",
+              "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs",
+              "-C",
+              "packages/base",
+              "exec",
+              "vitest",
+              "run",
+              "inspection/scan.pg.test.ts"
+            ]
+          },
+          "last_result": "not-run"
+        }
+      ],
+      "regression": {
+        "command": "node --env-file=.env /Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs -C packages/base exec vitest run inspection/scan.pg.test.ts",
+        "evidence": null
+      },
+      "fixed_by": null,
+      "verified_by": null,
+      "notes": "Root recorded source observations before edits; dynamic failures are retained with actual dirty-tree source state. MC-116 and MC-117 are each added before their inspection implementation writes."
+    }
+  ],
+  "gates": []
+}

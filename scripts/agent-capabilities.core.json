@@ -10,8 +10,16 @@
       "operation": "read",
       "risk": "low",
       "dataMode": "unverified",
-      "transport": { "kind": "trpc", "path": "workspace.profile", "method": "query" },
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false }
+      "transport": {
+        "kind": "trpc",
+        "path": "workspace.profile",
+        "method": "query"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
     },
     {
       "id": "core.agents.list",
@@ -21,8 +29,16 @@
       "operation": "read",
       "risk": "low",
       "dataMode": "unverified",
-      "transport": { "kind": "trpc", "path": "workspace.agents", "method": "query" },
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false }
+      "transport": {
+        "kind": "trpc",
+        "path": "workspace.agents",
+        "method": "query"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
     },
     {
       "id": "core.threads.list",
@@ -32,8 +48,16 @@
       "operation": "read",
       "risk": "low",
       "dataMode": "unverified",
-      "transport": { "kind": "trpc", "path": "threads.list", "method": "query" },
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false }
+      "transport": {
+        "kind": "trpc",
+        "path": "threads.list",
+        "method": "query"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
     },
     {
       "id": "core.threads.get",
@@ -43,11 +67,22 @@
       "operation": "read",
       "risk": "low",
       "dataMode": "unverified",
-      "transport": { "kind": "trpc", "path": "threads.get", "method": "query" },
+      "transport": {
+        "kind": "trpc",
+        "path": "threads.get",
+        "method": "query"
+      },
       "inputSchema": {
         "type": "object",
-        "properties": { "threadId": { "type": "string", "minLength": 1 } },
-        "required": ["threadId"],
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "threadId"
+        ],
         "additionalProperties": false
       }
     },
@@ -59,14 +94,27 @@
       "operation": "receipt",
       "risk": "low",
       "dataMode": "unverified",
-      "transport": { "kind": "trpc", "path": "threads.events", "method": "query" },
+      "transport": {
+        "kind": "trpc",
+        "path": "threads.events",
+        "method": "query"
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
-          "threadId": { "type": "string", "minLength": 1 },
-          "limit": { "type": "integer", "minimum": 1, "maximum": 200 }
+          "threadId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          }
         },
-        "required": ["threadId"],
+        "required": [
+          "threadId"
+        ],
         "additionalProperties": false
       }
     },
@@ -78,11 +126,24 @@
       "operation": "read",
       "risk": "low",
       "dataMode": "unverified",
-      "transport": { "kind": "trpc", "path": "approvals.list", "method": "query" },
+      "transport": {
+        "kind": "trpc",
+        "path": "approvals.list",
+        "method": "query"
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
-          "status": { "type": "string", "enum": ["pending", "approved", "edited", "rejected", "expired"] }
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "edited",
+              "rejected",
+              "expired"
+            ]
+          }
         },
         "additionalProperties": false
       }
@@ -95,8 +156,16 @@
       "operation": "read",
       "risk": "low",
       "dataMode": "unverified",
-      "transport": { "kind": "trpc", "path": "inspection.status", "method": "query" },
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false }
+      "transport": {
+        "kind": "trpc",
+        "path": "inspection.status",
+        "method": "query"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
     },
     {
       "id": "core.skills.list",
@@ -106,8 +175,298 @@
       "operation": "read",
       "risk": "low",
       "dataMode": "unverified",
-      "transport": { "kind": "trpc", "path": "skills.list", "method": "query" },
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false }
+      "transport": {
+        "kind": "trpc",
+        "path": "skills.list",
+        "method": "query"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "core.task.dispatch",
+      "version": "1.0.0",
+      "title": "调用系统或指定岗位执行任务",
+      "description": "把目标交给当前工作区系统自动路由，或用 presetKey 指定已就绪的岗位。复用服务端权限、围栏、Matrix 规划与工具；同键同参数查回原调用，结果未知不自动再派。只读、沙箱、能力缺口和真实业务回执分别说明。",
+      "operation": "execute",
+      "risk": "moderate",
+      "dataMode": "unverified",
+      "transport": {
+        "kind": "trpc",
+        "path": "agent.taskDispatch",
+        "method": "mutation"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "pattern": "\\S"
+          },
+          "presetKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+          },
+          "goalRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "runImmediately": {
+            "type": "boolean"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 200,
+            "pattern": "^[^\\r\\n\\u0000]*\\S[^\\r\\n\\u0000]*$"
+          }
+        },
+        "required": [
+          "title",
+          "idempotencyKey"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "core.task.receipt",
+      "version": "1.0.0",
+      "title": "核对本次系统或岗位任务",
+      "description": "按服务生成的 invocationId 查询本人成员调用、当前线程、岗位、逐步事件与产物摘要。排队或调用号不是交付成功；沙箱产物不代表平台发布、达人台账写入或真实成本归集。",
+      "operation": "receipt",
+      "risk": "low",
+      "dataMode": "unverified",
+      "transport": {
+        "kind": "trpc",
+        "path": "agent.taskReceipt",
+        "method": "query"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "invocationId": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+          }
+        },
+        "required": [
+          "invocationId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "core.task.cancel",
+      "version": "1.0.0",
+      "title": "停止本次普通任务的后续步骤",
+      "description": "取消尚未建档的可取消调用，或停止普通 Quest 的后续步骤。保留已完成终态；已开始的外部动作不承诺回滚，ASK 即时回答和影片异步管线会拒绝不可靠停止。",
+      "operation": "execute",
+      "risk": "moderate",
+      "dataMode": "unverified",
+      "transport": {
+        "kind": "trpc",
+        "path": "agent.taskCancel",
+        "method": "mutation"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "invocationId": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 200,
+            "pattern": "^[^\\r\\n\\u0000]*\\S[^\\r\\n\\u0000]*$"
+          }
+        },
+        "required": [
+          "invocationId",
+          "idempotencyKey"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "core.task.artifact",
+      "version": "1.0.0",
+      "title": "取回本次任务的登记产物",
+      "description": "按本人调用和回执中的 index 取文件。服务复验实际字节、允许根目录和已有登记摘要，返回 MIME、大小、sha256、base64；不接收任意文件路径。",
+      "operation": "receipt",
+      "risk": "low",
+      "dataMode": "unverified",
+      "transport": {
+        "kind": "trpc",
+        "path": "agent.taskArtifact",
+        "method": "query"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "invocationId": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 999
+          }
+        },
+        "required": [
+          "invocationId",
+          "index"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "video.film.start",
+      "version": "1.0.0",
+      "title": "调用影片固定阶段工位",
+      "description": "对本工作区已有叙事或营销项目运行受控的影片阶段。服务冻结原稿与摘要、绑定单次作业、受限父通道、预算和组件台账；阶段与文件回执不等于付费生成或发布达标。",
+      "operation": "execute",
+      "risk": "moderate",
+      "dataMode": "unverified",
+      "transport": {
+        "kind": "trpc",
+        "path": "agent.filmStart",
+        "method": "mutation"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+          },
+          "document": {
+            "type": "object"
+          },
+          "stages": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 19,
+            "items": {
+              "type": "string",
+              "enum": [
+                "cine-kb",
+                "continuity",
+                "micromotion",
+                "spec",
+                "plates",
+                "material-gen",
+                "videos",
+                "voice",
+                "compose",
+                "color",
+                "subtitle",
+                "danmaku",
+                "bgm",
+                "sfx",
+                "cover",
+                "mux",
+                "master",
+                "deliver",
+                "revise"
+              ]
+            }
+          },
+          "options": {
+            "type": "object"
+          },
+          "maxBudgetCny": {
+            "type": "number",
+            "minimum": 0.0001,
+            "maximum": 100000
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 200,
+            "pattern": "^[^\\r\\n\\u0000]*\\S[^\\r\\n\\u0000]*$"
+          }
+        },
+        "required": [
+          "projectId",
+          "document",
+          "stages",
+          "idempotencyKey"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "video.film.receipt",
+      "version": "1.0.0",
+      "title": "核对影片阶段与文件回执",
+      "description": "按本人 invocationId 读取同一作业的真实终态、阶段、组件费用与产物。完成结果和产物须与冻结作业及登记摘要相符；失败、未知和改动如实返回。",
+      "operation": "receipt",
+      "risk": "low",
+      "dataMode": "unverified",
+      "transport": {
+        "kind": "trpc",
+        "path": "agent.filmReceipt",
+        "method": "query"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "invocationId": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+          }
+        },
+        "required": [
+          "invocationId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "video.film.artifact",
+      "version": "1.0.0",
+      "title": "取回本次影片工位产物",
+      "description": "按本人 invocationId 和 index 取本次工位产物。先核验终态结果摘要和不可换绑作业，再核验文件摘要、大小和档案根目录，回传 base64；不接收任意路径。",
+      "operation": "receipt",
+      "risk": "low",
+      "dataMode": "unverified",
+      "transport": {
+        "kind": "trpc",
+        "path": "agent.filmArtifact",
+        "method": "query"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "invocationId": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 999
+          }
+        },
+        "required": [
+          "invocationId",
+          "index"
+        ],
+        "additionalProperties": false
+      }
     }
   ]
 }

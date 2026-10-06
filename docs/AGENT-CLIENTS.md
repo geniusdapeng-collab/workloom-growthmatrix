@@ -56,14 +56,14 @@ Codex 支持本地 STDIO MCP。把下面这段加进 Codex 的 `config.toml`（`
 **命令指向本仓**的 MCP 入口即可（多个仓可各配一条，用不同名字）：
 
 ```toml
-[mcp_servers.workloom-growth]
+[mcp_servers.workloom-growthmatrix]
 command = "node"
-args = ["/abs/path/to/WorkLoom-growth/scripts/workloom-agent-mcp.mjs"]
-cwd = "/abs/path/to/WorkLoom-growth"
+args = ["/abs/path/to/WorkLoom-growthmatrix/scripts/workloom-agent-mcp.mjs"]
+cwd = "/abs/path/to/WorkLoom-growthmatrix"
 startup_timeout_sec = 60
 
-[mcp_servers.workloom-growth.env]
-WORKLOOM_PRODUCT_ROOT = "/abs/path/to/WorkLoom-growth"
+[mcp_servers.workloom-growthmatrix.env]
+WORKLOOM_PRODUCT_ROOT = "/abs/path/to/WorkLoom-growthmatrix"
 # 只读能力可不配下面两项；要用服务端过程时按需配置（**不要写进仓库/日志**）
 # WORKLOOM_BASE_URL = "http://127.0.0.1:4295"      # 本机回环；远程必须 HTTPS
 # WORKLOOM_ACCESS_TOKEN = "<B 端成员令牌>"          # 远程地址时必须
@@ -110,10 +110,10 @@ DSH 官方扩展手册明确："**MCP：每个服务器一个插件：发现工�
 1. 在 DSH 插件页装一个 MCP 客户端插件（或让 DSH 现写一个），把服务器命令配成本仓入口：
 
    ```bash
-   node /abs/path/to/WorkLoom-growth/scripts/workloom-agent-mcp.mjs
+   node /abs/path/to/WorkLoom-growthmatrix/scripts/workloom-agent-mcp.mjs
    ```
 
-   并把 `WORKLOOM_PRODUCT_ROOT=/abs/path/to/WorkLoom-growth` 等环境变量注入插件进程；
+   并把 `WORKLOOM_PRODUCT_ROOT=/abs/path/to/WorkLoom-growthmatrix` 等环境变量注入插件进程；
 2. 重新加载插件后，在 DSH 的工具列表里应能看到 `workloom_growth_*` 工具（本仓 21 个：视频 6 + 仓库通用只读 4，另加核心 8 与服务 3）。
 
 > 说明：DSH 侧"自定义 STDIO MCP"的具体配置键以**你所用 DSH 版本的官方文档/插件页为准**；

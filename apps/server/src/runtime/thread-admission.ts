@@ -16,12 +16,14 @@
  *
  * 使用前提：调用方已 BEGIN 且已设置 `app.workspace_id` / `app.tenant_id`（RLS 事务上下文）。
  */
-import type pg from "pg";
 import { TRPCError } from "@trpc/server";
-import { makeReadableId } from "@workloom/shared";
+import {
+  insertWithReadableId, READABLE_ID_MAX_ATTEMPTS, THREAD_ID_SOURCE,
+  type ReadableIdQueryable,
+} from "@workloom/base/workdata";
 
-/** 号源撞号后的重试次数（首取 + 重试 1 次，与 GR-02 口径一致） */
-export const THREAD_INSERT_ATTEMPTS = 2;
+/** 与唯一可读编号入口保持同一有界重试预算。 */
+export const THREAD_INSERT_ATTEMPTS = READABLE_ID_MAX_ATTEMPTS;
 
 /** 业务语义：取号重试后仍撞号（不是 PG 原文，客户端可安全展示） */
 export class ThreadNumberConflictError extends Error {
@@ -47,6 +49,10 @@ export const DISPATCH_CONFLICT_MESSAGE = "任务派遣并发冲突（号源或�
  */
 export function mapDispatchDbError(err: unknown): unknown {
   if (err instanceof TRPCError) return err;
+  if (err instanceof AggregateError) {
+    console.error("[dispatch] 保存点回退失败，已停止事务重试");
+    return new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "任务建档事务回退失败，请重试", cause: err });
+  }
   // 号源重试耗尽：本身就是业务语义错误（文案不含 PG 原文），直接映射 409
   if (err instanceof ThreadNumberConflictError) {
     console.warn(`[dispatch] ${err.message}（已重试 ${err.attempts} 次）`);
@@ -68,34 +74,24 @@ export interface QueuedThreadDraft {
   agentId: string | null;
 }
 
-interface Queryable {
-  query<R extends pg.QueryResultRow = pg.QueryResultRow>(text: string, values?: unknown[]): Promise<pg.QueryResult<R>>;
-}
-
 /**
  * 事务内取号并插入 queued 线程（返回可读线程号）。
  * 撞号重试包在 SAVEPOINT 里——这是 U-03 的关键：23505 之后事务已中止，
  * 必须 `ROLLBACK TO SAVEPOINT` 才能继续在同事务内取号/插入。
  */
-export async function insertQueuedThread(client: Queryable, draft: QueuedThreadDraft): Promise<string> {
-  let threadId = "";
-  for (let attempt = 0; attempt < THREAD_INSERT_ATTEMPTS; attempt += 1) {
-    await client.query("SAVEPOINT thread_insert_attempt");
-    try {
-      const max = await client.query<{ n: number }>(`SELECT public.threads_max_t_no() AS n`);
-      threadId = makeReadableId("T", Number(max.rows[0]?.n ?? 100) + 1); // bigint 驱动返回 string，必须 Number() 防拼接（D29 教训）
+export async function insertQueuedThread(client: ReadableIdQueryable, draft: QueuedThreadDraft): Promise<string> {
+  try {
+    const allocated = await insertWithReadableId(client, THREAD_ID_SOURCE, async (threadId) => {
       await client.query(
         `INSERT INTO threads (id, tenant_id, workspace_id, title, mode, status, created_by, agent_id)
          VALUES ($1,$2,$3,$4,$5,'queued',$6,$7)`,
         [threadId, draft.tenantId, draft.workspaceId, draft.title, draft.mode, draft.createdBy, draft.agentId],
       );
-      await client.query("RELEASE SAVEPOINT thread_insert_attempt");
       return threadId;
-    } catch (err) {
-      await client.query("ROLLBACK TO SAVEPOINT thread_insert_attempt").catch(() => undefined);
-      if ((err as { code?: string }).code !== "23505") throw err;
-      console.warn(`[dispatch] 号源撞号 ${threadId}，回滚保存点后重取（GR-02/U-03）`);
-    }
+    });
+    return allocated.id;
+  } catch (err) {
+    if ((err as { code?: string }).code === "23505") throw new ThreadNumberConflictError(THREAD_INSERT_ATTEMPTS);
+    throw err;
   }
-  throw new ThreadNumberConflictError(THREAD_INSERT_ATTEMPTS);
 }

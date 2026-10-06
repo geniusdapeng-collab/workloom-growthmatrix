@@ -13,6 +13,8 @@ import { createHash } from "node:crypto";
 import type pg from "pg";
 import type { AppPool, Scope } from "./gen/db.js";
 import { SubmissionError } from "./gen/submission-ledger.js";
+import { gatewayAppendOnClient } from "@workloom/base/workdata";
+import { lockAgentInvocation, linkAgentInvocation, type AgentInvocationRef } from "../agent/invocations.js";
 
 export type FilmComponentKind = "llm" | "image" | "video" | "media" | "voice" | "review";
 export type FilmComponentState = "reserved" | "dispatched" | "accepted" | "failed" | "unknown";
@@ -247,12 +249,17 @@ export class FilmLedger {
     inputSha256: string;
     workerEntrySha256: string;
     actor: string;
+    agentInvocation?: AgentInvocationRef;
   }): Promise<FilmJobRow> {
     if (!/^[a-f0-9]{64}$/.test(input.inputSha256) || !/^[a-f0-9]{64}$/.test(input.workerEntrySha256)) {
       fail("FILM_JOB_INVALID", "作业输入或工位摘要非法");
     }
     if (!Number.isFinite(input.budgetCny) || input.budgetCny < 0) fail("FILM_JOB_INVALID", "作业预算非法");
     return this.transaction(async (client) => {
+      if (input.agentInvocation) {
+        if (input.actor !== input.agentInvocation.memberNo) fail("FILM_JOB_INVALID", "调用成员绑定不符");
+        await lockAgentInvocation(client, this.scope, input.agentInvocation);
+      }
       await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
         JSON.stringify(["film-job", this.scope.tenantId, this.scope.workspaceId, input.projectId]),
       ]);
@@ -273,6 +280,18 @@ export class FilmLedger {
       );
       const row = created.rows[0];
       if (!row) fail("FILM_JOB_INVALID", "作业认领未返回行");
+      if (input.agentInvocation) {
+        const event = await gatewayAppendOnClient(client, {
+          ...this.scope, actor: { id: input.actor, type: "human" },
+        }, {
+          who: { type: "human", id: input.actor },
+          context: { tenant_id: this.scope.tenantId, workspace_id: this.scope.workspaceId, time: new Date().toISOString(), channel: "inapp" },
+          object: { type: "film_job", id: row.id },
+          decision: { action: "film.start", after: { jobId: row.id, projectId: row.project_id, stages: row.stages,
+            inputSha256: row.input_sha256, workerEntrySha256: row.worker_entry_sha256, budgetCny: Number(row.budget_cny) } }, rule_impact: [],
+        });
+        await linkAgentInvocation(client, input.agentInvocation, "film", row.id, event.eventId);
+      }
       return row;
     });
   }

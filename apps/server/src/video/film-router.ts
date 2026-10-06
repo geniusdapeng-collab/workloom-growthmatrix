@@ -71,6 +71,7 @@ export const filmRouter = router({
       document: input.document,
       stages: input.stages,
       options: input.options,
+      ...(ctx.agentInvocation ? { agentInvocation: ctx.agentInvocation } : {}),
       ...(input.maxBudgetCny === undefined ? {} : { maxBudgetCny: input.maxBudgetCny }),
     }));
   }),

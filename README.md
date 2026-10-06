@@ -103,7 +103,7 @@ NATS/Redis 的事件总线库可在源码中找到，但当前主业务入口未
 同名岗位由主包 `composition.presetOwners` 裁决：`ads-optimizer`、`publish-operator`、`review-analyst` 归 `geo-growthmatrix`，`company-ceo` 归 `hotel`。下方数量从 manifest 和岗位标识自动派生，避免手工维护另一套总数。当前三包均为 `candidate`；稳定包签名校验能力的存在不能变成“这些候选包已经完成生产验收”的结论。
 
 <!-- CAPABILITIES:BEGIN -->
-<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（2026-10-02），请勿手改；重跑 pnpm capabilities 更新 -->
+<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（2026-10-04），请勿手改；重跑 pnpm capabilities 更新 -->
 
 ## 代码与资产速览（自动生成）
 
@@ -112,6 +112,7 @@ NATS/Redis 的事件总线库可在源码中找到，但当前主业务入口未
 - 🖥 **三端应用入口**：PC 工作台 · 员工移动工作台 · 客户 H5 服务前台
 - 📦 **行业包声明资产**：bundles/ai-video/ · bundles/geo-growthmatrix/ · bundles/hotel/
 - 🧑‍💼 **岗位与交互入口**：数字员工中心（`/agents`） · 织伴数字人组件 · 语音与口型引擎
+- 🔗 **系统与岗位 CLI / MCP**：系统目标与指定岗位 · 影片固定工位
 - 🖐 **电脑操作接口**：浏览器与桌面驱动接口 · HTTP / MCP 工位入口
 - ⚙ **共享基础模块（目录存在性）**：围栏判定 · 技能分发组件 · 任务编排基础组件 · 夜班状态与调度 · 模型路由与用量记录 · 发布适配层（默认演练） 等 15 项
 - 🎬 **内容生产专用入口**：视频工位 · 媒资与交付 · 白板与口播解释片
@@ -126,6 +127,12 @@ NATS/Redis 的事件总线库可在源码中找到，但当前主业务入口未
 ## 内置角色：陈卓 `chen-zhuo`
 
 仓库自带默认模特陈卓的角色档案与定妆照，入口是 [`characters/registry.json`](bundles/ai-video/library/characters/registry.json)，默认标识为 `chen-zhuo`。在使用该角色库的出片链路中，镜头未显式指定角色时按 registry 的默认选角规则处理；需要换人或多人时再提供角色名/档案，无需重复建立默认角色。
+
+**认证真人（客户在火山方舟「私域人像库」认证的真人素材，`asset://…`）怎么用**：素材在客户账号里，本地没有原图，
+标准流程是「客户给一张**资产详情页截图** → 清单对账 → Agent 判读缩略图角度 → 两段式出**专业定妆照** → 机器像不像校验 → 装档」。
+完整 SOP 见 [`docs/real-person-portrait-set.md`](docs/real-person-portrait-set.md)，速查见
+[`bundles/ai-video/README.md`](bundles/ai-video/README.md) §6/§6.1；工具：`scripts/tools/real-person-assets.mts`（清单对账，不猜角度）、
+`scripts/tools/portrait-set-from-asset.mts`（两段式出图 + 机器校验）、`scripts/tools/portrait-set-install.mts`（装档 + 写后复核）。
 
 **角色资产随仓存在，不等于克隆后即可生成成片。** 出片仍需要对应模型或媒体供应商、授权素材通道、渲染引擎与后期依赖。真人肖像应按供应商授权路径使用，不能把仓库内参考图视为绕过平台授权检查的方式。
 
@@ -229,6 +236,7 @@ pnpm -C apps/webc dev
 - **视频与角色**：[角色库与默认模特](docs/character-registry.md)、[视频交付与返修](docs/video-delivery-and-revision.md)、[口播解释片](docs/talkcraft-explainer.md)、[白板引擎](docs/whiteboard-engine.md)。
 - **桌面 Agent 接入（Codex / DeepSeek Harness）**：[客户端接入指南](docs/AGENT-CLIENTS.md)（5 分钟接入 + MCP 配置 + 视频能力清单 + 安全边界）。
 - **接入与运行**：[电脑工位指南](docs/computer-use-production.md)、[连接器退出 mock 的约定](docs/connectors-mock-exit.md)、[发布清单](docs/release-checklist.md)。
+- **系统与指定数字员工调用**：[CLI / MCP 指南](docs/agent-cli-mcp.md)（目标派遣、指定岗位、持久回执与取件）。
 - **产品方案背景**：[社媒与 GEO 融合方案](docs/geo-fusion-plan.md)、[获客方案](docs/plan-acquisition.md)。这些文档含目标与历史设计，不能单独证明当前运行能力。
 - **开发治理**：[AGENTS.md](AGENTS.md)、[本仓规则](AGENTS.repo.md)、[全景认知](WORKLOOM_PRODUCT_CONTEXT.md)、[开发协作协议](docs/DEVELOPMENT-PROTOCOL.md)。
 

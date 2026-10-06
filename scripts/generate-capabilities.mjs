@@ -97,6 +97,14 @@ if (digitalWorkforce.length) groups.push({
   icon: "🧑‍💼", title: "岗位与交互入口", items: digitalWorkforce,
 });
 
+if (existsSync(join(ROOT, "apps/server/src/trpc/agent-router.ts"))) groups.push({
+  icon: "🔗", title: "系统与岗位 CLI / MCP",
+  items: [
+    { name: "系统目标与指定岗位", how: "[接入指南](agent-cli-mcp.md)；`node scripts/workloom-agent.mjs list`", desc: "自动选岗或指定已上岗 presetKey；任务、回执、取消与取件共享持久调用编号和幂等键", sourcePaths: ["apps/server/src/trpc/agent-router.ts", "scripts/workloom-agent.mjs", "scripts/workloom-agent-mcp.mjs"] },
+    { name: "影片固定工位", how: "`node scripts/workloom-agent.mjs describe video.film.start`", desc: "启动本人项目的固定阶段、查询评审与取回文件；保留父进程期限、预算与来源校验", sourcePaths: ["apps/server/src/video/film-router.ts", "apps/server/src/video/film-worker.ts", "scripts/agent-capabilities.core.json"] },
+  ],
+});
+
 if (basePkgs.includes("computer-use")) groups.push({
   icon: "🖐", title: "电脑操作接口",
   items: [
@@ -161,6 +169,7 @@ const sourceSets = {
   "三端应用入口": ["product.manifest.json", ...appEntrypoints.flatMap((entry) => entry.sourcePaths)],
   "行业包声明资产": bundleDeclarations.map((b) => b.sourcePath),
   "岗位与交互入口": ["apps/web/src/pages/p8/P8.tsx", "apps/web/src/components/loommate/LoomMate.tsx", "apps/web/src/voice/VoiceEngine.ts"],
+  "系统与岗位 CLI / MCP": ["docs/agent-cli-mcp.md", "scripts/workloom-agent.mjs", "scripts/workloom-agent-mcp.mjs", "scripts/agent-capabilities.core.json"],
   "电脑操作接口": ["packages/base/computer-use/driver.ts", "docs/computer-use-production.md"],
   "共享基础模块（目录存在性）": ["packages/base", "packages/runtime/src"],
   "内容生产专用入口": ["apps/server/src/video"],

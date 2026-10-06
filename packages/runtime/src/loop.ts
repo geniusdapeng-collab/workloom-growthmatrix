@@ -13,7 +13,7 @@
 import type pg from "pg";
 import { createHash } from "node:crypto";
 import { judge, judgeViews, type JudgeInput, type RuntimeRule, type RuleImpact } from "@workloom/base/fence-engine";
-import { gatewayAppend, gatewayAppendOnClient, registerWriteActions } from "@workloom/base/workdata";
+import { gatewayAppend, gatewayAppendOnClient, authorizeToolExecution, registerWriteActions, type ExecutionPermit } from "@workloom/base/workdata";
 
 /** D16（#1/A）：步骤内「事件 + 线程状态」单事务封装（双 GUC 齐备） */
 async function inTx<T>(
@@ -98,6 +98,7 @@ interface StepReceiptRecord {
   verified: boolean;
   /** 新事件：完整指纹（含 tool） */
   fingerprint?: string;
+  originalFingerprint?: string;
   /** 历史事件：不含 tool 的指纹 */
   legacy: string;
 }
@@ -109,6 +110,7 @@ function receiptOfDecision(decision: Record<string, unknown>): StepReceiptRecord
   const tool = typeof decision.tool === "string" ? decision.tool : undefined;
   return {
     verified: false,
+    ...(typeof decision.original_fingerprint === "string" ? { originalFingerprint: decision.original_fingerprint } : {}),
     ...(typeof decision.fingerprint === "string"
       ? { fingerprint: decision.fingerprint }
       : (tool ? { fingerprint: stepFingerprint({ action, tool, params }) } : {})),
@@ -177,6 +179,13 @@ export function assessPlanRelevance(goal: string, steps: QuestStep[]): { relevan
     .toLowerCase();
   const matched = tokens.filter((token) => haystack.includes(token.toLowerCase()));
   return { relevant: matched.length > 0, matched };
+}
+
+function markPlanVerification(goal: string, steps: QuestStep[]): void {
+  const relevance = assessPlanRelevance(goal, steps);
+  if (!relevance.relevant && !steps.some((step) => Object.keys(step.params ?? {}).length > 0)) {
+    for (const step of steps) step.context = { ...step.context, plan_unverified: true };
+  }
 }
 
 /**
@@ -298,7 +307,7 @@ async function loadActiveRules(app: pg.Pool, scope: { tenantId: string; workspac
 export interface QuestRunResult {
   threadId: string;
   /** running：A-03 并发重入被 CAS 拒绝（他方正在执行同一线程），调用方应按"已在执行"处理 */
-  status: "completed" | "pending_review" | "failed" | "paused" | "running";
+  status: "completed" | "pending_review" | "failed" | "paused" | "running" | "cancelled";
   stepsDone: number;
   stepsTotal: number;
   /** 未核实步骤（E3.7：无回执不得宣称完成） */
@@ -352,10 +361,13 @@ async function existingStepReceipts(
       const isReview = kind ? kind === "review" : legacyReview;
       if (isBlock || isReview) continue;
       /**
-       * GR-17：工具执行异常（outcome=error）是**可重试**的失败，不是「无回执」——
-       * 不进入回执集合，replay 允许从该步重跑；「未核实」（无回执/对账前不重发）语义不动。
+       * 只有声明为只读的异常允许重试。写操作抛错也可能已被外部接收，
+       * 必须保留 execution_started/未知回执，对账前不能重发。
        */
-      if (kind === "execute" && decision.outcome === "error") continue;
+      if (kind === "execute" && decision.outcome === "error" && decision.effect === "read") {
+        receipts.delete(sid);
+        continue;
+      }
       const record = receiptOfDecision(decision);
       if (record) {
         record.verified = row.payload.receipt?.synced === true;
@@ -387,7 +399,7 @@ async function updateThread(app: pg.Pool, scope: { tenantId: string; workspaceId
       params.push(v);
       sets.push(`${k} = $${params.length}`);
     }
-    await client.query(`UPDATE threads SET ${sets.join(", ")} WHERE id=$1 AND workspace_id=$2`, params);
+    await client.query(`UPDATE threads SET ${sets.join(", ")} WHERE id=$1 AND workspace_id=$2 AND status <> 'cancelled'`, params);
     await client.query("COMMIT"); // A-08：显式提交，失败即抛（不再 finally 吞错）
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
@@ -509,6 +521,7 @@ export interface ApprovedStep {
   /** 旧审批：快照里的 action/params（无指纹时兜底比对） */
   action?: string;
   params?: Record<string, unknown>;
+  editedAfter?: Record<string, unknown>;
 }
 
 async function approvedStepIds(
@@ -521,13 +534,17 @@ async function approvedStepIds(
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
     await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]);
-    const r = await client.query<{ step_id: string; approval_id: string; snapshot: Record<string, unknown> | null }>(
-      `SELECT e.payload->'decision'->>'step_id' AS step_id, a.approval_id, a.snapshot
+    const r = await client.query<{ step_id: string; approval_id: string; snapshot: Record<string, unknown> | null; status: string; gesture: { edited_after?: unknown } | null }>(
+      `SELECT e.payload->'decision'->>'step_id' AS step_id, a.approval_id, a.snapshot, a.status, a.gesture
        FROM approvals a JOIN biz_events e ON e.event_id = a.event_id
-       WHERE a.workspace_id=$1 AND e.session_id=$2 AND a.status IN ('approved','edited')
+        WHERE a.workspace_id=$1 AND e.session_id=$2 AND a.status IN ('approved','edited')
          AND e.payload->'decision'->>'step_id' IS NOT NULL
          -- B-03 修复：过期审批即使被批也不得驱动步骤执行（消费侧与 decide() 过期口径一致）
-         AND (a.snapshot->>'expires_at' IS NULL OR (a.snapshot->>'expires_at')::timestamptz > now())`,
+         AND (a.snapshot->>'expires_at' IS NULL OR (a.snapshot->>'expires_at')::timestamptz > now())
+         -- T-2026-0929-0003 联动修复：已消费（B-02 一次性授权）的票据不再构成"本轮授权"——
+         -- 否则重试会挂着死票据去落库，被网关拒绝后线程停在 running（无终态、无法自愈）。
+         -- 语义：消费过的步骤要再执行，必须重新取得一张新审批（L3.5 逐次授权的原意）。
+         AND a.consumed_at IS NULL`,
       [scope.workspaceId, threadId],
     );
     await client.query("COMMIT");
@@ -536,11 +553,16 @@ async function approvedStepIds(
       const recorded = (typeof snap.step_fingerprint === "string" ? snap.step_fingerprint : undefined);
       const action = typeof snap.action === "string" ? snap.action : undefined;
       const params = (typeof snap.params === "object" && snap.params !== null ? snap.params : undefined) as Record<string, unknown> | undefined;
+      const edit = x.status === "edited" ? x.gesture?.edited_after : undefined;
+      if (x.status === "edited" && (!edit || typeof edit !== "object" || Array.isArray(edit))) {
+        throw new Error(`审批 ${x.approval_id} 的编辑参数不合法，拒绝执行`);
+      }
       return [x.step_id, {
         approvalId: x.approval_id,
         ...(recorded ? { fingerprint: recorded } : {}),
         ...(action ? { action } : {}),
         ...(params ? { params } : {}),
+        ...(edit ? { editedAfter: edit as Record<string, unknown> } : {}),
       }];
     }));
   } catch (err) {
@@ -555,7 +577,7 @@ async function approvedStepIds(
  * GR-01：审批快照 vs 当前步骤的指纹比对。
  * - 快照带 step_fingerprint → 严格比对；
  * - 旧快照只有 action/params → action 相同且 params（稳定序列化）相同才算匹配；
- * - 快照里完全没有可比对信息 → 视为匹配（历史数据兼容，不误伤存量审批）。
+ * - 快照里没有可比对信息 → 拒绝匹配，重新取得绑定当前动作的审批。
  */
 export function approvalMatchesStep(record: ApprovedStep, step: Pick<QuestStep, "action" | "tool" | "params">): boolean {
   if (record.fingerprint) return record.fingerprint === stepFingerprint(step);
@@ -563,7 +585,7 @@ export function approvalMatchesStep(record: ApprovedStep, step: Pick<QuestStep, 
     return record.action === step.action
       && stableStringify(record.params ?? {}) === stableStringify(step.params ?? {});
   }
-  return true;
+  return false;
 }
 
 /**
@@ -604,7 +626,49 @@ async function pendingApprovalForStep(
  * 运行 Quest（可重入 = replay 断点续跑，E3.3/H-5）
  * @param goal 任务目标（三要素之一）；@param presetKey 装配的 preset
  */
-export async function runQuest(
+export async function runQuest(...args: Parameters<typeof runQuestOwned>): Promise<QuestRunResult> {
+  const [app, , scope, input] = args;
+  const lease = await app.connect();
+  const lockKey = JSON.stringify([scope.tenantId, scope.workspaceId, input.threadId]);
+  let locked = false;
+  let heartbeat: ReturnType<typeof setInterval> | undefined;
+  let heartbeating = false;
+  try {
+    const acquired = await lease.query<{ locked: boolean }>(
+      "SELECT pg_try_advisory_lock(hashtextextended($1, 0)) AS locked", [lockKey],
+    );
+    locked = acquired.rows[0]?.locked === true;
+    if (!locked) return { threadId: input.threadId, status: "running", stepsDone: 0, stepsTotal: 0, unverified: [] };
+    const state = await inTx(app, scope, async (c) => c.query<{ status: string; progress_done: number; progress_total: number }>(
+      "SELECT status, progress_done, progress_total FROM threads WHERE id=$1 AND workspace_id=$2", [input.threadId, scope.workspaceId],
+    ));
+    if (!state.rows[0]) throw new Error("任务不存在或不属于当前工作区");
+    if (state.rows[0].status === "cancelled" || (state.rows[0].status === "completed" && !input.replan)) {
+      return { threadId: input.threadId, status: state.rows[0].status, stepsDone: state.rows[0].progress_done ?? 0,
+        stepsTotal: state.rows[0].progress_total ?? 0, unverified: [] };
+    }
+    heartbeat = setInterval(() => {
+      if (heartbeating) return;
+      heartbeating = true;
+      void inTx(app, scope, async (c) => c.query(
+        "UPDATE threads SET updated_at=now() WHERE id=$1 AND workspace_id=$2 AND status='running'", [input.threadId, scope.workspaceId],
+      )).catch((error) => console.error("[quest] 任务心跳写入失败", error instanceof Error ? error.message : String(error)))
+        .finally(() => { heartbeating = false; });
+    }, 15_000);
+    heartbeat.unref();
+    return await runQuestOwned(...args);
+  } catch (error) {
+    if (locked) await updateThread(app, scope, input.threadId, { status: "failed", error: String(error).slice(0, 500) });
+    throw error;
+  } finally {
+    if (heartbeat) clearInterval(heartbeat);
+    try {
+      if (locked) await lease.query("SELECT pg_advisory_unlock(hashtextextended($1, 0))", [lockKey]);
+    } finally { lease.release(); }
+  }
+}
+
+async function runQuestOwned(
   app: pg.Pool,
   gateway: pg.Pool,
   scope: { tenantId: string; workspaceId: string },
@@ -669,6 +733,7 @@ export async function runQuest(
     planReused = true;
   } else {
     steps = await planQuestSmart(input.goal, preset, input.llmCall, prefBlock, input.fallbackPlanner, vocabulary);
+    markPlanVerification(input.goal, steps);
     planVersion = (persisted?.version ?? 0) + 1;
     const superseded = await saveThreadPlan(app, scope, threadId, steps, planVersion, input.replan === true);
     if (input.replan === true) {
@@ -692,10 +757,10 @@ export async function runQuest(
   }
   /**
    * N-13：计划相关性闸门——目标与计划零交集时，给写步骤打 `plan_unverified`（强制人工裁决）。
-   * 仅在"本次新规划"上判定（复用持久化计划时模型不会漂移，且首跑已判过）。
+   * 首次规划在持久化之前标记，复用计划时仍重新核对。
    */
   let planRelevance: { relevant: boolean; matched: string[] } = { relevant: true, matched: [] };
-  if (!planReused) {
+  {
     planRelevance = assessPlanRelevance(input.goal, steps);
     /**
      * 只在**双重可疑**时才升级为人工裁决：既与目标零相关、又完全没有参数。
@@ -733,7 +798,22 @@ export async function runQuest(
 
   await updateThread(app, scope, threadId, { status: "running", progress_total: steps.length, agent_id: preset.agentId });
 
-  for (const step of steps) {
+  for (const originalStep of steps) {
+    const current = await inTx(app, scope, async (c) => c.query<{ status: string }>(
+      "SELECT status FROM threads WHERE id=$1 AND workspace_id=$2", [threadId, scope.workspaceId],
+    ));
+    if (current.rows[0]?.status === "cancelled" || current.rows[0]?.status === "paused") {
+      return { threadId, status: current.rows[0].status, stepsDone: done.size, stepsTotal: steps.length, unverified, planVersion, planReused };
+    }
+    const originalFingerprint = stepFingerprint(originalStep);
+    const candidateApproval = approved.get(originalStep.stepId);
+    const approvalMatches = candidateApproval ? approvalMatchesStep(candidateApproval, originalStep) : false;
+    const edited = approvalMatches ? candidateApproval?.editedAfter : undefined;
+    const step: QuestStep = edited ? {
+      ...originalStep, params: { ...originalStep.params, ...edited },
+      after: { ...(typeof originalStep.after === "object" && originalStep.after ? originalStep.after : {}), ...edited },
+      context: { ...originalStep.context, params_incomplete: originalStep.context?.params_incomplete === true && Object.keys(edited).length === 0 },
+    } : originalStep;
     const fingerprint = stepFingerprint(step);
     const legacy = legacyStepFingerprint(step);
     const prior = done.get(step.stepId);
@@ -744,7 +824,8 @@ export async function runQuest(
        * 只认 step_id 会把从未执行的动作当成「已完成」，线程照常 completed（假交付）。
        * 指纹不一致 → 不跳过，重新过围栏执行；一致才幂等跳过。
        */
-      const matches = prior.fingerprint ? prior.fingerprint === fingerprint : prior.legacy === legacy;
+      const matches = prior.originalFingerprint === originalFingerprint
+        || (prior.fingerprint ? prior.fingerprint === fingerprint : prior.legacy === legacy);
       if (matches) continue;
       drifted.push(step.stepId);
     }
@@ -756,16 +837,11 @@ export async function runQuest(
     const toolAccess: "read" | "write" =
       preset.tools.find((tool) => tool.name === step.tool)?.access === "read" ? "read" : "write";
     /**
-     * GR-07 / N-07：确定性兜底计划（参数不完整）**跳过围栏自动判定**，一律人工裁决。
-     * 为什么不能照常判定：词表对齐后（GR-03），空参写步骤会命中 R1/R2 这类**算术型 when**
-     * （`abs(after.price-before.price)/before.price`）——缺失路径经 num() 抛错 → E2.1 按 block
-     * → "审批看不到参数"恶化成"任务被假熔断"。缺数据宁挂起，不误熔断（与行业规划器同口径）。
-     */
-    /**
      * 强制人工裁决的两种来源：
      *  ① params_incomplete（GR-07：确定性兜底计划参数不完整）
      *  ② plan_unverified（N-13：计划与目标相关性低——目标关键词在计划里零落点）
-     * 二者都跳过围栏自动判定，避免"缺参数的算术型 when"被误熔断，也避免文不对题继续自动执行。
+     * 两者都先完整判围栏：真实 block 不可审批；仅缺数据导致的求值失败可以挂起补参，
+     * 补参后仍须重新判定，不能用人工批准绕过红线。
      */
     /**
      * GR-07 只对**写步骤**强制人工：读步骤无副作用，强制审批只会拖慢交付
@@ -774,7 +850,7 @@ export async function runQuest(
     const needsHumanCheck = (step.context?.params_incomplete === true || step.context?.plan_unverified === true)
       && toolAccess === "write";
     const planUnverified = needsHumanCheck && step.context?.plan_unverified === true && step.context?.params_incomplete !== true;
-    const paramsIncomplete = needsHumanCheck;
+    const paramsIncomplete = step.context?.params_incomplete === true && toolAccess === "write";
     const views: JudgeInput[] = [{
       object: { type: step.objectType, id: step.objectId }, action: step.action, effect: toolAccess,
       params: step.params, before: step.before, after: step.after, context: step.context,
@@ -785,9 +861,28 @@ export async function runQuest(
         params: step.params, before: step.before, after: step.after, context: step.context,
       });
     }
-    const verdict: { level: "auto" | "review" | "block"; impacts: RuleImpact[]; triggeredBy: string[]; evalErrors: string[] } = paramsIncomplete
-      ? { level: "review", impacts: [], triggeredBy: [], evalErrors: [] }
-      : (views.length === 1 ? judge(views[0]!, rules, defaultLevel) : judgeViews(views, rules, defaultLevel));
+    const rawVerdict = views.length === 1 ? judge(views[0]!, rules, defaultLevel) : judgeViews(views, rules, defaultLevel);
+
+    /**
+     * 机制兜底（2026-09-29 第二次修复，W-01；与 GR-07 同口径的"缺数据宁挂起，不误熔断"）。
+     *
+     * 为什么必须放在机制层：GR-07 的强制人审是**标记驱动**的（只认 `context.params_incomplete`），
+     * 而"缺参数"的实际来源不止兜底规划器——行业规划器（acquisition-planner）刻意不猜数据、
+     * 缺价带档案时不写 before/after，于是步骤照常进围栏瀑布，命中 R1/R2/R7/R8 这类算术型 when
+     * → 缺失路径 num() 抛错 → E2.1 宁可错杀按 block → 客户看到"围栏熔断 + 任务已暂停"，
+     * 把"档案缺字段"误报成"违了围栏"，且连人审入口都没有（第三方 UI 实拍实证）。
+     *
+     * 判据只认"**全部** block 都来自求值异常"：只要有任意一条规则是**真判 block**，
+     * 熔断语义原样保留（宁可错杀的红线不动）；求值异常本身仍进 rule_impact 留痕，不做静默降级。
+     */
+    const blockedImpacts = rawVerdict.impacts.filter((impact) => impact.result === "blocked").length;
+    const fenceUnevaluable = toolAccess === "write"
+      && rawVerdict.level === "block"
+      && rawVerdict.evalErrors.length > 0
+      && blockedImpacts === rawVerdict.evalErrors.length;
+    const verdict: typeof rawVerdict = fenceUnevaluable
+      ? { level: "review", impacts: rawVerdict.impacts, triggeredBy: [], evalErrors: rawVerdict.evalErrors }
+      : rawVerdict;
 
     await updateThread(app, scope, threadId, { current_action: step.label });
 
@@ -817,7 +912,7 @@ export async function runQuest(
           prefUsageRecorded = true;
         }
         await c.query(
-          `UPDATE threads SET status='paused', error=$3, updated_at=now() WHERE id=$1 AND workspace_id=$2`,
+          `UPDATE threads SET status='paused', error=$3, updated_at=now() WHERE id=$1 AND workspace_id=$2 AND status='running'`,
           [threadId, scope.workspaceId, `围栏熔断：${verdict.triggeredBy.join("、")}`],
         );
       });
@@ -827,13 +922,26 @@ export async function runQuest(
     // agent 模式（F3.3 逐步商量）：非 block 步骤一律视为 review——每步操作前挂起等人类确认
     //（block 已在上方提前 return；此处重新取宽类型避免控制流收窄误判）
     //（block 已在上方提前 return，此处 level ∈ {auto, review}；agent 模式一律 review）
-    const effectiveLevel: "auto" | "review" | "block" = input.mode === "agent" ? "review" : (verdict.level as "auto" | "review");
+    /**
+     * A-01 联动修复（T-2026-0929-0003）：高危岗位（`meta.high_risk=true`）的写类动作必须**逐次授权**（L3.5）。
+     *
+     * 背景：actor 接入 `preset.highRisk` 后，网关段③ 会在落库时要求 approvalRef。若这里仍按围栏
+     * 判定的 `auto` 直接执行，落库必然被 GatewayReject 抛出——线程停在 running（无终态、重试复撞死票据），
+     * 客户看到的是"任务卡住"而不是"等人审批"。所以把同一条纪律**前置**到判定处：
+     * 没有新鲜授权的高危写步骤不进执行分支，直接按人审挂起；人放行后携带 approvalRef 执行，
+     * 落库时仍由网关段③ 二次把关（纵深防御不变，只是不再把"该找人"做成"抛异常"）。
+     */
+    const highRiskAuthRequired = preset.highRisk && toolAccess === "write";
+    const effectiveLevel: "auto" | "review" | "block" =
+      input.mode === "agent" || (verdict.level === "auto" && highRiskAuthRequired)
+        ? "review"
+        : (needsHumanCheck ? "review" : verdict.level as "auto" | "review");
 
     // #34：review 级别但已获人工批准（approved/edited）→ 不二次挂起，携带授权引用执行
     // GR-01：批准必须与**当前步骤指纹**一致；LLM 重规划换了动作/参数 → 旧审批失效，重新挂起
-    const approvalRecord = effectiveLevel === "review" ? approved.get(step.stepId) : undefined;
-    const approvalDrifted = approvalRecord ? !approvalMatchesStep(approvalRecord, step) : false;
-    const approvalRef = approvalRecord && !approvalDrifted ? approvalRecord.approvalId : undefined;
+    const approvalRecord = candidateApproval;
+    const approvalDrifted = approvalRecord ? !approvalMatches : false;
+    const approvalRef = approvalRecord && !approvalDrifted && !paramsIncomplete && !fenceUnevaluable ? approvalRecord.approvalId : undefined;
 
     if (effectiveLevel === "review" && !approvalRef) {
       /**
@@ -869,11 +977,15 @@ export async function runQuest(
                 ? `越围栏挂起：${verdict.triggeredBy.join("、")}`
                 : (input.mode === "agent"
                   ? "agent 模式逐步确认：每步操作前挂起等待人工裁决"
-                  : (paramsIncomplete
-                    ? (planUnverified
-                      ? "计划与目标相关性低（目标关键词在计划中无落点）→ 一律人工裁决，请先核对是不是您要的活"
-                      : "确定性兜底计划：参数不完整 → 一律人工裁决（不做围栏自动判定）")
-                    : "越围栏挂起：写类动作无规则命中 → default_level=review")),
+                 : (paramsIncomplete
+                   ? (planUnverified
+                     ? "计划与目标相关性低（目标关键词在计划中无落点）→ 一律人工裁决，请先核对是不是您要的活"
+                     : "确定性兜底计划：参数不完整 → 一律人工裁决（不做围栏自动判定）")
+                    : (fenceUnevaluable
+                      ? `围栏无法求值（缺参数，未按熔断处理）→ 一律人工裁决：${verdict.evalErrors.slice(0, 3).join("；")}`
+                      : (highRiskAuthRequired
+                        ? `高危岗位「${preset.presetKey}」写类动作须逐次授权（L3.5）：围栏判定为 ${verdict.level} 亦须人审放行`
+                        : "越围栏挂起：写类动作无规则命中 → default_level=review")))),
               ...(approvalDrifted ? ["审批快照与当前步骤不一致，需重新裁决（approval_drift_detected）"] : []),
             ],
             ...(prefUsageRecorded ? {} : { memory_refs: preferenceMemoryRefs(prefs) }),
@@ -919,16 +1031,28 @@ export async function runQuest(
             JSON.stringify({
               /** GR-01：审批与「被批准的那一步」的指纹绑定（replay 时比对，防漂移消费） */
               step_fingerprint: fingerprint,
+              object_type: step.objectType,
+              object_id: step.objectId,
+              step_id: step.stepId,
               tool: step.tool,
               before: step.before ?? null,
               /** GR-08：真正的"变更后值"在 step.after；无 after 时才回落到 params（不再把 params 当 after） */
               after: step.after ?? step.params ?? null,
               action: step.action,
               params: step.params,
-              ...(step.context?.params_incomplete === true
+              ...(step.context?.params_incomplete === true || fenceUnevaluable
                 ? {
                   params_incomplete: true,
-                  warning: "该步骤由确定性兜底计划生成，参数不完整，请人工补齐或驳回",
+                  /**
+                   * 告警文案按来源分流（2026-09-29 第二次修复）：
+                   * 规划器自己打了标 → 优先用它的**可执行**说明（例如"档案缺 business.price_bands，
+                   * 请补齐价带或直接给出目标价与基准价"）；机制兜底降级 → 说明"围栏为什么算不出来"。
+                   */
+                  warning: step.context?.params_incomplete === true
+                    ? (typeof step.context.params_incomplete_note === "string" && step.context.params_incomplete_note.trim()
+                      ? step.context.params_incomplete_note
+                      : "该步骤由确定性兜底计划生成，参数不完整，请人工补齐或驳回")
+                    : `围栏无法求值（缺参数，已按人工裁决而非熔断处理）：${verdict.evalErrors.slice(0, 3).join("；")}。请补齐参数或驳回。`,
                 }
                 : {}),
               ...(step.context?.plan_unverified === true && step.context?.params_incomplete !== true
@@ -965,7 +1089,7 @@ export async function runQuest(
             tier],
         );
         await c.query(
-          `UPDATE threads SET status='pending_review', updated_at=now() WHERE id=$1 AND workspace_id=$2`,
+          `UPDATE threads SET status='pending_review', updated_at=now() WHERE id=$1 AND workspace_id=$2 AND status='running'`,
           [threadId, scope.workspaceId],
         );
         return { approvalId: aprId };
@@ -976,13 +1100,28 @@ export async function runQuest(
       };
     }
 
-    // auto（或 #34 已批准 review）：执行工具 → 回执校验（E3.7）→ 写事件
+    // 先验权限/消费批准并持久登记开始，再执行工具，最后落最终回执。
     /**
      * GR-17：工具执行必须 try/catch——执行器抛错时线程此前会永久停在 running
      * （无事件、无终态、还占着 L3.1 并发配额，10 个僵尸即让工作区永远 429）。
-     * 口径：异常 = 执行器出错（可重试，不写回执位），与「未核实=无回执、对账前不重发」分开建模。
+     * 只读异常可重试；写异常保留未知回执，对账前不重发。
      */
     let out: Awaited<ReturnType<ToolExecutor>>;
+    const executionContext = {
+      ...scope, actor: { id: preset.presetKey, type: "agent" as const, fenceBindings: preset.fenceBindings,
+        ...(preset.readonly ? { readonly: true } : {}), ...(preset.highRisk ? { highRisk: true } : {}) },
+      approvalRef, sessionId: threadId,
+    };
+    const executionDraft = {
+      who: { type: "agent" as const, id: preset.presetKey, version: preset.version },
+      context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString() },
+      object: { type: step.objectType, id: step.objectId },
+      decision: { kind: "execution_started", action: step.action, step_id: step.stepId, tool: step.tool,
+        effect: effectOf(step.tool), params: step.params, fingerprint, original_fingerprint: originalFingerprint },
+      rule_impact: verdict.impacts,
+      receipt: { synced: false, mode: simulated ? "simulated" as const : "real" as const },
+    };
+    const executionPermit: ExecutionPermit = await authorizeToolExecution(gateway, executionContext, executionDraft);
     try {
       out = await runTool(step.tool, step.params);
     } catch (err) {
@@ -990,10 +1129,7 @@ export async function runQuest(
       const summary = message.replace(/\s+/g, " ").slice(0, 200);
       await inTx(app, scope, async (c) => {
         const ev = await gatewayAppendOnClient(c, {
-          ...scope,
-          actor: { id: preset.presetKey, type: "agent", fenceBindings: preset.fenceBindings, ...(preset.highRisk ? { highRisk: true } : {}) },
-          approvalRef,
-          sessionId: threadId,
+          ...executionContext, executionPermit,
         }, {
           who: { type: "agent", id: preset.presetKey, version: preset.version },
           context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString() },
@@ -1002,6 +1138,7 @@ export async function runQuest(
             kind: "execute", outcome: "error",
             action: step.action, step_id: step.stepId, tool: step.tool, effect: effectOf(step.tool),
             params: step.params, fingerprint,
+            original_fingerprint: originalFingerprint,
             basis: [`执行失败：${summary}`],
             error: summary,
             ...(prefUsageRecorded ? {} : { memory_refs: preferenceMemoryRefs(prefs) }),
@@ -1014,7 +1151,7 @@ export async function runQuest(
           prefUsageRecorded = true;
         }
         await c.query(
-          `UPDATE threads SET status='failed', error=$3, progress_done=$4, progress_total=$5, updated_at=now() WHERE id=$1 AND workspace_id=$2`,
+          `UPDATE threads SET status='failed', error=$3, progress_done=$4, progress_total=$5, updated_at=now() WHERE id=$1 AND workspace_id=$2 AND status='running'`,
           [threadId, scope.workspaceId, `步骤 ${step.stepId}（${step.label}）执行失败：${summary}`, done.size, steps.length],
         );
       });
@@ -1035,10 +1172,7 @@ export async function runQuest(
     // D16（#1/A）：执行事件与线程进度同一事务——步骤级原子提交（replay 幂等锚点不漂移）
     await inTx(app, scope, async (c) => {
       const ev = await gatewayAppendOnClient(c, {
-        ...scope,
-        actor: { id: preset.presetKey, type: "agent", fenceBindings: preset.fenceBindings, ...(preset.highRisk ? { highRisk: true } : {}) },
-        approvalRef, // #34：已批准步骤携带审批引用（L3.5 授权留痕）
-        sessionId: threadId,
+        ...executionContext, executionPermit,
       }, {
         who: { type: "agent", id: preset.presetKey, version: preset.version },
         context: { tenant_id: scope.tenantId, workspace_id: scope.workspaceId, time: new Date().toISOString() },
@@ -1047,6 +1181,7 @@ export async function runQuest(
           kind: "execute",
           action: step.action, step_id: step.stepId, tool: step.tool, effect: effectOf(step.tool), params: step.params, before: step.before,
           fingerprint,
+          original_fingerprint: originalFingerprint,
           after: { ...(typeof step.after === "object" && step.after !== null ? step.after as Record<string, unknown> : {}), result: out.result },
           basis: execBasis.length ? execBasis : undefined,
           ...(prefUsageRecorded ? {} : { memory_refs: preferenceMemoryRefs(prefs) }),
@@ -1085,6 +1220,12 @@ export async function runQuest(
   if (unverified.length > 0) {
     await updateThread(app, scope, threadId, { status: "failed", error: `步骤 ${unverified.join("/")} 无回执，标「未核实」` });
     return { threadId, status: "failed", stepsDone: done.size, stepsTotal: steps.length, unverified, planVersion, planReused, planRelevance, ...(drifted.length ? { drifted } : {}) };
+  }
+  const current = await inTx(app, scope, async (c) => c.query<{ status: string }>(
+    "SELECT status FROM threads WHERE id=$1 AND workspace_id=$2", [threadId, scope.workspaceId],
+  ));
+  if (current.rows[0]?.status === "cancelled" || current.rows[0]?.status === "paused") {
+    return { threadId, status: current.rows[0].status, stepsDone: done.size, stepsTotal: steps.length, unverified, planVersion, planReused };
   }
   await updateThread(app, scope, threadId, { status: "completed", closed_at: new Date().toISOString() });
   return { threadId, status: "completed", stepsDone: done.size, stepsTotal: steps.length, unverified, planVersion, planReused, planRelevance, ...(drifted.length ? { drifted } : {}) };

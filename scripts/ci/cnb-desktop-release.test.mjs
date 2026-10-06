@@ -18,7 +18,7 @@ import {
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "../..");
 const SHA = "a".repeat(40);
-const REPOSITORY = "workloom-ai/WorkLoom-growthmatrix";
+const REPOSITORY = "workloom-ai/workloom-growthmatrix";
 const TAG = "v1.2.3";
 const BUILD_ID = "cnb-test-123";
 const PREFIX = `/${REPOSITORY}/-/`;
@@ -89,8 +89,10 @@ function json(value, status = 200) {
 class FakeCnb {
   constructor() {
     this.mainSha = SHA;
+    this.mainName = "refs/heads/main";
     this.mainProtected = true;
     this.tagSha = SHA;
+    this.tagName = `refs/tags/${TAG}`;
     this.commitAssets = new Map();
     this.releaseAssets = new Map();
     this.pending = new Map();
@@ -158,10 +160,10 @@ class FakeCnb {
     assert.ok(url.pathname.startsWith(PREFIX), `unexpected path ${url.pathname}`);
     const path = url.pathname.slice(PREFIX.length);
     if (method === "GET" && path === "git/branches/main") {
-      return json({ name: "main", protected: this.mainProtected, commit: { sha: this.mainSha } });
+      return json({ name: this.mainName, protected: this.mainProtected, commit: { sha: this.mainSha } });
     }
     if (method === "GET" && path === `git/tags/${TAG}`) {
-      return json({ name: TAG, target_type: "commit", target: this.tagSha,
+      return json({ name: this.tagName, target_type: "commit", target: this.tagSha,
         commit: { sha: this.tagSha } });
     }
     if (method === "GET" && path === `releases/tags/${TAG}`) {
@@ -312,11 +314,35 @@ test("context rejects wrong branch, source SHA, repo, role, or unsigned mode", (
   } finally { f.cleanup(); }
 });
 
+test("frozen product repository casing resolves to this exact canonical CNB repository", () => {
+  const f = fixture();
+  try {
+    writeFileSync(join(f.root, "product.manifest.json"), JSON.stringify({
+      repository: "workloom-ai/WorkLoom-growthmatrix", release: { channel: "stable" },
+    }));
+    const identity = validateContext(env("publisher"), { role: "publisher", cwd: f.root, checkoutSha: SHA });
+    assert.equal(identity.repository, REPOSITORY);
+    for (const repository of ["workloom-ai/WorkLoom-growthtest", "other/WorkLoom-growthmatrix", "workloom-ai/WorkLoom-growthmatrix-extra"]) {
+      writeFileSync(join(f.root, "product.manifest.json"), JSON.stringify({ repository, release: { channel: "stable" } }));
+      assert.throws(() => validateContext(env("publisher"), { role: "publisher", cwd: f.root, checkoutSha: SHA }), /产品清单仓库身份不符/u);
+    }
+  } finally { f.cleanup(); }
+});
+
 test("preflight binds remote main and tag and refuses an existing Release", async () => {
   const fake = new FakeCnb();
   const client = new CnbClient({ token: "test", fetchImpl: fake.fetch });
   const identity = { tag: TAG, sha: SHA };
   await assertGitBinding(client, identity);
+  fake.mainName = "main";
+  fake.tagName = TAG;
+  await assertGitBinding(client, identity);
+  fake.mainName = "refs/heads/main-other";
+  await assert.rejects(assertGitBinding(client, identity), /分支保护/u);
+  fake.mainName = "refs/heads/main";
+  fake.tagName = `refs/tags/${TAG}-other`;
+  await assert.rejects(assertGitBinding(client, identity), /tag 名称不符/u);
+  fake.tagName = `refs/tags/${TAG}`;
   fake.mainProtected = false;
   await assert.rejects(assertGitBinding(client, identity), /分支保护/u);
   fake.mainProtected = true;
