@@ -12,6 +12,7 @@
 
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
+import { existsSync, lstatSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runWithConfirmationHandler, type ConfirmationHandler } from "./confirmation.js";
@@ -36,6 +37,13 @@ import {
 import { AUDIO_DISCIPLINE_CLAUSE, AUDIO_NEGATIVE_TERMS } from "./shot-spec.js";
 import { loadDurationRules } from "./duration-rules.js";
 import { installVendorRequirementBridge, type RequirementBridgeTarget } from "./requirement-bridge.js";
+import { runWithReviewedMarketingDossier, validateReviewedMarketingDossier, type ReviewedMarketingDossier, type MarketingDossierTarget } from "./marketing-dossier-bridge.js";
+import { filmCanonicalJson } from "./film-worker-channel.js";
+import { installVendorPrdBridge, type PrdBridgeTarget } from "./prd-bridge.js";
+import { installVendorThemeBridge, type ThemeBridgeTarget } from "./theme-bridge.js";
+import { installVendorPromptReviewBridge, type PromptReviewTarget } from "./prompt-review-bridge.js";
+import { loadCharacterEntry } from "./character-archive.js";
+import { assessPortraitDecision } from "./portrait-decision.js";
 
 /** vendor 引擎暴露的最小结构（HyperrealitySystem 实例方法） */
 interface HyperrealitySystemLike {
@@ -102,6 +110,12 @@ export interface StudioConfig {
    * interactive + spec（只出规格包，不出图）——那是"等人确认"的旧口径，全自动预生产必须开启。
    */
   portraits?: StudioPortraitConfig;
+  /** 仅复用库中已有人验记录且当前图片齐备的明确角色；不出新图、不新造验收记录。 */
+  reusePortraits?: { libraryRoot: string };
+  /** 正式完整镜头合同补全在原G7之前执行；失败不能进入最终确认或渲染。 */
+  prepareFilmCandidate?: (production: Record<string, any>, script: Record<string, any>, timing: Record<string, any>, confirmations: Record<string, any>) => Promise<Record<string, any>>;
+  /** 宿主复读最终事实门或重算冻结稿渲染红线的实际拒绝后装配；用于同阶段修订，不能获得批准。 */
+  finalFactRejection?: { sourceShotsSha256: string; sourceFilmSha256: string; reason: string };
   /**
    * 渲染移交宿主 render-operator（融合设计 §6：vendor 只做预生产，渲染由 render-operator
    * 按 G8 围栏提交）。true 时 vendor Layer 3 只做校验不提交 —— 避免同一批镜头被
@@ -137,6 +151,7 @@ export interface StudioConfig {
     staleAfterDays?: number;
     /** 仅服务宿主在完整来源/G1通过后装配；浏览器metadata中的同名字段没有权限。 */
     verifiedRaw?: { projectId: string; rawJson: string; sha256: string; productQuery: Record<string, unknown> };
+    verifiedDossier?: ReviewedMarketingDossier;
   };
 }
 
@@ -147,6 +162,8 @@ export interface RunInput {
   metadata?: Record<string, unknown>;
   /** 是否为社媒营销类输入（决定是否强制情报层节点 0） */
   isMarketing?: boolean;
+  /** 仅受控CLI/宿主复用已生成、G6拒绝的前期对象；完整G1资格与输入绑定由宿主复读。 */
+  resume?: { result: PreproductionResult; sha256: string };
 }
 
 function resolveVendorEntry(): string {
@@ -166,6 +183,31 @@ function resolveVendorEntry(): string {
     }
   }
   throw new Error("未找到 vendor/supermickey/hyperreality-system/index.js");
+}
+
+export function readReusedPortraitEvidence(root: string, cast: Record<string, any>): Record<string, unknown> {
+  if (!cast || typeof cast.id !== "string" || !cast.id || !existsSync(root)) throw new Error("PORTRAIT_REUSE_NOT_FOUND：明确角色库不存在");
+  const matches = readdirSync(root).flatMap(name => {
+    const dir = path.join(root, name), file = path.join(dir, "profile.json");
+    if (!lstatSync(dir).isDirectory() || lstatSync(dir).isSymbolicLink()) return [];
+    if (!existsSync(file)) return [];
+    const profile = JSON.parse(readFileSync(file, "utf8"));
+    return profile.id === cast.id ? [dir] : [];
+  });
+  if (matches.length !== 1) throw new Error("PORTRAIT_REUSE_NOT_FOUND：角色未唯一登记");
+  const entry = loadCharacterEntry(matches[0]!);
+  if (!entry || entry.verification.status !== "passed" || entry.name !== cast.name
+    || entry.authorization?.evidence !== cast.authorization?.evidence) throw new Error("PORTRAIT_REUSE_UNVERIFIED：当前资产/身份/授权引用与明确档案不一致");
+  if (Object.values(entry.verification.assets).some(asset => asset.bytes < 50_000)) throw new Error("PORTRAIT_REUSE_UNVERIFIED：当前定妆照不足50KB");
+  const ledgerPath = path.join(entry.dir, "gates.jsonl"), bytes = readFileSync(ledgerPath);
+  const records = bytes.toString("utf8").split("\n").filter(Boolean).map(line => JSON.parse(line))
+    .filter(record => record.stepKey === "g5-portrait-confirm");
+  const record = records.at(-1), decision = assessPortraitDecision(record);
+  if (decision.kind !== "human" || decision.blocking || record?.evidence?.characterId !== entry.id) throw new Error("PORTRAIT_REUSE_UNVERIFIED：没有本角色既有人验放行记录或人验已否决");
+  return { source: "registered-portrait-reuse", characterId: entry.id, name: entry.name, activeVersion: entry.activeSet?.version,
+    files: entry.files, currentAssets: entry.verification.assets, verificationScope: entry.verification.scope,
+    humanRecord: record, ledger: { path: ledgerPath, sha256: createHash("sha256").update(bytes).digest("hex") },
+    note: "复读登记角色的人验决定，并核验当前库图片字节；legacy scope不冒称当前JPEG与历史PNG哈希相同，不宣称本次新出图或重新人审。" };
 }
 
 export class VideoStudio {
@@ -199,7 +241,30 @@ export class VideoStudio {
       }
       metadata.dataMining = structuredClone(verified.productQuery);
       verifiedRaw = parsed;
+      validateReviewedMarketingDossier(cfg.dataMining?.verifiedDossier!, input.projectId, verified.sha256);
+      if (filmCanonicalJson(cfg.dataMining?.verifiedDossier?.productQuery) !== filmCanonicalJson(verified.productQuery)) {
+        throw new Error("MARKETING_G1_REQUIRED：受审档案商品查询与回填查询不同");
+      }
     }
+    if (input.resume) {
+      const previous = input.resume.result as Record<string, any>;
+      const earlyRejection = previous.success === false && (previous.confirmations?.prompts?.approved === false
+        || previous.confirmations?.prompts?.approved === true && previous.confirmations?.preproduction?.approved === false);
+      const lateRejection = cfg.finalFactRejection && previous.success === true && previous.confirmations?.prompts?.approved === true
+        && previous.confirmations?.preproduction?.approved === true && cfg.finalFactRejection.reason.trim()
+        && createHash("sha256").update(filmCanonicalJson(previous.stages?.productionEngine?.shots ?? null)).digest("hex") === cfg.finalFactRejection.sourceShotsSha256
+        && createHash("sha256").update(filmCanonicalJson(previous.stages?.productionEngine?.formalFilmCandidate ?? null)).digest("hex") === cfg.finalFactRejection.sourceFilmSha256;
+      if (!input.isMarketing || !verified || createHash("sha256").update(filmCanonicalJson(previous)).digest("hex") !== input.resume.sha256
+        || !(earlyRejection || lateRejection) || cfg.finalFactRejection && !lateRejection
+        || ["creativeTheme", "requirementList", "prd"].some(key => previous.confirmations?.[key]?.approved !== true)
+        || filmCanonicalJson(previous.stages?.dataMining?.data) !== filmCanonicalJson(JSON.parse(cfg.dataMining?.verifiedDossier?.assemblyJson ?? "null"))
+        || filmCanonicalJson(previous.confirmations?.prd?.prd) !== filmCanonicalJson(previous.stages?.prdGeneration?.data)
+        || !Array.isArray(previous.stages?.productionEngine?.prompts) || !previous.stages.productionEngine.prompts.length
+        || ["renderingEngine", "render", "postProduction"].some(key => key in previous.stages)) {
+        throw new Error("PREPRODUCTION_RESUME_UNVERIFIED：只接受原G1–G4已批准、未渲染且当前实际拒绝的完整对象");
+      }
+    }
+    const reusedPortraits = cfg.reusePortraits ? readReusedPortraitEvidence(cfg.reusePortraits.libraryRoot, metadata.characterArchive as Record<string, any>) : null;
     const log = cfg.log ?? ((line: string) => console.log(line));
     const require = createRequire(import.meta.url);
     const { HyperrealitySystem } = require(resolveVendorEntry()) as {
@@ -218,11 +283,26 @@ export class VideoStudio {
         gate,
         payload: { vendorType: req.type }
       });
+      const suffix = `${cfg.dataMining?.verifiedDossier && gate !== "G1_DOSSIER"
+          ? `\n\n## 本次G1已审完整装订快照（当前设计依据，未宣称成片已生成）\n${JSON.stringify(JSON.parse(cfg.dataMining.verifiedDossier.assemblyJson),
+            (_key, value) => value === null ? "未提供（原档案空值）" : value)}\n档案原文/引用是商品口径；Brief、人物档案、布景与设计约束仅是明确制作输入。当前主题/需求/PRD不是最终逐镜产物或视觉实测，不能要求尚未生成的产物来证明已完成。\n`
+          : ""}${["G6_PROMPT", "G7_FINAL"].includes(gate) ? `\n\n## 明确制作合同与登记造型（事实原文仍以G1为准）\n${JSON.stringify({ brief: metadata.brief ?? null,
+            characterArchive: metadata.characterArchive ?? null, referenceAssets: metadata.referenceAssets ?? null, usage: metadata.marketingUsage ?? null })}\n技术格式与登记引用保留实际MP4/H.264/fps/asset语法；创意与对白中文。无人产品镜可有出镜人物画外音，但不能混入人体动作。\n` : ""}`;
+      let contentMd = req.content + suffix;
+      if (["G6_PROMPT", "G7_FINAL"].includes(gate)) {
+        let structured: unknown;
+        try { structured = JSON.parse(req.content); } catch (error) { if (!(error instanceof SyntaxError)) throw error; }
+        if (structured && typeof structured === "object") contentMd = filmCanonicalJson({ candidate: structured,
+          reviewedDossier: cfg.dataMining?.verifiedDossier ? JSON.parse(cfg.dataMining.verifiedDossier.assemblyJson) : null,
+          contract: { brief: metadata.brief ?? null, characterArchive: metadata.characterArchive ?? null,
+            referenceAssets: metadata.referenceAssets ?? null, usage: metadata.marketingUsage ?? null },
+          reviewScope: "实际完整候选与已审档案、明确制作合同。原生空值保留结构语义，不是缺词占位。未宣称已渲染或听音验收；技术引用保留准确语法，创意与对白中文；无人镜可有登记CEO画外音。" });
+      }
       const verdict = await cfg.onApproval({
         gate,
         vendorType: req.type,
         title: `预生产确认门 · ${gate}`,
-        contentMd: req.content,
+        contentMd,
         runId: req.runId ?? runId
       });
       await emit({
@@ -394,6 +474,17 @@ export class VideoStudio {
           durationConstraint: { maxSingleShot, minSingleShot }
         });
         keep(installVendorRequirementBridge(system as unknown as RequirementBridgeTarget, metadata, log));
+        keep(installVendorThemeBridge(system as unknown as ThemeBridgeTarget, metadata));
+        keep(installVendorPrdBridge(system as unknown as PrdBridgeTarget, metadata, log, cfg.dataMining?.verifiedDossier
+          ? (JSON.parse(cfg.dataMining.verifiedDossier.assemblyJson) as Record<string, unknown>).dossier as Record<string, unknown> : undefined,
+          { llm: cfg.llm, workDir: cfg.workDir, projectId: input.projectId }));
+        keep(installVendorPromptReviewBridge(system as unknown as PromptReviewTarget, { metadata, llm: cfg.llm,
+          reviewedFacts: cfg.dataMining?.verifiedDossier ? JSON.parse(cfg.dataMining.verifiedDossier.assemblyJson).dossier : undefined,
+          workDir: cfg.workDir, projectId: input.projectId, log, reusedPortraits,
+          reuseGeneratedCandidate: Boolean(input.resume) && !cfg.finalFactRejection,
+          ...(cfg.finalFactRejection && input.resume ? { initialRejection: { reason: cfg.finalFactRejection.reason,
+            candidate: (input.resume.result.stages?.productionEngine as Record<string, any>).formalFilmCandidate } } : {}),
+          prepareFinalCandidate: cfg.prepareFilmCandidate }));
         /** 实例级放宽 rhythmProfiles（standard 12 / slow 15 → 模型上限），否则 30s 单镜会被重新夹紧 */
         applyDurationPolicyToManager(
           (system as unknown as { durationConstraintManager?: unknown }).durationConstraintManager,
@@ -440,7 +531,35 @@ export class VideoStudio {
           const modelName = portraitCfg && portraitCfg.enabled !== false ? portraitCfg.model : "未指定模型";
           log(`[studio] 定妆照真实出图已启用（${modelName}，产物根 ${charactersDir}）`);
         }
-        const result = await system.create(input.intent, metadata, createOptions);
+        const execute = async (): Promise<PreproductionResult> => {
+          if (!input.resume) return system.create(input.intent, metadata, createOptions);
+          log("[studio] 正式恢复G6阶段：复读原G1资格与G2–G4完整对象；不重新生成上游，不提交渲染");
+          const previous = structuredClone(input.resume.result) as Record<string, any>;
+          // 正式修订会改变受审镜头；旧逐镜事实/导出地址与旧完整候选不可继承成当前资格。
+          delete previous.marketingFacts; delete previous.filmShotlist;
+          delete previous.stages.productionEngine.formalFilmCandidate;
+          previous.confirmations.preproduction = { approved: false, reason: "正式G6修订后等待原G7重新审核" };
+          const current = system as unknown as PromptReviewTarget;
+          const production = previous.stages.productionEngine;
+          const verdict = await current._confirmPrompts(production.prompts);
+          previous.confirmations.prompts = verdict;
+          previous.success = false;
+          previous.stages.promptReview = { status: verdict.approved ? "approved" : "rejected", reason: verdict.reason };
+          previous.resumeSourceSha256 = input.resume.sha256;
+          if (!verdict.approved) return previous as PreproductionResult;
+          const final = await current._confirmPreproductionResult(production, previous.stages.scriptEngine, previous.timing, previous.confirmations);
+          previous.confirmations.preproduction = final;
+          previous.success = final.approved;
+          return previous as PreproductionResult;
+        };
+        const result = input.isMarketing ? await runWithReviewedMarketingDossier({
+          proof: cfg.dataMining!.verifiedDossier!, projectId: input.projectId, rawSha256: verified!.sha256,
+          system: system as unknown as MarketingDossierTarget,
+          ...(input.resume ? { resumeAssembly: (input.resume.result.stages?.dataMining as Record<string, unknown>).data as Record<string, unknown> } : {}),
+        }, execute) : await execute();
+        if ((result.stages?.prdGeneration as { degraded?: boolean } | undefined)?.degraded === true) {
+          throw new Error("PRD_REVIEW_REQUIRED：正式PRD生成或重审失败，vendor兜底稿不得交给下游成片");
+        }
         if (portraitRuntime) {
           const index = portraitRuntime.snapshot();
           const characters = Object.keys(index.characters).length;

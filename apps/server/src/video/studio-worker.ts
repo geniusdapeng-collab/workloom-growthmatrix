@@ -49,7 +49,7 @@ import {
 } from "@hyperreality/video-studio";
 import { buildServerGateRecord, withGateLedger } from "./gate-ledger-bridge.js";
 import { createDataMiningExecutor } from "./data-mining-executor.js";
-import { prepareMarketingFacts, finalizeMarketingFacts, type PreparedMarketingFacts } from "./marketing-authority.js";
+import { prepareMarketingFacts, finalizeMarketingFacts, marketingStudioDataMining, type PreparedMarketingFacts } from "./marketing-authority.js";
 import { canonicalRenderJson, renderSha256 } from "./gen/compiled-request.js";
 import { acquireProjectLease, archiveWorkDir, makeLedgerWriter, readProjectMeta } from "./archive-host.js";
 import { ingestPortraitsFromIndex } from "./media/library.js";
@@ -1006,10 +1006,7 @@ export function startRun(scope: Scope, input: StudioRunInput): string {
               marketingDossierRoot = marketing.storeRoot;
               marketingDossierRef = path.posix.join("archive", scope.workspaceId, input.projectId, `${marketing.prefix}-dossier`);
             }
-            const studio = new VideoStudio({ ...studioConfig, ...(marketing ? { dataMining: {
-              mode: "api", storeRoot: marketing.storeRoot, refresh: true,
-              verifiedRaw: { projectId: input.projectId, rawJson: canonicalRenderJson(marketing.raw), sha256: marketing.bundle.rawSha256, productQuery: marketing.bundle.productQuery },
-            } } : {}) });
+            const studio = new VideoStudio({ ...studioConfig, ...(marketing && g1Approved ? { dataMining: marketingStudioDataMining(marketing) } : {}) });
             /**
              * 传入 runInput（而不是 input）：它带上了本轮的片型选型结论与注入指引，
              * vendor 的提示词/分镜必须按本次选中的知识条目生成；G1 营销事实仍取自原始 input。

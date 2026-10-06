@@ -4,7 +4,12 @@ import { resolveGate } from "./gates.js";
 import { autoApproveHandler, runWithConfirmationHandler } from "./confirmation.js";
 import { WorkloomLLMEngine } from "./llm-adapter.js";
 import { buildRenderScript, loadPromptLengthSpec } from "./render-scripts.js";
-import { VideoStudio, type ApprovalCallback, type EventSink } from "./studio.js";
+import { VideoStudio, type ApprovalCallback, type EventSink, type StudioConfig } from "./studio.js";
+import { filmCanonicalJson } from "./film-worker-channel.js";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { readReusedPortraitEvidence } from "./studio.js";
 
 const studioMocks = vi.hoisted(() => ({
   construct: vi.fn(),
@@ -28,6 +33,8 @@ vi.mock("node:module", async (importOriginal) => {
             return { HyperrealitySystem: class {
               constructor() { studioMocks.construct(); }
               create(...input: unknown[]) { return studioMocks.create(...input); }
+              _confirmPrompts(prompts: unknown) { return globalThis.__HR_CONFIRMATION_HANDLER__!({ type: "prompt", content: JSON.stringify(prompts), runId: "resume-test" }); }
+              _confirmPreproductionResult(production: unknown) { return globalThis.__HR_CONFIRMATION_HANDLER__!({ type: "preproduction", content: JSON.stringify(production), runId: "resume-test" }); }
             } };
           }
           return Reflect.apply(target, thisArg, args);
@@ -71,6 +78,28 @@ vi.mock("./requirement-bridge.js", () => ({
   installVendorRequirementBridge: () => {
     studioMocks.installed.push("requirement");
     return () => { studioMocks.disposed.push("requirement"); };
+  }
+}));
+vi.mock("./marketing-dossier-bridge.js", async importOriginal => ({
+  ...await importOriginal<typeof import("./marketing-dossier-bridge.js")>(),
+  runWithReviewedMarketingDossier: async (_input: unknown, execute: () => Promise<unknown>) => execute(),
+}));
+vi.mock("./prd-bridge.js", () => ({
+  installVendorPrdBridge: () => {
+    studioMocks.installed.push("prd");
+    return () => { studioMocks.disposed.push("prd"); };
+  }
+}));
+vi.mock("./theme-bridge.js", () => ({
+  installVendorThemeBridge: () => {
+    studioMocks.installed.push("theme");
+    return () => { studioMocks.disposed.push("theme"); };
+  }
+}));
+vi.mock("./prompt-review-bridge.js", () => ({
+  installVendorPromptReviewBridge: () => {
+    studioMocks.installed.push("prompt-review");
+    return () => { studioMocks.disposed.push("prompt-review"); };
   }
 }));
 
@@ -289,13 +318,38 @@ describe("vendor 核心可加载", () => {
   }, 35_000);
 });
 
+describe("既有人验定妆照只读复用", () => {
+  it.each(["ready", "missing-angle", "tiny", "machine", "rejected", "identity", "owner-other"])("%s只依据当前资产与登记人验；不生成或伪造新裁决", kind => {
+    const root = mkdtempSync(join(tmpdir(), "portrait-reuse-")), dir = join(root, "registered"); mkdirSync(join(dir, "portraits"), { recursive: true });
+    const angles = ["front", "threeQuarter", "closeup", "side"], files = Object.fromEntries(angles.map(angle => [angle, `portraits/ceo-${angle}.jpg`]));
+    const profile = { schemaVersion: "workloom.character-profile/v1", id: "ceo", name: "出镜人物", kind: "authorized-real",
+      authorization: { evidence: "asset://registered" }, portraitSets: [{ version: 1, dir: "portraits", active: true, angles, files }] };
+    for (const angle of angles) if (!(kind === "missing-angle" && angle === "side")) writeFileSync(join(dir, files[angle]!), Buffer.alloc(kind === "tiny" ? 2048 : 50001, 1));
+    writeFileSync(join(dir, "profile.json"), JSON.stringify(profile));
+    const record = { stepKey: "g5-portrait-confirm", via: kind === "machine" ? "llm" : "owner-acceptance", approved: kind !== "rejected",
+      evidence: { basis: "human-review", characterId: kind === "owner-other" ? "another" : "ceo" } };
+    writeFileSync(join(dir, "gates.jsonl"), JSON.stringify(record) + "\n");
+    const cast = { id: "ceo", name: kind === "identity" ? "其他人" : "出镜人物", authorization: { evidence: "asset://registered" } };
+    try {
+      if (kind === "ready") {
+        const result: any = readReusedPortraitEvidence(root, cast); expect(result.humanRecord).toEqual(record);
+        expect(Object.keys(result.currentAssets)).toHaveLength(4); expect(result.verificationScope).toBe("legacy-current-bytes-only");
+        expect(JSON.parse(readFileSync(join(dir, "profile.json"), "utf8"))).toEqual(profile);
+      } else expect(() => readReusedPortraitEvidence(root, cast)).toThrow("PORTRAIT_REUSE_UNVERIFIED");
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
+});
+
  describe("营销只消费宿主绑定回填", () => {
   const rawJson = JSON.stringify({ A1: { identity: { name: "本次商品" } }, A2: { reviews: [] }, A3: { competitors: [] } });
   const sha256 = createHash("sha256").update(rawJson).digest("hex");
-  function marketing(verifiedRaw?: { projectId: string; rawJson: string; sha256: string; productQuery: Record<string, unknown> }) {
+  function marketing(verifiedRaw?: { projectId: string; rawJson: string; sha256: string; productQuery: Record<string, unknown> }, extra: Partial<StudioConfig> = {}) {
+    const assemblyJson = JSON.stringify({ ok: true, chain: { ok: true }, envelopes: [1, 2, 3, 4, 5], dossier: {}, cards: {} });
     return new VideoStudio({ llm: new WorkloomLLMEngine({ baseUrl: "https://example.invalid", apiKey: "test-only", model: "test" }),
       workDir: "/unused/marketing-test", onApproval: async () => ({ approved: true }), log: () => undefined,
-      dataMining: { mode: "api", raw: { A1: { identity: { name: "旧缓存商品" } } }, storeRoot: "/unused/current-attempt", verifiedRaw } });
+      dataMining: { mode: "api", raw: { A1: { identity: { name: "旧缓存商品" } } }, storeRoot: "/unused/current-attempt", verifiedRaw,
+        ...(verifiedRaw ? { verifiedDossier: { projectId: verifiedRaw.projectId, productQuery: verifiedRaw.productQuery,
+          assemblyJson, sha256: createHash("sha256").update(assemblyJson).digest("hex"), rawSha256: verifiedRaw.sha256 } } : {}) }, ...extra });
   }
   it.each(["missing", "wrong-project", "wrong-hash", "missing-stage"])("%s在vendor构造与create之前拒绝", async kind => {
     let proof = { projectId: "P1", rawJson, sha256, productQuery: { name: "本次商品" } };
@@ -312,5 +366,52 @@ describe("vendor 核心可加载", () => {
     await marketing({ projectId: "P1", rawJson, sha256, productQuery: { name: "本次商品" } }).runPreproduction({ projectId: "P1", intent: "营销", isMarketing: true, metadata });
     expect(studioMocks.create).toHaveBeenCalledWith("营销", { brief: metadata.brief, dataMining: { name: "本次商品" } }, expect.objectContaining({ dataMiningRaw: JSON.parse(rawJson), dataMiningRefresh: true, skipDataMiningReview: true }));
     expect(metadata._dataDossier.name).toBe("伪造档案");
+  });
+  function resumeFixture(): Record<string, any> {
+    const data = { ok: true, chain: { ok: true }, envelopes: [1, 2, 3, 4, 5], dossier: {}, cards: {} }, prd = { targetDuration: 30 };
+    return { success: false, stages: { dataMining: { data }, prdGeneration: { data: prd },
+      productionEngine: { shots: [{ shotId: "S1", duration: 30 }], prompts: [{ shotId: "S1", duration: 30, fields: { scene: "柜台" }, prompt: "真实原稿" }] } },
+      confirmations: { creativeTheme: { approved: true }, requirementList: { approved: true }, prd: { approved: true, prd }, prompts: { approved: false } } };
+  }
+  it("真实G1绑定前期对象恢复原G6/G7，不调用vendor.create或重复上游生成", async () => {
+    const previous = resumeFixture(); previous.marketingFacts = { sha256: "旧事实资格" }; previous.filmShotlist = { path: "旧稿地址" };
+    previous.stages.productionEngine.formalFilmCandidate = { shots: "历史候选" };
+    const sha256 = createHash("sha256").update(filmCanonicalJson(previous)).digest("hex");
+    const result = await marketing({ projectId: "P1", rawJson, sha256: createHash("sha256").update(rawJson).digest("hex"), productQuery: { name: "本次商品" } })
+      .runPreproduction({ projectId: "P1", intent: "营销", isMarketing: true, resume: { result: previous as any, sha256 } });
+    expect(result.success).toBe(true); expect(studioMocks.create).not.toHaveBeenCalled(); expect(previous.success).toBe(false);
+    expect((result as any).confirmations.prompts.approved).toBe(true); expect((result as any).confirmations.preproduction.approved).toBe(true);
+    expect((result as any).marketingFacts).toBeUndefined(); expect((result as any).filmShotlist).toBeUndefined();
+    expect((result.stages!.productionEngine as any).formalFilmCandidate).toBeUndefined();
+    expect(previous.marketingFacts.sha256).toBe("旧事实资格");
+    expect(studioMocks.disposed).toEqual([...studioMocks.installed].reverse());
+  });
+  it.each(["hash", "assembly", "prd", "upstream", "render", "already-success"])("恢复%s失配在vendor构造和新审批前拒绝", async kind => {
+    const previous = resumeFixture();
+    if (kind === "assembly") previous.stages.dataMining.data.cards = { changed: true };
+    if (kind === "prd") previous.confirmations.prd.prd = { changed: true };
+    if (kind === "upstream") previous.confirmations.creativeTheme.approved = false;
+    if (kind === "render") previous.stages.renderingEngine = { submitted: 1 };
+    if (kind === "already-success") previous.success = true;
+    const sha256 = kind === "hash" ? "0".repeat(64) : createHash("sha256").update(filmCanonicalJson(previous)).digest("hex");
+    await expect(marketing({ projectId: "P1", rawJson, sha256: createHash("sha256").update(rawJson).digest("hex"), productQuery: { name: "本次商品" } })
+      .runPreproduction({ projectId: "P1", intent: "营销", isMarketing: true, resume: { result: previous as any, sha256 } })).rejects.toThrow("RESUME_UNVERIFIED");
+    expect(studioMocks.construct).not.toHaveBeenCalled(); expect(studioMocks.create).not.toHaveBeenCalled();
+  });
+  it.each(["bound", "shots", "film", "g7", "reason"])("最终事实门拒绝恢复%s：保持原G1–G7对象，只有完整绑定可接续", async kind => {
+    const previous = resumeFixture(); previous.success = true; previous.confirmations.prompts.approved = true;
+    previous.confirmations.preproduction = { approved: true };
+    previous.stages.productionEngine.formalFilmCandidate = { projectId: "P1", shots: previous.stages.productionEngine.shots };
+    const rejection = { reason: "最终事实门实际拒绝：不支持99档", sourceShotsSha256: createHash("sha256").update(filmCanonicalJson(previous.stages.productionEngine.shots)).digest("hex"),
+      sourceFilmSha256: createHash("sha256").update(filmCanonicalJson(previous.stages.productionEngine.formalFilmCandidate)).digest("hex") };
+    if (kind === "shots") rejection.sourceShotsSha256 = "0".repeat(64);
+    if (kind === "film") rejection.sourceFilmSha256 = "0".repeat(64);
+    if (kind === "g7") previous.confirmations.preproduction.approved = false;
+    if (kind === "reason") rejection.reason = "";
+    const pending = marketing({ projectId: "P1", rawJson, sha256, productQuery: { name: "本次商品" } }, { finalFactRejection: rejection })
+      .runPreproduction({ projectId: "P1", intent: "营销", isMarketing: true, resume: { result: previous as any,
+        sha256: createHash("sha256").update(filmCanonicalJson(previous)).digest("hex") } });
+    if (kind === "bound") { expect((await pending).success).toBe(true); expect(studioMocks.create).not.toHaveBeenCalled(); }
+    else { await expect(pending).rejects.toThrow("RESUME_UNVERIFIED"); expect(studioMocks.construct).not.toHaveBeenCalled(); }
   });
 });

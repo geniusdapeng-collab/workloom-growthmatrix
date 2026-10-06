@@ -64,7 +64,10 @@ export const GATE_RUBRIC: Partial<Record<GateKey, string[]>> = {
     "商品型号/价格时点/计量单位与来源一致，来源冲突必须拒绝；与项目主题相关，不含无关行业商品"],
   G2_THEME: ["主题/受众/时长/画幅与需求一致", "不出现与主题无关的红线意象（科幻/微观/无关地域）"],
   G3_INSIGHT: ["需求对齐清单覆盖角色/场景/道具/动作四类契约", "受众与风险项有具体结论，不是占位文字"],
-  G4_PRD: ["角色系统有可执行的外观锚点（定妆照前置）", "交付标准可验证（画幅/时长/音频/字幕口径）"],
+  G4_PRD: ["这是PRD设计门：审核当前设计及明确输入，不要求尚未进入生成的完整剧本、逐镜prompt或最终镜头卡；这些产物必须在后续G6/G7审核，当前不得宣称已生成或已验证",
+    "角色系统有可执行外观锚点：四个必需角度front/threeQuarter/closeup/side可用既有人类验收的登记图，不强制新出图或额外手部角度；平台素材有效性在实际渲染提交前核查，PRD不得把本地登记说成实时平台核验",
+    "交付设计可验证（画幅/时长/口播、音频与字幕策略）；本门检查计划是否明确和自洽，不冒称音频听音、口型或最终字幕逐条已验收",
+    "本次附带的G1受审档案与宣传禁用政策是商品口径来源；创作要求的否定限制不是可用宣称，使用政策可缩小事实宣传面，不能提升证据等级"],
   G5_PORTRAIT: ["定妆照必须真出图（completedPortraits>0），不接受只有规格包的 pending 状态", "必需角度 front/threeQuarter/closeup/side 齐备", "人物与角色档案一致（授权真人须与本人照片同一张脸）"],
   G6_PROMPT: ["每镜提示词达到交付口径（≥1200 字）且 25/30 字段齐备", "台词速率与占比合规，无红线词"],
   G7_FINAL: ["预生产收口：镜头卡/定妆照/提示词三件套齐备且互相引用一致", "渲染提交前的花额度动作仍需人审（本门只放行内部准备）"]
@@ -87,9 +90,23 @@ export function gateDeterministicChecks(gate: GateKey, content: string): Array<{
     return [{ id: "marketing-facts-present", pass: valid, hard: true,
       detail: valid ? "完整本次来源/三站事实包可解析；null等JSON值不会当作占位词误杀" : "G1必须读取宿主本次完整来源事实包" }];
   }
+  // 结构化产物中的null是明确未提供值；检查字符串叶子，不把JSON语法当作占位文本。
+  let placeholderText = trimmed;
+  try {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (parsed && typeof parsed === "object") {
+      const leaves: string[] = [];
+      const visit = (value: unknown): void => {
+        if (typeof value === "string") leaves.push(value);
+        else if (value && typeof value === "object") Object.values(value).forEach(visit);
+      };
+      visit(parsed); placeholderText = leaves.join("\n");
+    }
+  } catch { /* prose gates retain their text placeholder check */ }
+  const placeholder = /undefined|null(?![\w])|NaN|\[object Object\]/.test(placeholderText);
   const checks = [
     { id: "content-present", pass: trimmed.length > 0, hard: true, detail: trimmed.length > 0 ? `门内容 ${trimmed.length} 字` : "门内容为空（vendor 未产出该环节产物）" },
-    { id: "no-placeholder", pass: !/undefined|null(?![\w])|NaN|\[object Object\]/.test(trimmed), hard: true, detail: /undefined|null(?![\w])|NaN|\[object Object\]/.test(trimmed) ? "门内容含 undefined/null/NaN/[object Object] 占位" : "无占位符泄漏" },
+    { id: "no-placeholder", pass: !placeholder, hard: true, detail: placeholder ? "门内容字符串含 undefined/null/NaN/[object Object] 占位" : "无占位符泄漏" },
     { id: "min-length", pass: trimmed.length >= 120, hard: true, detail: `内容长度 ${trimmed.length}（下限 120，过短通常意味着上游字段过薄）` }
   ];
   if (gate === "G5_PORTRAIT") {

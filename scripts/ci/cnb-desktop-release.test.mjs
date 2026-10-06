@@ -330,6 +330,33 @@ test("preflight binds remote main and tag and refuses an existing Release", asyn
   await assert.rejects(assertGitBinding(client, identity), /已存在/u);
 });
 
+test("CNB lowercase slug maps to the same manifest repository; other repositories still fail", () => {
+  const f = fixture();
+  try {
+    assert.equal(validateContext({ ...env("publisher"), CNB_REPO_SLUG: REPOSITORY.toLowerCase() },
+      { role: "publisher", cwd: f.root, checkoutSha: SHA }).repository, REPOSITORY);
+    for (const slug of [REPOSITORY + "-other", "other/WorkLoom-growthmatrix", null]) {
+      assert.throws(() => validateContext({ ...env("publisher"), CNB_REPO_SLUG: slug },
+        { role: "publisher", cwd: f.root, checkoutSha: SHA }), /仓库身份/u);
+    }
+  } finally { f.cleanup(); }
+});
+
+test("upload confirmation permits repository case only; SHA and target path remain exact", async () => {
+  const calls = [];
+  const client = new CnbClient({ token: "test-only", fetchImpl: async (url) => {
+    calls.push(url); return Response.json({ ok: true });
+  } });
+  const target = `${PREFIX}git/commit-assets/${SHA}/asset-upload-confirmation/`;
+  await client.confirm(`https://api.cnb.cool${target.replace(REPOSITORY, REPOSITORY.toLowerCase())}token`, target, 1);
+  assert.equal(calls.length, 1);
+  for (const path of [target.replace(SHA, "b".repeat(40)), target.replace(REPOSITORY, "other/repo"),
+    target.replace("asset-upload-confirmation", "other-target")]) {
+    await assert.rejects(client.confirm(`https://api.cnb.cool${path}token`, target, 1), /确认地址/u);
+  }
+  assert.equal(calls.length, 1);
+});
+
 test("Mac producer seals exact candidates, uploads them once, and reads back SHA-512", async () => {
   const f = fixture();
   const fake = new FakeCnb();
