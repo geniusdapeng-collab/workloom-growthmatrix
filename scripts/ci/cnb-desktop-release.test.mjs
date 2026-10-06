@@ -89,6 +89,7 @@ function json(value, status = 200) {
 class FakeCnb {
   constructor() {
     this.mainSha = SHA;
+    this.mainName = "refs/heads/main";
     this.mainProtected = true;
     this.tagSha = SHA;
     this.commitAssets = new Map();
@@ -158,7 +159,7 @@ class FakeCnb {
     assert.ok(url.pathname.startsWith(PREFIX), `unexpected path ${url.pathname}`);
     const path = url.pathname.slice(PREFIX.length);
     if (method === "GET" && path === "git/branches/main") {
-      return json({ name: "main", protected: this.mainProtected, commit: { sha: this.mainSha } });
+      return json({ name: this.mainName, protected: this.mainProtected, commit: { sha: this.mainSha } });
     }
     if (method === "GET" && path === `git/tags/${TAG}`) {
       return json({ name: TAG, target_type: "commit", target: this.tagSha,
@@ -328,6 +329,23 @@ test("preflight binds remote main and tag and refuses an existing Release", asyn
   fake.tagSha = SHA;
   fake.release = { id: "already-there", draft: true, latest: false };
   await assert.rejects(assertGitBinding(client, identity), /已存在/u);
+});
+
+test("preflight accepts the CNB full main ref and legacy short name without accepting other refs", async () => {
+  const fake = new FakeCnb();
+  const client = new CnbClient({ token: "test", fetchImpl: fake.fetch });
+  const identity = { tag: TAG, sha: SHA };
+  for (const name of ["main", "refs/heads/main"]) {
+    fake.mainName = name;
+    await assertGitBinding(client, identity);
+    fake.mainProtected = false;
+    await assert.rejects(assertGitBinding(client, identity), /分支保护/u);
+    fake.mainProtected = true;
+  }
+  for (const name of ["refs/heads/other", "refs/tags/main", "refs/heads/Main", "main ", " refs/heads/main", "", null, 1]) {
+    fake.mainName = name;
+    await assert.rejects(assertGitBinding(client, identity), /分支保护/u);
+  }
 });
 
 test("CNB lowercase slug maps to the same manifest repository; other repositories still fail", () => {

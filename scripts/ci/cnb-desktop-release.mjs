@@ -299,7 +299,7 @@ function safeHttpsUrl(value) {
 
 export async function assertGitBinding(client, identity, { requireAbsentRelease = true } = {}) {
   const main = await client.api("GET", "git/branches/main");
-  assert(main?.name === "main" && main.protected === true,
+  assert((main?.name === "main" || main?.name === "refs/heads/main") && main.protected === true,
     "远端 main 必须已启用 CNB 分支保护");
   assert(requireSha(main?.commit?.sha, "远端 main SHA") === identity.sha,
     "远端 main 已偏离 RELEASE_SHA");

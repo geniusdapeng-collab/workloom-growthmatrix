@@ -32,6 +32,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { auditFilmRedlines, PROMPT_REDLINE_POLICY_VERSION } from "../../packages/video-studio/src/prompt-redlines.js";
 import { resumeOrSubmitVideoTask, videoTaskReceiptPath } from "../../packages/video-studio/src/video-task-receipt.js";
+import { downloadMedia } from "../../packages/video-studio/src/media-download.js";
 import { assertReviewedSurfaceRepair, assertSurfaceRepairOrigin, executeSurfaceRepair, inspectSurfaceRepair, qualifyReviewedSurfacePost } from "../../packages/video-studio/src/video-surface-repair.js";
 import { buildRenderReferences } from "../../packages/video-studio/src/render-reference.js";
 import { assetIdOf, assertShotMatchesCertifiedAsset, isRealPersonAssetRef, loadRealPersonAssets,
@@ -686,6 +687,7 @@ const lineageComponentHash = productionHash({
   film: sha256FileSync(join(REPO_ROOT, "scripts/tools/full-chain-film.mts")),
   surfaceRepair: sha256FileSync(join(REPO_ROOT, "packages/video-studio/src/video-surface-repair.ts")),
   videoReceipt: sha256FileSync(join(REPO_ROOT, "packages/video-studio/src/video-task-receipt.ts")),
+  mediaDownload: sha256FileSync(join(REPO_ROOT, "packages/video-studio/src/media-download.ts")),
 });
 const SCENE_BIBLE_FILE = arg("--scene-bible");
 const sceneBible: SceneBible | null = SCENE_BIBLE_FILE
@@ -1945,10 +1947,7 @@ function lastKeyframeApproved(history: StageRecord[], shotId: string): boolean {
 }
 
 async function download(url: string, file: string): Promise<string> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(300_000) });
-  if (!res.ok) throw new Error(`下载失败 HTTP ${res.status}`);
-  writeFileSync(file, Buffer.from(await res.arrayBuffer()));
-  return file;
+  return downloadMedia({ url, file, log });
 }
 
 /** 逐镜视频提交（Seedance 异步任务制） */
