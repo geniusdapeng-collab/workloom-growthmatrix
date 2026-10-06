@@ -5,6 +5,7 @@
  */
 import type pg from "pg";
 import type { Severity } from "./checks.js";
+import { withInspectionTransaction } from "./transaction.js";
 
 interface Scope { tenantId: string; workspaceId: string }
 
@@ -29,12 +30,7 @@ export async function inspectionStatusBar(
   scope: Scope,
   day: Date = new Date(),
 ): Promise<StatusBar> {
-  const client = await app.connect();
-  try {
-    // 事务级 RLS 上下文必须在显式事务内设置：autocommit 下 set_config(...,true) 语句结束即失效
-    await client.query("BEGIN");
-    await client.query("SELECT set_config('app.workspace_id', $1, true)", [scope.workspaceId]);
-    await client.query("SELECT set_config('app.tenant_id', $1, true)", [scope.tenantId]);
+  return withInspectionTransaction(app, scope, async client => {
     const dayStart = new Date(day); dayStart.setHours(0, 0, 0, 0);
 
     const lastRun = await client.query<{
@@ -42,10 +38,10 @@ export async function inspectionStatusBar(
       payload: { decision: { action: string; after?: { totalChecks?: number; okCount?: number } } };
     }>(
       `SELECT created_at, payload FROM biz_events
-       WHERE workspace_id=$1 AND created_at >= $2
+       WHERE workspace_id=$1 AND created_at >= $2 AND tenant_id=$3
          AND payload->'decision'->>'action' IN ('inspect.run.completed','inspect.run.failed')
        ORDER BY seq DESC LIMIT 1`,
-      [scope.workspaceId, dayStart.toISOString()],
+      [scope.workspaceId, dayStart.toISOString(), scope.tenantId],
     );
     const last = lastRun.rows[0];
     const lastRunFailed = last?.payload.decision.action === "inspect.run.failed";
@@ -55,14 +51,14 @@ export async function inspectionStatusBar(
       payload: { decision: { after?: { severity?: Severity; summary?: string } }; object: { type: string; id?: string } };
     }>(
       `SELECT event_id, created_at, payload FROM biz_events
-       WHERE workspace_id=$1 AND created_at >= $2 AND payload->'decision'->>'action' = 'inspect.anomaly'
+       WHERE workspace_id=$1 AND created_at >= $2 AND tenant_id=$3 AND payload->'decision'->>'action' = 'inspect.anomaly'
        ORDER BY seq ASC`,
-      [scope.workspaceId, dayStart.toISOString()],
+      [scope.workspaceId, dayStart.toISOString(), scope.tenantId],
     );
     const resolved = await client.query<{ payload: { links?: string[] } }>(
       `SELECT payload FROM biz_events
-       WHERE workspace_id=$1 AND created_at >= $2 AND payload->'decision'->>'action' IN ('inspect.resolved','inspect.escalated')`,
-      [scope.workspaceId, dayStart.toISOString()],
+       WHERE workspace_id=$1 AND created_at >= $2 AND tenant_id=$3 AND payload->'decision'->>'action' IN ('inspect.resolved','inspect.escalated')`,
+      [scope.workspaceId, dayStart.toISOString(), scope.tenantId],
     );
     const resolvedIds = new Set(resolved.rows.flatMap((r) => r.payload.links ?? []));
 
@@ -85,11 +81,5 @@ export async function inspectionStatusBar(
       attention: open,
       lastRunFailed,
     };
-  } catch (err) {
-    await client.query("ROLLBACK").catch(() => undefined);
-    throw err;
-  } finally {
-    await client.query("COMMIT").catch(() => undefined);
-    client.release();
-  }
+  });
 }

@@ -1,0 +1,50 @@
+COMMAND ["/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node", "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/pnpm/bin/pnpm.cjs", "exec", "vitest", "run", "--root", "..", "matrix-thread-sequence.test.ts"]
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work[39m
+
+[90mstderr[2m | matrix-thread-sequence.test.ts[2m > [22m[2mMatrix 号源适配反例（实际产品函数）[2m > [22m[2mSAVEPOINT 回退失败时停止重试，保留原写入错误和回退错误
+[22m[39m[dispatch] 号源撞号 T-102，回滚保存点后重取（GR-02/U-03）
+
+[90mstderr[2m | matrix-thread-sequence.test.ts[2m > [22m[2mMatrix 号源适配反例（实际产品函数）[2m > [22m[2mSAVEPOINT 回退失败时停止重试，保留原写入错误和回退错误
+[22m[39m[dispatch] 号源撞号 T-102，回滚保存点后重取（GR-02/U-03）
+
+ [31m❯[39m matrix-thread-sequence.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 6[2mms[22m[39m
+[31m     [31m×[31m 号源返回 101 时直接落 T-101，不能额外加一[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m SAVEPOINT 回退失败时停止重试，保留原写入错误和回退错误[39m[32m 1[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m matrix-thread-sequence.test.ts[2m > [22mMatrix 号源适配反例（实际产品函数）[2m > [22m号源返回 101 时直接落 T-101，不能额外加一
+[31m[1mAssertionError[22m: expected 'T-102' to be 'T-101' // Object.is equality[39m
+
+Expected: [32m"T-10[7m1[27m"[39m
+Received: [31m"T-10[7m2[27m"[39m
+
+[36m [2m❯[22m matrix-thread-sequence.test.ts:[2m17:62[22m[39m
+    [90m 15|[39m       }[33m,[39m
+    [90m 16|[39m     }[33m;[39m
+    [90m 17|[39m     expect(await insertQueuedThread(client as never, draft)).toBe('T-1…
+    [90m   |[39m                                                              [31m^[39m
+    [90m 18|[39m     [34mexpect[39m(inserted[[34m0[39m][33m?.[39m[[34m0[39m])[33m.[39m[34mtoBe[39m([32m'T-101'[39m)[33m;[39m
+    [90m 19|[39m     [34mexpect[39m(inserted[[34m0[39m][33m?.[39m[[34m4[39m])[33m.[39m[34mtoBe[39m([32m'quest'[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m matrix-thread-sequence.test.ts[2m > [22mMatrix 号源适配反例（实际产品函数）[2m > [22mSAVEPOINT 回退失败时停止重试，保留原写入错误和回退错误
+[31m[1mAssertionError[22m: expected ThreadNumberConflictError: 任务号源并发冲突（取号重试 … { …(2) } to be an instance of AggregateError[39m
+[36m [2m❯[22m matrix-thread-sequence.test.ts:[2m35:21[22m[39m
+    [90m 33|[39m     }[33m;[39m
+    [90m 34|[39m     const failure = await insertQueuedThread(client as never, draft).c…
+    [90m 35|[39m     [34mexpect[39m(failure)[33m.[39m[34mtoBeInstanceOf[39m([33mAggregateError[39m)[33m;[39m
+    [90m   |[39m                     [31m^[39m
+    [90m 36|[39m     [34mexpect[39m(failure[33m.[39merrors)[33m.[39m[34mtoEqual[39m([collision[33m,[39m rollback])[33m;[39m
+    [90m 37|[39m     [34mexpect[39m(inserts)[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m   Start at [22m 18:14:40
+[2m   Duration [22m 213ms[2m (transform 30ms, setup 0ms, import 89ms, tests 6ms, environment 0ms)[22m
+

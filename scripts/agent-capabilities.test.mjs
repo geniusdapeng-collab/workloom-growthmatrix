@@ -11,7 +11,7 @@ import {
 
 const root = resolve(import.meta.dirname, "..");
 /**
- * 清单口径从本仓事实源推导（基座 ai-pm / 行业仓 geo-growth 等），
+ * 清单口径从本仓事实源推导（基座 ai-pm / 行业仓 geo-growthmatrix 等），
  * 避免把"基座只有 8 条"写死——行业仓会把行业清单合并进来（T-2026-1001-0008）。
  */
 const productManifest = JSON.parse(readFileSync(resolve(root, "product.manifest.json"), "utf8"));

@@ -1,19 +1,22 @@
 /**
  * stress-threads.ts —— 任务派遣链动态排雷（对应静态台账 A-02 / A-03 / A-07 + 边界注入 + 越权）
- * 前置：server 运行中（scheduler 每 7000ms 扫描 queued 线程）。
- * 适用基线：e71f30c。唯一后缀 RUN_ID 保证可复跑。
+ * 前置：明确授权的本机 mock 审计库和运行中的 server；不得接客户库。
+ * queued 不占运行位；运行位由近期心跳的 running 线程占用。
+ * 唯一后缀 RUN_ID 保证可复跑，号源故障注入与测试线程在 finally 中恢复。
  */
 import { check, login, ownerPool, scene, step, summary, trpc, TrpcError, RUN_ID } from "./_helper.js";
+import { closeAllPools } from "../packages/db/src/index.js";
+import { sweepQueuedThreads } from "../apps/server/src/runtime/scheduler.js";
 
 const SCOPE = { tenantId: "tenant-demo", workspaceId: "ws-yunqi" };
 const CONCURRENCY_LIMIT = 10; // L3.1：单工作区并发 ≤10
 
-/** 当前占用并发位（与 Router 判定同口径：queued + 有近期心跳的 running） */
+/** 当前占用并发位（与 Router 判定同口径：仅有近期心跳的 running） */
 async function occupancy(db: { query: (text: string, values?: unknown[]) => Promise<{ rows: Array<{ c: number }> }> }): Promise<number> {
   const r = await db.query(
     `SELECT count(*)::int AS c FROM threads
       WHERE workspace_id=$1
-        AND (status='queued' OR (status='running' AND updated_at > now() - interval '10 minutes'))`,
+        AND status='running' AND updated_at > now() - interval '10 minutes'`,
     [SCOPE.workspaceId],
   );
   return r.rows[0]?.c ?? 0;
@@ -28,27 +31,43 @@ function classifyFailure(err: unknown): { code: string; leak: boolean; message: 
 }
 
 async function main(): Promise<void> {
+  const target = new URL(process.env.DATABASE_URL ?? "");
+  if (process.env.STRESS_ALLOW_FAULT_INJECTION !== "1" || process.env.LLM_PROVIDER !== "mock"
+      || !["127.0.0.1", "localhost", "[::1]"].includes(target.hostname)
+      || !/^\/[a-z0-9_]+_audit$/u.test(target.pathname)
+      || !/^\d{10,30}$/u.test(process.env.STRESS_DB_SYSTEM_IDENTIFIER ?? "")) {
+    throw new Error("线程故障注入仅允许显式授权、实例身份已绑定的本机 mock 审计库");
+  }
   const db = ownerPool();
+  const createdIds: string[] = [];
+  let restoreNumberSource: string | undefined;
+  try {
+  const instance = await db.query<{ system_identifier: string }>("SELECT system_identifier::text FROM pg_control_system()");
+  if (instance.rows[0]?.system_identifier !== process.env.STRESS_DB_SYSTEM_IDENTIFIER) {
+    throw new Error("审计库实例身份不符，拒绝故障注入");
+  }
   const token = await login();
   step(`运行标识 ${RUN_ID}`);
 
   /* ---------- A-02 ask 线程被调度器当 quest 执行（模拟 runAsk 进行中的 queued ask 线程） ---------- */
   scene("A-02 调度器不得把 ask 问询线程当 Quest 执行");
   const askId = `T-ASK-${RUN_ID}`;
+  createdIds.push(askId);
   await db.query(
     `INSERT INTO threads (id, tenant_id, workspace_id, title, status, mode, created_by)
      VALUES ($1,$2,$3,$4,'queued','ask','stress')`,
     [askId, SCOPE.tenantId, SCOPE.workspaceId, `stress·问询线程 ${RUN_ID}`],
-  ).catch(async (err) => {
-    // 列名兜底：老 schema 可能无 tenant_id/mode/created_by 中的某些列
-    step(`完整列插入失败（${String(err).slice(0, 80)}），尝试最小列`);
-    await db.query(
-      `INSERT INTO threads (id, workspace_id, title, status, mode) VALUES ($1,$2,$3,'queued','ask')`,
-      [askId, SCOPE.workspaceId, `stress·问询线程 ${RUN_ID}`],
-    );
-  });
-  step(`已造 queued/mode=ask 线程 ${askId}（模拟 runAsk 执行中状态），等待调度器两轮扫描（16s）…`);
-  await new Promise((r) => setTimeout(r, 16_000));
+  );
+  const questControl = `T-SCHEDULER-${RUN_ID}`;
+  createdIds.push(questControl);
+  await db.query(
+    `INSERT INTO threads (id,tenant_id,workspace_id,title,status,mode,created_by)
+     VALUES ($1,$2,$3,$4,'queued','quest','stress')`,
+    [questControl, SCOPE.tenantId, SCOPE.workspaceId, `整理今日运营简报 ${RUN_ID}`],
+  );
+  const sweeps = [await sweepQueuedThreads({ batch: 10 }), await sweepQueuedThreads({ batch: 10 })];
+  step(`实际执行两轮产品调度器；认领 ${sweeps.flatMap((result) => result.picked).join(",") || "无"}`);
+  check("A-02c 同场 quest 对照被实际调度器认领", sweeps.some((result) => result.picked.includes(questControl)));
   const th = await db.query<{ status: string; mode: string }>(`SELECT status, mode FROM threads WHERE id=$1`, [askId]);
   const ev = await db.query<{ n: string }>(
     `SELECT count(*)::text AS n FROM biz_events
@@ -61,11 +80,11 @@ async function main(): Promise<void> {
   step(`现状：status=${th.rows[0]?.status} mode=${th.rows[0]?.mode} quest类事件=${ev.rows[0]?.n} 全部事件=${evAny.rows[0]?.n}（${evAny.rows[0]?.actions || "无"}）`);
   check("A-02a ask 线程不得被调度器迁移出 queued 去执行", th.rows[0]?.status === "queued", `实际 ${th.rows[0]?.status}`);
   check("A-02b ask 线程不得产生 quest 规划/执行事件", ev.rows[0]?.n === "0", `实际 ${ev.rows[0]?.n} 条`);
-  await db.query(`DELETE FROM threads WHERE id=$1`, [askId]);
+  await db.query(`DELETE FROM threads WHERE id=ANY($1)`, [[askId, questControl]]);
 
   /* ---------- A-03/A-07 并发派遣 12 路：全部成功 + 线程号唯一 ---------- */
   scene("A-03/A-07 12 路并发派遣（号源唯一性 / 无重入）");
-  const capacityBefore = CONCURRENCY_LIMIT - (await occupancy(db)); // 必须在派遣前测量：派遣后占用已包含本批
+  const occupancyBefore = await occupancy(db);
   const results = await Promise.allSettled(
     Array.from({ length: 12 }, (_, i) =>
       trpc<{ kind?: string; threadId?: string }>("threads.dispatch", {
@@ -78,21 +97,18 @@ async function main(): Promise<void> {
     .map((r) => (r.status === "fulfilled" ? (r.value.threadId ?? null) : null))
     .filter((x): x is string => typeof x === "string");
   const failedN = results.length - okIds.length;
+  createdIds.push(...okIds);
   const failures = results
     .filter((r): r is PromiseRejectedResult => r.status === "rejected")
     .map((r) => classifyFailure(r.reason));
-  step(`成功 ${okIds.length}/12，失败 ${failedN}（预算并发位 ${capacityBefore}；${failures.map((f) => `${f.code}:${f.message.slice(0, 40)}`).join(" | ") || "无"}）`);
+  step(`成功 ${okIds.length}/12，失败 ${failedN}（派遣前运行位 ${occupancyBefore}；${failures.map((f) => `${f.code}:${f.message.slice(0, 40)}`).join(" | ") || "无"}）`);
   /**
-   * U-03 之后的上限口径：并发上限判定与建档已串行化——
-   *  ① 成功数不得超过提交时的可用并发位；
-   *  ② 超限失败必须是业务 429/409，不得 500、不得泄漏 PG 原文；
-   *  ③ 派遣后占用不得超过上限（此前 12 路并发实测冲到 13/10）。
+   * 修复后口径：queued 可等待调度，不占运行位；号源仍须并发唯一。
+   * 调度器实际启动时在同一事务内分配运行位，满 running 时派遣返回业务码。
    */
-  check("A-07 12 路并发派遣：成功数不超过可用并发位", okIds.length <= Math.max(0, capacityBefore), `成功 ${okIds.length}，预算 ${capacityBefore}`);
-  check("A-07c 超限失败为业务错误（不得 500 / 泄漏 PG 原文）",
-    failures.every((f) => (f.code === "TOO_MANY_REQUESTS" || f.code === "CONFLICT") && !f.leak),
-    failures.map((f) => `${f.code}${f.leak ? "(泄漏)" : ""}`).join(",") || "无失败");
+  check("A-07 12 路 queued 派遣全部建档成功", okIds.length === 12 && failures.length === 0, `成功 ${okIds.length}，失败 ${failures.length}`);
   const afterBurst = await occupancy(db);
+  check("A-07e queued 建档不增加运行位占用", afterBurst === occupancyBefore, `派遣前 ${occupancyBefore} / 派遣后 ${afterBurst}`);
   check("A-07d 派遣后占用并发位不得超过上限（并发上限竞争）", afterBurst <= CONCURRENCY_LIMIT, `占用 ${afterBurst}/${CONCURRENCY_LIMIT}`);
   if (okIds.length) {
     const dup = await db.query<{ id: string; n: string }>(
@@ -126,12 +142,13 @@ async function main(): Promise<void> {
       await db.query(
         `CREATE OR REPLACE FUNCTION public.threads_max_t_no()
          RETURNS bigint LANGUAGE sql SECURITY DEFINER SET search_path = public
-         AS $$ SELECT ${floor}::bigint $$`);
+         AS $$ SELECT ${floor + 1}::bigint $$`);
       injected = true;
+      restoreNumberSource = originalFn;
       const hitTitle = `${u03Prefix}·撞号单 ${Date.now().toString(36)}`;
-      await trpc("threads.dispatch", { token, method: "mutation", input: { title: hitTitle, runImmediately: false } })
-        .then(() => step("撞号首单：建档成功（占用恒定号）"))
-        .catch((err) => step(`撞号首单异常：${classifyFailure(err).code}`));
+      const first = await trpc<{ threadId: string }>("threads.dispatch", { token, method: "mutation", input: { title: hitTitle, runImmediately: false } });
+      createdIds.push(first.threadId);
+      check("U-03g 号源直接落库且首单占用恒定号", first.threadId === `T-${floor + 1}`, `实际 ${first.threadId}`);
       const second = await trpc("threads.dispatch", {
         token, method: "mutation", input: { title: `${hitTitle}-次单`, runImmediately: false },
       }).then(() => ({ code: "OK", leak: false, message: "" })).catch((err) => classifyFailure(err));
@@ -148,7 +165,7 @@ async function main(): Promise<void> {
         halfThreads.rows[0]?.n === "0" && halfEvents.rows[0]?.n === "0",
         `线程 ${halfThreads.rows[0]?.n} 条 / 事件 ${halfEvents.rows[0]?.n} 条`);
     } finally {
-      if (injected) await db.query(originalFn);
+      if (injected) { await db.query(originalFn); restoreNumberSource = undefined; }
     }
     const restored = (await db.query<{ ok: boolean }>(
       `SELECT position('nextval' in pg_get_functiondef('public.threads_max_t_no()'::regprocedure)) > 0 AS ok`)).rows[0]?.ok === true;
@@ -158,20 +175,15 @@ async function main(): Promise<void> {
   await db.query(`DELETE FROM threads WHERE workspace_id=$1 AND title LIKE $2`, [SCOPE.workspaceId, `${u03Prefix}·撞号单%`]);
 
   // ② 并发上限竞争：先填满并发位，再并发冲击——占用不得超限，拒绝必须是业务码
-  let fillOk = 0;
-  while ((await occupancy(db)) < CONCURRENCY_LIMIT && fillOk < CONCURRENCY_LIMIT + 2) {
-    try {
-      await trpc("threads.dispatch", {
-        token, method: "mutation", input: { title: `${u03Prefix}·填充 ${fillOk}`, runImmediately: false },
-      });
-      fillOk += 1;
-    } catch (err) {
-      const f = classifyFailure(err);
-      step(`填充中断（${f.code}）：${f.message.slice(0, 60)}`);
-      break;
-    }
+  const fillCount = Math.max(0, CONCURRENCY_LIMIT - await occupancy(db));
+  for (let i = 0; i < fillCount; i += 1) {
+    const id = `T-STRESS-RUN-${RUN_ID}-${i}`;
+    createdIds.push(id);
+    await db.query(`INSERT INTO threads (id,tenant_id,workspace_id,title,status,mode,created_by,updated_at)
+      VALUES ($1,$2,$3,$4,'running','ask','stress',now())`, [id,SCOPE.tenantId,SCOPE.workspaceId,`${u03Prefix}·填充 ${i}`]);
   }
-  step(`已填充 ${fillOk} 条，占用 ${await occupancy(db)}/${CONCURRENCY_LIMIT}`);
+  step(`已造 ${fillCount} 条 running 夹具，占用 ${await occupancy(db)}/${CONCURRENCY_LIMIT}`);
+  check("U-03h running 夹具实际填满运行位", await occupancy(db) === CONCURRENCY_LIMIT);
   const burst = await Promise.allSettled(Array.from({ length: 6 }, (_, i) =>
     trpc("threads.dispatch", {
       token, method: "mutation", input: { title: `${u03Prefix}·越限 ${i}`, runImmediately: false },
@@ -196,6 +208,7 @@ async function main(): Promise<void> {
     token, method: "mutation",
     input: { title: `'); DROP TABLE threads;-- ${RUN_ID}`, runImmediately: false },
   }).catch((err) => ({ error: String(err) }));
+  if ("threadId" in inj && inj.threadId) createdIds.push(inj.threadId);
   const alive = await db.query(`SELECT 1 FROM threads LIMIT 1`).then(() => true).catch(() => false);
   check("INJ-1 注入式标题不造成破坏且服务存活", alive, `响应 ${JSON.stringify(inj).slice(0, 60)}`);
   const empty = await trpc("threads.dispatch", { token, method: "mutation", input: { title: "", runImmediately: false } })
@@ -215,8 +228,12 @@ async function main(): Promise<void> {
     if (m.rows[0]) return login("geo-growthmatrix", m.rows[0].member_no);
     throw new Error("geo 工作区无可用成员");
   });
+  const permissionThread = await trpc<{ threadId: string }>("threads.dispatch", {
+    token, method: "mutation", input: { title: `stress·越权探针 ${RUN_ID}`, runImmediately: false },
+  });
+  createdIds.push(permissionThread.threadId);
   const yunqiThread = await db.query<{ id: string }>(
-    `SELECT id FROM threads WHERE workspace_id='ws-yunqi' LIMIT 1`);
+    `SELECT id FROM threads WHERE id=$1 AND workspace_id='ws-yunqi'`, [permissionThread.threadId]);
   if (yunqiThread.rows[0]) {
     const tid = yunqiThread.rows[0].id;
     const cross = await trpc<unknown>("threads.events", { token: geoToken, input: { threadId: tid } })
@@ -232,10 +249,14 @@ async function main(): Promise<void> {
     const leak = crossList.some((t) => t.id === tid);
     check("SEC-2 跨工作区 threads.list 不得混入他区线程", !leak, `列表 ${crossList.length} 条，泄漏=${leak}`);
   } else {
-    step("ws-yunqi 无线程可测，跳过 SEC-1/2");
+    throw new Error("越权探针线程未落库，不能以跳过充当通过");
   }
-
-  await db.end();
+  } finally {
+    try {
+      if (restoreNumberSource) await db.query(restoreNumberSource);
+      if (createdIds.length) await db.query(`DELETE FROM threads WHERE id=ANY($1) AND workspace_id=$2`, [createdIds, SCOPE.workspaceId]);
+    } finally { await Promise.all([db.end(), closeAllPools()]); }
+  }
   summary();
 }
 

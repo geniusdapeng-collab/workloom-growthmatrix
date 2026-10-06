@@ -8,7 +8,7 @@
  * 请示卡，员工状态卡不再提供批准/驳回手势；业务链路自带的关卡（如视频管线 G1–G10、定妆照确认）
  * 由各自业务页面就地放行。
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ensureDemoLogin, isLocalFull, trpc } from "../../lib/trpc";
 import { CommandCard } from "../../components/CommandCard";
 import { actionText, actorText } from "../../lib/display";
@@ -26,6 +26,7 @@ import { ValueCounters } from "../../components/ValueCounters";
 import { QuestlineHud } from "../../components/mate-guide/QuestlineHud";
 import { QuestlineGuide } from "../../components/mate-guide/QuestlineGuide";
 import { useQuestline } from "../../onboarding/useQuestline";
+import { useWelcomeProgress, type WelcomeState } from "../../onboarding/useWelcomeProgress";
 import { EMPTY_FACTS, factsFromRecentActions, type QuestFacts } from "../../onboarding/questline";
 import { questlineForBundle } from "../../onboarding/questline.config";
 import { QuestlineContentProvider } from "../../onboarding/QuestlineContent";
@@ -45,15 +46,6 @@ interface Theater {
   satellites: Satellite[];
   ticker: TickerItem[];
   floor?: FloorPayload | null;
-}
-interface WelcomeState {
-  status: "not_started" | "in_progress" | "paused" | "completed";
-  currentStep: "start" | "mate" | "team" | "summary" | "done";
-  journeyVersion: number;
-  replayCount: number;
-  shouldShow: boolean;
-  persisted: boolean;
-  role: string;
 }
 
 function safeInteractionError(error: unknown, fallback: string): string {
@@ -185,29 +177,45 @@ export default function P0() {
   const canDispatch = canAction("task.dispatch");
   const [wsName, setWsName] = useState("WorkLoom");
   const [showWelcome, setShowWelcome] = useState(false);
-  const [welcome, setWelcome] = useState<WelcomeState | null>(null);
+  const [msg, setMsg] = useState("");
   const bundleId = bundle?.bundleId ?? null;
   const setWelcomeVisible = (visible: boolean) => {
     window.dispatchEvent(new CustomEvent<boolean>("workloom:welcome", { detail: visible }));
     setShowWelcome(visible);
   };
+  const { welcome, initialize: initializeWelcome, save: saveWelcome } = useWelcomeProgress({
+    onVisibilityChange: setWelcomeVisible,
+    onError: message => { setMsg(message); setTimeout(() => setMsg(""), 3500); },
+  });
   useEffect(() => {
-    void ensureDemoLogin().then(async () => {
-      await Promise.all([
-        trpc.onboarding.status.query().then((r) => {
-          const rr = r as { workspace?: { name?: string }; bundle?: { id?: string | null; isExample?: boolean }; workspaceId?: string };
-          const n = rr.workspace?.name;
-          if (n) setWsName(n);
-        }).catch(() => undefined),
-        trpc.onboarding.welcomeStatus.query().then((result) => {
-          const progress = result as WelcomeState;
-          setWelcome(progress);
-          if (progress.shouldShow) setWelcomeVisible(true);
-        }).catch(() => undefined),
-      ]);
-    });
+    let stopped = false;
+    const loadOnboarding = async () => {
+      try {
+        await ensureDemoLogin();
+        const [status, progress] = await Promise.allSettled([
+          trpc.onboarding.status.query(), trpc.onboarding.welcomeStatus.query(),
+        ]);
+        if (stopped) return;
+        if (status.status === "fulfilled") {
+          const name = (status.value as { workspace?: { name?: string } }).workspace?.name;
+          if (name) setWsName(name);
+        }
+        if (progress.status === "fulfilled") initializeWelcome(progress.value as WelcomeState);
+        if (status.status === "rejected" || progress.status === "rejected") {
+          setMsg("工作区信息或欢迎进度暂时无法加载，请稍后刷新。");
+        }
+      } catch (error) {
+        if (!stopped) setMsg(safeInteractionError(error, "工作区信息暂时无法加载，请稍后刷新。"));
+      }
+    };
+    void loadOnboarding();
+    return () => { stopped = true; };
   }, []);
   const [data, setData] = useState<Theater | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const pageMounted = useRef(true);
+  const loadInFlight = useRef(false);
 
   /**
    * 职场视图分批（2026-09-20 密度重设计）：
@@ -219,7 +227,7 @@ export default function P0() {
   const [waveIndex, setWaveIndex] = useState(0);
   const floorAgentsAll = useMemo(() => data?.floor?.agents ?? [], [data]);
   const sortedFloorAgents = useMemo(() => {
-    const rank: Record<string, number> = { asking: 0, blocked: 1, celebrating: 2, collab: 3, working: 4, idle: 5, disabled: 6 };
+    const rank: Record<string, number> = { asking: 0, blocked: 1, celebrating: 2, collab: 3, working: 4, queued: 5, idle: 6, disabled: 7 };
     return [...floorAgentsAll].sort(
       (a, b) => (rank[a.state] ?? 9) - (rank[b.state] ?? 9) || a.id.localeCompare(b.id),
     );
@@ -297,7 +305,6 @@ export default function P0() {
   };
   const [pick, setPick] = useState<Satellite | null>(null);
   const [ceremony, setCeremony] = useState(0); // 0=未演 1-4=晨间播报阶段 5=完成
-  const [msg, setMsg] = useState("");
   // D25 视图：floor=数字办公区（默认） / stage=剧场舞台（D23）
   const [view, setView] = useState<"floor" | "stage">(() =>
     (typeof localStorage !== "undefined" && localStorage.getItem("theater-view") === "stage") ? "stage" : "floor");
@@ -351,46 +358,52 @@ export default function P0() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ceremony, data, showWelcome]);
 
-  const load = async () => {
-    await ensureDemoLogin();
-    const t = await trpc.captain.theater.query() as Theater;
-    setData({
-      ...t,
-      latestBriefing: t.latestBriefing
-        ? { ...t.latestBriefing, text: clientChineseText(t.latestBriefing.text, BRIEFING_FALLBACK) }
-        : null,
-    });
-    hydrateAliases(t.satellites.map((a) => ({ presetKey: a.presetKey, alias: a.alias })));
-  };
-  const saveWelcome = async (
-    status: "in_progress" | "paused" | "completed",
-    currentStep: WelcomeState["currentStep"],
-  ) => {
+  const load = useCallback(async () => {
+    if (loadInFlight.current || !pageMounted.current) return;
+    loadInFlight.current = true;
+    setRefreshing(true);
     try {
-      const result = await trpc.onboarding.saveWelcomeProgress.mutate({ status, currentStep }) as Omit<WelcomeState, "role">;
-      setWelcome((current) => current ? { ...result, role: current.role } : null);
-    } catch {
-      setMsg("欢迎引导进度暂时无法保存，请稍后重试。");
-      setTimeout(() => setMsg(""), 3500);
+      await ensureDemoLogin();
+      const t = await trpc.captain.theater.query() as Theater;
+      if (!pageMounted.current) return;
+      hydrateAliases(t.satellites.map((a) => ({ presetKey: a.presetKey, alias: a.alias })));
+      setData({
+        ...t,
+        latestBriefing: t.latestBriefing
+          ? { ...t.latestBriefing, text: clientChineseText(t.latestBriefing.text, BRIEFING_FALLBACK) }
+          : null,
+      });
+      setLoadError(null);
+    } catch (error) {
+      if (pageMounted.current) {
+        setLoadError(safeInteractionError(error, "经营实况暂时无法加载，请稍后重试。"));
+      }
     } finally {
-      if (status === "paused" || status === "completed") setWelcomeVisible(false);
+      loadInFlight.current = false;
+      if (pageMounted.current) setRefreshing(false);
     }
-  };
+  }, []);
   useEffect(() => {
+    pageMounted.current = true;
     void load();
     const id = setInterval(() => void load(), 5000); // 5s 心跳
-    return () => clearInterval(id);
-  }, []);
+    return () => { pageMounted.current = false; clearInterval(id); };
+  }, [load]);
 
   // 开门仪式（每日首访）
+  const hasTheater = data !== null;
   useEffect(() => {
+    if (!hasTheater || showWelcome) return;
     const key = `theater-ceremony-${new Date().toDateString()}`;
     if (localStorage.getItem(key)) { setCeremony(5); return; }
-    localStorage.setItem(key, "1");
     setCeremony(1);
     const seq = [900, 1800, 2900, 4200];
-    seq.forEach((ms, i) => setTimeout(() => setCeremony(i + 2), ms));
-  }, []);
+    const timers = seq.map((ms, i) => window.setTimeout(() => {
+      setCeremony(i + 2);
+      if (i === seq.length - 1) localStorage.setItem(key, "1");
+    }, ms));
+    return () => timers.forEach(timer => window.clearTimeout(timer));
+  }, [hasTheater, showWelcome]);
 
   const tone = useMemo(() => {
     if (!data) return "grey" as const;
@@ -399,10 +412,10 @@ export default function P0() {
     return "holo" as const;
   }, [data]);
 
-  const showCeremony = ceremony < 5;
+  const showCeremony = hasTheater && !loadError && !showWelcome && ceremony < 5;
   return (
     <div
-      data-product-ready={data ? "true" : "false"}
+      data-product-ready={data && !loadError ? "true" : "false"}
       data-product-bundle={bundleId ?? ""}
       data-product-actors={data ? String(data.satellites.length) : "0"}
       className="relative flex min-h-screen flex-col overflow-x-hidden bg-bg950"
@@ -442,6 +455,21 @@ export default function P0() {
       <SimBanner />
       {/* 技能更新通栏（技能保鲜环：夜班自动更新提示 / L2 待审批引导） */}
       <SkillDistBanner />
+
+      {loadError && (
+        <div role="alert" className="relative z-30 mx-4 flex flex-wrap items-center gap-3 rounded-lg border border-red-300/30 bg-red-950/30 px-4 py-3 text-body text-red-100">
+          <span className="min-w-0 flex-1 break-words">
+            {loadError}{data ? " 当前保留上次实况，恢复连接后会自动更新。" : ""}
+          </span>
+          <button data-retry-theater type="button" disabled={refreshing} onClick={() => void load()}
+            className="rounded border border-red-200/40 px-3 py-1.5 transition-colors hover:bg-red-200/10 active:bg-red-200/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200 disabled:cursor-wait disabled:opacity-60">
+            {refreshing ? "正在重试…" : "重新加载"}
+          </button>
+        </div>
+      )}
+      {!data && !loadError && (
+        <p role="status" className="relative z-20 px-4 py-3 text-center text-body text-ink3">正在加载经营实况…</p>
+      )}
 
       {/* 舞台 */}
       <main className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center px-4">

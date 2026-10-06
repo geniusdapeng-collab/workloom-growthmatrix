@@ -1,0 +1,52 @@
+COMMAND ["/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/downloads/node-v24.19.0-darwin-arm64/bin/node", "--test", "/Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix-video-baseline.test.mjs"]
+✖ Matrix baseline: a changed deliverable must not retain a green integrity result (4.332917ms)
+✖ Matrix baseline: a plan provides literal argv without evaluating caller text (0.546875ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 69.942084
+
+✖ failing tests:
+
+test at ../matrix-video-baseline.test.mjs:9:1
+✖ Matrix baseline: a changed deliverable must not retain a green integrity result (4.332917ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'all-listed-files-present'
+  - 'incomplete'
+  
+      at TestContext.<anonymous> (file:///Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix-video-baseline.test.mjs:22:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'all-listed-files-present',
+    expected: 'incomplete',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../matrix-video-baseline.test.mjs:31:1
+✖ Matrix baseline: a plan provides literal argv without evaluating caller text (0.546875ms)
+  AssertionError [ERR_ASSERTION]: Missing structured execution argv
+      at TestContext.<anonymous> (file:///Users/mac/Documents/Codex/2026-10-02/growth-growth-https-cnb-cool-workloom/work/matrix-video-baseline.test.mjs:40:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
