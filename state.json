@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 136,
+  "revision": 138,
   "tasks": {
     "132": {
       "number": 132,
@@ -688,14 +688,14 @@
         "at": 1791317717753
       },
       "developerReview": null,
-      "error": "Alignment retry budget exhausted",
-      "blockedUntil": 1791318317753,
+      "error": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+      "blockedUntil": 1791319209591,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
         "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
-        "reason": "主干对齐失败：Command failed: git merge --no-ff --no-edit 6e7bb78749a4ade1955cf03476ed249f630aa3f8\n",
-        "at": 1791317717753
+        "reason": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+        "at": 1791318609591
       },
       "recoveryIntent": null,
       "recoveryCount": 0,
@@ -6078,6 +6078,39 @@
       },
       "previous": "57e27f0bea8d0162ad66d5c67fea6ba6b38d2ef381ca38537cf76d93ffd60f55",
       "digest": "ef3b14a6a8918e3949b62d1af311c4e05fd30ce2a0b07c3eda0290b961913b90"
+    },
+    {
+      "sequence": 137,
+      "at": "2026-10-06T20:30:09.591Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "reason": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+            "at": 1791318609591
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791319209591
+        }
+      },
+      "previous": "ef3b14a6a8918e3949b62d1af311c4e05fd30ce2a0b07c3eda0290b961913b90",
+      "digest": "8f5346295e09aa5fa24663009e32ef32dd70daaa3da8c082888b25f0ae9478d5"
+    },
+    {
+      "sequence": 138,
+      "at": "2026-10-06T20:30:11.643Z",
+      "kind": "transaction",
+      "data": {
+        "id": "35b8c15d-dde8-4914-bdd3-be1ac03a6696"
+      },
+      "previous": "8f5346295e09aa5fa24663009e32ef32dd70daaa3da8c082888b25f0ae9478d5",
+      "digest": "79519d6e46b40ff3e073ffcefdf43012e56bd17e6edd4bc462448150db2e4300"
     }
   ]
 }
