@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 18,
+  "revision": 21,
   "tasks": {
     "132": {
       "number": 132,
-      "status": "developing",
+      "status": "waiting_ci",
       "firstSeen": 1791244433175,
       "attempts": {},
       "admission": {
@@ -21,7 +21,641 @@
           "protocol": 3
         }
       },
-      "updatedAt": 1791307589181
+      "updatedAt": 1791308680388,
+      "headSha": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+      "mainSha": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+      "branch": "chore/protocol-onboarding-delivery-de67da2fd721cb62-aa9b8c1550d4",
+      "intent": {
+        "taskId": "T-2026-1005-9565",
+        "ready": true,
+        "dependsOn": [],
+        "releases": []
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 132,
+        "headSha": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+        "mainSha": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          ".cnb.yml",
+          ".workloom-delivery-install.json",
+          "AGENTS.md",
+          "docs/AUTOMATIC-RD-DELIVERY.md",
+          "docs/OPEN_SOURCE_COMPONENTS.md",
+          "scripts/ci/protocol-rules.mjs",
+          "scripts/ci/protocol-rules.test.mjs",
+          "scripts/ci/verify-lock-conflict.mjs",
+          "scripts/delivery/bootstrap-cnb.yml",
+          "scripts/delivery/cnb.yml",
+          "scripts/delivery/git-state.mjs",
+          "scripts/delivery/install-cnb.yml",
+          "scripts/delivery/install-config.mjs",
+          "scripts/delivery/install-manifest.mjs",
+          "scripts/delivery/model-gateway.mjs",
+          "scripts/delivery/queue-controller.mjs",
+          "scripts/delivery/queue-model.mjs",
+          "scripts/delivery/queue-platform.mjs",
+          "scripts/delivery/queue-policy.mjs",
+          "scripts/delivery/queue-release.mjs",
+          "scripts/delivery/queue-runner.mjs",
+          "scripts/delivery/queue-work.mjs",
+          "scripts/delivery/queue.test.mjs",
+          "scripts/delivery/release-source.mjs",
+          "scripts/delivery/review-plugin.mjs",
+          "scripts/delivery/runtime/package-lock.json",
+          "scripts/delivery/runtime/package.json",
+          "scripts/tools/cnb-api.mjs",
+          "scripts/tools/task.mjs"
+        ],
+        "filesHash": "3452e39e660b2f72a68daa9d8868d6a7baf00c768e2f50edbbb553131962cd41",
+        "dependsOn": [],
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "rationale": "Bind repository, PR, source, main, complete compare files, labels, readiness and original CI in snapshots. Candidate creation/merge uses immutable protected source, unique recovery identity and exact original two-parent verification."
+          },
+          {
+            "id": "CI-002",
+            "rationale": "Require explicit frozen expected source and native repository identity before packaging/upload; current branch/main/tag alone cannot substitute for exact source proof."
+          },
+          {
+            "id": "CI-003",
+            "rationale": "Run the real retained canonical parsing/decision/negative cases; per-target post-commit regression confirms the installed copy executes with current protocol semantics."
+          },
+          {
+            "id": "CI-004",
+            "rationale": "Add deterministic installed queue/protocol regression as an independent required PR pipeline without weakening any original product gate or treating unrelated UI publication as tested."
+          },
+          {
+            "id": "CI-005",
+            "rationale": "Actual post-commit tests cover exact review drift/partial receipts, leases/CAS/lost acknowledgements, candidates/permissions/dependencies, red-oldest isolation, frozen releases/private redirects and disabled model/NPC IO. Explicitly retain one non-applicable shared UI lane skip per target."
+          },
+          {
+            "id": "CI-006",
+            "rationale": "Retain normal source/main alignment with explicit conflicts. Legacy review preparation/publication and NPC repair dispatch fail before IO; repair diagnostics return to the current Codex session."
+          },
+          {
+            "id": "CI-007",
+            "rationale": "Append three deterministic repository-local includes while retaining all original product pipeline/stage/check signals. Tiger switches only the four legacy protocol invocations to their exact canonical root equivalents; Python, evidence and industry checks remain."
+          },
+          {
+            "id": "CI-008",
+            "rationale": "Use the exact reviewed canonical parser dependency/integrity lock; installation ignores package scripts and does not request a model service."
+          },
+          {
+            "id": "CI-009",
+            "rationale": "Keep repository/source/main/path and required task contracts. Installed sensitive changes require accurate source admission and live lease checks; old open-PR order no longer occupies a module forever."
+          },
+          {
+            "id": "CI-010",
+            "rationale": "Keep integration and frozen publication independent. Require exact source/build/event/tag/manifest/digests; authenticate only the initial official private download request, bound redirect/stream failures and omit token on later requests."
+          },
+          {
+            "id": "CI-011",
+            "rationale": "Keep actual task IDs and scoped task contracts. Existing task card creation/validation and errors remain; ready handoff cannot manufacture a lease or a platform approval."
+          },
+          {
+            "id": "CI-012",
+            "rationale": "Keep the previously verified parser locked at the exact existing runtime version. No SDK or paid model package is introduced; actual installed parser is tested in each owned target checkout."
+          },
+          {
+            "id": "CI-013",
+            "rationale": "Normalize the bootstrap gate to delivery-bootstrap-checks and run only installation ledger/assets, syntax and existing Codex session verification. Exact onboarding branch selection and independent original product checks remain."
+          },
+          {
+            "id": "CI-014",
+            "rationale": "Repository-local native main scheduling performs deterministic admission/session record/reconcile/release operations only. Legacy base stage names contain syntax checks and no model image or calls; original locks and five-minute recovery remain."
+          },
+          {
+            "id": "CI-015",
+            "rationale": "Historical pure receipt readers remain, but CLI and runReview reject before SDK, publisher, subprocess, network or model work. No paid platform approval is created."
+          },
+          {
+            "id": "CI-016",
+            "rationale": "Verify schema 2 and the complete exact tracked runtime closure, upstream provenance, regular Git objects, checkout/digest identity and target adapters. Missing, altered, foreign or symlink assets fail."
+          },
+          {
+            "id": "CI-017",
+            "rationale": "Use canonical current repository protocol: ordinary overlap is advisory, permanent open-PR occupation is removed, and exact Git/PR, current main and fenced lease admission remain enforced."
+          },
+          {
+            "id": "CI-018",
+            "rationale": "Use current Codex provider with platformAI=false; preserve existing target product pipelines and business holds. Require implementation-change explanations and invalidate receipts on exact policy/source/main drift."
+          },
+          {
+            "id": "CI-019",
+            "rationale": "Reject immediately before any model, credential, filesystem, network or SDK operation because the owner revoked platform AI."
+          },
+          {
+            "id": "CI-020",
+            "rationale": "Retain official repository-bound API/Git authentication, read retry and zero write retries. Runtime credentials remain process-only and redacted; no model service is called."
+          },
+          {
+            "id": "CI-021",
+            "rationale": "Parse local CI and append only missing delivery includes. Compare the remaining complete configuration hash to preserve existing target pipelines, selectors and permissions."
+          },
+          {
+            "id": "CI-022",
+            "rationale": "Handoff requires a clean exact checkout and actual session review/test; source and body read back before durable storage. Bootstrap/activation verify complete manifest, prepared source/main and real product CI before changing human approval counters."
+          },
+          {
+            "id": "CI-023",
+            "rationale": "Select healthy reviewed sources independently of older failures; use immutable candidates, all original CI, real dependencies, fenced sensitive integration lease and exact ordinary merge receipts. No paid review/recovery dispatcher or shared AI capacity remains."
+          },
+          {
+            "id": "CI-024",
+            "rationale": "Validate actual Codex exact repo/PR/head/main/policy/files/tests/timestamps/dependencies and CI IDs. Missing, stale, tampered or partial review, live lease, unresolved dependency and unknown write remain blockers for that task."
+          },
+          {
+            "id": "CI-025",
+            "rationale": "Persist append-only events and exact tasks on the protected state branch via normal fast-forward CAS. Recover lost push acknowledgement by transaction ID; do not force or blindly repeat external actions."
+          }
+        ],
+        "ciPolicyChangesHash": "2d241750682c3896ba0e5d9d8da362b5395de46a9addf8da5ff6162785713eeb",
+        "tests": [
+          {
+            "command": "/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test scripts/delivery/queue.test.mjs scripts/ci/protocol-rules.test.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-06T17:26:17.915Z",
+            "result": "dar time and preserves the exact boundary (0.216375ms)\n✔ legacy review capacity never reads paid build history and cannot block unrelated reviewed source (0.042375ms)\n✔ release enqueue is idempotent by frozen source/kind/version and keeps integration separate (0.102583ms)\n✔ both UI and desktop dispatch pass the explicit frozen SHA to the whole build, independently of current branch SHA (0.448166ms)\n﹣ manual UI event and delivery dispatch use the same actual publishing job and native lock; the scheduler only launches and observes (4.283958ms) # This product has no shared UI publishing lane\n✔ release launch intent survives lost acknowledgement and forbids duplicate publication (0.439917ms)\n✔ release failures use the latest durable attempt count and park after two launches (0.431958ms)\n✔ lost release launch cannot adopt a different manual build with the same source/event (0.482125ms)\n✔ UI release verifies the real Platform API JSON decoding contract and rejects unreadable registration or different bytes (3.448583ms)\n✔ release verifies actual tag source, manifest identity and every downloaded digest (0.302166ms)\n✔ private release download authenticates only the official first request and hashes the actual redirected bytes (0.478667ms)\n✔ private release permission, unsafe redirect, empty/oversized stream and malformed manifest remain explicit failures (0.859875ms)\n✔ a release redirect loop is bounded and every later same-origin or foreign request omits the token (0.161417ms)\nℹ tests 105\nℹ suites 5\nℹ pass 104\nℹ fail 0\nℹ cancelled 0\nℹ skipped 1\nℹ todo 0\nℹ duration_ms 11062.526209\n"
+          }
+        ],
+        "reviewedAt": "2026-10-06T17:44:06.365Z",
+        "summary": "Current Codex reviewed the canonical source execution code and affected dependencies in this conversation. All 24 copied source assets were compared byte-for-byte (B evidence) to that reviewed source. Each target-specific CI/AGENTS/bootstrap diff and Tiger delegate was inspected; schema-2 manifest, exact upstream/target identities, entire changed file set, existing product CI preservation and repeat-install zero-change result were machine-verified. Only target YAML occurrence metadata changed in its offline open-source inventory; no package upgrade or industry/isolation change. Actual tests ran after this exact target commit: 104 passed, zero failed, one shared UI publishing lane case explicitly skipped because the product has no such lane. No unresolved blocker found. Current Codex review plus actual original native product CI authorize only normal first installation; paid platform AI/NPC/gateway and fabricated platform approvals remain disabled.",
+        "passed": true,
+        "id": "f66538f161d48754124ed2c9cb3a7978731e721e61d723ae91212fedf18cfce5"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 132,
+        "pull": {
+          "number": 132,
+          "state": "open",
+          "title": "feat(base): 安装普通研发自动交付 [T-2026-1005-9565]",
+          "body": "从已激活且禁用平台 AI 的基座当前主干 2d350b7ec969abb0749f8d8d60a2212b8872e3e0 安装完整研发执行闭包。当前 Codex 会话 review、实际测试并保存准确回执；CNB/GitHub 模型审核、模型代理及 NPC 修复入口关闭。保留目标产品依赖、必需机器 CI、行业身份、业务围栏和隔离；敏感 fenced 租约、不可修改候选、真实依赖和准确 merge 双亲继续核验。\n\n安装准备账本与清单，当前会话实测交接后才能普通合入；缺真实证明保持等待，不伪造批准。任务卡 #131 [T-2026-1005-9565]。\n\n<!-- delivery-install:eadd924affbe00f33296870464578fec1ed1abc715bf15a7c104c48676df8022 -->\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1005-9565\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/chore/protocol-onboarding-delivery-de67da2fd721cb62-aa9b8c1550d4",
+            "sha": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "waiting_review",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+        "mainSha": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+        "files": [
+          ".cnb.yml",
+          ".workloom-delivery-install.json",
+          "AGENTS.md",
+          "docs/AUTOMATIC-RD-DELIVERY.md",
+          "docs/OPEN_SOURCE_COMPONENTS.md",
+          "scripts/ci/protocol-rules.mjs",
+          "scripts/ci/protocol-rules.test.mjs",
+          "scripts/ci/verify-lock-conflict.mjs",
+          "scripts/delivery/bootstrap-cnb.yml",
+          "scripts/delivery/cnb.yml",
+          "scripts/delivery/git-state.mjs",
+          "scripts/delivery/install-cnb.yml",
+          "scripts/delivery/install-config.mjs",
+          "scripts/delivery/install-manifest.mjs",
+          "scripts/delivery/model-gateway.mjs",
+          "scripts/delivery/queue-controller.mjs",
+          "scripts/delivery/queue-model.mjs",
+          "scripts/delivery/queue-platform.mjs",
+          "scripts/delivery/queue-policy.mjs",
+          "scripts/delivery/queue-release.mjs",
+          "scripts/delivery/queue-runner.mjs",
+          "scripts/delivery/queue-work.mjs",
+          "scripts/delivery/queue.test.mjs",
+          "scripts/delivery/release-source.mjs",
+          "scripts/delivery/review-plugin.mjs",
+          "scripts/delivery/runtime/package-lock.json",
+          "scripts/delivery/runtime/package.json",
+          "scripts/tools/cnb-api.mjs",
+          "scripts/tools/task.mjs"
+        ],
+        "intent": {
+          "taskId": "T-2026-1005-9565",
+          "ready": true,
+          "dependsOn": [],
+          "releases": []
+        },
+        "headTime": 1791307566000,
+        "mergeBase": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "file": "scripts/delivery/queue-platform.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/queue-platform.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/queue-platform.mjs",
+              "absent": false
+            },
+            "digest": "0b3395af4b5494839928455cb97e34186b55cbc9bc12183c8832075f55b05403"
+          },
+          {
+            "id": "CI-002",
+            "file": "scripts/delivery/release-source.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/release-source.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/release-source.mjs",
+              "absent": false
+            },
+            "digest": "0eb580f1ef8b54e8a95313375bfe9831d83efae30f5cb61c57e559a461cdeedb"
+          },
+          {
+            "id": "CI-003",
+            "file": "scripts/ci/protocol-rules.test.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/ci/protocol-rules.test.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/ci/protocol-rules.test.mjs",
+              "absent": false
+            },
+            "digest": "20614aff4ef48537075c8fc249a4f6791638535f455fd8dee2b2cebe3e5220c1"
+          },
+          {
+            "id": "CI-004",
+            "file": "scripts/delivery/install-cnb.yml",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/install-cnb.yml",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/install-cnb.yml",
+              "absent": false
+            },
+            "digest": "222c9b8f3cb1fae869364d2e55c89d19a0e2c797b1d5faa76e501a0648ed5dba"
+          },
+          {
+            "id": "CI-005",
+            "file": "scripts/delivery/queue.test.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/queue.test.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/queue.test.mjs",
+              "absent": false
+            },
+            "digest": "23ca2290fb72666c7c973086698cfa00f01fd6dbacf7297e68aff0792e75e5d3"
+          },
+          {
+            "id": "CI-006",
+            "file": "scripts/delivery/queue-work.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/queue-work.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/queue-work.mjs",
+              "absent": false
+            },
+            "digest": "25a28b4e6273a9fc0e163a825cd512bfa0ca2df9c1dd639a8430c8a3937d1ed2"
+          },
+          {
+            "id": "CI-007",
+            "file": ".cnb.yml",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": ".cnb.yml",
+              "absent": false
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": ".cnb.yml",
+              "absent": false
+            },
+            "digest": "27672656a6c8902bc9b77e5b5fb80afe33be33c498f1365d42498b72ddb51e30"
+          },
+          {
+            "id": "CI-008",
+            "file": "scripts/delivery/runtime/package-lock.json",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/runtime/package-lock.json",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/runtime/package-lock.json",
+              "absent": false
+            },
+            "digest": "2edd1036db96a74f12837c0f20ecb431e46b2b250e9d264857dc9887c0c58961"
+          },
+          {
+            "id": "CI-009",
+            "file": "scripts/ci/verify-lock-conflict.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/ci/verify-lock-conflict.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/ci/verify-lock-conflict.mjs",
+              "absent": false
+            },
+            "digest": "44b892a932a69373e6198105e68c0c552fcf0969242525863928f0d7e33d7e0a"
+          },
+          {
+            "id": "CI-010",
+            "file": "scripts/delivery/queue-release.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/queue-release.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/queue-release.mjs",
+              "absent": false
+            },
+            "digest": "47b31f43e42a36cebe1985525e87c73c380789487d1a4a2a37d2b99e59b7f92d"
+          },
+          {
+            "id": "CI-011",
+            "file": "scripts/tools/task.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/tools/task.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/tools/task.mjs",
+              "absent": false
+            },
+            "digest": "4c102befe3e609550d21b63f1194cecb22c1767a5d7abe08032b0319b5483750"
+          },
+          {
+            "id": "CI-012",
+            "file": "scripts/delivery/runtime/package.json",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/runtime/package.json",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/runtime/package.json",
+              "absent": false
+            },
+            "digest": "4e92d6ab93a413e6305062435fb1f3368fc63b0c9fadea94bffe111351645456"
+          },
+          {
+            "id": "CI-013",
+            "file": "scripts/delivery/bootstrap-cnb.yml",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/bootstrap-cnb.yml",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/bootstrap-cnb.yml",
+              "absent": false
+            },
+            "digest": "63ac81e1954fdca032faf6ca6b8b3aeb6ea67bce0429c6dfb194fe94642feeb5"
+          },
+          {
+            "id": "CI-014",
+            "file": "scripts/delivery/cnb.yml",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/cnb.yml",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/cnb.yml",
+              "absent": false
+            },
+            "digest": "63c378f779c102ed27e71e9a0e25e174d5a76268f02bcf06b7163cd0d1ad681c"
+          },
+          {
+            "id": "CI-015",
+            "file": "scripts/delivery/review-plugin.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/review-plugin.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/review-plugin.mjs",
+              "absent": false
+            },
+            "digest": "7e5a3094385fbf94d327f2325ec5f3f6b406ecbb8af4e543de9a168865845540"
+          },
+          {
+            "id": "CI-016",
+            "file": "scripts/delivery/install-manifest.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/install-manifest.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/install-manifest.mjs",
+              "absent": false
+            },
+            "digest": "9c2eb93dd6f463e4f60f4e26bdb4b3a548052b24fed0abc25e247c70ec5948ae"
+          },
+          {
+            "id": "CI-017",
+            "file": "scripts/ci/protocol-rules.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/ci/protocol-rules.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/ci/protocol-rules.mjs",
+              "absent": false
+            },
+            "digest": "a89bcc58351ade7bb3f2de6eb76ce2ef44d4abb0ae1a610df8b9842171246785"
+          },
+          {
+            "id": "CI-018",
+            "file": "scripts/delivery/queue-policy.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/queue-policy.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/queue-policy.mjs",
+              "absent": false
+            },
+            "digest": "ace6e972da13bf8eb35352b0186eb525888b0c2338af5c37a1b15d37d501714f"
+          },
+          {
+            "id": "CI-019",
+            "file": "scripts/delivery/model-gateway.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/model-gateway.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/model-gateway.mjs",
+              "absent": false
+            },
+            "digest": "c21678be09c27016bcfe563b1779de8b4e5c610432ae6604012493226b521313"
+          },
+          {
+            "id": "CI-020",
+            "file": "scripts/tools/cnb-api.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/tools/cnb-api.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/tools/cnb-api.mjs",
+              "absent": false
+            },
+            "digest": "c39910ce892bcf96f245fdf828d86dc5efdb1e01f5ad7adcb9eabd37b0984921"
+          },
+          {
+            "id": "CI-021",
+            "file": "scripts/delivery/install-config.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/install-config.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/install-config.mjs",
+              "absent": false
+            },
+            "digest": "c9a1483ac8c15e925e46c31cf190855c290e3836ab4a4f5854d307a706f1aa27"
+          },
+          {
+            "id": "CI-022",
+            "file": "scripts/delivery/queue-runner.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/queue-runner.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/queue-runner.mjs",
+              "absent": false
+            },
+            "digest": "d6b7109e5a4d7542ce303b6de61ffcffe99cff709aabc9e05656f47fcd3239b8"
+          },
+          {
+            "id": "CI-023",
+            "file": "scripts/delivery/queue-controller.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/queue-controller.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/queue-controller.mjs",
+              "absent": false
+            },
+            "digest": "e32dfb5de3c0f929364868dd77ac0b5bdcface7f735c08f3b7f44cb158f9587e"
+          },
+          {
+            "id": "CI-024",
+            "file": "scripts/delivery/queue-model.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/queue-model.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/queue-model.mjs",
+              "absent": false
+            },
+            "digest": "f2c12503930f7c46fd2a2eef8d2f09fdfb76f0ca2dc6c3352c26824c7f598d7f"
+          },
+          {
+            "id": "CI-025",
+            "file": "scripts/delivery/git-state.mjs",
+            "before": {
+              "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+              "path": "scripts/delivery/git-state.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+              "path": "scripts/delivery/git-state.mjs",
+              "absent": false
+            },
+            "digest": "f7b69e6afefa5ce03a49597f36a04b6f779a08faa64c6c6b4cbcf1e3d1ac722b"
+          }
+        ]
+      }
     }
   },
   "leases": {
@@ -330,6 +964,676 @@
       },
       "previous": "77610f07e0f54e6689360c5e0a27b73a21001ce7bb7e9cc70ad8b59813362c7c",
       "digest": "fc715a10d7fd0e33526af795ec6cf2f5ee19b9fb97ae0246bffc6f3d9833b49d"
+    },
+    {
+      "sequence": 19,
+      "at": "2026-10-06T17:44:40.388Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 132,
+        "id": "f66538f161d48754124ed2c9cb3a7978731e721e61d723ae91212fedf18cfce5",
+        "headSha": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+        "mainSha": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34"
+      },
+      "previous": "fc715a10d7fd0e33526af795ec6cf2f5ee19b9fb97ae0246bffc6f3d9833b49d",
+      "digest": "a8fb2ae507c0a4830f0f923a397ab2ddad153d2dedcfb59efc1a8753c7b000cc"
+    },
+    {
+      "sequence": 20,
+      "at": "2026-10-06T17:44:40.388Z",
+      "kind": "task",
+      "data": {
+        "number": 132,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+          "mainSha": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+          "branch": "chore/protocol-onboarding-delivery-de67da2fd721cb62-aa9b8c1550d4",
+          "intent": {
+            "taskId": "T-2026-1005-9565",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 132,
+            "headSha": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+            "mainSha": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              ".cnb.yml",
+              ".workloom-delivery-install.json",
+              "AGENTS.md",
+              "docs/AUTOMATIC-RD-DELIVERY.md",
+              "docs/OPEN_SOURCE_COMPONENTS.md",
+              "scripts/ci/protocol-rules.mjs",
+              "scripts/ci/protocol-rules.test.mjs",
+              "scripts/ci/verify-lock-conflict.mjs",
+              "scripts/delivery/bootstrap-cnb.yml",
+              "scripts/delivery/cnb.yml",
+              "scripts/delivery/git-state.mjs",
+              "scripts/delivery/install-cnb.yml",
+              "scripts/delivery/install-config.mjs",
+              "scripts/delivery/install-manifest.mjs",
+              "scripts/delivery/model-gateway.mjs",
+              "scripts/delivery/queue-controller.mjs",
+              "scripts/delivery/queue-model.mjs",
+              "scripts/delivery/queue-platform.mjs",
+              "scripts/delivery/queue-policy.mjs",
+              "scripts/delivery/queue-release.mjs",
+              "scripts/delivery/queue-runner.mjs",
+              "scripts/delivery/queue-work.mjs",
+              "scripts/delivery/queue.test.mjs",
+              "scripts/delivery/release-source.mjs",
+              "scripts/delivery/review-plugin.mjs",
+              "scripts/delivery/runtime/package-lock.json",
+              "scripts/delivery/runtime/package.json",
+              "scripts/tools/cnb-api.mjs",
+              "scripts/tools/task.mjs"
+            ],
+            "filesHash": "3452e39e660b2f72a68daa9d8868d6a7baf00c768e2f50edbbb553131962cd41",
+            "dependsOn": [],
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "rationale": "Bind repository, PR, source, main, complete compare files, labels, readiness and original CI in snapshots. Candidate creation/merge uses immutable protected source, unique recovery identity and exact original two-parent verification."
+              },
+              {
+                "id": "CI-002",
+                "rationale": "Require explicit frozen expected source and native repository identity before packaging/upload; current branch/main/tag alone cannot substitute for exact source proof."
+              },
+              {
+                "id": "CI-003",
+                "rationale": "Run the real retained canonical parsing/decision/negative cases; per-target post-commit regression confirms the installed copy executes with current protocol semantics."
+              },
+              {
+                "id": "CI-004",
+                "rationale": "Add deterministic installed queue/protocol regression as an independent required PR pipeline without weakening any original product gate or treating unrelated UI publication as tested."
+              },
+              {
+                "id": "CI-005",
+                "rationale": "Actual post-commit tests cover exact review drift/partial receipts, leases/CAS/lost acknowledgements, candidates/permissions/dependencies, red-oldest isolation, frozen releases/private redirects and disabled model/NPC IO. Explicitly retain one non-applicable shared UI lane skip per target."
+              },
+              {
+                "id": "CI-006",
+                "rationale": "Retain normal source/main alignment with explicit conflicts. Legacy review preparation/publication and NPC repair dispatch fail before IO; repair diagnostics return to the current Codex session."
+              },
+              {
+                "id": "CI-007",
+                "rationale": "Append three deterministic repository-local includes while retaining all original product pipeline/stage/check signals. Tiger switches only the four legacy protocol invocations to their exact canonical root equivalents; Python, evidence and industry checks remain."
+              },
+              {
+                "id": "CI-008",
+                "rationale": "Use the exact reviewed canonical parser dependency/integrity lock; installation ignores package scripts and does not request a model service."
+              },
+              {
+                "id": "CI-009",
+                "rationale": "Keep repository/source/main/path and required task contracts. Installed sensitive changes require accurate source admission and live lease checks; old open-PR order no longer occupies a module forever."
+              },
+              {
+                "id": "CI-010",
+                "rationale": "Keep integration and frozen publication independent. Require exact source/build/event/tag/manifest/digests; authenticate only the initial official private download request, bound redirect/stream failures and omit token on later requests."
+              },
+              {
+                "id": "CI-011",
+                "rationale": "Keep actual task IDs and scoped task contracts. Existing task card creation/validation and errors remain; ready handoff cannot manufacture a lease or a platform approval."
+              },
+              {
+                "id": "CI-012",
+                "rationale": "Keep the previously verified parser locked at the exact existing runtime version. No SDK or paid model package is introduced; actual installed parser is tested in each owned target checkout."
+              },
+              {
+                "id": "CI-013",
+                "rationale": "Normalize the bootstrap gate to delivery-bootstrap-checks and run only installation ledger/assets, syntax and existing Codex session verification. Exact onboarding branch selection and independent original product checks remain."
+              },
+              {
+                "id": "CI-014",
+                "rationale": "Repository-local native main scheduling performs deterministic admission/session record/reconcile/release operations only. Legacy base stage names contain syntax checks and no model image or calls; original locks and five-minute recovery remain."
+              },
+              {
+                "id": "CI-015",
+                "rationale": "Historical pure receipt readers remain, but CLI and runReview reject before SDK, publisher, subprocess, network or model work. No paid platform approval is created."
+              },
+              {
+                "id": "CI-016",
+                "rationale": "Verify schema 2 and the complete exact tracked runtime closure, upstream provenance, regular Git objects, checkout/digest identity and target adapters. Missing, altered, foreign or symlink assets fail."
+              },
+              {
+                "id": "CI-017",
+                "rationale": "Use canonical current repository protocol: ordinary overlap is advisory, permanent open-PR occupation is removed, and exact Git/PR, current main and fenced lease admission remain enforced."
+              },
+              {
+                "id": "CI-018",
+                "rationale": "Use current Codex provider with platformAI=false; preserve existing target product pipelines and business holds. Require implementation-change explanations and invalidate receipts on exact policy/source/main drift."
+              },
+              {
+                "id": "CI-019",
+                "rationale": "Reject immediately before any model, credential, filesystem, network or SDK operation because the owner revoked platform AI."
+              },
+              {
+                "id": "CI-020",
+                "rationale": "Retain official repository-bound API/Git authentication, read retry and zero write retries. Runtime credentials remain process-only and redacted; no model service is called."
+              },
+              {
+                "id": "CI-021",
+                "rationale": "Parse local CI and append only missing delivery includes. Compare the remaining complete configuration hash to preserve existing target pipelines, selectors and permissions."
+              },
+              {
+                "id": "CI-022",
+                "rationale": "Handoff requires a clean exact checkout and actual session review/test; source and body read back before durable storage. Bootstrap/activation verify complete manifest, prepared source/main and real product CI before changing human approval counters."
+              },
+              {
+                "id": "CI-023",
+                "rationale": "Select healthy reviewed sources independently of older failures; use immutable candidates, all original CI, real dependencies, fenced sensitive integration lease and exact ordinary merge receipts. No paid review/recovery dispatcher or shared AI capacity remains."
+              },
+              {
+                "id": "CI-024",
+                "rationale": "Validate actual Codex exact repo/PR/head/main/policy/files/tests/timestamps/dependencies and CI IDs. Missing, stale, tampered or partial review, live lease, unresolved dependency and unknown write remain blockers for that task."
+              },
+              {
+                "id": "CI-025",
+                "rationale": "Persist append-only events and exact tasks on the protected state branch via normal fast-forward CAS. Recover lost push acknowledgement by transaction ID; do not force or blindly repeat external actions."
+              }
+            ],
+            "ciPolicyChangesHash": "2d241750682c3896ba0e5d9d8da362b5395de46a9addf8da5ff6162785713eeb",
+            "tests": [
+              {
+                "command": "/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test scripts/delivery/queue.test.mjs scripts/ci/protocol-rules.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-06T17:26:17.915Z",
+                "result": "dar time and preserves the exact boundary (0.216375ms)\n✔ legacy review capacity never reads paid build history and cannot block unrelated reviewed source (0.042375ms)\n✔ release enqueue is idempotent by frozen source/kind/version and keeps integration separate (0.102583ms)\n✔ both UI and desktop dispatch pass the explicit frozen SHA to the whole build, independently of current branch SHA (0.448166ms)\n﹣ manual UI event and delivery dispatch use the same actual publishing job and native lock; the scheduler only launches and observes (4.283958ms) # This product has no shared UI publishing lane\n✔ release launch intent survives lost acknowledgement and forbids duplicate publication (0.439917ms)\n✔ release failures use the latest durable attempt count and park after two launches (0.431958ms)\n✔ lost release launch cannot adopt a different manual build with the same source/event (0.482125ms)\n✔ UI release verifies the real Platform API JSON decoding contract and rejects unreadable registration or different bytes (3.448583ms)\n✔ release verifies actual tag source, manifest identity and every downloaded digest (0.302166ms)\n✔ private release download authenticates only the official first request and hashes the actual redirected bytes (0.478667ms)\n✔ private release permission, unsafe redirect, empty/oversized stream and malformed manifest remain explicit failures (0.859875ms)\n✔ a release redirect loop is bounded and every later same-origin or foreign request omits the token (0.161417ms)\nℹ tests 105\nℹ suites 5\nℹ pass 104\nℹ fail 0\nℹ cancelled 0\nℹ skipped 1\nℹ todo 0\nℹ duration_ms 11062.526209\n"
+              }
+            ],
+            "reviewedAt": "2026-10-06T17:44:06.365Z",
+            "summary": "Current Codex reviewed the canonical source execution code and affected dependencies in this conversation. All 24 copied source assets were compared byte-for-byte (B evidence) to that reviewed source. Each target-specific CI/AGENTS/bootstrap diff and Tiger delegate was inspected; schema-2 manifest, exact upstream/target identities, entire changed file set, existing product CI preservation and repeat-install zero-change result were machine-verified. Only target YAML occurrence metadata changed in its offline open-source inventory; no package upgrade or industry/isolation change. Actual tests ran after this exact target commit: 104 passed, zero failed, one shared UI publishing lane case explicitly skipped because the product has no such lane. No unresolved blocker found. Current Codex review plus actual original native product CI authorize only normal first installation; paid platform AI/NPC/gateway and fabricated platform approvals remain disabled.",
+            "passed": true,
+            "id": "f66538f161d48754124ed2c9cb3a7978731e721e61d723ae91212fedf18cfce5"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 132,
+            "pull": {
+              "number": 132,
+              "state": "open",
+              "title": "feat(base): 安装普通研发自动交付 [T-2026-1005-9565]",
+              "body": "从已激活且禁用平台 AI 的基座当前主干 2d350b7ec969abb0749f8d8d60a2212b8872e3e0 安装完整研发执行闭包。当前 Codex 会话 review、实际测试并保存准确回执；CNB/GitHub 模型审核、模型代理及 NPC 修复入口关闭。保留目标产品依赖、必需机器 CI、行业身份、业务围栏和隔离；敏感 fenced 租约、不可修改候选、真实依赖和准确 merge 双亲继续核验。\n\n安装准备账本与清单，当前会话实测交接后才能普通合入；缺真实证明保持等待，不伪造批准。任务卡 #131 [T-2026-1005-9565]。\n\n<!-- delivery-install:eadd924affbe00f33296870464578fec1ed1abc715bf15a7c104c48676df8022 -->\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1005-9565\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/chore/protocol-onboarding-delivery-de67da2fd721cb62-aa9b8c1550d4",
+                "sha": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "waiting_review",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+            "mainSha": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+            "files": [
+              ".cnb.yml",
+              ".workloom-delivery-install.json",
+              "AGENTS.md",
+              "docs/AUTOMATIC-RD-DELIVERY.md",
+              "docs/OPEN_SOURCE_COMPONENTS.md",
+              "scripts/ci/protocol-rules.mjs",
+              "scripts/ci/protocol-rules.test.mjs",
+              "scripts/ci/verify-lock-conflict.mjs",
+              "scripts/delivery/bootstrap-cnb.yml",
+              "scripts/delivery/cnb.yml",
+              "scripts/delivery/git-state.mjs",
+              "scripts/delivery/install-cnb.yml",
+              "scripts/delivery/install-config.mjs",
+              "scripts/delivery/install-manifest.mjs",
+              "scripts/delivery/model-gateway.mjs",
+              "scripts/delivery/queue-controller.mjs",
+              "scripts/delivery/queue-model.mjs",
+              "scripts/delivery/queue-platform.mjs",
+              "scripts/delivery/queue-policy.mjs",
+              "scripts/delivery/queue-release.mjs",
+              "scripts/delivery/queue-runner.mjs",
+              "scripts/delivery/queue-work.mjs",
+              "scripts/delivery/queue.test.mjs",
+              "scripts/delivery/release-source.mjs",
+              "scripts/delivery/review-plugin.mjs",
+              "scripts/delivery/runtime/package-lock.json",
+              "scripts/delivery/runtime/package.json",
+              "scripts/tools/cnb-api.mjs",
+              "scripts/tools/task.mjs"
+            ],
+            "intent": {
+              "taskId": "T-2026-1005-9565",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791307566000,
+            "mergeBase": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": "scripts/delivery/queue-platform.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/queue-platform.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/queue-platform.mjs",
+                  "absent": false
+                },
+                "digest": "0b3395af4b5494839928455cb97e34186b55cbc9bc12183c8832075f55b05403"
+              },
+              {
+                "id": "CI-002",
+                "file": "scripts/delivery/release-source.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/release-source.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/release-source.mjs",
+                  "absent": false
+                },
+                "digest": "0eb580f1ef8b54e8a95313375bfe9831d83efae30f5cb61c57e559a461cdeedb"
+              },
+              {
+                "id": "CI-003",
+                "file": "scripts/ci/protocol-rules.test.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/ci/protocol-rules.test.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/ci/protocol-rules.test.mjs",
+                  "absent": false
+                },
+                "digest": "20614aff4ef48537075c8fc249a4f6791638535f455fd8dee2b2cebe3e5220c1"
+              },
+              {
+                "id": "CI-004",
+                "file": "scripts/delivery/install-cnb.yml",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/install-cnb.yml",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/install-cnb.yml",
+                  "absent": false
+                },
+                "digest": "222c9b8f3cb1fae869364d2e55c89d19a0e2c797b1d5faa76e501a0648ed5dba"
+              },
+              {
+                "id": "CI-005",
+                "file": "scripts/delivery/queue.test.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/queue.test.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/queue.test.mjs",
+                  "absent": false
+                },
+                "digest": "23ca2290fb72666c7c973086698cfa00f01fd6dbacf7297e68aff0792e75e5d3"
+              },
+              {
+                "id": "CI-006",
+                "file": "scripts/delivery/queue-work.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/queue-work.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/queue-work.mjs",
+                  "absent": false
+                },
+                "digest": "25a28b4e6273a9fc0e163a825cd512bfa0ca2df9c1dd639a8430c8a3937d1ed2"
+              },
+              {
+                "id": "CI-007",
+                "file": ".cnb.yml",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": ".cnb.yml",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": ".cnb.yml",
+                  "absent": false
+                },
+                "digest": "27672656a6c8902bc9b77e5b5fb80afe33be33c498f1365d42498b72ddb51e30"
+              },
+              {
+                "id": "CI-008",
+                "file": "scripts/delivery/runtime/package-lock.json",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/runtime/package-lock.json",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/runtime/package-lock.json",
+                  "absent": false
+                },
+                "digest": "2edd1036db96a74f12837c0f20ecb431e46b2b250e9d264857dc9887c0c58961"
+              },
+              {
+                "id": "CI-009",
+                "file": "scripts/ci/verify-lock-conflict.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/ci/verify-lock-conflict.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/ci/verify-lock-conflict.mjs",
+                  "absent": false
+                },
+                "digest": "44b892a932a69373e6198105e68c0c552fcf0969242525863928f0d7e33d7e0a"
+              },
+              {
+                "id": "CI-010",
+                "file": "scripts/delivery/queue-release.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/queue-release.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/queue-release.mjs",
+                  "absent": false
+                },
+                "digest": "47b31f43e42a36cebe1985525e87c73c380789487d1a4a2a37d2b99e59b7f92d"
+              },
+              {
+                "id": "CI-011",
+                "file": "scripts/tools/task.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/tools/task.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/tools/task.mjs",
+                  "absent": false
+                },
+                "digest": "4c102befe3e609550d21b63f1194cecb22c1767a5d7abe08032b0319b5483750"
+              },
+              {
+                "id": "CI-012",
+                "file": "scripts/delivery/runtime/package.json",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/runtime/package.json",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/runtime/package.json",
+                  "absent": false
+                },
+                "digest": "4e92d6ab93a413e6305062435fb1f3368fc63b0c9fadea94bffe111351645456"
+              },
+              {
+                "id": "CI-013",
+                "file": "scripts/delivery/bootstrap-cnb.yml",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/bootstrap-cnb.yml",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/bootstrap-cnb.yml",
+                  "absent": false
+                },
+                "digest": "63ac81e1954fdca032faf6ca6b8b3aeb6ea67bce0429c6dfb194fe94642feeb5"
+              },
+              {
+                "id": "CI-014",
+                "file": "scripts/delivery/cnb.yml",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/cnb.yml",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/cnb.yml",
+                  "absent": false
+                },
+                "digest": "63c378f779c102ed27e71e9a0e25e174d5a76268f02bcf06b7163cd0d1ad681c"
+              },
+              {
+                "id": "CI-015",
+                "file": "scripts/delivery/review-plugin.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/review-plugin.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/review-plugin.mjs",
+                  "absent": false
+                },
+                "digest": "7e5a3094385fbf94d327f2325ec5f3f6b406ecbb8af4e543de9a168865845540"
+              },
+              {
+                "id": "CI-016",
+                "file": "scripts/delivery/install-manifest.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/install-manifest.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/install-manifest.mjs",
+                  "absent": false
+                },
+                "digest": "9c2eb93dd6f463e4f60f4e26bdb4b3a548052b24fed0abc25e247c70ec5948ae"
+              },
+              {
+                "id": "CI-017",
+                "file": "scripts/ci/protocol-rules.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/ci/protocol-rules.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/ci/protocol-rules.mjs",
+                  "absent": false
+                },
+                "digest": "a89bcc58351ade7bb3f2de6eb76ce2ef44d4abb0ae1a610df8b9842171246785"
+              },
+              {
+                "id": "CI-018",
+                "file": "scripts/delivery/queue-policy.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/queue-policy.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/queue-policy.mjs",
+                  "absent": false
+                },
+                "digest": "ace6e972da13bf8eb35352b0186eb525888b0c2338af5c37a1b15d37d501714f"
+              },
+              {
+                "id": "CI-019",
+                "file": "scripts/delivery/model-gateway.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/model-gateway.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/model-gateway.mjs",
+                  "absent": false
+                },
+                "digest": "c21678be09c27016bcfe563b1779de8b4e5c610432ae6604012493226b521313"
+              },
+              {
+                "id": "CI-020",
+                "file": "scripts/tools/cnb-api.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/tools/cnb-api.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/tools/cnb-api.mjs",
+                  "absent": false
+                },
+                "digest": "c39910ce892bcf96f245fdf828d86dc5efdb1e01f5ad7adcb9eabd37b0984921"
+              },
+              {
+                "id": "CI-021",
+                "file": "scripts/delivery/install-config.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/install-config.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/install-config.mjs",
+                  "absent": false
+                },
+                "digest": "c9a1483ac8c15e925e46c31cf190855c290e3836ab4a4f5854d307a706f1aa27"
+              },
+              {
+                "id": "CI-022",
+                "file": "scripts/delivery/queue-runner.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/queue-runner.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/queue-runner.mjs",
+                  "absent": false
+                },
+                "digest": "d6b7109e5a4d7542ce303b6de61ffcffe99cff709aabc9e05656f47fcd3239b8"
+              },
+              {
+                "id": "CI-023",
+                "file": "scripts/delivery/queue-controller.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/queue-controller.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/queue-controller.mjs",
+                  "absent": false
+                },
+                "digest": "e32dfb5de3c0f929364868dd77ac0b5bdcface7f735c08f3b7f44cb158f9587e"
+              },
+              {
+                "id": "CI-024",
+                "file": "scripts/delivery/queue-model.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/queue-model.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/queue-model.mjs",
+                  "absent": false
+                },
+                "digest": "f2c12503930f7c46fd2a2eef8d2f09fdfb76f0ca2dc6c3352c26824c7f598d7f"
+              },
+              {
+                "id": "CI-025",
+                "file": "scripts/delivery/git-state.mjs",
+                "before": {
+                  "ref": "ce8eb8a411686ba79995fa4e19e1bdcd03859f34",
+                  "path": "scripts/delivery/git-state.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "01534587c14fce0329cd61be1d514a1b64fda4f4",
+                  "path": "scripts/delivery/git-state.mjs",
+                  "absent": false
+                },
+                "digest": "f7b69e6afefa5ce03a49597f36a04b6f779a08faa64c6c6b4cbcf1e3d1ac722b"
+              }
+            ]
+          }
+        }
+      },
+      "previous": "a8fb2ae507c0a4830f0f923a397ab2ddad153d2dedcfb59efc1a8753c7b000cc",
+      "digest": "5847a06b97d5327546c375b1287b6ad4bbfd34c4bc83eb3405f4892165237ec1"
+    },
+    {
+      "sequence": 21,
+      "at": "2026-10-06T17:44:39.812Z",
+      "kind": "transaction",
+      "data": {
+        "id": "aa76ee66-cab4-4818-88ec-f992dac0859c"
+      },
+      "previous": "5847a06b97d5327546c375b1287b6ad4bbfd34c4bc83eb3405f4892165237ec1",
+      "digest": "74fcaecb91979788711585fb8d830e5592f990050c1a9c7bc3ff9481ed5721dc"
     }
   ]
 }
