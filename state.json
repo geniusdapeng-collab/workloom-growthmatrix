@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 128,
+  "revision": 130,
   "tasks": {
     "132": {
       "number": 132,
@@ -659,7 +659,7 @@
     },
     "134": {
       "number": 134,
-      "status": "aligning",
+      "status": "parked",
       "firstSeen": 1791310212615,
       "attempts": {},
       "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -688,8 +688,8 @@
         "at": 1791317717753
       },
       "developerReview": null,
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/134/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791317420553,
+      "error": "Command failed: git merge --no-ff --no-edit 6e7bb78749a4ade1955cf03476ed249f630aa3f8\n",
+      "blockedUntil": 1791318317753,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -5955,6 +5955,31 @@
       },
       "previous": "d2d3c99be0792bf656864559738894d5efbd5c2ff58708c815ea280358102b53",
       "digest": "ea3be6c7730d24bdc07c3f99b1b7428eebfe90c179b1348dd8f4a21624127880"
+    },
+    {
+      "sequence": 129,
+      "at": "2026-10-06T20:15:17.753Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "Command failed: git merge --no-ff --no-edit 6e7bb78749a4ade1955cf03476ed249f630aa3f8\n",
+          "blockedUntil": 1791318317753
+        }
+      },
+      "previous": "ea3be6c7730d24bdc07c3f99b1b7428eebfe90c179b1348dd8f4a21624127880",
+      "digest": "205921402c4efaa265672c27a73e8f0f09f17b1f23a9116d059fb951875647ce"
+    },
+    {
+      "sequence": 130,
+      "at": "2026-10-06T20:15:26.891Z",
+      "kind": "transaction",
+      "data": {
+        "id": "7e6d7f26-d9b8-4613-8a93-f203db94eb32"
+      },
+      "previous": "205921402c4efaa265672c27a73e8f0f09f17b1f23a9116d059fb951875647ce",
+      "digest": "7adcb96aab60f0595408469d4c551ac8cb3b365082990954e4414e00fa5e0cf2"
     }
   ]
 }
