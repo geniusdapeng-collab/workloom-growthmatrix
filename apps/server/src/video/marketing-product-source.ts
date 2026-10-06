@@ -45,7 +45,11 @@ export interface ProductSourceProvenance {
 }
 export interface ProductSourceSnapshot extends SourceSnapshot { archive: ProductSourceProvenance }
 export interface RegisteredProductSource {
-  snapshot: ProductSourceSnapshot; rawBytes: Buffer; productQuery: Record<string, string>; archive: ProductArchive;
+  snapshot: ProductSourceSnapshot; rawBytes: Buffer; productQuery: Record<string, string>; archive: ProductArchive; dir: string;
+}
+export interface ProductVisualReference {
+  sourceId: string; archiveId: string; archiveSha256: string; photoId: string;
+  file: string; path: string; sha256: string; bytes: number;
 }
 function fail(code: string, message: string): never { throw new SubmissionError(code, message); }
 function parseArchive(bytes: Buffer): ProductArchive {
@@ -111,12 +115,30 @@ export async function loadRegisteredProductSource(selector: unknown, options: { 
   if (hard.length) fail("MARKETING_ARCHIVE_INVALID", hard.map(issue => `${issue.code}：${issue.detail}`).join("；"));
   const rawSha256 = renderSha256(rawBytes), document = descriptor(archive, rawSha256);
   const url = sourceAddress(archive.id, rawSha256), textSha256 = renderSha256(document.text);
-  return { rawBytes, archive, productQuery: { name: archive.displayName, ...(archive.brand ? { brand: archive.brand } : {}),
+  return { rawBytes, archive, dir, productQuery: { name: archive.displayName, ...(archive.brand ? { brand: archive.brand } : {}),
     ...(archive.model ? { model: archive.model } : {}) }, snapshot: {
     sourceId: `SRC-${renderSha256(`${url}\n${textSha256}`).slice(0, 24)}`, requestedUrl: url, finalUrl: url, redirectChain: [],
     fetchedAt: new Date().toISOString(), contentType: PRODUCT_SOURCE_TYPE, rawSha256, textSha256, bytes: rawBytes.length,
     ...document, assetUrls: [],
   } };
+}
+
+/** 视觉证据独立于摘录claims；只从当前正式库复开与已归档profile字节相同的图档。 */
+export async function loadProductVisualReferences(sources: Array<{ sourceId: string; rawSha256: string; archive?: ProductSourceProvenance }>,
+  options: { libraryRoot?: string } = {}): Promise<ProductVisualReference[]> {
+  const references: ProductVisualReference[] = [];
+  for (const source of sources) {
+    if (!source.archive) continue;
+    const current = (await loadRegisteredProductSource(source.archive.archiveId, options))!;
+    if (current.snapshot.rawSha256 !== source.rawSha256 || current.snapshot.rawSha256 !== source.archive.archiveSha256
+      || canonicalRenderJson(current.snapshot.archive) !== canonicalRenderJson(source.archive)
+      || current.snapshot.sourceId !== source.sourceId) fail("MARKETING_VISUAL_SOURCE_CHANGED", "当前商品图档与原审核来源不一致");
+    for (const photo of current.archive.photos) references.push({ sourceId: source.sourceId, archiveId: current.archive.id,
+      archiveSha256: current.snapshot.rawSha256, photoId: photo.id, file: photo.file,
+      path: path.join(current.dir, photo.file), sha256: photo.sha256, bytes: photo.bytes });
+  }
+  if (references.length > 6) fail("MARKETING_VISUAL_BUDGET_EXCEEDED", "登记图档超过完整单次视觉审核预算；不能静默截取");
+  return references;
 }
 
 export function assertProductSourceQuery(source: RegisteredProductSource, query: Record<string, unknown>): void {

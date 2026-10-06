@@ -124,7 +124,8 @@ export function validateContext(env, { role, cwd = process.cwd(), checkoutSha } 
   assert(env.CNB_EVENT === EVENT, "仅允许 CNB 桌面 Release API 触发事件");
   assert(env.CNB_BRANCH === "main" && env.CNB_DEFAULT_BRANCH === "main",
     "桌面 Release 只能从默认 main 分支触发");
-  assert(env.CNB_REPO_SLUG === repository, "CNB 仓库身份与产品清单不符");
+  assert(typeof env.CNB_REPO_SLUG === "string" && env.CNB_REPO_SLUG.toLowerCase() === repository.toLowerCase(),
+    "CNB 仓库身份与产品清单不符");
   assert(env.CNB_PIPELINE_NAME === PIPELINE_BY_ROLE[role], "CNB 流水线角色不符");
   assert(BUILD_ID_PATTERN.test(env.CNB_BUILD_ID ?? ""), "CNB_BUILD_ID 缺失或格式非法");
   assert(TAG_PATTERN.test(env.RELEASE_TAG ?? ""), "仅允许 vMAJOR.MINOR.PATCH 稳定 tag");
@@ -222,7 +223,10 @@ export class CnbClient {
 
   async confirm(verifyUrl, expectedPathPrefix, ttl) {
     const url = safeHttpsUrl(verifyUrl);
-    assert(url.origin === API_ORIGIN && url.pathname.startsWith(expectedPathPrefix),
+    const repositoryPrefix = `/${REPOSITORY}/-/`;
+    const canonicalPath = url.pathname.slice(0, repositoryPrefix.length).toLowerCase() === repositoryPrefix.toLowerCase()
+      ? repositoryPrefix + url.pathname.slice(repositoryPrefix.length) : url.pathname;
+    assert(url.origin === API_ORIGIN && canonicalPath.startsWith(expectedPathPrefix),
       "CNB 上传确认地址与仓库或目标对象不符");
     url.searchParams.set("ttl", String(ttl));
     let response;

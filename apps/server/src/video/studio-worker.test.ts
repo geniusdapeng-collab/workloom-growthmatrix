@@ -26,6 +26,7 @@ const doubles = vi.hoisted(() => ({
   review: vi.fn(),
   prepare: vi.fn(),
   finalize: vi.fn(),
+  dataMiningConfig: vi.fn(),
   studioConfigs: [] as Array<Record<string, any>>,
   emitGates: true,
   connect: vi.fn(),
@@ -39,7 +40,8 @@ vi.mock("@workloom/base/model-router", () => ({
 }));
 vi.mock("@workloom/base/workdata", () => ({ gatewayAppend: vi.fn(), gatewayAppendOnClient: vi.fn() }));
 vi.mock("../service/llm.js", () => ({ modelPolicyFor: () => undefined }));
-vi.mock("./marketing-authority.js", () => ({ prepareMarketingFacts: doubles.prepare, finalizeMarketingFacts: doubles.finalize }));
+vi.mock("./marketing-authority.js", () => ({ prepareMarketingFacts: doubles.prepare, finalizeMarketingFacts: doubles.finalize,
+  marketingStudioDataMining: doubles.dataMiningConfig }));
 vi.mock("./data-mining-executor.js", () => ({ createDataMiningExecutor: vi.fn() }));
 vi.mock("./media/library.js", () => ({ ingestPortraitsFromIndex: doubles.ingest }));
 vi.mock("./media/products.js", () => ({ upsertProductProfileFromDossier: doubles.project }));
@@ -94,12 +96,16 @@ beforeEach(() => {
   doubles.nextAttempt = 0;
   doubles.studioConfigs.length = 0;
   doubles.prepare.mockReset().mockImplementation(async ({ scope, root }) => ({
-    bundle: { rawSha256: "a".repeat(64), productQuery: { name: "本次商品" } }, raw: { A1: {}, A2: {}, A3: {} },
+    bundle: { scope, rawSha256: "a".repeat(64), productQuery: { name: "本次商品" } }, raw: { A1: {}, A2: {}, A3: {} },
     prefix: `stages/preproduction/attempt-${scope.attempt}.marketing`,
     storeRoot: path.join(root, `stages/preproduction/attempt-${scope.attempt}.marketing-dossier`),
     g1Content: JSON.stringify({ facts: { schemaVersion: "workloom.marketing-facts/v1", stages: [1, 2, 3], sources: [1], optionalValue: null }, scope }),
   }));
   doubles.finalize.mockReset().mockResolvedValue({ ref: "stages/preproduction/attempt-1.marketing-facts.json", sha256: "b".repeat(64) });
+  // 本文件只验证worker调用顺序；受审装订的真实摘要/五站校验由authority与dossier-bridge回归覆盖。
+  doubles.dataMiningConfig.mockReset().mockImplementation(prepared => ({ mode: "api", refresh: true, storeRoot: prepared.storeRoot,
+    verifiedRaw: { projectId: prepared.bundle.scope.projectId, rawJson: JSON.stringify(prepared.raw),
+      sha256: prepared.bundle.rawSha256, productQuery: prepared.bundle.productQuery } }));
   doubles.emitGates = true;
   doubles.query.mockReset().mockResolvedValue({ rows: [], rowCount: 1 });
   doubles.review.mockReset().mockImplementation(async (options) => {
@@ -485,6 +491,7 @@ describe("预生产原始结果与诚实终态", () => {
     doubles.runPreproduction.mockImplementation(async () => {
       expect(doubles.prepare).toHaveBeenCalledTimes(1);
       expect(doubles.review.mock.calls.some(([options]) => options.context.gate === "G1_DOSSIER")).toBe(true);
+      expect(doubles.dataMiningConfig).toHaveBeenCalledTimes(1);
       return success();
     });
     const { entry, projectId } = await runToTerminal(); expect(entry.status).toBe("finished");
@@ -500,6 +507,7 @@ describe("预生产原始结果与诚实终态", () => {
     if (kind === "unbound-proof") doubles.review.mockResolvedValue({ status: "passed", approved: true, via: "llm", model: "judge", degraded: false, reason: "通过", score: 95, issues: [], suggestions: [], evidence: [{ sha256: "0".repeat(64), scope: "complete-text" }] });
     const { entry } = await runToTerminal(); expect(entry.status).toBe("failed");
     expect(doubles.runPreproduction).not.toHaveBeenCalled(); expect(doubles.finalize).not.toHaveBeenCalled();
+    expect(doubles.dataMiningConfig).not.toHaveBeenCalled();
   });
   it("最终事实审核失败时不写done、不投影商品，保留失败原因", async () => {
     doubles.runPreproduction.mockResolvedValue(success()); doubles.finalize.mockRejectedValue(new Error("MARKETING_PROMPT_FACTS_REJECTED"));
