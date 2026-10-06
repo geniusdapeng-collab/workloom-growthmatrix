@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync, realpathSyn
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
-  AUTO_GATES, GATE_PRODUCER_STAGE, gateDeterministicChecks, portraitGateEvidence, portraitReviewManifest,
+  AUTO_GATES, GATE_PRODUCER_STAGE, GATE_RUBRIC, gateDeterministicChecks, portraitGateEvidence, portraitReviewManifest,
   renderSubmitAutoAllowed,
 } from "./gate-policy.js";
 let dir: string;
@@ -21,6 +21,12 @@ function fixture() {
   return { root, files, index, indexPath, input };
 }
 describe("服务预生产 G5/G7", () => {
+  it("G4审核当前设计，逐镜最终产物仍由后续G6/G7检查，不要求额外新生成角度", () => {
+    expect(GATE_RUBRIC.G4_PRD?.join("\n")).toContain("后续G6/G7审核");
+    expect(GATE_RUBRIC.G4_PRD?.join("\n")).toContain("既有人类验收");
+    expect(GATE_RUBRIC.G6_PROMPT?.join("\n")).toContain("25/30 字段齐备");
+    expect(GATE_RUBRIC.G7_FINAL?.join("\n")).toContain("三件套齐备");
+  });
   it("G7 是文字预生产收口，不错误调用要求成片和听音回执的 master", () => expect(GATE_PRODUCER_STAGE.G7_FINAL).toBe("prompt"));
   it("只把实际读取的本项目四角度图片送审", () => {
     const f = fixture(); const evidence = portraitGateEvidence(f.input);
@@ -77,4 +83,14 @@ it("营销G1允许合法JSON空值，拒绝仅摘要或旧自报档案", () => {
   const good = { facts: { schemaVersion: "workloom.marketing-facts/v1", stages: [1, 2, 3], sources: [1], optional: null } };
   expect(gateDeterministicChecks("G1_DOSSIER", JSON.stringify(good)).every(check => check.pass)).toBe(true);
   for (const bad of ["商品事实摘要".repeat(100), JSON.stringify({ ...good, facts: { ...good.facts, stages: [1] } }), "null"]) expect(gateDeterministicChecks("G1_DOSSIER", bad).some(check => check.hard && !check.pass)).toBe(true);
+});
+it("G6/G7结构化镜头包允许明确空值，字符串内真实占位仍阻断", () => {
+  for (const gate of ["G6_PROMPT", "G7_FINAL"] as const) {
+    const document = { character: null, shots: [{ prompt: "本次真实模型提示词".repeat(30) }], optional: null };
+    expect(gateDeterministicChecks(gate, JSON.stringify(document)).every(check => check.pass)).toBe(true);
+    for (const bad of ["undefined", "[object Object]", "null", "NaN"]) {
+      document.shots[0]!.prompt += bad;
+      expect(gateDeterministicChecks(gate, JSON.stringify(document)).some(check => check.hard && !check.pass)).toBe(true);
+    }
+  }
 });

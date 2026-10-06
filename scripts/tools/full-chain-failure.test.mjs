@@ -13,6 +13,7 @@ import ts from "typescript-governance";
 
 const filmPath = new URL("./full-chain-film.mts", import.meta.url);
 const source = ts.createSourceFile(filmPath.pathname, readFileSync(filmPath, "utf8"), ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
+assert.equal(source.parseDiagnostics.length, 0, "production film source must parse without errors");
 const compilerOptions = { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS };
 const transpile = (code) => ts.transpileModule(code, { compilerOptions, reportDiagnostics: true }).outputText;
 const declaration = (name) => {
@@ -35,6 +36,9 @@ const stage = (name) => {
 const materialPolicy = { exports: {} };
 runInNewContext(transpile(readFileSync(new URL("../../packages/video-studio/src/material-policy.ts", import.meta.url), "utf8")),
   materialPolicy, { timeout: 1000, filename: "production-material-policy.js" });
+const firstPass = { exports: {} };
+runInNewContext(transpile(readFileSync(new URL("../../packages/video-studio/src/first-pass.ts", import.meta.url), "utf8")),
+  firstPass, { timeout: 1000, filename: "production-first-pass.js" });
 const predicates = ["isMaterialShot", "ASSET_REF_PATTERN", "isAssetRefLocal", "assetRefOf", "isAssetShot", "isProductMaterialShot", "materialShots", "localReviewRefsEarly"]
   .map(declaration).join("\n");
 const materialCode = stage("material-gen").getText(source);
@@ -64,6 +68,7 @@ function shot(kind, id) {
 async function renderSequence(kind, attempts = 1, options = {}) {
   const rows = [], submissions = [], gates = [];
   const shots = [shot(kind, "S-01"), shot(kind, "S-02")];
+  const person = { asset: { assetId: "fixture-person" } };
   const context = {
     ...materialPolicy.exports, Error, join, basename, createHash,
     shots, FIRST_PASS_ORDER: shots, STAGES: new Set(["material-gen"]),
@@ -75,11 +80,16 @@ async function renderSequence(kind, attempts = 1, options = {}) {
     WORK_DIR: "/fixture/work", PROJECT: "fixture-film", scenePolicy: null,
     REFERENCE_INDEPENDENCE_POLICY: {}, ALLOW_FALLBACK_APPROVE: false,
     productLibrary: { byId: new Map() }, identityAnchors: new Map(),
+    realPersons: new Map(kind === "asset-material" ? shots.map(item => [item.shotId, person]) : []),
+    realPersonAnchors: new Map(shots.map(item => [item.shotId, { path: "/fixture/identity.jpg" }])),
+    qualifiedSurfacePosts: new Map(), canaryShotId: options.canaryShotId ?? "S-01",
+    productionClipFile: (id) => join("/fixture/clips", `${id}.mp4`),
+    stageApproved: (name, ids) => rows.some(row => row.stage === name && ids.includes(row.shotId) && row.ok),
     FFMPEG: "fixture-ffmpeg", refs: [], ceoIdentityAnchorFrame: null,
     realPersonLibrary: { byAssetId: new Map() }, assetIdOf: () => "fixture-person", REVISION_CONTEXT: "", FPS: 30,
     ACCEPT_REJECTED: [], VIDEO_MODEL: "fixture-provider",
     abs: (value) => value, existsSync: (value) => !options.missingMaterial || !value.endsWith(".jpg"), statSync: () => ({ size: 100001 }),
-    run: () => {}, writeFileSync: () => {}, rememberInputs: () => {}, log: () => {},
+    run: () => {}, copyFileSync: () => {}, writeFileSync: () => {}, rememberInputs: () => {}, log: () => {},
     sha256FileSync: (file) => (file.endsWith(".mp4") ? "b" : "a").repeat(64), flag: () => false, retryInstruction: () => "change from failure feedback",
     readFileSync: () => "【约束】9:16 " + "自然摄影".repeat(400),
     loadHostedUrl: () => null, dataUrl: () => "fixture-reference",
@@ -94,6 +104,11 @@ async function renderSequence(kind, attempts = 1, options = {}) {
     measureReferenceIndependence: () => ({ candidates: 2 }),
     assessReferenceIndependence: () => ({ independent: true, detail: "controlled media measurement" }),
     rememberIdentityAnchor: () => {}, dialogueText: () => "", localReviewRefs: () => [],
+    buildRenderReferences: ({ asset }) => ({ refs: asset ? ["asset://fixture-person", "fixture-reference"] : ["fixture-reference"],
+      prompt: "保持完整商品原图及登记身份；" + "摄影场景正文".repeat(250) }),
+    filmContractSource: {}, identityReviewContext: () => ({ displayName: "controlled identity" }),
+    reviewFilmStage: async () => ({ approved: options.identityApproved !== false, degraded: false,
+      reason: "controlled identity result", ms: 1 }),
     reviewStage: async () => ({ approved: options.reviewApproved !== false, degraded: Boolean(options.judgeUnavailable),
       via: options.judgeUnavailable ? "fallback" : "fixture-review", hardFailures: [], reason: "controlled reviewer result", ms: 1 }),
     arkVideo: async (request) => {
@@ -119,10 +134,16 @@ for (const [kind, attempts] of [["product-material", 2], ["asset-material", 1], 
     assert.ok(result.rows.some((row) => String(row.evidence.error).startsWith("INJECTED_PROVIDER_FAILURE:S-01")),
       "the actual production loop must record the injected failure before aborting");
     assert.match(result.failure?.message ?? "", /^CANARY_ABORT:/, "fatal canary must escape the sequential loop");
-    assert.deepEqual(result.submissions, Array(attempts).fill("S-01"), "no S-02 request may follow a failed canary");
+    assert.deepEqual(result.submissions, ["S-01"], "a failed or unknown request must not retry or submit S-02");
   });
 }
-for (const kind of ["ordinary-material", "ordinary-video"]) {
+it("ordinary material provider failure stops further submissions under the persistent-task contract", { timeout: 5000 }, async () => {
+  const result = await renderSequence("ordinary-material", 2);
+  assert.match(result.failure?.message ?? "", /^INJECTED_PROVIDER_FAILURE:S-01/);
+  assert.deepEqual(result.submissions, ["S-01"]);
+  assert.ok(result.rows.some(row => String(row.evidence.error).startsWith("INJECTED_PROVIDER_FAILURE:S-01")));
+});
+for (const kind of ["ordinary-video"]) {
   it(`ordinary ${kind} failure is recorded and the existing next-shot behavior is preserved`, { timeout: 5000 }, async () => {
     const result = await renderSequence(kind);
     assert.equal(result.failure, null, JSON.stringify(result.rows));
@@ -130,12 +151,43 @@ for (const kind of ["ordinary-material", "ordinary-video"]) {
     assert.equal(result.rows.filter((row) => String(row.evidence.error).startsWith("INJECTED_PROVIDER_FAILURE:")).length, 2);
   });
 }
+for (const [fixture, expected] of [[{ missingMaterial: true }, /^MATERIAL_REFERENCE_MISSING/],
+  [{ blockedGate: true }, /^MATERIAL_SUBMIT_BLOCKED/]]) {
+  it(`ordinary material prerequisite ${Object.keys(fixture)[0]} stops before provider submission`, { timeout: 5000 }, async () => {
+    const result = await renderSequence("ordinary-material", 1, fixture);
+    assert.match(result.failure?.message ?? "", expected);
+    assert.deepEqual(result.submissions, []);
+    assert.ok(result.rows.some(row => !row.ok && (row.evidence.missing || row.evidence.gateBlocked)));
+  });
+}
+it("a failed real-person identity decision retains evidence and stops the next material render", { timeout: 5000 }, async () => {
+  const result = await renderSequence("asset-material", 2, { providerFails: false, identityApproved: false });
+  assert.match(result.failure?.message ?? "", /^CANARY_ABORT:/);
+  assert.deepEqual(result.submissions, ["S-01"]);
+  assert.ok(result.rows.some(row => row.stage === "identity-fact" && !row.ok && row.artifact && row.verdict));
+});
+it("non-canary real-person material is blocked until the source canary has an identity receipt", { timeout: 5000 }, async () => {
+  const result = await renderSequence("asset-material", 1, { canaryShotId: "SOURCE-CANARY" });
+  assert.match(result.failure?.message ?? "", /^CANARY_ABORT:/);
+  assert.deepEqual(result.submissions, []);
+  assert.ok(result.rows.some(row => String(row.evidence.error).startsWith("REAL_PERSON_CANARY_REQUIRED")));
+});
+it("full-source risk order chooses one canary even when only another shot is selected", () => {
+  const sourceShots = [{ ...shot("asset-material", "S-01") },
+    { ...shot("asset-material", "S-02"), timeline: "定住", camera_movement: "固定机位" }];
+  const context = { assessFilmFirstPass: firstPass.exports.assessFilmFirstPass, sourceDocument: { shots: sourceShots }, FPS: 30,
+    realPersons: new Map(sourceShots.map(item => [item.shotId, {}])), shots: [sourceShots[0]] };
+  const selected = runInNewContext(transpile(`${declaration("canaryShotId")}\ncanaryShotId;`), context);
+  assert.equal(selected, "S-02", "canary follows full-source risk, not source index or the --only selection");
+});
 for (const kind of ["product-material", "asset-material", "asset-video"]) {
   it(`canary ${kind} approved first shot proceeds to the next shot`, { timeout: 5000 }, async () => {
     const result = await renderSequence(kind, 2, { providerFails: false });
     assert.equal(result.failure, null);
     assert.deepEqual(result.submissions, ["S-01", "S-02"]);
-    assert.equal(result.rows.filter((row) => row.ok && row.invoked).length, 2);
+    assert.equal(result.rows.filter((row) => row.ok && row.invoked
+      && row.stage === (kind.includes("material") ? "material-gen" : "shot")).length, 2);
+    if (kind === "asset-material") assert.equal(result.rows.filter(row => row.stage === "identity-fact" && row.ok).length, 2);
   });
   it(`canary ${kind} review rejection retains the artifact and stops subsequent submissions`, { timeout: 5000 }, async () => {
     const result = await renderSequence(kind, 1, { providerFails: false, reviewApproved: false });
@@ -164,6 +216,45 @@ for (const kind of ["product-material", "asset-material"]) {
     assert.ok(result.rows.some((row) => row.evidence.missing));
   });
 }
+
+it("worker video submission retains the parent stage, shot and artifact context without calling the direct provider", async () => {
+  const ark = source.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === "arkVideo");
+  assert.ok(ark);
+  const calls = [], input = { stage: "material-gen", shotId: "S-02", target: "/fixture/clips/S-02.raw.mp4",
+    prompt: "controlled production prompt", refs: ["asset://fixture-person"], seconds: 5, generateAudio: true };
+  const context = {
+    WORKER_RUNTIME: { video: async options => { calls.push(options); return { taskId: "worker-parent-task", url: "parent-artifact", lastFrame: null }; } },
+    resumeOrSubmitVideoTask: () => { throw new Error("DIRECT_PROVIDER_MUST_NOT_RUN_IN_WORKER"); },
+  };
+  const invoke = runInNewContext(transpile(`${ark.getText(source)}\narkVideo;`), context);
+  const result = await invoke(input);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0], input);
+  assert.equal(result.taskId, "worker-parent-task");
+});
+
+it("direct video submission passes the exact request into persistent task recovery", async () => {
+  const ark = source.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === "arkVideo");
+  const bodyBuilder = source.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === "arkVideoBody");
+  assert.ok(ark && bodyBuilder);
+  const calls = [];
+  const context = { WORKER_RUNTIME: null, join, WORK_DIR: "/fixture/work", PROJECT: "fixture-film",
+    VIDEO_MODEL: "fixture-provider", ASPECT: "9:16", SOURCE_RESOLUTION: "720p",
+    resumeOrSubmitVideoTask: async options => { calls.push(options); return { taskId: "saved-provider-task", url: "fixture-result", lastFrame: null }; },
+  };
+  const invoke = runInNewContext(transpile(`${bodyBuilder.getText(source)}\n${ark.getText(source)}\narkVideo;`), context);
+  const result = await invoke({ stage: "videos", shotId: "S-01", target: "/fixture/clips/S-01.mp4",
+    prompt: "complete controlled prompt", refs: ["asset://fixture-person", "data:image/png;base64,YQ=="], seconds: 5, generateAudio: true });
+  assert.equal(result.taskId, "saved-provider-task");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].root, "/fixture/work/render-task-receipts");
+  assert.equal(calls[0].projectId, "fixture-film");
+  assert.equal(calls[0].shotId, "S-01");
+  assert.equal(calls[0].body.content[1].image_url.url, "asset://fixture-person");
+  assert.equal(calls[0].body.content[2].image_url.url, "data:image/png;base64,YQ==");
+  assert.equal(typeof calls[0].transport.submit, "function");
+  assert.equal(typeof calls[0].transport.poll, "function");
+});
 
 async function bgmStage({ signing = false, declared = false, output = true, noBgm = false }) {
   const rows = [], reviews = [];
