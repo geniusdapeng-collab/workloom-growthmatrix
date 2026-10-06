@@ -35,6 +35,7 @@ import {
 } from "./vendor-compat.js";
 import { AUDIO_DISCIPLINE_CLAUSE, AUDIO_NEGATIVE_TERMS } from "./shot-spec.js";
 import { loadDurationRules } from "./duration-rules.js";
+import { installVendorRequirementBridge, type RequirementBridgeTarget } from "./requirement-bridge.js";
 
 /** vendor 引擎暴露的最小结构（HyperrealitySystem 实例方法） */
 interface HyperrealitySystemLike {
@@ -392,6 +393,7 @@ export class VideoStudio {
           charactersDir,
           durationConstraint: { maxSingleShot, minSingleShot }
         });
+        keep(installVendorRequirementBridge(system as unknown as RequirementBridgeTarget, metadata, log));
         /** 实例级放宽 rhythmProfiles（standard 12 / slow 15 → 模型上限），否则 30s 单镜会被重新夹紧 */
         applyDurationPolicyToManager(
           (system as unknown as { durationConstraintManager?: unknown }).durationConstraintManager,

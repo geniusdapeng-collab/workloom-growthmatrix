@@ -13,6 +13,33 @@ describe("逐事实叶子的正文绑定", () => {
     expect(JSON.stringify(facts.payload)).toContain("source.example.com"); expect(JSON.stringify(facts.payload)).not.toContain("假称官方");
     expect(() => revalidateStageFacts(facts, [source])).not.toThrow();
   });
+  it.each(["", "  \n\t"])("有完整事实时可选空说明%j等同于未填写", noEvidenceReason => {
+    const expected = validateStageFacts("A1", fixture(), [source]);
+    const facts = validateStageFacts("A1", { ...fixture(), noEvidenceReason }, [source]);
+    expect(facts).toEqual(expected);
+    expect(facts).not.toHaveProperty("noEvidenceReason");
+    expect(() => revalidateStageFacts(facts, [source])).not.toThrow();
+  });
+  it.each(["", "  \n\t"])("空站不能靠空说明%j取得事实资格", noEvidenceReason => {
+    for (const stage of ["A2", "A3"] as const) {
+      const payload = stage === "A2" ? { reviews: [] } : { competitors: [] };
+      expect(() => validateStageFacts(stage, { payload, citations: [], noEvidenceReason }, [])).toThrow("MARKETING_EVIDENCE_EMPTY");
+    }
+  });
+  it.each([null, 0, false, {}, []])("说明错误类型%j不能被归一为有效输入", noEvidenceReason => {
+    expect(() => validateStageFacts("A1", { ...fixture(), noEvidenceReason }, [source])).toThrow();
+  });
+  it("空说明不能补上缺失的原文引用", () => {
+    const value = fixture(); value.citations.pop();
+    expect(() => validateStageFacts("A1", { ...value, noEvidenceReason: "" }, [source])).toThrow("MARKETING_CLAIM_UNSOURCED");
+  });
+  it("真实回包中的卖点对象路径不能代替point事实叶子", () => {
+    const value = fixture();
+    value.citations[2]!.pointer = "/identity/official_selling_points/0";
+    expect(() => validateStageFacts("A1", value, [source])).toThrow("MARKETING_CITATION_INVALID");
+    value.citations[2]!.pointer += "/point";
+    expect(validateStageFacts("A1", value, [source]).claims).toHaveLength(3);
+  });
   it.each(["missing", "duplicate", "wrong-pointer", "wrong-source", "invented-quote", "text-hash", "mixed-fake-url", "inferred"])("%s不能升格事实", kind => {
     const value = fixture(), sources = structuredClone([source]);
     if (kind === "missing") value.citations.pop();

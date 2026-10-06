@@ -959,6 +959,9 @@ const events = [];
 let installedAtCreate = false;
 let fail = false;
 entry.HyperrealitySystem = class OfflineSystem {
+ requirementDiscoveryEngine = { discover: async () => { throw new Error("offline phase3 fixture must not call discovery"); } };
+ async _convertDiscoveryToRequirementList() { throw new Error("offline phase3 fixture must not convert requirements"); }
+ _renderRequirementContract() { throw new Error("offline phase3 fixture must not render requirements"); }
  async create() {
   installedAtCreate = installedAtCreate || listSharedBridges().some(x => x.key === "phase3-fusion-policy-v1");
   const output = await makePhase({}, fail ? { canAfford: () => false } : {}).execute(makeState());
