@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2406,
+  "revision": 2408,
   "tasks": {
     "132": {
       "number": 132,
@@ -3088,7 +3088,7 @@
     },
     "144": {
       "number": 144,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791352089622,
       "attempts": {},
       "headSha": "0b2f473e327eb68de59b017b72178ca2052f9864",
@@ -3236,7 +3236,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791388008707,
+      "updatedAt": 1791388536253,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 0,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
@@ -62473,6 +62473,46 @@
       },
       "previous": "a98bba6253a1b57a6a4157e7318267462be5581956b37724b477971c92b36d72",
       "digest": "5a40064695acf9d5570996b4e8b60b21120203aed1f7de110c53db7536fde58a"
+    },
+    {
+      "sequence": 2407,
+      "at": "2026-10-07T15:55:36.253Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "0b2f473e327eb68de59b017b72178ca2052f9864",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              143
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.6"
+              }
+            ]
+          },
+          "dependencies": [
+            143
+          ]
+        }
+      },
+      "previous": "5a40064695acf9d5570996b4e8b60b21120203aed1f7de110c53db7536fde58a",
+      "digest": "6bdf839de0e9a9efd17dc5d8a1c017f011e0643e1b25af4c4bbaef701757bd30"
+    },
+    {
+      "sequence": 2408,
+      "at": "2026-10-07T15:56:51.923Z",
+      "kind": "transaction",
+      "data": {
+        "id": "ad43e833-aa18-49d1-b8b8-bddf698c6020"
+      },
+      "previous": "6bdf839de0e9a9efd17dc5d8a1c017f011e0643e1b25af4c4bbaef701757bd30",
+      "digest": "0433172a51545e92bca8cd10644c984a865f6b82a14a06bf369c84859cc79764"
     }
   ]
 }
