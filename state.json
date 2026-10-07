@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3488,
+  "revision": 3491,
   "tasks": {
     "132": {
       "number": 132,
@@ -8824,8 +8824,8 @@
           "protocol": 72
         }
       },
-      "updatedAt": 1791407339058,
-      "headSha": "6a3ae42761157bf58f214192fd3f7d385696fc8c",
+      "updatedAt": 1791407347216,
+      "headSha": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
       "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
       "branch": "fix/T-2026-1007-0918-isolate-pr-read-failures",
       "intent": {
@@ -8841,7 +8841,7 @@
         "provider": "codex",
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 184,
-        "headSha": "6a3ae42761157bf58f214192fd3f7d385696fc8c",
+        "headSha": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
         "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
@@ -8856,7 +8856,7 @@
         "ciPolicyChanges": [
           {
             "id": "CI-001",
-            "rationale": "Add real Platform/controller fixture regressions for observed native 429 and permission/absence errors, wrong identity/body, pagination failure, duplicate/invalid identities, redaction, dry-run, failed error recording, parent denial, independent full source/check/final snapshot reads and a fresh recovered later scan. Existing native checks and test files remain intact; the repository wildcard test stage includes this file."
+            "rationale": "Add real Platform/controller fixture regressions for observed native 429 and permission/absence errors, wrong identity/body, pagination failure, duplicate/invalid identities, redaction, dry-run, failed error recording, parent denial, independent full source/check/final snapshot reads and a fresh recovered later scan. Existing native checks and test files remain intact; the repository wildcard test stage includes this file. Add an advanced-clock starvation reproduction using the actual Platform/control flow, plus changed-head/intent/pending-set and missing-metadata regressions. Independent sources still cannot bypass exact current review and checks."
           },
           {
             "id": "CI-002",
@@ -8864,34 +8864,34 @@
           },
           {
             "id": "CI-003",
-            "rationale": "Collect per-known-PR detail read failures and save redacted errors through the existing append-only state mutation. Feed unreadable parents into dependency planning without using stale source or integration metadata. Ready independent sources still run the unchanged exact native snapshot/eligibility/candidate/final merge checks, including a fresh prerequisite read before any merge. Incomplete global enumeration and unknown merge outcomes still halt. Revert this additive isolation and its assertions together."
+            "rationale": "Collect per-known-PR detail read failures and save redacted errors through the existing append-only state mutation. Feed unreadable parents into dependency planning without using stale source or integration metadata. Ready independent sources still run the unchanged exact native snapshot/eligibility/candidate/final merge checks, including a fresh prerequisite read before any merge. Incomplete global enumeration and unknown merge outcomes still halt. Revert this additive isolation and its assertions together. Suppress only an exactly unchanged waiting_dependency notification after current source/prerequisite planning, preserving durable updates for changed/incomplete head, intent or pending metadata and every full ready-source/pre-merge check. This avoids repeated remote Git writes starving later independent sources under the existing finite deadline."
           }
         ],
-        "ciPolicyChangesHash": "0fc3ca7be060fe4bf1176fb3f8311189bb9637ea0cb28a4a5dfb4e4fc9f9d173",
+        "ciPolicyChangesHash": "7e232a4c7b6b81c9d107370c90a7f877bb5d0296f229fb7dfc825c2420e8e5ef",
         "tests": [
           {
             "command": "node --test scripts/delivery/evidence-controls.test.mjs scripts/delivery/mine-clear.test.mjs scripts/delivery/queue-io-budget.test.mjs scripts/delivery/queue-read-isolation.test.mjs scripts/delivery/queue-release-contract.test.mjs scripts/delivery/queue-release-history.test.mjs scripts/delivery/queue.test.mjs",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T20:38:05.231370+00:00",
+            "finishedAt": "2026-10-07T21:03:19.031860+00:00",
             "result": "Complete native delivery fixture suite at this exact committed head, including actual local Git CAS/race assertions, mandatory source/review/protection/byte contracts and new isolated-read failure tests. Fixture IO is explicitly distinct from native production writes."
           },
           {
             "command": "node --check scripts/delivery/queue-platform.mjs",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T20:38:05.323753+00:00",
+            "finishedAt": "2026-10-07T21:03:19.150793+00:00",
             "result": "Current Platform syntax passes at this exact committed head."
           },
           {
             "command": "node --check scripts/delivery/queue-controller.mjs",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T20:38:05.393106+00:00",
+            "finishedAt": "2026-10-07T21:03:19.228998+00:00",
             "result": "Current controller syntax passes at this exact committed head."
           }
         ],
-        "reviewedAt": "2026-10-07T20:38:51.279107+00:00",
-        "summary": "The current Codex session read the complete platform, controller, model, API, policy, release and work implementations and their direct imports, plus the complete new 142-line regression and complete final patch. Compared increasing delay alone with isolating a known failed PR: actual native 429 remained after the earlier pacing fix, so selected bounded per-PR isolation while keeping default strict reads and complete pagination fatal. The controller saves redacted errors through the existing append-only store, excludes unreadable current identities, and prevents an old integrated ledger record from approving a dependent. Actual Platform fixtures exercise 429/403/404, substituted identities, malformed bodies, duplicate or invalid list identities, incomplete pagination, failed error recording, dry-run, recovery freshness, full independent native check reads and missing Codex review denial. The existing immediate-before-merge real prerequisite tests and all original native fixture assertions remain. No API metadata cache, platform AI, paid model/render, native environment spoofing, force merge or main push. Local fixtures do not assert actual production deployment; original native CI and protected ordinary integration remain necessary.",
+        "reviewedAt": "2026-10-07T21:08:48.302769+00:00",
+        "summary": "The current Codex session read the complete platform, controller, model, API, policy, release and work implementations and their direct imports, plus the complete new 142-line regression and complete final patch. Compared increasing delay alone with isolating a known failed PR: actual native 429 remained after the earlier pacing fix, so selected bounded per-PR isolation while keeping default strict reads and complete pagination fatal. The controller saves redacted errors through the existing append-only store, excludes unreadable current identities, and prevents an old integrated ledger record from approving a dependent. Actual Platform fixtures exercise 429/403/404, substituted identities, malformed bodies, duplicate or invalid list identities, incomplete pagination, failed error recording, dry-run, recovery freshness, full independent native check reads and missing Codex review denial. The existing immediate-before-merge real prerequisite tests and all original native fixture assertions remain. No API metadata cache, platform AI, paid model/render, native environment spoofing, force merge or main push. Local fixtures do not assert actual production deployment; original native CI and protected ordinary integration remain necessary. Also read the complete current controller and dependency-budget tests, and reviewed the waiting-state event path. A new advanced-clock regression reproduces independent source starvation before this fix; after suppressing only identical waiting events it reaches the real full Platform snapshot and still denies absent Codex review. Actual source head, intent, pending-set changes and incomplete waiting metadata each retain durable updates. No source metadata is cached, no approval/CI/permission requirement is weakened, and no deadline is removed. All added code and the final 184-line regression were read in full, then the complete locked native fixture suite is actually rerun at the exact committed head.",
         "passed": true,
-        "id": "b225c275a645f808c875f5d52aca641bad33d4cf2488afd1eb67e5d6e044aee4"
+        "id": "1c4b0a51c932d79e18d02666b1338f2de9a99d39ad2952656b41818826bad46f"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -8921,7 +8921,7 @@
           },
           "head": {
             "ref": "refs/heads/fix/T-2026-1007-0918-isolate-pr-read-failures",
-            "sha": "6a3ae42761157bf58f214192fd3f7d385696fc8c",
+            "sha": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -8939,7 +8939,7 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "6a3ae42761157bf58f214192fd3f7d385696fc8c",
+        "headSha": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
         "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
         "files": [
           "scripts/delivery/queue-controller.mjs",
@@ -8954,7 +8954,7 @@
           ],
           "releases": []
         },
-        "headTime": 1791405341000,
+        "headTime": 1791406858000,
         "mergeBase": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
         "checkErrors": [],
         "checkSha": null,
@@ -8969,11 +8969,11 @@
               "absent": true
             },
             "after": {
-              "ref": "6a3ae42761157bf58f214192fd3f7d385696fc8c",
+              "ref": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
               "path": "scripts/delivery/queue-read-isolation.test.mjs",
               "absent": false
             },
-            "digest": "31cd263e159acf09fd3e2dfa0281760aa33f0d7c42cb0a8b6f38ab8904ce58ec"
+            "digest": "6f804a3c86b0835f79929ea86fc744f3d31ae4bdc76b75f184ff9ff36a6c326f"
           },
           {
             "id": "CI-002",
@@ -8984,11 +8984,11 @@
               "absent": false
             },
             "after": {
-              "ref": "6a3ae42761157bf58f214192fd3f7d385696fc8c",
+              "ref": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
               "path": "scripts/delivery/queue-platform.mjs",
               "absent": false
             },
-            "digest": "4cd212400c40a73067518d3b84d3a03cf0f9f9d5c6e54e26e7c4c3aa17ecd992"
+            "digest": "bfb73384a8c55b101e3bac33734296d4e9663aa4d4a55f058c9daf1510bf9ea5"
           },
           {
             "id": "CI-003",
@@ -8999,11 +8999,11 @@
               "absent": false
             },
             "after": {
-              "ref": "6a3ae42761157bf58f214192fd3f7d385696fc8c",
+              "ref": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
               "path": "scripts/delivery/queue-controller.mjs",
               "absent": false
             },
-            "digest": "b7d7375890e75119a86aed9de3b16f8f39ed6e3c17f2d1ff0e976d785b0d282d"
+            "digest": "c4767d1f58a8489508680b7fa4e24573a0ccd9ca8f47aecbc6e6bb6de0a57bf0"
           }
         ]
       }
@@ -87473,6 +87473,224 @@
       },
       "previous": "1c018f81e8f3c4a4867c0ffe32c697e83fc8c6b4c3315f09e2fba2f0616f502c",
       "digest": "b4602a0c56a55a3c602344dd2ea1b825b2ddca4d0253b43ab14f6705a51264b3"
+    },
+    {
+      "sequence": 3489,
+      "at": "2026-10-07T21:09:07.215Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 184,
+        "id": "1c4b0a51c932d79e18d02666b1338f2de9a99d39ad2952656b41818826bad46f",
+        "headSha": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
+        "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98"
+      },
+      "previous": "b4602a0c56a55a3c602344dd2ea1b825b2ddca4d0253b43ab14f6705a51264b3",
+      "digest": "c473ee8e89251e690fb57edf3150ee36b012a8fff0d1693c5642902cade0358e"
+    },
+    {
+      "sequence": 3490,
+      "at": "2026-10-07T21:09:07.216Z",
+      "kind": "task",
+      "data": {
+        "number": 184,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
+          "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+          "branch": "fix/T-2026-1007-0918-isolate-pr-read-failures",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              178
+            ],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 184,
+            "headSha": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
+            "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "scripts/delivery/queue-controller.mjs",
+              "scripts/delivery/queue-platform.mjs",
+              "scripts/delivery/queue-read-isolation.test.mjs"
+            ],
+            "filesHash": "c17dcdf2c62a1a70800d8b60d2f4f9d4b915e8ff9fc100a4a49bb6e6c678f747",
+            "dependsOn": [
+              178
+            ],
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "rationale": "Add real Platform/controller fixture regressions for observed native 429 and permission/absence errors, wrong identity/body, pagination failure, duplicate/invalid identities, redaction, dry-run, failed error recording, parent denial, independent full source/check/final snapshot reads and a fresh recovered later scan. Existing native checks and test files remain intact; the repository wildcard test stage includes this file. Add an advanced-clock starvation reproduction using the actual Platform/control flow, plus changed-head/intent/pending-set and missing-metadata regressions. Independent sources still cannot bypass exact current review and checks."
+              },
+              {
+                "id": "CI-002",
+                "rationale": "Add an explicit optional per-known-PR failure handler to hydration. Default callers keep the existing strict rejection. Never return list-only summaries or old details on a failed current read. Global pagination/known identity and callback failures remain fatal; pacing, retries, native snapshots/protection and writes are unchanged. Fixtures use actual Platform control flow and deny any mutating call."
+              },
+              {
+                "id": "CI-003",
+                "rationale": "Collect per-known-PR detail read failures and save redacted errors through the existing append-only state mutation. Feed unreadable parents into dependency planning without using stale source or integration metadata. Ready independent sources still run the unchanged exact native snapshot/eligibility/candidate/final merge checks, including a fresh prerequisite read before any merge. Incomplete global enumeration and unknown merge outcomes still halt. Revert this additive isolation and its assertions together. Suppress only an exactly unchanged waiting_dependency notification after current source/prerequisite planning, preserving durable updates for changed/incomplete head, intent or pending metadata and every full ready-source/pre-merge check. This avoids repeated remote Git writes starving later independent sources under the existing finite deadline."
+              }
+            ],
+            "ciPolicyChangesHash": "7e232a4c7b6b81c9d107370c90a7f877bb5d0296f229fb7dfc825c2420e8e5ef",
+            "tests": [
+              {
+                "command": "node --test scripts/delivery/evidence-controls.test.mjs scripts/delivery/mine-clear.test.mjs scripts/delivery/queue-io-budget.test.mjs scripts/delivery/queue-read-isolation.test.mjs scripts/delivery/queue-release-contract.test.mjs scripts/delivery/queue-release-history.test.mjs scripts/delivery/queue.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T21:03:19.031860+00:00",
+                "result": "Complete native delivery fixture suite at this exact committed head, including actual local Git CAS/race assertions, mandatory source/review/protection/byte contracts and new isolated-read failure tests. Fixture IO is explicitly distinct from native production writes."
+              },
+              {
+                "command": "node --check scripts/delivery/queue-platform.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T21:03:19.150793+00:00",
+                "result": "Current Platform syntax passes at this exact committed head."
+              },
+              {
+                "command": "node --check scripts/delivery/queue-controller.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T21:03:19.228998+00:00",
+                "result": "Current controller syntax passes at this exact committed head."
+              }
+            ],
+            "reviewedAt": "2026-10-07T21:08:48.302769+00:00",
+            "summary": "The current Codex session read the complete platform, controller, model, API, policy, release and work implementations and their direct imports, plus the complete new 142-line regression and complete final patch. Compared increasing delay alone with isolating a known failed PR: actual native 429 remained after the earlier pacing fix, so selected bounded per-PR isolation while keeping default strict reads and complete pagination fatal. The controller saves redacted errors through the existing append-only store, excludes unreadable current identities, and prevents an old integrated ledger record from approving a dependent. Actual Platform fixtures exercise 429/403/404, substituted identities, malformed bodies, duplicate or invalid list identities, incomplete pagination, failed error recording, dry-run, recovery freshness, full independent native check reads and missing Codex review denial. The existing immediate-before-merge real prerequisite tests and all original native fixture assertions remain. No API metadata cache, platform AI, paid model/render, native environment spoofing, force merge or main push. Local fixtures do not assert actual production deployment; original native CI and protected ordinary integration remain necessary. Also read the complete current controller and dependency-budget tests, and reviewed the waiting-state event path. A new advanced-clock regression reproduces independent source starvation before this fix; after suppressing only identical waiting events it reaches the real full Platform snapshot and still denies absent Codex review. Actual source head, intent, pending-set changes and incomplete waiting metadata each retain durable updates. No source metadata is cached, no approval/CI/permission requirement is weakened, and no deadline is removed. All added code and the final 184-line regression were read in full, then the complete locked native fixture suite is actually rerun at the exact committed head.",
+            "passed": true,
+            "id": "1c4b0a51c932d79e18d02666b1338f2de9a99d39ad2952656b41818826bad46f"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 184,
+            "pull": {
+              "number": 184,
+              "state": "open",
+              "title": "fix(ci): isolate unreadable PR details without approving their dependents [T-2026-1007-0918]",
+              "body": "Actual native reconcile builds repeatedly ended before processing the queue because one known open PR detail returned CNB 429. Make per-PR isolation an explicit optional Platform.pulls handler, preserving the strict default and fatal incomplete/ambiguous global pagination. The native controller records each failed known PR, excludes its unreadable identity from delivery, blocks its dependents without retrying it during planning, and continues full fresh checks for unrelated sources. No summary or stale integration proof substitutes for a current read. All native source/check/config, immutable candidate, protection and immediate merge prerequisite checks remain required. This native infrastructure repair declares no desktop version; actual integration/readback is still necessary.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    178\n  ],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-isolate-pr-read-failures",
+                "sha": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
+            "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+            "files": [
+              "scripts/delivery/queue-controller.mjs",
+              "scripts/delivery/queue-platform.mjs",
+              "scripts/delivery/queue-read-isolation.test.mjs"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                178
+              ],
+              "releases": []
+            },
+            "headTime": 1791406858000,
+            "mergeBase": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": "scripts/delivery/queue-read-isolation.test.mjs",
+                "before": {
+                  "ref": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+                  "path": "scripts/delivery/queue-read-isolation.test.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
+                  "path": "scripts/delivery/queue-read-isolation.test.mjs",
+                  "absent": false
+                },
+                "digest": "6f804a3c86b0835f79929ea86fc744f3d31ae4bdc76b75f184ff9ff36a6c326f"
+              },
+              {
+                "id": "CI-002",
+                "file": "scripts/delivery/queue-platform.mjs",
+                "before": {
+                  "ref": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+                  "path": "scripts/delivery/queue-platform.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
+                  "path": "scripts/delivery/queue-platform.mjs",
+                  "absent": false
+                },
+                "digest": "bfb73384a8c55b101e3bac33734296d4e9663aa4d4a55f058c9daf1510bf9ea5"
+              },
+              {
+                "id": "CI-003",
+                "file": "scripts/delivery/queue-controller.mjs",
+                "before": {
+                  "ref": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+                  "path": "scripts/delivery/queue-controller.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
+                  "path": "scripts/delivery/queue-controller.mjs",
+                  "absent": false
+                },
+                "digest": "c4767d1f58a8489508680b7fa4e24573a0ccd9ca8f47aecbc6e6bb6de0a57bf0"
+              }
+            ]
+          }
+        }
+      },
+      "previous": "c473ee8e89251e690fb57edf3150ee36b012a8fff0d1693c5642902cade0358e",
+      "digest": "82366b5d288a1e1a95e660bf911fe189634b37dd93b1be6fef3d382dcae6ec28"
+    },
+    {
+      "sequence": 3491,
+      "at": "2026-10-07T21:09:04.735Z",
+      "kind": "transaction",
+      "data": {
+        "id": "dd805877-ddbd-4f34-a9c4-23d46278ca0b"
+      },
+      "previous": "82366b5d288a1e1a95e660bf911fe189634b37dd93b1be6fef3d382dcae6ec28",
+      "digest": "ec49264c1c45326f4c274985bf64db4f2c8adebfe4f824e62e73fa8ec402146f"
     }
   ]
 }
