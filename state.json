@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1458,
+  "revision": 1461,
   "tasks": {
     "132": {
       "number": 132,
@@ -4594,7 +4594,7 @@
     },
     "158": {
       "number": 158,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791364616335,
       "attempts": {},
       "admission": {
@@ -4606,9 +4606,9 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791371100874,
+      "updatedAt": 1791372293316,
       "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
-      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -4626,7 +4626,7 @@
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 158,
         "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "apps/server/src/video/film-ledger.ts",
@@ -4673,10 +4673,10 @@
             "result": "Server typecheck passed."
           }
         ],
-        "reviewedAt": "2026-10-07T09:16:51.247528+00:00",
-        "summary": "Current Codex fully read and reviewed all changed files and direct dependencies. JSON source cloning preserves caller input; every authored duration declaration is validated and conflicting declarations fail before provider work. Post options reject automatic source timing edits, arbitrary paths and incomplete ref/digest pairs. Archive realpath, no-follow reads, regular bounded files, byte hashes and complete nested presentation checks hold before content-addressed copies; exclusive immutable installation and directory fsync preserve exact bytes. Workers reject tampered source and assets and send no reference bookkeeping as arbitrary CLI flags. Existing paid ACK identities and acceptance helper copies match their previously reviewed fixes. Exact committed fault tests and both package/server typechecks passed. No paid provider calls, no unresolved review finding.",
+        "reviewedAt": "2026-10-07T11:24:43.956122+00:00",
+        "summary": "Current Codex fully read and reviewed all changed files and direct dependencies. JSON source cloning preserves caller input; every authored duration declaration is validated and conflicting declarations fail before provider work. Post options reject automatic source timing edits, arbitrary paths and incomplete ref/digest pairs. Archive realpath, no-follow reads, regular bounded files, byte hashes and complete nested presentation checks hold before content-addressed copies; exclusive immutable installation and directory fsync preserve exact bytes. Workers reject tampered source and assets and send no reference bookkeeping as arbitrary CLI flags. Existing paid ACK identities and acceptance helper copies match their previously reviewed fixes. Exact committed fault tests and both package/server typechecks passed. No paid provider calls, no unresolved review finding. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
         "passed": true,
-        "id": "e66dabbf7cf64206d980fe7ec69ba9e3fcc2b9200775bc5f7ed26b8b8ba28f37"
+        "id": "b3c2efc3393ae6be1c7f0d20203040ec803dd4226e86f650c16dc726d1e430ec"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -4696,7 +4696,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4725,7 +4725,7 @@
           "statuses": {}
         },
         "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "files": [
           "apps/server/src/video/film-ledger.ts",
           "apps/server/src/video/film-paid-generation.test.ts",
@@ -36043,6 +36043,195 @@
       },
       "previous": "a9cffa67bd69359569dbe315dd93648ee686e78237c80cffa0d4fd7144e87cff",
       "digest": "3f5e510cdb29b61632998dee5bcae6aca2e45308d98c44e3d00ee5b89aa5a35a"
+    },
+    {
+      "sequence": 1459,
+      "at": "2026-10-07T11:24:53.316Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 158,
+        "id": "b3c2efc3393ae6be1c7f0d20203040ec803dd4226e86f650c16dc726d1e430ec",
+        "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0"
+      },
+      "previous": "3f5e510cdb29b61632998dee5bcae6aca2e45308d98c44e3d00ee5b89aa5a35a",
+      "digest": "c82ac4347cef71c5b2a575f34ecc3fdf765276cc54d9ac6452fc88e059fcedf9"
+    },
+    {
+      "sequence": 1460,
+      "at": "2026-10-07T11:24:53.316Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146
+            ],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 158,
+            "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "apps/server/src/video/film-ledger.ts",
+              "apps/server/src/video/film-paid-generation.test.ts",
+              "apps/server/src/video/film-paid-generation.ts",
+              "apps/server/src/video/film-worker.ts",
+              "packages/video-studio/src/creative-duration-policy.ts",
+              "packages/video-studio/src/film-job-assets.test.ts",
+              "packages/video-studio/src/film-job-assets.ts",
+              "packages/video-studio/src/film-presentation.test.ts",
+              "packages/video-studio/src/film-presentation.ts",
+              "packages/video-studio/src/film-worker-runtime.test.ts",
+              "packages/video-studio/src/film-worker-runtime.ts",
+              "packages/video-studio/src/index.ts",
+              "packages/video-studio/src/producer-gate.ts",
+              "packages/video-studio/src/rendered-output-policy.test.ts",
+              "packages/video-studio/src/rendered-output-policy.ts"
+            ],
+            "filesHash": "054094cdf55fee7144aebdb88ba80a0f667d80de0a5776f61cb3298f46bbb272",
+            "dependsOn": [
+              144,
+              145,
+              146
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/film-job-assets.test.ts packages/video-studio/src/film-worker-runtime.test.ts packages/video-studio/src/film-presentation.test.ts packages/video-studio/src/rendered-output-policy.test.ts apps/server/src/video/film-paid-generation.test.ts apps/server/src/video/film-worker.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T09:13:12.142204+00:00",
+                "result": "Real content-addressed assets, archive escapes, tamper, immutable authored duration policy, before-dispatch option validation, worker ABI, paid ACK recovery and default off acceptance tests passed without live paid calls."
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T09:13:12.600936+00:00",
+                "result": "Video studio typecheck passed."
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T09:13:14.688557+00:00",
+                "result": "Server typecheck passed."
+              }
+            ],
+            "reviewedAt": "2026-10-07T11:24:43.956122+00:00",
+            "summary": "Current Codex fully read and reviewed all changed files and direct dependencies. JSON source cloning preserves caller input; every authored duration declaration is validated and conflicting declarations fail before provider work. Post options reject automatic source timing edits, arbitrary paths and incomplete ref/digest pairs. Archive realpath, no-follow reads, regular bounded files, byte hashes and complete nested presentation checks hold before content-addressed copies; exclusive immutable installation and directory fsync preserve exact bytes. Workers reject tampered source and assets and send no reference bookkeeping as arbitrary CLI flags. Existing paid ACK identities and acceptance helper copies match their previously reviewed fixes. Exact committed fault tests and both package/server typechecks passed. No paid provider calls, no unresolved review finding. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+            "passed": true,
+            "id": "b3c2efc3393ae6be1c7f0d20203040ec803dd4226e86f650c16dc726d1e430ec"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 158,
+            "pull": {
+              "number": 158,
+              "state": "open",
+              "title": "fix(growth): freeze film timing policy and project post assets [T-2026-1007-0918]",
+              "body": "Background film jobs previously rejected current post-production options and could carry conflicting authored and CLI duration policies. Normalize the immutable source and options to one explicit creative-target or strict policy, default post-render review to off, and reject automatic timing changes before dispatch. Accept end-card and presentation assets only by project-relative refs with mandatory SHA-256, verify every nested asset and freeze content-addressed copies before recording the job. The keyless worker translates only verified references into CLI paths. Matching reviewed paid-ledger and acceptance dependencies from PR145 and PR146 are included for independent source compilation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    144,\n    145,\n    146\n  ],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-film-job-policy-assets",
+                "sha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "files": [
+              "apps/server/src/video/film-ledger.ts",
+              "apps/server/src/video/film-paid-generation.test.ts",
+              "apps/server/src/video/film-paid-generation.ts",
+              "apps/server/src/video/film-worker.ts",
+              "packages/video-studio/src/creative-duration-policy.ts",
+              "packages/video-studio/src/film-job-assets.test.ts",
+              "packages/video-studio/src/film-job-assets.ts",
+              "packages/video-studio/src/film-presentation.test.ts",
+              "packages/video-studio/src/film-presentation.ts",
+              "packages/video-studio/src/film-worker-runtime.test.ts",
+              "packages/video-studio/src/film-worker-runtime.ts",
+              "packages/video-studio/src/index.ts",
+              "packages/video-studio/src/producer-gate.ts",
+              "packages/video-studio/src/rendered-output-policy.test.ts",
+              "packages/video-studio/src/rendered-output-policy.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                144,
+                145,
+                146
+              ],
+              "releases": []
+            },
+            "headTime": 1791364382000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "c82ac4347cef71c5b2a575f34ecc3fdf765276cc54d9ac6452fc88e059fcedf9",
+      "digest": "67cca7d226e05dbf5c51f54fc37d278dc1a865c26f97a8a449fa31a091e73ba1"
+    },
+    {
+      "sequence": 1461,
+      "at": "2026-10-07T11:24:46.379Z",
+      "kind": "transaction",
+      "data": {
+        "id": "7c273a78-9ef8-476f-84ea-c7a6840c5b91"
+      },
+      "previous": "67cca7d226e05dbf5c51f54fc37d278dc1a865c26f97a8a449fa31a091e73ba1",
+      "digest": "11e67151054fe048b50b92e3472e8c0d893b08005911426a7cb168b994eb1f26"
     }
   ]
 }
