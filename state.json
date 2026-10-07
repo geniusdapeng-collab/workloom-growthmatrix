@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4057,
+  "revision": 4059,
   "tasks": {
     "132": {
       "number": 132,
@@ -4478,7 +4478,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791415517365,
+      "updatedAt": 1791415818677,
       "admission": {
         "number": 149,
         "headSha": "e23036b57b872777c3d0d9ff3f57ab5d40701613",
@@ -100492,6 +100492,54 @@
       },
       "previous": "5fa6b2bd366b200f3b4d893d1a6775a0de6e3af4a26b78458d8ad4d3fd78677c",
       "digest": "acedd2676b9fc7357ed412a730276e7f62e59d0754651def70fa2a3b54bd5a4c"
+    },
+    {
+      "sequence": 4058,
+      "at": "2026-10-07T23:30:18.677Z",
+      "kind": "task",
+      "data": {
+        "number": 149,
+        "patch": {
+          "headSha": "e23036b57b872777c3d0d9ff3f57ab5d40701613",
+          "mainSha": "6213c885ba4d5dd77981228d3ba0890092c297f9",
+          "branch": "fix/T-2026-1007-0918-video-ack-recovery",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              146
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.9"
+              }
+            ]
+          },
+          "originalBody": "Video generation now freezes project/shot/provider/endpoint/full body in a private durable v2 journal before POST and saves ACK before all GETs. Complete v1 receipts can be imported without reissuing generation; unknown submissions stay pending reconciliation, and late legacy ACKs permit GET-only recovery. Conflicting task IDs, modified requests, corrupt identity and unknown dead locks reject without another payment. Existing postproduction consumers validate v2 identity while retaining v1 read support. The shared file journal matches PR148 byte for byte. A subsequent CLI integration connects stable project paths; this fix independently protects acknowledgement and legacy recovery in the existing journal scope. All fault tests inject providers, with no live paid generation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148,\n    146\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.9\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "packages/video-studio/src/video-surface-repair.test.ts",
+            "packages/video-studio/src/video-surface-repair.ts",
+            "packages/video-studio/src/video-task-receipt.test.ts",
+            "packages/video-studio/src/video-task-receipt.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791371100874
+        }
+      },
+      "previous": "acedd2676b9fc7357ed412a730276e7f62e59d0754651def70fa2a3b54bd5a4c",
+      "digest": "3b025314bfbb7427281b7f601ba7fda9b688de9c9d8d591e61eefdf30e834f32"
+    },
+    {
+      "sequence": 4059,
+      "at": "2026-10-07T23:31:15.015Z",
+      "kind": "transaction",
+      "data": {
+        "id": "7869f480-74bd-463d-a89a-32fde4b76dae"
+      },
+      "previous": "3b025314bfbb7427281b7f601ba7fda9b688de9c9d8d591e61eefdf30e834f32",
+      "digest": "f07f97db013bbe60c1e7641d3a15cf5887a5e7977b6827fdabc9d7fbd2c7c45e"
     }
   ]
 }
