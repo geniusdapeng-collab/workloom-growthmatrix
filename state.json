@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1510,
+  "revision": 1512,
   "tasks": {
     "132": {
       "number": 132,
@@ -2732,7 +2732,7 @@
     },
     "144": {
       "number": 144,
-      "status": "waiting_ci",
+      "status": "aligning",
       "firstSeen": 1791352089622,
       "attempts": {},
       "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
@@ -2744,54 +2744,7 @@
         "dependsOn": [],
         "releases": []
       },
-      "developerReview": {
-        "schemaVersion": 1,
-        "provider": "codex",
-        "repo": "workloom-ai/workloom-growthmatrix",
-        "number": 144,
-        "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
-        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
-        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
-        "reviewedFiles": [
-          "packages/video-studio/src/creative-duration-policy.test.ts",
-          "packages/video-studio/src/creative-duration-policy.ts",
-          "packages/video-studio/src/duration-projection-bridge.test.ts",
-          "packages/video-studio/src/duration-projection.test.ts",
-          "packages/video-studio/src/duration-projection.ts",
-          "packages/video-studio/src/duration-rules.test.ts",
-          "packages/video-studio/src/duration-rules.ts",
-          "packages/video-studio/src/vendor-compat.ts",
-          "scripts/tools/duration-projection-e2e.mts"
-        ],
-        "filesHash": "c3627266757cfe14463fb4cf59f8b1216b7729c89a642bb6cf8082bacee78149",
-        "dependsOn": [],
-        "ciPolicyChanges": [],
-        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-        "tests": [
-          {
-            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/creative-duration-policy.test.ts packages/video-studio/src/duration-rules.test.ts packages/video-studio/src/duration-projection.test.ts packages/video-studio/src/duration-projection-bridge.test.ts",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T05:45:17.173906+00:00",
-            "result": "4files62passed,1existingCJSskip"
-          },
-          {
-            "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T05:45:36.908856+00:00",
-            "result": "tsc noEmit passed"
-          },
-          {
-            "command": "node --import tsx scripts/tools/duration-projection-e2e.mts",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T05:45:37.026160+00:00",
-            "result": "实际node+tsx：3个默认总时长+8个strict编排断言通过，零失败；覆盖原Vitest skip"
-          }
-        ],
-        "reviewedAt": "2026-10-07T11:21:18.108199+00:00",
-        "summary": "当前Codex逐行复核9个变更文件及直接静态依赖：共享策略默认creative-target，规划保留每镜有效时长并尊重台词与登记能力，strict仅显式规划时守恒；真实渲染观测为advisory且不产生自动retime或paidPOST。校验目录唯一模型、能力完整性、非法数值和整数计划，输入不变。真实ProductionEngine运行时补测覆盖Vitest原CJS加载skip，目标30对28/32/35秒不改时长；原strict端到端继续通过。未改vendor源码，无DB/权限/CI变更，无新依赖或真实模型调用。回滚普通revert本提交；未发现未解决问题。 Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
-        "passed": true,
-        "id": "944cbfb4ace45127c8b79d14cec70fabe2adf6994967d629807c8dcde03f05c6"
-      },
+      "developerReview": null,
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 144,
@@ -2887,7 +2840,13 @@
         "reason": "检查/评审阻断：Required check static-gate missing/failed/ambiguous",
         "at": 1791362108120
       },
-      "recoveryIntent": null
+      "recoveryIntent": null,
+      "alignmentCount": 1,
+      "alignmentIntent": {
+        "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "at": 1791374342093
+      }
     },
     "145": {
       "number": 145,
@@ -38951,6 +38910,36 @@
       },
       "previous": "1fb465904d776211f484816b2b9dd881ee9e7f13a478742a75482bb6051a5b4e",
       "digest": "fe7be5ce62488156479c8dbf6279e0be07d2c9cc03f91c7a85afba1aaf7c6be4"
+    },
+    {
+      "sequence": 1511,
+      "at": "2026-10-07T11:59:02.093Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "status": "aligning",
+          "alignmentCount": 1,
+          "alignmentIntent": {
+            "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "at": 1791374342093
+          },
+          "developerReview": null
+        }
+      },
+      "previous": "fe7be5ce62488156479c8dbf6279e0be07d2c9cc03f91c7a85afba1aaf7c6be4",
+      "digest": "44607c0c0f80c6d794def2155d2937db18dc29174b9d6651c8906f014856ed7c"
+    },
+    {
+      "sequence": 1512,
+      "at": "2026-10-07T12:00:00.892Z",
+      "kind": "transaction",
+      "data": {
+        "id": "4881d0a2-5266-41fb-9ec9-8f00fdd3dcc0"
+      },
+      "previous": "44607c0c0f80c6d794def2155d2937db18dc29174b9d6651c8906f014856ed7c",
+      "digest": "5fe1473d7304b28ff651dd80dcd42d62caacf7ff08593d4f790d2c361cb272a9"
     }
   ]
 }
