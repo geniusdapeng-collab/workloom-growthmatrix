@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3620,
+  "revision": 3622,
   "tasks": {
     "132": {
       "number": 132,
@@ -6094,7 +6094,7 @@
     },
     "161": {
       "number": 161,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791368515129,
       "attempts": {},
       "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
@@ -6262,7 +6262,7 @@
           }
         ]
       },
-      "updatedAt": 1791409532141,
+      "updatedAt": 1791409819615,
       "admission": {
         "number": 161,
         "headSha": "fd1089d472ec538c5cdd64a32b8d926261d81135",
@@ -90630,6 +90630,46 @@
       },
       "previous": "624690d6282511ca349905defccc8c6a355fadc9efbf7ab53dc3510fc1463ead",
       "digest": "f1c4f9f57f9d36aee64fdb39597c4fb3c57de862c2fc073b9dc36b5f1928c9f6"
+    },
+    {
+      "sequence": 3621,
+      "at": "2026-10-07T21:50:19.615Z",
+      "kind": "task",
+      "data": {
+        "number": 161,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              160
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.20"
+              }
+            ]
+          },
+          "dependencies": [
+            160
+          ]
+        }
+      },
+      "previous": "f1c4f9f57f9d36aee64fdb39597c4fb3c57de862c2fc073b9dc36b5f1928c9f6",
+      "digest": "bf9bc5b9f20050d1eaa63ab199d9d0dc276bc58540f2c922e507ddce5f560e99"
+    },
+    {
+      "sequence": 3622,
+      "at": "2026-10-07T21:51:39.066Z",
+      "kind": "transaction",
+      "data": {
+        "id": "35f234a2-0e68-480d-92ef-6fe7e5bb8423"
+      },
+      "previous": "bf9bc5b9f20050d1eaa63ab199d9d0dc276bc58540f2c922e507ddce5f560e99",
+      "digest": "53ced6048dd83319f52873a8502fc52ad023ca86b826970904b841e70cb77e39"
     }
   ]
 }
