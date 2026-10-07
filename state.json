@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4088,
+  "revision": 4090,
   "tasks": {
     "132": {
       "number": 132,
@@ -4611,10 +4611,10 @@
     },
     "150": {
       "number": 150,
-      "status": "aligning",
+      "status": "waiting_ci",
       "firstSeen": 1791357138520,
       "attempts": {},
-      "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
+      "headSha": "fac83eb139bd23ad9f3f0d4475c2cce902e08223",
       "mainSha": "d11f3ce08333142102ef89a1760453cdff4aa581",
       "branch": "fix/T-2026-1007-0918-formal-preproduction-recovery",
       "intent": {
@@ -4740,10 +4740,12 @@
         "packages/video-studio/src/requirement-bridge.ts"
       ],
       "ciSince": 1791416314852,
-      "alignmentIntent": {
-        "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
+      "alignmentIntent": null,
+      "alignment": {
+        "sha": "fac83eb139bd23ad9f3f0d4475c2cce902e08223",
+        "previousHead": "f409347e11fb6066e013c83b0fea98e19cf3d340",
         "mainSha": "d11f3ce08333142102ef89a1760453cdff4aa581",
-        "at": 1791416314852
+        "verifiedAt": "2026-10-07T23:41:06.769Z"
       }
     },
     "151": {
@@ -101206,6 +101208,38 @@
       },
       "previous": "e141e771bb33078850bafd9d62b4a9f3f6029b05813cb432e2664b71dcefa78b",
       "digest": "05add8866111132475533129926522502c2bf23b513732e21d8cf9ec68ee21ac"
+    },
+    {
+      "sequence": 4089,
+      "at": "2026-10-07T23:38:34.852Z",
+      "kind": "task",
+      "data": {
+        "number": 150,
+        "patch": {
+          "status": "waiting_ci",
+          "alignment": {
+            "sha": "fac83eb139bd23ad9f3f0d4475c2cce902e08223",
+            "previousHead": "f409347e11fb6066e013c83b0fea98e19cf3d340",
+            "mainSha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+            "verifiedAt": "2026-10-07T23:41:06.769Z"
+          },
+          "alignmentIntent": null,
+          "headSha": "fac83eb139bd23ad9f3f0d4475c2cce902e08223",
+          "ciSince": 1791416314852
+        }
+      },
+      "previous": "05add8866111132475533129926522502c2bf23b513732e21d8cf9ec68ee21ac",
+      "digest": "c28a946b20e0d2e4ab946356407171f52205172a9bb09b2ec19d22e2ff226f70"
+    },
+    {
+      "sequence": 4090,
+      "at": "2026-10-07T23:41:06.831Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8b8b14dd-5312-42c7-b9ca-55452b7cd504"
+      },
+      "previous": "c28a946b20e0d2e4ab946356407171f52205172a9bb09b2ec19d22e2ff226f70",
+      "digest": "d23385d0df18fe8250e67410edd185db911dcea7eb23bef7585e3314075124ff"
     }
   ]
 }
