@@ -27,8 +27,10 @@ function errResponse(error: string, message: string, retryable = false) {
 }
 
 describe("工具白名单", () => {
-  it("只声明 12 个配乐工具（含结构识别与在线取源），且不提供他人工具", () => {
-    expect(BGM_BRIDGE_TOOLS).toHaveLength(12);
+  it("声明 14 个配乐及曲库工具（含结构识别与在线取源），且不提供他人工具", () => {
+    expect(BGM_BRIDGE_TOOLS).toHaveLength(14);
+    expect(isBgmBridgeTool("bgmwrite.tag")).toBe(true);
+    expect(isBgmBridgeTool("bgmwrite.library")).toBe(true);
     expect(isBgmBridgeTool("bgmread.brief")).toBe(true);
     expect(isBgmBridgeTool("bgmwrite.fetch")).toBe(true);
     expect(isBgmBridgeTool("bgmread.structure")).toBe(true);

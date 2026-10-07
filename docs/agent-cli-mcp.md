@@ -4,6 +4,10 @@ Matrix 的 JSON CLI 和 stdio MCP 使用同一份能力清单，连接当前工�
 
 适用场景：让系统生成一张封面并取回文件；向内容排期官或成本核算员询问当前数据缺口；在自己的影片项目中运行固定工位阶段并核对阶段文件。只读岗位保持只读，付费生成、公开发布和高风险动作继续走已有权限、围栏和审批流程。
 
+内置 AI 工作台接视频需求时，先调用 `growth.video.workbench.guide`（MCP：`workloom_growth_video_workbench_guide`，参数 `{}`），
+完整读取 [视频调用指南](ai-video-workbench-guide.md)。返回正文/产品标识/版本/SHA-256；同一固定文档随客户 runtime 分发，缺文件或旧载荷不能视为就绪。
+指南按本仓真实入口说明需求保存、声音边界与时间估算；读取不连接服务或调用模型。
+
 ## 连接正在运行的客户服务
 
 源码入口是 `scripts/workloom-agent.mjs` 和 `scripts/workloom-agent-mcp.mjs`。客户安装后的入口位于本机产品运行目录的 `runtime/scripts/`，使用同一安装目录随附的 Node。安装预检会检查入口、清单、影片辅助模块及行业资产是否存在。
@@ -46,6 +50,9 @@ node scripts/workloom-agent.mjs invoke core.task.dispatch --input-file request.j
 ```
 
 `title` 长度为 1 至 120 字符；请求键为 8 至 200 字符，同一逻辑请求重试必须保留原键和原参数。新目标使用新键。不存在、停用或未就绪的岗位会返回具体失败，不会替换成另一个岗位。
+
+该派遣接口没有完整 brief/document 字段；不要截断视频需求塞进 title，或把 goalRef 当作任意文件加载机制。
+完整视频需求另存项目 brief，再按上述指南进入 Studio 或已有项目的固定影片工位，逐项核对时长、授权与声音政策。
 
 返回中的 `result.invocationId` 是调用编号，`result.thread.id` 是实际任务编号。`status=pending` 表示仍在排队、执行、等待审批或对账；`status=failed` 表示失败或缺少有效交付；`status=succeeded` 仍需核对 `delivery`、事件与产物。CLI 退出码 0 表示拿到了合法协议响应，不能单凭退出码判断任务成功。
 

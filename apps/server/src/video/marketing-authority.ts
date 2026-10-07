@@ -418,7 +418,7 @@ export async function restoreMarketingReviewTransportCheckpoint(prepared: Prepar
     }
     const verdict = receipt.verdict;
     await verifyOutputVisualEvidence(prepared.bundle, references.length ? references : undefined, verdict);
-    if (accepted(verdict, file, receipt.contentSha256) && verdict.score >= 85) {
+    if (accepted(verdict, file, receipt.contentSha256) && (verdict.score ?? 0) >= 85) {
       passed.push({ shotId: shot.shotId, promptSha256: renderSha256(shot.prompt), fieldsSha256: renderSha256(canonicalRenderJson(shot.fields)),
         ref, sha256: receipt.contentSha256, verdict });
     } else if (verdict.status === "unverified" && verdict.approved === false && verdict.degraded === true && verdict.via === "fallback"
@@ -464,7 +464,7 @@ export async function finalizeMarketingFacts(prepared: PreparedMarketingFacts, s
         performerIdentity: performer ? { id: performer.id, name: performer.name, identity: performer.identity ?? null,
           appearance: performer.appearance ?? null, wardrobe: performer.wardrobe ?? null, authorization: performer.authorization } : null,
         visualScope: "visualReferences是另行校验并实际送审的登记产品基准图；sourceClaims.images为空仅表示文字采集站没有公网图片，不表示本次没有收到登记图。不能由图推断功能、认证、规格、原PDF已复核或产物已生成。",
-        designScope: "当前审核的是生成前的创意合同。场景时段、光线色温、光比、光圈、运镜位移、空间尺寸属于虚构画面设计，不是商品属性或已实拍事实；无需用成片证明这些设计已经执行。它们与商品事实有冲突时仍应拒绝，产物质量由后续真实渲染证据核验。",
+        designScope: "当前审核的是生成前的创意合同。场景时段、光线色温、光比、光圈、运镜位移、空间尺寸属于虚构画面设计，不是商品属性或已实拍事实；无需用成片证明这些设计已经执行。它们与商品事实有冲突时仍应拒绝；供应商成功源片直接正式后期，不追加产物视觉或人物质量审核。",
         identityScope: "这是本次G1请求绑定的明确授权表演角色，仅用于识别speaker/character；不是商品品牌、功能、效果或真实顾客评价的证据。其姓名不能证明商品名称或领先性。" },
     });
     await writeBound(prepared.root, `${prefix}-shot-${index + 1}.verdict.json`, canonicalRenderJson({
