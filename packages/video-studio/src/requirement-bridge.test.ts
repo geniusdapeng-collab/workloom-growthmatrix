@@ -24,6 +24,65 @@ function target(convert: RequirementBridgeTarget["_convertDiscoveryToRequirement
 }
 
 describe("真实异步需求转换接缝", () => {
+  it("结构化模型失败触发供应商重试，错误不会被默认受众掩盖", async () => {
+    const system = target();
+    const schema = { type: "object", required: ["primaryAudience"], properties: { primaryAudience: {
+      type: "object", required: ["occupation", "interestTags"], properties: {
+        occupation: { type: "string" }, interestTags: { type: "array", minItems: 2, items: { type: "string" } },
+      },
+    } } };
+    const generated = { primaryAudience: { occupation: "酒店经营者", interestTags: ["酒店", "门店运营"] } };
+    const llm = { marker: "original", reasonStructured: vi.fn(function(this: { marker: string }, _prompt: unknown, _schema: unknown, _options: unknown) {
+      return { success: false, error: `${this.marker}: invalid-json` };
+    }) };
+    llm.reasonStructured.mockResolvedValueOnce({ success: false, error: "invalid-json" } as never)
+      .mockResolvedValueOnce({ success: true, data: generated } as never);
+    const audience = { llmEngine: llm }; system.requirementDiscoveryEngine.agents = { audience };
+    const restore = installVendorRequirementBridge(system, { ...metadata(), brief: { audience: "酒店经营者" } });
+    await expect((audience.llmEngine as typeof llm).reasonStructured("actual", schema, {})).rejects.toThrow("invalid-json");
+    await expect((audience.llmEngine as typeof llm).reasonStructured("actual", schema, {})).resolves.toMatchObject({ success: true, data: generated });
+    expect(llm.reasonStructured.mock.calls[1]![0]).toContain("上次实际返回错误");
+    expect(llm.reasonStructured.mock.calls[1]![0]).toContain("这是广告观看者，不是新出镜人物");
+    expect(llm.reasonStructured.mock.calls[1]![2]).toMatchObject({ thinking: { type: "disabled" }, temperature: .2 });
+    restore(); expect(audience.llmEngine).toBe(llm);
+  });
+
+  it.each([{}, { primaryAudience: { occupation: "酒店" } }, { primaryAudience: { occupation: "酒店", interestTags: ["酒店"] } }])(
+    "缺少真实嵌套必需字段不能借供应商回退进入审核：%j", async (generated) => {
+      const system = target(); const convert = system._convertDiscoveryToRequirementList;
+      const llm = { reasonStructured: vi.fn().mockResolvedValue({ success: true, data: generated }) };
+      const audience = { llmEngine: llm }; system.requirementDiscoveryEngine.agents = { audience };
+      const schema = { type: "object", required: ["primaryAudience"], properties: { primaryAudience: {
+        type: "object", required: ["occupation", "interestTags"], properties: { occupation: { type: "string" },
+          interestTags: { type: "array", minItems: 2, items: { type: "string" } } },
+      } } };
+      system.requirementDiscoveryEngine.discover = async () => {
+        let fallbackObserved = false;
+        try { await (audience.llmEngine as typeof llm).reasonStructured("actual", schema, {}); }
+        catch { fallbackObserved = true; }
+        expect(fallbackObserved).toBe(true);
+        return discovery();
+      };
+      const restore = installVendorRequirementBridge(system, metadata());
+      await expect(system.requirementDiscoveryEngine.discover({})).rejects.toThrow("供应商回退不能进入审核");
+      expect(convert).not.toHaveBeenCalled(); restore();
+    },
+  );
+
+  it("一个实例失败不会污染另一个实例的结构化生成，恢复后错误不残留", async () => {
+    const a = target(); const b = target();
+    const sourceA = { reasonStructured: vi.fn().mockResolvedValue({ success: false, error: "actual failure" }) };
+    const sourceB = { reasonStructured: vi.fn().mockResolvedValue({ success: true, data: { name: "B" } }) };
+    const agentA = { llmEngine: sourceA }; const agentB = { llmEngine: sourceB };
+    a.requirementDiscoveryEngine.agents = { risk: agentA }; b.requirementDiscoveryEngine.agents = { risk: agentB };
+    const restoreA = installVendorRequirementBridge(a, metadata("A")); const restoreB = installVendorRequirementBridge(b, metadata("B"));
+    const schema = { type: "object", required: ["name"] };
+    const results = await Promise.allSettled([(agentA.llmEngine as typeof sourceA).reasonStructured("A", schema, {}),
+      (agentB.llmEngine as typeof sourceB).reasonStructured("B", schema, {})]);
+    expect(results[0]!.status).toBe("rejected"); expect(results[1]!.status).toBe("fulfilled");
+    restoreA(); restoreB(); expect(agentA.llmEngine).toBe(sourceA); expect(agentB.llmEngine).toBe(sourceB);
+  });
+
   it("错误场景总和必须由原模型重做，不能只把totalDuration标签改成30", async () => {
     const system = target();
     const wrong = discovery().sceneStructure;
@@ -31,7 +90,7 @@ describe("真实异步需求转换接缝", () => {
     const llm = { reason: vi.fn().mockResolvedValueOnce({ success: true, content: JSON.stringify(wrong) })
       .mockResolvedValueOnce({ success: true, content: JSON.stringify(discovery().sceneStructure) }) };
     const scene = { llmEngine: llm }; system.requirementDiscoveryEngine.agents = { scene };
-    const restore = installVendorRequirementBridge(system, { ...metadata(), brief: { durationSec: 30 } });
+    const restore = installVendorRequirementBridge(system, { ...metadata(), brief: { durationSec: 30, durationPolicy: "strict" } });
     await expect((scene.llmEngine as typeof llm).reason("实际输入")).rejects.toThrow("合计40s");
     await expect((scene.llmEngine as typeof llm).reason("实际输入")).resolves.toMatchObject({ success: true });
     expect(llm.reason.mock.calls[1]![0]).toContain("实际场景时长合计40s");
@@ -47,10 +106,23 @@ describe("真实异步需求转换接缝", () => {
     const result = await (scene.llmEngine as typeof llm).reason(prompt);
     const sent = llm.reason.mock.calls[0]![0];
     expect(sent).not.toContain('"duration":10'); expect(sent).toContain('"duration":null');
-    expect(sent).toContain("剩余秒数分给scenes"); expect(sent).toContain("原始故事和其他参数10");
+    expect(sent).toContain("给客户交付高完成度作品"); expect(sent).toContain("原始故事和其他参数10");
     expect(prompt).toContain('"duration":10');
     expect(JSON.parse(result.content)).toEqual(generated);
     expect(generated.opening.duration).toBe(5); expect(generated.scenes[0]!.duration).toBe(20);
+    restore();
+  });
+  it.each([28, 32, 35])("30秒需求目标接受%s秒自洽模型规划，禁止伪改totalDuration", async seconds => {
+    const system = target(), generated = discovery().sceneStructure;
+    generated.scenes[0]!.duration = seconds - 10; generated.totalDuration = seconds;
+    const llm = { reason: vi.fn().mockResolvedValue({ success: true, content: JSON.stringify(generated) }) };
+    const scene = { llmEngine: llm }; system.requirementDiscoveryEngine.agents = { scene };
+    const restore = installVendorRequirementBridge(system, { ...metadata(), brief: { durationSec: 30 } });
+    const actual = await (scene.llmEngine as typeof llm).reason("实际输入");
+    expect(JSON.parse(actual.content)).toEqual(generated);
+    generated.totalDuration = 30;
+    llm.reason.mockResolvedValueOnce({ success: true, content: JSON.stringify(generated) });
+    await expect((scene.llmEngine as typeof llm).reason("实际输入")).rejects.toThrow("totalDuration");
     restore();
   });
   it("discover直到原始转换完成才返回，同步消费者得到完整对象并继承明确档案", async () => {

@@ -32,9 +32,16 @@ it("原卡明确无人产品镜保持无人；全片主要人物不能丢失或�
   r.stages.productionEngine.shots.push(productShot);
   const doc = mapPreproductionFilm({ result: r, metadata: metadata(), projectId: "P1" });
   expect(doc.shots[1]!.character).toBe("无角色出场，不适用");
+  expect(doc.shots[1]!.subject).toEqual({ hasPerson: false, count: 0, faceVisible: false });
   expect(doc.shots[1]!.assetRef).toBeUndefined(); expect(doc.shots[0]!.assetRef).toBe("asset://registered-person");
   r.stages.productionEngine.shots[0].fields.character = "无角色出场，不适用";
   expect(() => mapPreproductionFilm({ result: r, metadata: metadata(), projectId: "P1" })).toThrow("全片没有明确主要人物");
+});
+it.each([{ hasPerson: true }, { count: 1 }, { faceVisible: true }, { kind: "human" }])("明确无人和有人subject冲突拒绝：%j", subject => {
+  const r: any = result(); r.stages.productionEngine.shots[0].duration = 15;
+  r.stages.productionEngine.shots.push({ ...raw(), shot_id: "S02", duration: 15,
+    fields: { ...raw().fields, character: "无角色出场，不适用", dialogue: "", subject } });
+  expect(() => mapPreproductionFilm({ result: r, metadata: metadata(), projectId: "P1" })).toThrow("FILM_SUBJECT_CONFLICT");
 });
 it("明确无对白映射为空；所有受审台词仍须在实际口播预算内，不能靠G6批准豁免", () => {
   const r: any = result(); r.stages.productionEngine.shots[0].duration = 4;
@@ -45,14 +52,20 @@ it("明确无对白映射为空；所有受审台词仍须在实际口播预算�
   expect(mapPreproductionFilm({ result: r, metadata: meta, projectId: "P1" }).shots[0]!.dialogue).toEqual([]);
 });
 it.each(["failed", "short", "duration", "cast", "duplicate", "degraded"])("%s输入拒绝，不补造镜头/台词/时长", kind => {
-  const r: any = result();
+  const r: any = result(), meta: any = metadata();
   if (kind === "failed") r.success = false;
   if (kind === "short") r.stages.productionEngine.shots[0].prompt = "短";
-  if (kind === "duration") r.stages.productionEngine.shots[0].duration = 29;
+  if (kind === "duration") { r.stages.productionEngine.shots[0].duration = 29; meta.brief.durationPolicy = "strict"; }
   if (kind === "cast") r.stages.productionEngine.shots[0].fields.character = "另一人";
   if (kind === "duplicate") r.stages.productionEngine.shots.push(raw());
   if (kind === "degraded") r.stages.prdGeneration.degraded = true;
-  expect(() => mapPreproductionFilm({ result: r, projectId: "P1", metadata: metadata() })).toThrow(/FILM_/);
+  expect(() => mapPreproductionFilm({ result: r, projectId: "P1", metadata: meta })).toThrow(/FILM_/);
+});
+it.each([28, 32, 35])("30秒创作目标导出%s秒真实分镜，不补镜或改写时长", seconds => {
+  const r: any = result(); r.stages.productionEngine.shots[0].duration = seconds;
+  const before = structuredClone(r), doc = mapPreproductionFilm({ result: r, projectId: "P1", metadata: metadata() });
+  expect(doc).toMatchObject({ durationSeconds: seconds, targetDurationSeconds: 30, durationPolicy: "creative-target" });
+  expect(doc.shots[0]!.duration).toBe(seconds); expect(r).toEqual(before);
 });
 it("环境补全保持动作/台词/时长/提示词冻结，禁止未知镜号或改写", () => {
   const doc = mapPreproductionFilm({ result: result(), projectId: "P1", metadata: metadata() });
@@ -61,6 +74,30 @@ it("环境补全保持动作/台词/时长/提示词冻结，禁止未知镜号�
   const changed: any = environment(); changed.shots[0].action = "另编动作";
   expect(() => applyFilmEnvironment(doc, changed, "douyin")).toThrow("SCOPE_CHANGED");
   changed.shots = [{ shotId: "NEW" }]; expect(() => applyFilmEnvironment(doc, changed, "douyin")).toThrow("SCOPE_CHANGED");
+});
+it("逐镜所有未登记物件和错误首句一起反馈，不修改源稿；原模型第二稿仍完整送审", async () => {
+  const doc = mapPreproductionFilm({ result: result(), projectId: "P1", metadata: metadata() }), before = structuredClone(doc);
+  const bad: any = environment(); bad.shots[0].visibleMaterials = ["近义柜台"];
+  bad.hook.firstShotTemplate.line = "其他镜台词";
+  expect(() => applyFilmEnvironment(doc, bad, "douyin")).toThrow(/S01.*近义柜台.*已登记item.*柜台.*FILM_HOOK_DIALOGUE_CHANGED/);
+  expect(doc).toEqual(before);
+  const reason = vi.fn(async (_prompt: string, _options?: unknown) => ({ success: true, data: environment() }));
+  reason.mockResolvedValueOnce({ success: true, data: bad });
+  const onApproval = vi.fn(async () => ({ approved: true }));
+  await exportPreproductionFilm({ result: result(), projectId: "P1", metadata: metadata(), llm: { reason }, onApproval });
+  expect(reason).toHaveBeenCalledTimes(2); expect(reason.mock.calls[1]![0]).toContain("近义柜台");
+  expect(reason.mock.calls[1]![0]).toContain("FILM_HOOK_DIALOGUE_CHANGED");
+  expect(onApproval).toHaveBeenCalledTimes(2);
+});
+it.each([true, false])("环境外部输出失败retryable=%s按原两次上限处理，未生成合法合同绝不送审", async retryable => {
+  const reason = vi.fn(async (_prompt: string, _options?: unknown): Promise<any> => ({ success: true, data: environment() }));
+  reason.mockResolvedValueOnce({ success: false, error: "真实content为空", retryable });
+  const onApproval = vi.fn(async () => ({ approved: true })), onArtifact = vi.fn();
+  const operation = exportPreproductionFilm({ result: result(), projectId: "P1", metadata: metadata(), llm: { reason }, onApproval, onArtifact });
+  if (retryable) { await operation; expect(onApproval).toHaveBeenCalledTimes(2); expect(reason.mock.calls[1]![0]).toContain("从头返回"); }
+  else { await expect(operation).rejects.toThrow("GENERATION_FAILED"); expect(onApproval).not.toHaveBeenCalled(); }
+  expect(reason).toHaveBeenCalledTimes(retryable ? 2 : 1);
+  expect(onArtifact).toHaveBeenCalledWith("film-environment-generation-failure-1.json", { error: "FILM_ENVIRONMENT_GENERATION_FAILED：真实content为空", retryable });
 });
 it("钩子不能另写不存在的口播或兑现镜", () => {
   const doc = mapPreproductionFilm({ result: result(), projectId: "P1", metadata: metadata() });

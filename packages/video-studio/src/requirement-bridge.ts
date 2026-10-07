@@ -1,8 +1,9 @@
 /** Instance bridge for vendor create's unawaited requirement conversion. Vendor sources stay read-only. */
+import { durationPolicy, FILM_COMPLETENESS_PRINCIPLE } from "./creative-duration-policy.js";
 type Recordish = Record<string, unknown>;
 interface DiscoveryEngine {
   discover(input: Recordish): Promise<Recordish>;
-  agents?: { scene?: { llmEngine?: Recordish } };
+  agents?: Partial<Record<"audience" | "scene" | "risk" | "reference", { llmEngine?: Recordish }>>;
 }
 export interface RequirementBridgeTarget {
   requirementDiscoveryEngine: DiscoveryEngine;
@@ -16,6 +17,36 @@ function object(value: unknown, label: string): Recordish {
 }
 const text = (value: unknown): string => typeof value === "string" ? value.trim() : "";
 const strings = (value: unknown): string[] => Array.isArray(value) ? value.map(text).filter(Boolean) : [];
+
+/** Reject missing source fields before vendor _fillDefaults can invent a successful result. */
+function requiredShapeIssue(value: unknown, schema: unknown, path = "data"): string | null {
+  if (!schema || typeof schema !== "object" || Array.isArray(schema)) return null;
+  const shape = schema as Recordish;
+  if (shape.type === "object") {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return `${path}必须为对象`;
+    const data = value as Recordish;
+    for (const field of strings(shape.required)) {
+      if (data[field] == null || (typeof data[field] === "string" && !text(data[field]))) return `${path}.${field}缺失`;
+    }
+    if (shape.properties && typeof shape.properties === "object" && !Array.isArray(shape.properties)) {
+      for (const [field, child] of Object.entries(shape.properties)) {
+        if (data[field] !== undefined) {
+          const issue = requiredShapeIssue(data[field], child, `${path}.${field}`);
+          if (issue) return issue;
+        }
+      }
+    }
+  } else if (shape.type === "array") {
+    if (!Array.isArray(value)) return `${path}必须为数组`;
+    if (typeof shape.minItems === "number" && Number.isFinite(shape.minItems) && value.length < shape.minItems) return `${path}元素不足${String(shape.minItems)}`;
+    for (let i = 0; i < value.length; i++) {
+      const issue = requiredShapeIssue(value[i], shape.items, `${path}[${i}]`);
+      if (issue) return issue;
+    }
+  } else if (shape.type === "string" && (typeof value !== "string" || !value.trim())) return `${path}必须为非空字符串`;
+  if (Array.isArray(shape.enum) && !shape.enum.includes(value)) return `${path}不在允许枚举中`;
+  return null;
+}
 
 function requestedCharacters(metadata: Recordish): Recordish[] {
   if (metadata.characters !== undefined) {
@@ -49,7 +80,7 @@ function nodes(discovery: Recordish): Array<{ label: string; data: Recordish }> 
 }
 
 /** Validate actual scene-agent JSON before vendor can substitute copied examples as content. */
-function sceneContractIssue(value: unknown, targetDuration?: number): string | null {
+function sceneContractIssue(value: unknown, targetDuration?: number, strict = false): string | null {
   try {
     const scene = object(value, "sceneStructure");
     for (const { label, data } of nodes({ sceneStructure: scene })) {
@@ -62,7 +93,7 @@ function sceneContractIssue(value: unknown, targetDuration?: number): string | n
       if (!Number.isFinite(Number(data.duration)) || Number(data.duration) <= 0) return `${label}.duration必须为正数`;
     }
     const total = nodes({ sceneStructure: scene }).reduce((sum, node) => sum + Number(node.data.duration), 0);
-    if (Number.isFinite(targetDuration) && Math.abs(total - targetDuration!) > .05) return `实际场景时长合计${total}s，必须由模型重新分配到明确目标${targetDuration}s；不能复制10秒示例`;
+    if (strict && Number.isFinite(targetDuration) && Math.abs(total - targetDuration!) > .05) return `实际场景时长合计${total}s，必须由模型重新分配到明确目标${targetDuration}s；不能复制10秒示例`;
     if (Math.abs(total - Number(scene.totalDuration)) > .05) return `totalDuration=${String(scene.totalDuration)}与实际场景总和${total}s不一致`;
     return null;
   } catch (error) {
@@ -108,10 +139,46 @@ export function installVendorRequirementBridge(
   const cast = requestedCharacters(metadata);
   const brief = metadata.brief ? object(metadata.brief, "brief") : {};
   const targetDuration = Number(brief.duration ?? brief.durationSec);
+  const strictDuration = durationPolicy(brief.durationPolicy) === "strict";
+  const durationInstruction = strictDuration
+    ? `显式strict规划合同：所有opening+scenes+ending的duration相加必须等于${targetDuration}秒。`
+    : `创作目标约${targetDuration}秒，完整表达优先，允许合理偏离；不得为凑总秒数切断句子、填充无用镜头或安排渲染后变速。`;
   const sceneAgent = engine.agents?.scene;
   const sceneLLM = sceneAgent?.llmEngine;
   let active = true;
   let sceneFeedback = "";
+  const structuredErrors = new Map<string, string>();
+  const structuredRestores: Array<() => void> = [];
+  for (const name of ["audience", "risk", "reference"] as const) {
+    const agent = engine.agents?.[name];
+    const llm = agent?.llmEngine;
+    if (!agent || !llm || typeof llm.reasonStructured !== "function") continue;
+    agent.llmEngine = new Proxy(llm, {
+      get(target, key) {
+        if (key === "reasonStructured") return async (prompt: unknown, schema: unknown, options: Recordish = {}) => {
+          if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
+          try {
+            const augmented = `${String(prompt)}\n\n【宿主需求JSON契约】只输出目标JSON对象，无外层success/content包装，无代码块或解释。简洁填写每个必需字段，禁止靠默认值补齐。\n明确受众：${text(brief.audience)}；这是广告观看者，不是新出镜人物。明确角色档案：${JSON.stringify(cast)}。原始意图禁止增加的人物、商品结构与机械动作不得出现在受众触发场景、风险建议或参考改编中。${structuredErrors.has(name) ? `\n上次实际返回错误：${structuredErrors.get(name)}；请重新生成合法完整JSON。` : ""}`;
+            const result = object(await (target.reasonStructured as (p: unknown, s: unknown, o: Recordish) => unknown)
+              .call(target, augmented, schema, { ...options, forceJson: true, temperature: .2, thinking: { type: "disabled" } }), "structuredResult");
+            if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
+            if (result.success !== true) throw new Error(text(result.error) || "模型未返回成功结果");
+            const issue = requiredShapeIssue(result.data, schema);
+            if (issue) throw new Error(issue);
+            structuredErrors.delete(name);
+            return result;
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            structuredErrors.set(name, message);
+            throw new Error(`REQUIREMENT_MODEL_FAILED: ${name}: ${message}`);
+          }
+        };
+        const value = Reflect.get(target, key, target);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    structuredRestores.push(() => { agent.llmEngine = llm; });
+  }
   if (sceneAgent && sceneLLM && typeof sceneLLM.reason === "function") {
     sceneAgent.llmEngine = new Proxy(sceneLLM, {
       get(target, key) {
@@ -121,14 +188,14 @@ export function installVendorRequirementBridge(
           // while also requiring a middle array. Those sample values are not a plan.
           // Remove only example defaults; actual allocation stays with SceneArchitect.
           const shapePrompt = String(prompt).replace(/"duration"\s*:\s*10(?=\s*[,}])/g, '"duration":null');
-          const augmented = `${shapePrompt}${SCENE_CONTRACT}\n明确角色档案：${JSON.stringify(cast)}\n明确时长：${Number.isFinite(targetDuration) ? `${targetDuration}秒；所有opening+scenes+ending的duration相加必须等于该值` : "按上游目标时长，totalDuration必须等于各场景实际总和"}\n时长分配口径：示例的null仅表示待模型分配，不是合法输出。先按本次叙事自行确定主体场景数量和opening/ending时长，再将目标总时长减去opening.duration和ending.duration，剩余秒数分给scenes；返回前按实际数组逐项加总。不得将主体场景总和当作整片总和，也不得每增加一场就复制旧10秒。sceneCount为opening、scenes所有元素、ending的合计数量；示例计数不约束本次真实数量。每个duration最终必须是正数，totalDuration最终必须等于逐项加总与明确目标。\n独立登记资产核验：${JSON.stringify(metadata.referenceAssets ?? null)}\n只使用明确人物，不新增经营者、客人或未登记的单屏参考图片。${sceneFeedback ? `\n上次实际字段错误：${sceneFeedback}；请针对错误重新生成，不复制旧输出。` : ""}`;
+          const augmented = `${shapePrompt}${SCENE_CONTRACT}\n最高创作宗旨：${FILM_COMPLETENESS_PRINCIPLE}\n明确角色档案：${JSON.stringify(cast)}\n时长：${Number.isFinite(targetDuration) ? durationInstruction : "按叙事确定合理长度"}\n时长分配口径：示例的null仅表示待模型分配，不是合法输出。先按本次叙事确定场景数量、开场和结尾的完整表达所需时长，再自行安排主体场景；每个duration必须是正数，totalDuration必须等于opening、scenes所有元素、ending的实际逐项总和。不能把主体场景总和当整片总和，不能复制旧10秒。sceneCount为本次真实总场景数量。\n独立登记资产核验：${JSON.stringify(metadata.referenceAssets ?? null)}\n只使用明确人物，不新增经营者、客人或未登记的单屏参考图片。${sceneFeedback ? `\n上次实际字段错误：${sceneFeedback}；请针对错误重新生成，不复制旧输出。` : ""}`;
           const result = await (target.reason as (p: unknown, o: Recordish) => unknown).call(target, augmented, { ...options, forceJson: true, thinking: { type: "disabled" } });
           if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
           if (result && typeof result === "object" && (result as Recordish).success === true) {
             let parsed: unknown;
             try { parsed = JSON.parse(String((result as Recordish).content)); }
             catch { throw new Error("REQUIREMENT_SCENE_INVALID: 场景结果不是JSON"); }
-            const issue = sceneContractIssue(parsed, targetDuration);
+            const issue = sceneContractIssue(parsed, targetDuration, strictDuration);
             if (issue) { sceneFeedback = issue; throw new Error(`REQUIREMENT_SCENE_INVALID: ${issue}`); }
             sceneFeedback = "";
           }
@@ -141,8 +208,10 @@ export function installVendorRequirementBridge(
   }
   engine.discover = async function awaitedDiscovery(upstream) {
     if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
+    structuredErrors.clear();
     const discovery = object(await originalDiscover.call(this, upstream), "discovery");
-    const issue = sceneContractIssue(discovery.sceneStructure, targetDuration);
+    if (structuredErrors.size) throw new Error(`REQUIREMENT_MODEL_FAILED: 供应商回退不能进入审核：${[...structuredErrors].map(([name, error]) => `${name}: ${error}`).join("；")}`);
+    const issue = sceneContractIssue(discovery.sceneStructure, targetDuration, strictDuration);
     if (issue) throw new Error(`REQUIREMENT_SCENE_INVALID: ${issue}`);
     const list = object(await originalConvert.call(system, discovery, upstream), "requirementList");
     if (!active) throw new Error("REQUIREMENT_BRIDGE_CLOSED");
@@ -172,5 +241,6 @@ export function installVendorRequirementBridge(
     system._convertDiscoveryToRequirementList = originalConvert;
     system._renderRequirementContract = originalRender;
     if (sceneAgent && sceneLLM) sceneAgent.llmEngine = sceneLLM;
+    for (const restore of structuredRestores) restore();
   };
 }

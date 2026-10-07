@@ -3,11 +3,12 @@ import { createHash } from "node:crypto";
 import type { PreproductionResult, ApprovalCallback } from "./studio.js";
 import type { WorkloomLLMEngine } from "./llm-adapter.js";
 import { filmCanonicalJson } from "./film-worker-channel.js";
-import { environmentDefects, expandShotWithBible, validateSceneBible, type SceneBible } from "./scene-bible.js";
+import { environmentDefects, expandShotWithBible, resolveSceneEnvironment, SceneBibleError, validateSceneBible, type SceneBible } from "./scene-bible.js";
 import { openingHookChecks, validateHookCard, type HookCard } from "./opening-hook.js";
 import { productHeroPhoto, productPhotoPath, type LoadedProductArchive } from "./product-archive.js";
 import { isRealPersonAssetRef } from "./real-person-asset.js";
 import { auditFilmRedlines } from "./prompt-redlines.js";
+import { durationPolicy, FILM_COMPLETENESS_PRINCIPLE } from "./creative-duration-policy.js";
 type Obj = Record<string, any>;
 const obj = (value: unknown): Obj => value && typeof value === "object" && !Array.isArray(value) ? value as Obj : {};
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
@@ -84,7 +85,14 @@ function mapFormalProduction(input: { production: Obj; prd: Obj; projectId: stri
     // 明确角色身份只做引用映射，外观与台词仍来自正式生成物；角色丢失不凭空增补。
     if (cast.id) {
       const noPerson = /^(?:无角色出场|无人物|无人出镜|无角色|无出镜人物)(?:[，,；;。\s].*|$)/.test(mapped.character);
-      if (noPerson) { delete mapped.characterId; delete mapped.assetRef; }
+      if (noPerson) {
+        const subject = obj(mapped.subject);
+        if (subject.hasPerson === true || Number(subject.count) > 0 || subject.faceVisible === true || /^(?:person|human)$/i.test(text(subject.kind))) {
+          throw new Error(`FILM_SUBJECT_CONFLICT：${shotId}明确无人但主体声明有人`);
+        }
+        mapped.subject = { ...subject, hasPerson: false, count: 0, faceVisible: false };
+        delete mapped.characterId; delete mapped.assetRef;
+      }
       else {
         if (![cast.id, cast.name].filter(Boolean).some(name => mapped.character.includes(String(name)))) throw new Error(`FILM_CAST_CHANGED：${shotId}未包含明确角色`);
         mapped.characterId = cast.id; mapped.assetRef = assetRef;
@@ -102,8 +110,11 @@ function mapFormalProduction(input: { production: Obj; prd: Obj; projectId: stri
   if (new Set(shots.map((shot: Obj) => shot.shotId)).size !== shots.length) throw new Error("FILM_SHOT_DUPLICATE");
   const durationSeconds = shots.reduce((sum: number, shot: Obj) => sum + shot.duration, 0);
   const target = Number(brief.duration ?? brief.durationSec ?? prd.productPositioning?.targetDuration);
-  if (!Number.isFinite(target) || Math.abs(durationSeconds - target) > .05) throw new Error(`FILM_DURATION_CHANGED：正式分配${durationSeconds}s与目标${target}s不一致`);
+  const policy = durationPolicy(brief.durationPolicy);
+  if (!Number.isFinite(target) || target <= 0) throw new Error("FILM_DURATION_TARGET_INVALID");
+  if (policy === "strict" && Math.abs(durationSeconds - target) > .05) throw new Error(`FILM_DURATION_CHANGED：strict正式分配${durationSeconds}s与目标${target}s不一致`);
   return { schemaVersion: "workloom.film-shotlist/v1", projectId: input.projectId, shots, durationSeconds,
+    durationPolicy: policy, targetDurationSeconds: target, completenessPrinciple: FILM_COMPLETENESS_PRINCIPLE,
     title: text(prd.projectDefinition?.projectName), aspect: brief.aspectRatio ?? prd.productPositioning?.aspectRatio,
     resolution: brief.resolution ?? prd.productPositioning?.resolution, videoType: "商业广告",
     pipeline: obj(input.metadata.pipelineRoute).kind ?? "narrative",
@@ -129,12 +140,24 @@ export function applyFilmEnvironment(document: FilmShotlist, generated: Obj, pla
   const next = structuredClone(document);
   next.sceneBible = generated.sceneBible as SceneBible; next.hook = hook;
   next.shots = document.shots.map(shot => ({ ...structuredClone(shot), ...structuredClone(scenes.get(shot.shotId)) }));
-  const expanded = next.shots.map(shot => expandShotWithBible(shot, next.sceneBible));
+  const contractErrors: string[] = [];
+  const expanded = next.shots.flatMap(shot => {
+    try { return [expandShotWithBible(shot, next.sceneBible)]; }
+    catch (error) {
+      if (!(error instanceof SceneBibleError)) throw error;
+      let detail = `${shot.shotId}：${error.message}`;
+      if (error.code === "SCENE_VISIBILITY_INVALID") {
+        detail += `；本镜visibleMaterials=${filmCanonicalJson(shot.visibleMaterials)}；本空间已登记item=${filmCanonicalJson(resolveSceneEnvironment(next.sceneBible, shot.sceneId).materials.map(item => item.item))}`;
+      }
+      contractErrors.push(detail); return [];
+    }
+  });
   const defects = environmentDefects(expanded, next.sceneBible).filter(defect => defect.hard);
   const hookChecks = openingHookChecks({ shots: next.shots as any, hook, platform, shortForm: true }).filter(check => check.hard && !check.pass);
-  if (defects.length || hookChecks.length) throw new Error(`FILM_ENVIRONMENT_INVALID：${[...defects, ...hookChecks].map(item => item.detail).join("；")}`);
   const first = next.shots[0]!, firstLines = first.dialogue.map((line: Obj) => text(line.text)).join("");
   const hookLine = hook.firstShotTemplate!.line;
+  if (firstLines && !firstLines.includes(hookLine)) contractErrors.push(`FILM_HOOK_DIALOGUE_CHANGED：钩子line=${filmCanonicalJson(hookLine)}不在实际首镜${first.shotId}口播${filmCanonicalJson(firstLines)}中，不能引用其他镜台词`);
+  if (contractErrors.length || defects.length || hookChecks.length) throw new Error(`FILM_ENVIRONMENT_INVALID：${[...contractErrors, ...[...defects, ...hookChecks].map(item => item.detail)].join("；")}`);
   if (!firstLines.includes(hookLine)) {
     const sourceField = ["subtitle_content", "title_content"].find(key => !firstLines && text(first[key]).includes(hookLine));
     if (!sourceField) throw new Error("FILM_HOOK_DIALOGUE_CHANGED：钩子首句必须来自正式首镜对白或已生成片头旁挂计划，不能另写口播");
@@ -183,9 +206,18 @@ propInteraction中的purpose与screenFacing按真实镜头用途填写：屏幕�
   for (let attempt = 1; attempt <= 2; attempt++) {
     const response = await input.llm.reason(`${contract}${hookContract}\n${filmCanonicalJson({ document: mapped, prd: input.prd, usage: input.metadata.marketingUsage,
       actualFinalFactRejection: input.factRejection ?? null })}${feedback}`,
-      { forceJson: true, maxTokens: 8192, temperature: .1, thinking: { type: "disabled" } });
+      { forceJson: true, maxTokens: 65536, temperature: .1,
+        systemPrompt: "你是正式环境与钩子补全工位。仅返回完整JSON对象，顶层恰好sceneBible/hook/shots；绝不能返回response_format的type:json_object。当前document是已受审镜头，旧PRD与上次错误响应不能覆盖它。保持台词、动作、人物和时长不变。先登记场景materials的完整item名称，再逐镜从同一sceneId的item逐字选visibleMaterials，不写近义名称。首句钩子line只从首镜实际对白截取，不能引用其他镜台词；不增加商品物理结构、功能或布景。环境合同必须具体遵循当前镜头实际台面与承重，台式产品不能改为落地机器。" });
     await input.onArtifact?.(`film-environment-response-${attempt}.json`, response);
-    if (!response.success) throw new Error(`FILM_ENVIRONMENT_GENERATION_FAILED：${response.error}`);
+    if (!response.success) {
+      lastError = new Error(`FILM_ENVIRONMENT_GENERATION_FAILED：${response.error}`);
+      await input.onArtifact?.(`film-environment-generation-failure-${attempt}.json`, { error: (lastError as Error).message, retryable: response.retryable === true });
+      if (response.retryable === true && attempt < 2) {
+        feedback = `\n上次外部模型输出失败：${response.error ?? "没有有效完整响应"}。失败响应已落盘，未成为候选。请从头返回满足原合同的完整json对象，只含sceneBible/hook/shots，不续写局部片段，不改原镜台词、人物、动作或时长。`;
+        continue;
+      }
+      throw lastError;
+    }
     try { return applyFilmEnvironment(mapped, obj(response.data ?? JSON.parse(response.content ?? "")), text(obj(input.metadata.brief).platform)); }
     catch (error) {
       lastError = error; await input.onArtifact?.(`film-environment-contract-failure-${attempt}.json`, { error: error instanceof Error ? error.message : String(error) });
