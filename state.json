@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3402,
+  "revision": 3404,
   "tasks": {
     "132": {
       "number": 132,
@@ -5632,7 +5632,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791403724050,
+      "updatedAt": 1791404714744,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -85440,6 +85440,52 @@
       },
       "previous": "0543c745b7978aec015b91a9e5b8bd32008470f602e7974b7413f130646509be",
       "digest": "24ec89f919c4f434613430a9424e50ed86c60edd70d7e2d1bbead5367ddc23ad"
+    },
+    {
+      "sequence": 3403,
+      "at": "2026-10-07T20:25:14.744Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "24ec89f919c4f434613430a9424e50ed86c60edd70d7e2d1bbead5367ddc23ad",
+      "digest": "181b8508ffd622053d808aeade92ee6774009bad64a269ee97c6273235b0c026"
+    },
+    {
+      "sequence": 3404,
+      "at": "2026-10-07T20:27:50.539Z",
+      "kind": "transaction",
+      "data": {
+        "id": "be01b2a7-d0b4-4931-84db-fdf31e3a284d"
+      },
+      "previous": "181b8508ffd622053d808aeade92ee6774009bad64a269ee97c6273235b0c026",
+      "digest": "8ef25a24388f3650c7ac0fbd55cb910cb443061e86e84f1281151adbf0775d06"
     }
   ]
 }
