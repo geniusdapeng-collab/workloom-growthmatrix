@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1735,
+  "revision": 1737,
   "tasks": {
     "132": {
       "number": 132,
@@ -3424,7 +3424,7 @@
     },
     "146": {
       "number": 146,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791354743310,
       "attempts": {},
       "admission": {
@@ -3440,7 +3440,7 @@
           "migrations": 6
         }
       },
-      "updatedAt": 1791376941116,
+      "updatedAt": 1791378611870,
       "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -3498,8 +3498,15 @@
       "intent": {
         "taskId": "T-2026-1007-0918",
         "ready": true,
-        "dependsOn": [],
-        "releases": []
+        "dependsOn": [
+          145
+        ],
+        "releases": [
+          {
+            "kind": "desktop",
+            "version": "0.1.7"
+          }
+        ]
       },
       "originalBody": "Film worker原先在轮询和下载完成后才保存供应商任务号，换作业或调用键可能重复付费；Film worker图像同步受理也存在同样窗口。现在同作业以完整请求去重，跨作业在事务锁内绑定供应商、模型、端点及完整正文摘要，受理任务号先于轮询/下载持久保存。已受理请求恢复只复用原任务；未知受理明确待对账，禁止自动再提交。成功响应重放核对实际文件摘要，跨作业复用不再次预占或记生成费。\n\n0056迁移新增付费意图查询索引并保持原租户/状态约束，拒绝换绑受理身份、任务号与计数；晚到任务号只补证据，不改终态。当前Codex精读7个变更文件及直接依赖，准确提交后33项单测、20项真实PostgreSQL/RLS/并发/篡改/超时契约全过，服务类型检查和秘密扫描通过。依赖在独立工作树按锁文件安装。故障测试使用注入的测试供应商，未发出任何新付费调用。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
       "files": [
@@ -3597,7 +3604,10 @@
         "previousHead": "6d22a76063381d4a512b6bcec8c7627726a27d46",
         "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "verifiedAt": "2026-10-07T12:00:41.511Z"
-      }
+      },
+      "dependencies": [
+        145
+      ]
     },
     "147": {
       "number": 147,
@@ -45323,6 +45333,46 @@
       },
       "previous": "f217026cc64f6c8f472272c1eabe2fe0d01cd59df7c89db759b056555a8c5b7b",
       "digest": "4a67306d7ca7ad7d47b6028be003f0a5ba5e8ec99005b0cefd24394547f92331"
+    },
+    {
+      "sequence": 1736,
+      "at": "2026-10-07T13:10:11.870Z",
+      "kind": "task",
+      "data": {
+        "number": 146,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "243127c6279e75a36c2c6715ad1df575a90a4c89",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              145
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.7"
+              }
+            ]
+          },
+          "dependencies": [
+            145
+          ]
+        }
+      },
+      "previous": "4a67306d7ca7ad7d47b6028be003f0a5ba5e8ec99005b0cefd24394547f92331",
+      "digest": "c668fc9fc57f69a029686846c1efcf57edc3011492feaea2adeb2a9eb807f9bd"
+    },
+    {
+      "sequence": 1737,
+      "at": "2026-10-07T13:11:08.409Z",
+      "kind": "transaction",
+      "data": {
+        "id": "a562e406-20c5-4969-8ec0-5ce8a89321fe"
+      },
+      "previous": "c668fc9fc57f69a029686846c1efcf57edc3011492feaea2adeb2a9eb807f9bd",
+      "digest": "1e1b3d5ba10f5381df3e98bb3795a4bb4e2cccfc8833b0b58f5c6b56e8c2a443"
     }
   ]
 }
