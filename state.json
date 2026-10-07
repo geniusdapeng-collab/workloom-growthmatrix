@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 681,
+  "revision": 683,
   "tasks": {
     "132": {
       "number": 132,
@@ -2397,9 +2397,22 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791357309101,
+      "updatedAt": 1791358810413,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791357909101
+      "blockedUntil": 1791357909101,
+      "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+      "files": [
+        "packages/video-studio/src/creative-duration-policy.test.ts",
+        "packages/video-studio/src/creative-duration-policy.ts",
+        "packages/video-studio/src/duration-projection-bridge.test.ts",
+        "packages/video-studio/src/duration-projection.test.ts",
+        "packages/video-studio/src/duration-projection.ts",
+        "packages/video-studio/src/duration-rules.test.ts",
+        "packages/video-studio/src/duration-rules.ts",
+        "packages/video-studio/src/vendor-compat.ts",
+        "scripts/tools/duration-projection-e2e.mts"
+      ],
+      "ciSince": 1791358810413
     },
     "145": {
       "number": 145,
@@ -17667,6 +17680,51 @@
       },
       "previous": "33f7d164fc6e600e42cc48f8e48301a2dab91bf6ccbb7a73b55894a72d9b3cd0",
       "digest": "7f9299bd70859d3217f368c0973505e7118af3e7f73b8a93746071a5c63ff262"
+    },
+    {
+      "sequence": 682,
+      "at": "2026-10-07T07:40:10.413Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-creative-duration",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/creative-duration-policy.test.ts",
+            "packages/video-studio/src/creative-duration-policy.ts",
+            "packages/video-studio/src/duration-projection-bridge.test.ts",
+            "packages/video-studio/src/duration-projection.test.ts",
+            "packages/video-studio/src/duration-projection.ts",
+            "packages/video-studio/src/duration-rules.test.ts",
+            "packages/video-studio/src/duration-rules.ts",
+            "packages/video-studio/src/vendor-compat.ts",
+            "scripts/tools/duration-projection-e2e.mts"
+          ],
+          "status": "parked",
+          "ciSince": 1791358810413
+        }
+      },
+      "previous": "7f9299bd70859d3217f368c0973505e7118af3e7f73b8a93746071a5c63ff262",
+      "digest": "ee5ef6eb079c8bc528cd0be8d906fc1bfdf471c4cb69ae556001987a8c13edd0"
+    },
+    {
+      "sequence": 683,
+      "at": "2026-10-07T07:40:35.028Z",
+      "kind": "transaction",
+      "data": {
+        "id": "56542bb3-6936-4b43-b492-fd85663fecc1"
+      },
+      "previous": "ee5ef6eb079c8bc528cd0be8d906fc1bfdf471c4cb69ae556001987a8c13edd0",
+      "digest": "52ad06aa9188e74d2b2554976aa70a95a6c5c68536301a0e2dd719fdd8d1ec6a"
     }
   ]
 }
