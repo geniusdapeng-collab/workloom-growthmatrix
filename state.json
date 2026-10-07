@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1412,
+  "revision": 1415,
   "tasks": {
     "132": {
       "number": 132,
@@ -2236,7 +2236,7 @@
         "owner": "admission/pr-143",
         "generation": {}
       },
-      "updatedAt": 1791371100874,
+      "updatedAt": 1791371825575,
       "headSha": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
       "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-first-pass-camera",
@@ -2246,7 +2246,35 @@
         "dependsOn": [],
         "releases": []
       },
-      "developerReview": null,
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 143,
+        "headSha": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "packages/video-studio/src/first-pass.test.ts",
+          "packages/video-studio/src/first-pass.ts"
+        ],
+        "filesHash": "6a0be61d7fc9ed3bc4ff0ba0baa8ca8fa356592159d7703c7c861ba05faaeba2",
+        "dependsOn": [],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/first-pass.test.ts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T11:16:51.100324+00:00",
+            "result": "Actual recorded check rerun after native source alignment. 1 test file passed; 14 tests passed, zero failed/skip. Actual log work/evidence/delivery-02-tests.log."
+          }
+        ],
+        "reviewedAt": "2026-10-07T11:16:51.106659+00:00",
+        "summary": "当前 Codex 完整读取 first-pass 实现及完整测试，复核否定运镜仅作用于动词，时间段严格解析、边界相接不重叠、完整静止覆盖和前缀运动不被后段遮盖。实现保持输入不变；真实运动重叠、静止缺口、未标时段和非法区间继续阻断。无数据库/权限/外部写变更，无新依赖。准确提交后14项实跑通过。回滚普通 Revert 本提交，不删除源片或模型回执。未发现未解决问题。 Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+        "passed": true,
+        "id": "07d1054b2c2e58b544627d7be952472059b65bb17d6734b5945b6562d9e18779"
+      },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 143,
@@ -2265,7 +2293,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -2275,7 +2303,7 @@
           },
           "head": {
             "ref": "refs/heads/fix/T-2026-1007-0918-first-pass-camera",
-            "sha": "5ee0686f9f8b4e938b42bd7b47364e31e2c17557",
+            "sha": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -2293,8 +2321,8 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "5ee0686f9f8b4e938b42bd7b47364e31e2c17557",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "headSha": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "files": [
           "packages/video-studio/src/first-pass.test.ts",
           "packages/video-studio/src/first-pass.ts"
@@ -2305,8 +2333,8 @@
           "dependsOn": [],
           "releases": []
         },
-        "headTime": 1791351120000,
-        "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "headTime": 1791371157000,
+        "mergeBase": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "checkErrors": [],
         "checkSha": null,
         "hasFailedChecks": false,
@@ -33593,6 +33621,145 @@
       },
       "previous": "1e6cf7c7f966ccba0aa8e4d4171f6d16b399c225d9d5a8e2b2bc4ea59ee9c775",
       "digest": "60075ba382bc5b85772e6ddf76be2a7087689a912788775047a810126b28910f"
+    },
+    {
+      "sequence": 1413,
+      "at": "2026-10-07T11:17:05.574Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 143,
+        "id": "07d1054b2c2e58b544627d7be952472059b65bb17d6734b5945b6562d9e18779",
+        "headSha": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0"
+      },
+      "previous": "60075ba382bc5b85772e6ddf76be2a7087689a912788775047a810126b28910f",
+      "digest": "8342a729c896000a42114c480b6c1b31cb01fc34212d284ecdea05c155f2780d"
+    },
+    {
+      "sequence": 1414,
+      "at": "2026-10-07T11:17:05.575Z",
+      "kind": "task",
+      "data": {
+        "number": 143,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-first-pass-camera",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 143,
+            "headSha": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/first-pass.test.ts",
+              "packages/video-studio/src/first-pass.ts"
+            ],
+            "filesHash": "6a0be61d7fc9ed3bc4ff0ba0baa8ca8fa356592159d7703c7c861ba05faaeba2",
+            "dependsOn": [],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/first-pass.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T11:16:51.100324+00:00",
+                "result": "Actual recorded check rerun after native source alignment. 1 test file passed; 14 tests passed, zero failed/skip. Actual log work/evidence/delivery-02-tests.log."
+              }
+            ],
+            "reviewedAt": "2026-10-07T11:16:51.106659+00:00",
+            "summary": "当前 Codex 完整读取 first-pass 实现及完整测试，复核否定运镜仅作用于动词，时间段严格解析、边界相接不重叠、完整静止覆盖和前缀运动不被后段遮盖。实现保持输入不变；真实运动重叠、静止缺口、未标时段和非法区间继续阻断。无数据库/权限/外部写变更，无新依赖。准确提交后14项实跑通过。回滚普通 Revert 本提交，不删除源片或模型回执。未发现未解决问题。 Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+            "passed": true,
+            "id": "07d1054b2c2e58b544627d7be952472059b65bb17d6734b5945b6562d9e18779"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 143,
+            "pull": {
+              "number": 143,
+              "state": "open",
+              "title": "fix(growth): compare camera locks within timed windows [T-2026-1007-0918]",
+              "body": "正式出镜人物分镜前段推近、尾段定住本来不重叠，旧就绪检查把整镜关键词拼成冲突，并把“无推拉摇移/停止移动”当作肯定运镜。现按时间轴与运镜的同一窗口核对静止覆盖，明确否定不计运动；仍拒绝真实重叠、静止缺口、无时段前缀和非法区间。原稿内容保持不变。\n\n当前 Codex 完整读取并逐行复核两个改动文件；准确提交后运行正常、否定、交界、重叠和缺口回归，不调用模型或付费渲染。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-first-pass-camera",
+                "sha": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "files": [
+              "packages/video-studio/src/first-pass.test.ts",
+              "packages/video-studio/src/first-pass.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791371157000,
+            "mergeBase": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "8342a729c896000a42114c480b6c1b31cb01fc34212d284ecdea05c155f2780d",
+      "digest": "a93e411e5795208025586b1133959f0cdb389dcc8192d6191eb195c8d3394e79"
+    },
+    {
+      "sequence": 1415,
+      "at": "2026-10-07T11:16:59.661Z",
+      "kind": "transaction",
+      "data": {
+        "id": "2b71c6f8-7f39-4c2a-a696-240fdd624431"
+      },
+      "previous": "a93e411e5795208025586b1133959f0cdb389dcc8192d6191eb195c8d3394e79",
+      "digest": "349f3f6434729f6514d4d32fe6f1e795436c3ebab44c816fcdcb4096db9f7fc5"
     }
   ]
 }
