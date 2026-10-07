@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2820,
+  "revision": 2822,
   "tasks": {
     "132": {
       "number": 132,
@@ -8087,7 +8087,7 @@
           }
         ]
       },
-      "updatedAt": 1791398873192,
+      "updatedAt": 1791399312954,
       "admission": {
         "number": 178,
         "headSha": "83b842b042f28174dd07c891ea314fad313c86c8",
@@ -72519,6 +72519,47 @@
       },
       "previous": "4a462e5d797c53888467e47d1f749933a61f51b560296f5f028f2a46aa768a0e",
       "digest": "7f16b10c0fc440905130703e2f6df94ef63dccfd8c24fbd33973e8ae8e1dd4f8"
+    },
+    {
+      "sequence": 2821,
+      "at": "2026-10-07T18:55:12.954Z",
+      "kind": "task",
+      "data": {
+        "number": 178,
+        "patch": {
+          "headSha": "83b842b042f28174dd07c891ea314fad313c86c8",
+          "mainSha": "703947eeca100eb2598c9bb25c914d4dad8c9a9b",
+          "branch": "fix/T-2026-1007-0918-delivery-io-budget",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              172
+            ],
+            "releases": []
+          },
+          "originalBody": "Native delivery repeatedly exhausted CNB reads while checking source PRs that could not advance because their explicit prerequisites were still pending. Reuse hydrated open PR details for planning and defer the full source/CI snapshot until prerequisite planning is clear. Keep fresh snapshots, exact source/main/policy review, native CI, immutable candidate protection and the fresh prerequisite re-read immediately before merge. Permission/read failures and DAG cycles remain closed failures. This infrastructure fix is deployed through normal native integration; it does not declare a separate desktop version.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    172\n  ],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "scripts/delivery/queue-controller.mjs",
+            "scripts/delivery/queue-io-budget.test.mjs",
+            "scripts/delivery/queue-platform.mjs"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791396312503
+        }
+      },
+      "previous": "7f16b10c0fc440905130703e2f6df94ef63dccfd8c24fbd33973e8ae8e1dd4f8",
+      "digest": "441e3991b7d4489744366f0870d8a6d7f08fc0994db6121973a136a4b234105c"
+    },
+    {
+      "sequence": 2822,
+      "at": "2026-10-07T18:55:22.357Z",
+      "kind": "transaction",
+      "data": {
+        "id": "063d67b0-3c1e-4d89-aed0-41782e4b82c1"
+      },
+      "previous": "441e3991b7d4489744366f0870d8a6d7f08fc0994db6121973a136a4b234105c",
+      "digest": "316d970b9be0a5ca3ea17a60dbb391fb3f9ecbb8c6926d2876262c4391f46944"
     }
   ]
 }
