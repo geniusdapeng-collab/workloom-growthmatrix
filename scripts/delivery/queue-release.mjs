@@ -134,9 +134,31 @@ export async function ensureDesktopReleaseTag(platform, release) {
 
 async function releaseBuilds(platform, release) {
   const data = await platform.call(`/-/build/logs?event=${releaseEventFor(release.kind)}&sha=${release.sha}&page_size=100`);
-  if (!Array.isArray(data?.data) || !Number.isSafeInteger(data.total)) throw new Error('Release build history unreadable');
-  if (data.total > 100) throw new Error('Release build history is too large to reconcile safely');
+  // CNB's real serializer also returns canonical decimal strings (including "0").
+  // Do not coerce null, booleans, whitespace, exponents or malformed totals to zero.
+  const total = typeof data?.total === 'string' && /^(?:0|[1-9]\d*)$/.test(data.total)
+    ? Number(data.total) : data?.total;
+  if (!Array.isArray(data?.data) || !Number.isSafeInteger(total) || total < 0) throw new Error('Release build history unreadable');
+  if (total > 100) throw new Error('Release build history is too large to reconcile safely');
+  if (data.data.length !== total) throw new Error('Release build history is incomplete');
+  const seen = new Set();
+  for (const build of data.data) {
+    if (!build || typeof build.sn !== 'string' || !build.sn.trim() || seen.has(build.sn)) {
+      throw new Error('Release build history identity is ambiguous');
+    }
+    seen.add(build.sn);
+  }
   return data.data;
+}
+
+function recoverablePrelaunchHistoryFailure(release, state) {
+  return release?.status === 'parked' && release.attempts === 0
+    && release.error === 'Release build history unreadable'
+    && !release.build && !release.launchIntentAt && !release.launchedAt
+    && Array.isArray(release.builds) && release.builds.length === 0
+    && release.tag?.name === release.version && release.tag.sha === release.sha
+    && !state.events.some(event => ['release_launch_intent', 'release_started', 'release_launch_recovered'].includes(event.kind)
+      && event.data?.key === release.key);
 }
 
 /** One launch per release environment, while failed releases do not hold the integration lock. */
@@ -148,6 +170,29 @@ export async function reconcileReleases({ platform, store, now = Date.now(), ver
     if (!queue.length) continue;
     const item = queue[0];
     try {
+      // Recover only this observed pre-dispatch ABI failure. Unknown acknowledgements,
+      // prior attempts and intentional parks keep their original no-relaunch rule.
+      if (recoverablePrelaunchHistoryFailure(item, state)) {
+        const history = await releaseBuilds(platform, item);
+        if (history.some(build => build.sha === item.sha && build.event === releaseEventFor(item.kind)
+          && build.title === `WorkLoom release ${item.key}`)) {
+          throw new Error('Prior release launch lacks a ledger acknowledgement; refusing a new launch');
+        }
+        const recovered = await store.mutate(current => {
+          const actual = current.releases[item.key];
+          if (!recoverablePrelaunchHistoryFailure(actual, current) || actual.sha !== item.sha || actual.version !== item.version) {
+            return false;
+          }
+          current.releases[item.key] = { ...actual, status: 'pending', error: null };
+          appendEvent(current, 'release_prelaunch_history_recovered', { key: item.key, knownBuilds: history.map(build => build.sn) }, now);
+          return true;
+        });
+        state = await store.read();
+        if (!recovered.result) {
+          report.push({ kind, status: 'recovery_conflict', key: item.key, reason: 'Release recovery state changed; no new launch' });
+          continue;
+        }
+      }
       if (item.status === 'launching' || item.status === 'unknown') {
         const matches = (await releaseBuilds(platform, item)).filter(build => !item.knownBuilds.includes(build.sn) && build.sha === item.sha && build.event === releaseEventFor(item.kind) && build.title === `WorkLoom release ${item.key}`);
         if (matches.length !== 1 || !matches[0].sn) {
