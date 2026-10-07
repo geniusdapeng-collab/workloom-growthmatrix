@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 495,
+  "revision": 500,
   "tasks": {
     "132": {
       "number": 132,
@@ -2540,6 +2540,26 @@
       "ciSince": 1791352820859,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/145/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 1791354909536
+    },
+    "146": {
+      "number": 146,
+      "status": "developing",
+      "firstSeen": 1791354743310,
+      "attempts": {},
+      "admission": {
+        "number": 146,
+        "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "filesHash": "962fe398a94a7554f5737ce053346e72cb3d4baf9b4e974ddcf75861c5dab088",
+        "scopes": [
+          "migrations"
+        ],
+        "owner": "admission/pr-146",
+        "generation": {
+          "migrations": 2
+        }
+      },
+      "updatedAt": 1791354743310
     }
   },
   "leases": {
@@ -2551,9 +2571,9 @@
     },
     "migrations": {
       "owner": null,
-      "generation": 1,
-      "acquiredAt": 1791353563864,
-      "expiresAt": 1791354099148
+      "generation": 2,
+      "acquiredAt": 1791354743310,
+      "expiresAt": 1791354743310
     }
   },
   "releases": {},
@@ -13173,6 +13193,93 @@
       },
       "previous": "04455d2660d218e1d9401b2ab41a75a82ee174087d7d152eecee6a4796cdba0d",
       "digest": "df8837345d83d68ce2093b43754be5e1655b1af2a772cd9cb1bf1e8373b39bb9"
+    },
+    {
+      "sequence": 496,
+      "at": "2026-10-07T06:32:23.310Z",
+      "kind": "lease_acquire",
+      "data": {
+        "scopes": [
+          "migrations"
+        ],
+        "owner": "admission/pr-146",
+        "generation": {
+          "migrations": 2
+        }
+      },
+      "previous": "df8837345d83d68ce2093b43754be5e1655b1af2a772cd9cb1bf1e8373b39bb9",
+      "digest": "6c210e99527cedde3e70d4dd49f3add08cd923277169217be6ed1079360f6a70"
+    },
+    {
+      "sequence": 497,
+      "at": "2026-10-07T06:32:23.310Z",
+      "kind": "lease_release",
+      "data": {
+        "scopes": [
+          "migrations"
+        ],
+        "owner": "admission/pr-146",
+        "generation": {
+          "migrations": 2
+        }
+      },
+      "previous": "6c210e99527cedde3e70d4dd49f3add08cd923277169217be6ed1079360f6a70",
+      "digest": "4e3fda4c5e5aa42c442e964058f465324edd83a5a26de652d287f2f1bea25142"
+    },
+    {
+      "sequence": 498,
+      "at": "2026-10-07T06:32:23.310Z",
+      "kind": "source_admitted",
+      "data": {
+        "number": 146,
+        "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "filesHash": "962fe398a94a7554f5737ce053346e72cb3d4baf9b4e974ddcf75861c5dab088",
+        "scopes": [
+          "migrations"
+        ],
+        "owner": "admission/pr-146",
+        "generation": {
+          "migrations": 2
+        }
+      },
+      "previous": "4e3fda4c5e5aa42c442e964058f465324edd83a5a26de652d287f2f1bea25142",
+      "digest": "29095fdff5054413dc3c8981444f73610deb16f5fa96e0cd1f3973c3ab4d3c0b"
+    },
+    {
+      "sequence": 499,
+      "at": "2026-10-07T06:32:23.310Z",
+      "kind": "task",
+      "data": {
+        "number": 146,
+        "patch": {
+          "admission": {
+            "number": 146,
+            "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "filesHash": "962fe398a94a7554f5737ce053346e72cb3d4baf9b4e974ddcf75861c5dab088",
+            "scopes": [
+              "migrations"
+            ],
+            "owner": "admission/pr-146",
+            "generation": {
+              "migrations": 2
+            }
+          }
+        }
+      },
+      "previous": "29095fdff5054413dc3c8981444f73610deb16f5fa96e0cd1f3973c3ab4d3c0b",
+      "digest": "d55642b19c869e55ea409a51168f4348d9b9be7733938b809007e3dee6145d31"
+    },
+    {
+      "sequence": 500,
+      "at": "2026-10-07T06:32:22.431Z",
+      "kind": "transaction",
+      "data": {
+        "id": "source-admit:146:6d22a76063381d4a512b6bcec8c7627726a27d46:6e7bb78749a4ade1955cf03476ed249f630aa3f8"
+      },
+      "previous": "d55642b19c869e55ea409a51168f4348d9b9be7733938b809007e3dee6145d31",
+      "digest": "227d3ff3fab6ba661db0556ffe01612a44b0d8ba2b2d3c4163c840f78e7c041b"
     }
   ]
 }
