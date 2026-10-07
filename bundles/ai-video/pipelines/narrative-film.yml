@@ -3,7 +3,7 @@
 quest: narrative-film
 name: 叙事片管线
 version: v1
-description: 剧本→场景→片头→视听→连贯审查→提示词融合→字段质检→定妆照→预生产确认→渲染→后期→调色→字幕→配音→配乐→多风格交付→成片入库→返修闭环
+description: 新生成先走需求与预生产授权；成功渲染镜头按真实task/字节直接后期，无源片品质二检；请求调色字幕配乐交付一次加工，默认原节目音，明确请求才配音；实际错误与返修来源保持
 steps:
   - step_key: script
     name: 剧本蓝图
@@ -92,20 +92,20 @@ steps:
   - step_key: subtitle
     name: 标题字幕制作
     owner: subtitle-stylist
-    outputs: [subtitle_track, subtitle_report, final_video]   # 文字层收口：字体选型 + 平台版式 + 版式体检 + 可现度复检。**字幕以旁挂文件交付（srt/ass/vtt + 清单），母版不烧字**（G-DLV2）；要带字幕的片子由软字幕轨（softmux，画面逐帧零改动）或另存烧字副本派生
+    outputs: [subtitle_track, subtitle_report, final_video]   # 请求字体/样式/事件实际加工一次，无默认可读性/墨迹/安全区/可现度品质闸；旁挂优先，母版不烧字，软轨实际copy，明确硬字幕另存副本
   - step_key: voice
-    name: 成片配音
+    name: 原节目音默认保留（明确请求时配音）
     owner: voice-artist
-    outputs: [voice_track, voice_report, final_video]   # 克隆音色配音：时窗对齐 + 原声让位 + 视频轨 copy；授权不清不得建音色档案
+    outputs: [voice_track, voice_report, final_video]   # 默认成功源片原节目音直接使用，不自动 ASR/TTS/克隆或品质重配音；明确请求配音才实际加工，授权/隐私/源字节保持
   - step_key: bgm
     name: 成片配乐
     owner: bgm-composer
-    outputs: [bgm_track, bgm_report, final_video]   # 后期音频链路收口：原声保留策略 + BGM 让位 + -14 LUFS 母版
+    outputs: [bgm_track, bgm_report, final_video]   # 原节目音默认接受；请求配方混音一次，有限时间轴，未测声学品质null；显式分轨权限字节照验
   - step_key: deliver
     name: 多风格交付包
     owner: post-editor
-    gate: G-DLV1                  # 变体雷同（画面与音轨都测不出差别）一票否决
-    outputs: [delivery_package, final_video, subtitle_track]   # 干净母版 + 旁挂字幕 + 2–3 个风格变体（封面/文案/BGM/调色/转场）+ 软字幕轨版 + 交付清单 + 工程文件；quality=uhd 时先在本机增强低分辨率镜头，再实测目标画布与来源（G-DLV8/9）；镜头只生成一次，变体零 token
+    gate: G-DLV1                  # 实际所请求变体缺产物失败；单变体可交付，无默认像素/音轨/封面差异品质闸
+    outputs: [delivery_package, final_video, subtitle_track]   # 干净母版/请求变体/字幕/封面/文案/清单/工程实际交付；HD/UHD按真实scale-pad画布导出，不强制模型增强；成功原镜头复用，后期本地成本如实记账
   - step_key: archive
     name: 成片入库
     owner: post-editor
