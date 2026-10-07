@@ -1,4 +1,5 @@
 /** Persist author facts once and carry the same scoped contract into every film review. */
+import { acceptPostStage, POST_RENDER_STAGES } from "./post-render-acceptance.js";
 import { randomUUID } from "node:crypto";
 import { closeSync, constants, fstatSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -66,6 +67,7 @@ export function filmReviewContracts(source: FilmContractSource, shotId?: string)
 export async function reviewFilmStage(source: FilmContractSource, options: Omit<ProducerGateOptions, "contracts">,
   reviewer: (options: ProducerGateOptions) => Promise<ProducerVerdict> = reviewStage): Promise<ProducerVerdict> {
   if (options.projectId !== source.projectId) throw new Error("FILM_REVIEW_PROJECT_MISMATCH");
+  if (POST_RENDER_STAGES.has(options.stage)) return acceptPostStage(options);
   const requested = options.context?.shotId;
   if (requested !== undefined && (typeof requested !== "string" || !requested)) throw new Error("FILM_REVIEW_SCOPE_INVALID");
   const contracts = filmReviewContracts(source, requested as string | undefined);

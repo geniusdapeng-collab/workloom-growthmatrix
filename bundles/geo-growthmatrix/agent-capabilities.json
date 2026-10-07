@@ -151,6 +151,25 @@
       "dataMode": "simulated"
     },
     {
+      "id": "growth.video.workbench.guide",
+      "version": "1.0.0",
+      "title": "读取内置 AI 工作台视频调用指南",
+      "description": "读取 Matrix 固定视频工作台指南全文、版本、产品标识与 SHA-256，说明需求保留、真实 Studio/影片/CLI 入口、原生音轨能力缺口、时间估算及交付核对。只读本仓文件，不调服务、模型或媒体。",
+      "operation": "read",
+      "risk": "low",
+      "dataMode": "unverified",
+      "transport": {
+        "kind": "local",
+        "module": "bundles/geo-growthmatrix/capabilities/workbench-guide.mjs",
+        "export": "workbenchGuide"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
       "id": "growth.video.route.record",
       "version": "1.0.0",
       "title": "读取视频分流结论",

@@ -104,7 +104,7 @@ function printHuman(command, result) {
     line(`滤镜链：${r.chain}`);
     line(`强度：${r.intensity}${r.profile ? ` · profile=${r.profile}` : ""}${r.lut ? ` · lut=${path.basename(r.lut)}` : ""}`);
     line(`时长：${fmt(r.durationSeconds)}s · 体积：${(r.sizeBytes / 1024 / 1024).toFixed(2)}MB`);
-    line(`指标：YAVG ${fmt(r.before.YAVG)} → ${fmt(r.after.YAVG)}（Δ${fmt(r.delta.YAVG)}）  SATAVG ${fmt(r.before.SATAVG)} → ${fmt(r.after.SATAVG)}`);
+    line("执行请求配方一次；未进行源片质量评分");
     line(`sha256：${r.sha256}`);
     for (const w of r.verifyWarnings) line(`⚠ ${w}`);
     return;
@@ -115,15 +115,8 @@ function printHuman(command, result) {
     if (r.recipe) line(`配方：${r.recipe}${r.recipeContext ? ` · ${r.recipeContext.genre} · ${r.recipeContext.scene}` : ""}`);
     line(`理由：${r.reason ?? `最佳候选比原片高 ${r.improvement} 分（阈值 ${r.minImprovement}）`}`);
     line("");
-    line("候选得分（基准 100 = 原片）");
-    for (const c of [...r.candidates].sort((a, b) => b.score - a.score).slice(0, 6)) {
-      line(`  ${String(c.score).padStart(6)}  ${String(c.id).padEnd(22)} 对比度×${c.reasons.contrastRatio} 饱和×${c.reasons.satRatio} 裁切${c.reasons.clipDeltaPct >= 0 ? "+" : ""}${c.reasons.clipDeltaPct}% 亮度${c.reasons.lumaDrift >= 0 ? "+" : ""}${c.reasons.lumaDrift}`);
-    }
-    if (r.verdict === "graded") {
-      line("");
-      line(`成片：${r.output}`);
-      line(`成片得分：${r.finalScore.score}（原片 100）｜可见性 ${r.visibility.meanAbsDiff}/255 ${r.visibility.verdict}`);
-    }
+    line(`成片：${r.output}`);
+    line(`sha256：${r.sha256}`);
     return;
   }
   if (command === "scope") {
@@ -290,10 +283,10 @@ async function main() {
         "  recipes [--list] [--genre <题材>] [--platform <平台>] [--keyword <词>] [--id <配方 id>]",
         "                                  题材×场景调色配方（含 profile/LUT/强度/目标区间/避免事项）",
         "  grade   --in <file> --out <file> [--profile <p>] [--lut <cube>] [--intensity 0..1] [--corrections-json <json>]",
-        "                                        [--auto] [--denoise]  自动校正（曝光/饱和/偏色，先校正后创作）；降噪仅在噪点命中时插入",
+        "                                        [--auto] [--denoise]  自动校正（曝光/饱和/偏色，先校正后创作）；降噪按显式请求执行",
         "  best    --in <file> [--out <file>] [--at a,b] [--min-improvement 2]",
         "                                  可加 [--recipe <id>] / [--genre <题材>] / [--platform <平台>] 走配方驱动",
-        "                                  候选择优+画质打分；判「无需调色」时不产出文件（do no harm）",
+        "                                  按请求配方执行一次调色；不进行源片质量评分",
         "  match   --ref <file> --in <file> [--in <file>...] --out-dir <dir> [--profile <p>]",
         "                                  [--histogram-check warn|fail|off] [--denoise]",
         "  compare --before <file> --after <file> [--at s] --out <png>",
