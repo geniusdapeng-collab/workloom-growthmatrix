@@ -8,6 +8,8 @@ import { resolve } from "node:path";
 import {
   CapabilityError, invokeCapability, loadCatalog, mcpTools, sanitizeErrorMessage, validateInput,
 } from "./agent-capabilities.mjs";
+// Keep the Matrix guide's real CLI/MCP and payload failure cases in the existing CI test:agent entry.
+import "../bundles/geo-growthmatrix/capabilities/workbench-guide.test.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 /**

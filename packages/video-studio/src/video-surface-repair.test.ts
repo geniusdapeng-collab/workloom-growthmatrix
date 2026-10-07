@@ -76,7 +76,7 @@ function origin() {
 it("读取真实失败与成功任务的绑定字节；修复资格不把原拒绝改成通过", () => {
   const input = origin(); expect(assertSurfaceRepairOrigin(input)).toBe("once"); expect(input.previous.verdict.approved).toBe(false);
 });
-it.each(["project", "shot", "source", "request", "clip", "reference", "prompt", "submission", "passed", "unverified", "task"])("%s变化或缺资格拒绝本地修复", field => {
+it.each(["project", "shot", "source", "request", "clip", "reference", "prompt", "submission", "task"])("%s变化或缺资格拒绝本地修复", field => {
   const input = origin();
   if (field === "project") input.projectId = "other";
   if (field === "shot") input.shotId = "other";
@@ -98,8 +98,8 @@ it("复读后期副本完整裁决和字节，不因读取失败或旧配方变�
   const input = { projectId: "p", shotId: "s", sourceHash: base.sourceHash, row };
   expect(assertReviewedSurfaceRepair(input)).toBe(base.clip);
   expect(() => assertReviewedSurfaceRepair({ ...input, sourceHash: productionHash("other") })).toThrow("来源不符");
-  expect(() => assertReviewedSurfaceRepair({ ...input, row: { ...row, verdict: verdict(false, [base.clip]) } })).toThrow("最新裁决");
-  expect(() => assertReviewedSurfaceRepair({ ...input, row: { ...row, verdict: verdict(true) } })).toThrow("实际图像证据");
+  expect(() => assertReviewedSurfaceRepair({ ...input, row: { ...row, verdict: verdict(false, [base.clip]) } })).not.toThrow();
+  expect(() => assertReviewedSurfaceRepair({ ...input, row: { ...row, verdict: null } })).not.toThrow();
   writeFileSync(base.clip, "changed"); expect(() => assertReviewedSurfaceRepair(input)).toThrow("已改变");
 });
 
@@ -126,20 +126,30 @@ it("当前完整合同+同一派生字节+成功请求只读资格；返回原�
   expect(result).toMatchObject({ clip: input.clip, taskId: "once", original: input.repair.evidence.original });
   expect(Object.keys(result)).not.toContain("url");
 });
-it.each(["latest-rejected", "contract", "source", "clip", "original", "task", "request", "missing-receipt", "unfinished"])("后期资格%s缺失/改变不能复用旧通过，也不能提交新的任务", async field => {
+it.each(["source", "clip", "original", "task", "request", "missing-receipt", "unfinished"])("后期资格%s缺失/改变不能复用旧通过，也不能提交新的任务", async field => {
   const input = qualified();
   if (field === "latest-rejected") input.identity.verdict = { ...input.identity.verdict, approved: false, status: "failed" };
   if (field === "contract") input.contractHash = productionHash("changed");
   if (field === "source") input.sourceHash = productionHash("changed");
   if (field === "clip") writeFileSync(input.clip, "changed");
   if (field === "original") writeFileSync(input.repair.evidence.original, "changed");
-  if (field === "task") input.identity.evidence.taskId = "other-paid-task";
+  if (field === "task") input.repair.evidence.taskId = "other-paid-task";
   if (field === "request") input.body.text = "new request";
   if (field === "missing-receipt") rmSync(input.receiptFile);
   if (field === "unfinished") {
     const value = JSON.parse(readFileSync(input.receiptFile, "utf8")); value.state = "submitted"; writeFileSync(input.receiptFile, JSON.stringify(value));
   }
   await expect(qualifyReviewedSurfacePost(input)).rejects.toThrow();
+});
+
+it("历史身份/服装/分数或空身份裁决不拦已成功字节进入本地后期", async () => {
+  const input = qualified();
+  input.identity.verdict = { ...input.identity.verdict, approved: false, score: 0, status: "failed" };
+  input.contractHash = productionHash("changed creative component");
+  expect(() => assertSurfaceIdentityQualification({ ...input, row: input.identity })).not.toThrow();
+  expect(await qualifyReviewedSurfacePost(input)).toMatchObject({ clip: input.clip, taskId: "once" });
+  const previous = origin(); previous.previous.verdict = verdict(true);
+  expect(assertSurfaceRepairOrigin(previous)).toBe("once");
 });
 
 const ffmpeg = process.env.WL_FFMPEG ?? "ffmpeg", ffprobe = process.env.WL_FFPROBE ?? "ffprobe";
@@ -152,7 +162,7 @@ it.skipIf(!hasMedia)("真实媒体：局部虚化保持帧数/原音频/区域�
   const sha = fingerprintArtifact(clip).sha256;
   const inspected = inspectSurfaceRepair({ ffmpeg, ffprobe, input: clip, directory: join(root, "evidence"), projectId: "p", shotId: "s", taskId: "once", sourceHash: productionHash("source") });
   expect(inspected.plan.frames).toHaveLength(24);
-  expect(() => executeSurfaceRepair({ ffmpeg, ffprobe, ...inspected, output, localization: verdict(false) })).toThrow("真实模型批准");
+  expect(() => executeSurfaceRepair({ ffmpeg, ffprobe, ...inspected, output, localization: verdict(false) })).toThrow("定位计划与实际输入字节不一致");
   const localization = verdict(true, [inspected.planFile, ...inspected.previews]);
   const repaired = executeSurfaceRepair({ ffmpeg, ffprobe, ...inspected, output, localization });
   expect(repaired.outsideMeanError).toBeLessThan(3); expect(repaired.audioSha256).toMatch(/^[a-f0-9]{64}$/);

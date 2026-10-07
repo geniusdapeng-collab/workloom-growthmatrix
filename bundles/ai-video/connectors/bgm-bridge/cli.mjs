@@ -13,7 +13,7 @@
  *   bgm-cli mix       --in clip.mp4 --out scored.mp4 --bgm bgm.wav [--policy keep-dialogue]
  *                     [--audio-stems pinned-audio-reference.json | --declared-program-mix]
  *                     # --declared-program-mix：源片是对白+环境混音成品、无可独立取证的干净分轨时，
- *                     # 调用方**显式声明**直混；回执写 sourceAuthority=declared-unverified（不冒充签章分轨）
+ *                     # 旧声明开关可兼容；默认源片节目轨回执为 original-program-bytes（不冒充签章分轨）
  *                     [--music-level -22] [--ducking 12] [--lufs -14] [--evidence-dir dir]
  *                     [--track-license cc-by-4.0] [--attribution-out CREDITS.md]
  *   bgm-cli separate  --in clip.mp4 --out-dir dir [--engine auto|demucs|ffmpeg]
@@ -85,9 +85,24 @@ function catalogFlag(value) {
 }
 
 function audioStemsFlag(value) {
-  if (typeof value !== "string" || !value) throw new BgmError("--audio-stems 需要工程固定的签章分轨引用 JSON", "audio_stems_source_unverified", false);
-  try { return JSON.parse(fs.readFileSync(value, "utf8")); }
+  if (value === undefined) return null;
+  if (typeof value !== "string" || !value.trim()) throw new BgmError("--audio-stems 需要签章分轨引用 JSON 路径", "bad_request", false);
+  let parsed;
+  try { parsed = JSON.parse(fs.readFileSync(value, "utf8")); }
   catch (error) { throw new BgmError(`音轨引用无法读取：${error.message}`, "bad_request", false); }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new BgmError("--audio-stems JSON 必须是非空对象；不能丢弃显式来源而回退原声", "bad_request", false);
+  }
+  return parsed;
+}
+function audioAuthorityFlags(flags) {
+  if (Object.hasOwn(flags, "audio-stems") && Object.hasOwn(flags, "declared-program-mix")) {
+    throw new BgmError("--audio-stems 与 --declared-program-mix 不能同时提供", "bad_request", false);
+  }
+  if (Object.hasOwn(flags, "declared-program-mix") && flags["declared-program-mix"] !== true) {
+    throw new BgmError("--declared-program-mix 是无值开关", "bad_request", false);
+  }
+  return { audioStems: audioStemsFlag(flags["audio-stems"]), declaredProgramMix: flags["declared-program-mix"] === true };
 }
 
 async function main() {
@@ -204,10 +219,9 @@ async function main() {
       return 0;
     }
     case "mix": {
-      const declaredProgramMix = flags["declared-program-mix"] === true;
+      const authority = audioAuthorityFlags(flags);
       const result = await mix({
-        audioStems: declaredProgramMix ? null : audioStemsFlag(flags["audio-stems"]),
-        declaredProgramMix,
+        ...authority,
         input: flags.in,
         output: flags.out,
         bgmPath: flags.bgm,
@@ -236,9 +250,10 @@ async function main() {
         sectionEndSec: number(flags["section-end"]),
       });
       line(`已配乐：${result.output.path}`);
-      line(`  策略 ${result.policy} · BGM ${result.mix.musicLevelDb}dB · 让位 ${result.levels.duckingDepthDb}dB · 人声余量 ${result.levels.speechToMusicMarginDb}dB · 配乐可闻度 ${result.levels.musicPresenceDb}dB`);
-      line(`  响度 ${result.loudness.after.integratedLufs} LUFS / 真峰值 ${result.loudness.after.truePeakDbtp} dBTP（目标 ${result.mix.targetLufs} / ${result.mix.truePeak}）`);
-      line(`  卡点：${result.alignment.verdict}（${result.alignment.alignedCount}/${result.alignment.cuts.length} 落在 ±${result.alignment.toleranceMs}ms 内，平均 ${result.alignment.meanAbsErrorMs}ms，BPM ${result.alignment.bpm}）`);
+      line(`  策略 ${result.policy} · 请求 BGM ${result.mix.musicLevelDb}dB · 让位参数 ${result.mix.duckingDbTarget} · 时间线 ${result.output.durationSeconds}s`);
+      line(`  来源 ${result.independentAudio.sourceAuthority} · 未进行音频品质复评`);
+      line(`  请求响度 ${result.mix.targetLufs} LUFS / 真峰值 ${result.mix.truePeak} dBTP（处理参数；无复评分数）`);
+      line(`  卡点：${result.alignment.verdict} · 请求剪辑点 ${result.alignment.cuts.length} · BPM ${result.alignment.bpm}`);
       if (result.section?.chosen) {
         line(`  选段：${result.section.mode} → ${result.section.chosen.type} ${result.section.played?.startSec ?? result.section.chosen.startSec}s→${result.section.chosen.endSec}s`);
         line(`        理由：${result.section.reason}`);
@@ -376,10 +391,9 @@ async function main() {
       return 2;
     }
     case "best": {
-      const declaredProgramMix = flags["declared-program-mix"] === true;
+      const authority = audioAuthorityFlags(flags);
       const result = await best({
-        audioStems: declaredProgramMix ? null : audioStemsFlag(flags["audio-stems"]),
-        declaredProgramMix,
+        ...authority,
         input: flags.in,
         output: flags.out,
         genre: typeof flags.genre === "string" ? flags.genre : null,
@@ -396,9 +410,9 @@ async function main() {
         line(`结论：无需配乐 —— ${result.reason}`);
         return 0;
       }
-      line(`结论：已配乐（择优）`);
-      line(`  赢家 ${result.winnerLabel} · 预估分 ${result.score}（阈值 ${result.minScore}）`);
-      line(`  成片 ${result.report.output.path} · 响度 ${result.report.loudness.after.integratedLufs} LUFS · 让位 ${result.report.levels.duckingDepthDb}dB · 人声余量 ${result.report.levels.speechToMusicMarginDb}dB`);
+      line(`结论：已按请求配方配乐`);
+      line(`  配方 ${result.winnerLabel} · 未进行源片品质评分或复选`);
+      line(`  成片 ${result.report.output.path} · 时间线 ${result.report.output.durationSeconds}s · 来源 ${result.report.independentAudio.sourceAuthority}`);
       line(`  sha256 ${result.sha256}`);
       return 0;
     }
