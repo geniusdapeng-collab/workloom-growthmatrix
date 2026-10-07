@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1397,
+  "revision": 1399,
   "tasks": {
     "132": {
       "number": 132,
@@ -4345,7 +4345,7 @@
     },
     "158": {
       "number": 158,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791364616335,
       "attempts": {},
       "admission": {
@@ -4357,7 +4357,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791369013609,
+      "updatedAt": 1791371100874,
       "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
       "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -33246,6 +33246,45 @@
       },
       "previous": "fe20efb251e4a162f32a593ef426bc45daf6a9592ae62c0d85ceae441673be83",
       "digest": "2b0ca207d0c7595d1160198319892922b350dc4421af07e01e87d405f29a437b"
+    },
+    {
+      "sequence": 1398,
+      "at": "2026-10-07T11:05:00.874Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146
+            ],
+            "releases": []
+          },
+          "dependencies": [
+            144,
+            145,
+            146
+          ]
+        }
+      },
+      "previous": "2b0ca207d0c7595d1160198319892922b350dc4421af07e01e87d405f29a437b",
+      "digest": "8f13a1dae4f00c51bfadc453e37f905ba41055071f18c1be586d5c2a26298d22"
+    },
+    {
+      "sequence": 1399,
+      "at": "2026-10-07T11:06:39.560Z",
+      "kind": "transaction",
+      "data": {
+        "id": "11bf5c44-6e1b-43dc-a94e-a4269f9f4fc9"
+      },
+      "previous": "8f13a1dae4f00c51bfadc453e37f905ba41055071f18c1be586d5c2a26298d22",
+      "digest": "de3b8fd1e2611312a816538ae60bbcea7d39b3c0e6c7793dce5ba5a8121780cc"
     }
   ]
 }
