@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4034,
+  "revision": 4036,
   "tasks": {
     "132": {
       "number": 132,
@@ -7066,7 +7066,7 @@
     },
     "167": {
       "number": 167,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791373275072,
       "attempts": {},
       "headSha": "a3ae5995629bcecc7f2417412fbe90758a25143c",
@@ -7206,7 +7206,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791414018724,
+      "updatedAt": 1791415213157,
       "admission": {
         "number": 167,
         "headSha": "a3ae5995629bcecc7f2417412fbe90758a25143c",
@@ -7224,7 +7224,7 @@
         "bundles/ai-video/library/style-variants/bold-promo.json"
       ],
       "ciSince": 1791374342093,
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/167 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "error": "Prerequisite #165 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/165 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "repairRequired": {
         "provider": "codex",
         "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
@@ -7233,7 +7233,7 @@
         "at": 1791378611870
       },
       "recoveryIntent": null,
-      "blockedUntil": 1791414311542,
+      "blockedUntil": 1791415813157,
       "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -100074,6 +100074,31 @@
       },
       "previous": "8007ee70b8fad7f6e984e011fd3e0125a75049517df96c09c88d4233d533aa90",
       "digest": "0b926b9b57f3b8e62a27a321f4ca3a6aa5730cd8e3a5c7b1620d54a92cf71623"
+    },
+    {
+      "sequence": 4035,
+      "at": "2026-10-07T23:20:13.157Z",
+      "kind": "task",
+      "data": {
+        "number": 167,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #165 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/165 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791415813157
+        }
+      },
+      "previous": "0b926b9b57f3b8e62a27a321f4ca3a6aa5730cd8e3a5c7b1620d54a92cf71623",
+      "digest": "623c4b83d583264856c1eac79f7940e4ca139e179ce4e6ce0272f5e698349758"
+    },
+    {
+      "sequence": 4036,
+      "at": "2026-10-07T23:21:21.072Z",
+      "kind": "transaction",
+      "data": {
+        "id": "25282808-4151-40ad-a540-0a61edb5846f"
+      },
+      "previous": "623c4b83d583264856c1eac79f7940e4ca139e179ce4e6ce0272f5e698349758",
+      "digest": "fc200eb252db15680d1f9968ebe16aa54c6e4f4a276f1d7237306c045279882e"
     }
   ]
 }
