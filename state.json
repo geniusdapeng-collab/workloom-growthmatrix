@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2838,
+  "revision": 2840,
   "tasks": {
     "132": {
       "number": 132,
@@ -659,7 +659,7 @@
     },
     "134": {
       "number": 134,
-      "status": "aligning",
+      "status": "parked",
       "firstSeen": 1791310212615,
       "attempts": {},
       "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -688,8 +688,8 @@
         "at": 1791399352988
       },
       "developerReview": null,
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/134 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 0,
+      "error": "Command failed: git merge --no-ff --no-edit d4431bae77c5af2345402949978f95a70c1db5f1\n",
+      "blockedUntil": 1791399952988,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -73089,6 +73089,31 @@
       },
       "previous": "1700a62ce1f12c818d85fbd33d395bdd310e0083a68770b2b0d3c60d51e13c89",
       "digest": "18b3b496e1015f1ae79472c4bd93a84423a5d2629b642f339fbfabb79b647c86"
+    },
+    {
+      "sequence": 2839,
+      "at": "2026-10-07T18:55:52.988Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "Command failed: git merge --no-ff --no-edit d4431bae77c5af2345402949978f95a70c1db5f1\n",
+          "blockedUntil": 1791399952988
+        }
+      },
+      "previous": "18b3b496e1015f1ae79472c4bd93a84423a5d2629b642f339fbfabb79b647c86",
+      "digest": "b9538233f2dc282c62433cf6cb2ca5426d2e82306de83384fa5d400054628b6c"
+    },
+    {
+      "sequence": 2840,
+      "at": "2026-10-07T18:56:17.390Z",
+      "kind": "transaction",
+      "data": {
+        "id": "d0f97793-37f3-479a-bb7c-bceb886f28eb"
+      },
+      "previous": "b9538233f2dc282c62433cf6cb2ca5426d2e82306de83384fa5d400054628b6c",
+      "digest": "20d47584b5f18923f9473571f911b051b5d173e2f70024da6446ff299189b85b"
     }
   ]
 }
