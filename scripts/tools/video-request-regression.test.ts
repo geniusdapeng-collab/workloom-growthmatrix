@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -126,13 +127,19 @@ describe("全链路镜头增强真实消费", () => {
     expect(run.rows().some((row: Card) => row.stage === "micromotion")).toBe(false);
   }, 40_000);
 
-  it("KB部分字段超预算不能用其余成功写入掩盖", () => {
+  it("KB可选建议超预算时整句省略，保留完整作者字段且继续下游", () => {
     const run = runChain([{ ...windowShot, lighting: `右侧窗光；${"原始灯光说明".repeat(80)}` }]);
-    expect(run.result.status, run.diagnostic).not.toBe(0);
+    expect(run.result.status, run.diagnostic).toBe(0);
     const row = run.rows().find((entry: Card) => entry.stage === "cine-kb" && entry.shotId === windowShot.shotId);
-    expect(row).toMatchObject({ ok: false, evidence: { status: "unverified" } });
+    expect(row).toMatchObject({ ok: true, evidence: { status: "passed" } });
     expect(row.evidence.injectedFields).not.toContain("lighting");
-    expect(run.read("shotlist-enriched-regression.json").shots[0].lighting).toBe(`右侧窗光；${"原始灯光说明".repeat(80)}`);
+    const trace = JSON.parse(readFileSync(row.artifact, "utf8"));
+    expect(trace.omitted).toEqual(expect.arrayContaining([expect.objectContaining({ field: "lighting", dropped: "field-over-budget", written: "", writtenChars: 0 })]));
+    expect(trace.applied.some((entry: Card) => entry.field === "lighting")).toBe(false);
+    const authoredLighting = `右侧窗光；${"原始灯光说明".repeat(80)}`;
+    expect(run.read("shotlist-enriched-regression.json").shots[0].lighting).toBe(authoredLighting);
+    expect(run.read("shotlist-current-regression.json").shots[0].lighting).toBe(authoredLighting);
+    expect(run.rows().findLast((entry: Card) => entry.stage === "micromotion")).toMatchObject({ ok: true });
   }, 40_000);
 
   it("请求的KB目录缺失会记录未验证并停止，而非跳过后继续微动作", () => {
@@ -292,7 +299,7 @@ describe("成片硬切 CFR 接缝", () => {
     expect(sync.measured).toBe(3);
   }, 100_000);
 
-  it.skipIf(!available)("--transition-at 3 只在第三镜入点转场，音画起点与刀数同源", () => {
+  it.skipIf(!available)("重叠转场、变速和冻结补秒在写出前拒绝，硬切保留完整源片时长", () => {
     const dir = mkdtempSync(join(tmpdir(), "compose-transition-entry-")); temporary.push(dir);
     const clips: string[] = [];
     for (const [index, color] of ["red", "green", "blue"].entries()) {
@@ -306,29 +313,47 @@ describe("成片硬切 CFR 接缝", () => {
       expect(made.status, `${made.error ?? ""}\n${made.stderr}`).toBe(0);
       clips.push(file);
     }
+    const originalHashes = clips.map(file => createHash("sha256").update(readFileSync(file)).digest("hex"));
+    for (const [index, forbidden] of [
+      ["--transition", "fade", "--transition-duration", "0.25", "--transition-at", "3"],
+      ["--retime-to", "2"],
+      ["--clip-tail-holds", "0,0,1"],
+    ].entries()) {
+      const output = join(dir, `forbidden-${index}.mp4`);
+      const rejected = spawnSync(process.execPath, ["--import", "tsx", "scripts/tools/compose-film.mts",
+        "--clips", clips.join(","), "--out", output, "--width", "64", "--height", "96", "--fps", "8",
+        "--fade", "0", "--color", "none", ...forbidden],
+      { cwd: root, encoding: "utf8", timeout: 30_000, env: { ...process.env, WL_FFMPEG: ffmpeg, WL_FFPROBE: ffprobe } });
+      expect(rejected.status, `${rejected.error ?? ""}\n${rejected.stderr}`).not.toBe(0);
+      expect(rejected.stderr).toContain("SOURCE_TIMING_PROTECTED");
+      expect(existsSync(output)).toBe(false);
+    }
     const master = join(dir, "master.mp4");
     const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/tools/compose-film.mts",
       "--clips", clips.join(","), "--out", master, "--width", "64", "--height", "96", "--fps", "8",
-      "--fade", "0", "--color", "none", "--transition", "fade", "--transition-duration", "0.25",
-      "--transition-at", "3",
+      "--fade", "0", "--color", "none",
     ], { cwd: root, encoding: "utf8", timeout: 90_000, env: { ...process.env, WL_FFMPEG: ffmpeg, WL_FFPROBE: ffprobe } });
     expect(result.status, `${result.error ?? ""}\n${result.stdout}\n${result.stderr}`).toBe(0);
-    expect(result.stdout).toContain("× 1 刀");
     const duration = spawnSync(ffprobe, ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", master], { encoding: "utf8" });
-    expect(Math.abs(Number(duration.stdout.trim()) - 2.75)).toBeLessThanOrEqual(0.13); // ≤1 frame @8fps
+    expect(Math.abs(Number(duration.stdout.trim()) - 3)).toBeLessThanOrEqual(0.13); // ≤1 encoding frame @8fps
     const report = JSON.parse(readFileSync(join(dir, "master.av-sync.json"), "utf8"));
     expect(report.outputSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(report.clipCount).toBe(3);
     expect(report.samples.map((sample: { index: number }) => sample.index)).toEqual([0, 1, 2]);
+    expect(report.retimeFactor).toBe(1);
+    expect(report.clipTailHolds).toEqual([0, 0, 0]);
+    expect(report.normalizedTimeline.map((row: Card) => row.speedFactor)).toEqual([1, 1, 1]);
+    expect(report.sourceTiming.map((row: Card) => row.sha256)).toEqual(originalHashes);
+    expect(clips.map(file => createHash("sha256").update(readFileSync(file)).digest("hex"))).toEqual(originalHashes);
     const pixel = (at: number) => {
       const frame = spawnSync(ffmpeg, ["-v", "error", "-ss", String(at), "-i", master, "-frames:v", "1",
         "-vf", "scale=1:1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], { encoding: "buffer" });
       expect(frame.status, `${frame.error ?? ""}\n${String(frame.stderr)}`).toBe(0);
       return [...frame.stdout.subarray(0, 3)];
     };
-    const firstCut = pixel(1.125), beforeThirdEntry = pixel(1.625), thirdShot = pixel(2.125);
+    const firstCut = pixel(1.125), beforeThirdEntry = pixel(1.875), thirdShot = pixel(2.125);
     expect(firstCut[1]).toBeGreaterThan(firstCut[2]); // second shot, not a blend into blue
-    expect(beforeThirdEntry[1]).toBeGreaterThan(beforeThirdEntry[2]); // old index error cuts to blue here
+    expect(beforeThirdEntry[1]).toBeGreaterThan(beforeThirdEntry[2]); // the complete second shot reaches its original end
     expect(thirdShot[2]).toBeGreaterThan(thirdShot[1]);
   }, 100_000);
 });

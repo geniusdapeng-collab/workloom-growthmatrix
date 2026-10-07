@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { closeSync, existsSync, openSync, readSync, renameSync, rmSync, statSync } from "node:fs";
+import { RENDERED_ACCEPTANCE_POLICY, type FilmReviewPolicy } from "../../packages/video-studio/src/rendered-output-policy.js";
 
 /** The stage log is the receipt for the exact raw clip, dialogue and voice profile. */
 export interface VoiceArtifactRecord {
@@ -46,7 +47,7 @@ export function fingerprintFile(file: string): string {
 
 /** Old receipts without full provenance deliberately fail closed and trigger a new voice check. */
 export function assessVoiceArtifact({
-  record, projectId, shotId, raw, voiced, text, profile,
+  record, projectId, shotId, raw, voiced, text, profile, reviewPolicy = "blocking",
 }: {
   record: VoiceArtifactRecord | null | undefined;
   projectId: string;
@@ -55,6 +56,7 @@ export function assessVoiceArtifact({
   voiced: string;
   text: string;
   profile: string;
+  reviewPolicy?: FilmReviewPolicy;
 }): VoiceArtifactStatus {
   if (!record || record.stage !== "voice" || record.shotId !== shotId || !record.ok || record.degraded) {
     return { ok: false, voiced: false, reason: "missing_or_failed_voice_receipt" };
@@ -68,18 +70,28 @@ export function assessVoiceArtifact({
     if (evidence.rawSha256 !== rawSha256) return { ok: false, voiced: false, reason: "raw_changed" };
     if (evidence.textSha256 !== textSha256) return { ok: false, voiced: false, reason: "dialogue_changed" };
     const source = evidence.source;
+    const accepted = source === "clip-audio-accepted" || source === "tts-policy-accepted";
+    if (accepted && (reviewPolicy !== "off" || evidence.policy !== RENDERED_ACCEPTANCE_POLICY || evidence.speechVerified !== false)) {
+      return { ok: false, voiced: false, reason: "voice_acceptance_policy_mismatch" };
+    }
+    if (source === "clip-audio-accepted") {
+      return record.artifact === raw
+        ? { ok: true, voiced: false, reason: "raw_voice_accepted_not_verified", rawSha256, textSha256 }
+        : { ok: false, voiced: false, reason: "raw_artifact_mismatch" };
+    }
     if (RAW_SOURCES.has(String(source))) {
       return record.artifact === raw
         ? { ok: true, voiced: false, reason: "raw_voice_verified", rawSha256, textSha256 }
         : { ok: false, voiced: false, reason: "raw_artifact_mismatch" };
     }
-    if (!VOICED_SOURCES.has(String(source))) return { ok: false, voiced: false, reason: "source_not_approved" };
+    if (!VOICED_SOURCES.has(String(source)) && source !== "tts-policy-accepted") return { ok: false, voiced: false, reason: "source_not_approved" };
     if (record.artifact !== voiced) return { ok: false, voiced: false, reason: "voiced_artifact_mismatch" };
     if (evidence.profile !== profile) return { ok: false, voiced: false, reason: "profile_changed" };
     if (!existsSync(voiced)) return { ok: false, voiced: false, reason: "voiced_missing" };
     const voicedSha256 = fingerprintFile(voiced);
     if (evidence.voicedSha256 !== voicedSha256) return { ok: false, voiced: false, reason: "voiced_changed" };
-    return { ok: true, voiced: true, reason: "voiced_receipt_verified", rawSha256, textSha256, voicedSha256 };
+    if (source === "tts-policy-accepted" && evidence.ttsText !== text) return { ok: false, voiced: false, reason: "tts_input_changed" };
+    return { ok: true, voiced: true, reason: accepted ? "voiced_accepted_not_speech_verified" : "voiced_receipt_verified", rawSha256, textSha256, voicedSha256 };
   } catch (error) {
     return { ok: false, voiced: false, reason: `artifact_read_failed: ${error instanceof Error ? error.message : String(error)}` };
   }
@@ -87,18 +99,19 @@ export function assessVoiceArtifact({
 
 /** Only a successful, checked new candidate may replace the last good voice artifact. */
 export function promoteDubCandidate({
-  candidate, final, commandOk, verifiedOk,
+  candidate, final, commandOk, verifiedOk, reviewPolicy = "blocking",
 }: {
   candidate: string;
   final: string;
   commandOk: boolean;
   verifiedOk: boolean;
+  reviewPolicy?: FilmReviewPolicy;
 }): { ok: boolean; reason: string } {
   let reason = "";
   try {
     if (!commandOk) reason = "dub_command_failed";
     else if (!existsSync(candidate) || statSync(candidate).size === 0) reason = "dub_output_missing_or_empty";
-    else if (!verifiedOk) reason = "dub_verification_failed";
+    else if (!verifiedOk && reviewPolicy !== "off") reason = "dub_verification_failed";
     else {
       renameSync(candidate, final);
       return { ok: true, reason: "promoted" };

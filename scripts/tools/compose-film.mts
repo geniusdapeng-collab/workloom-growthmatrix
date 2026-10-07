@@ -2,7 +2,7 @@
 /**
  * 成片拼接工具（2026-09-21）——逐镜产物 → 一条竖版母版（可选标题/字幕 + 调色）。
  *
- * 为什么需要：Ark Seedance 单条上限 15s（媒体目录 limits），30 秒短片必须由多镜拼接；
+ * 为什么需要：较长作品由模型能力范围内的多个完整镜头拼接；
  * 逐镜产物的编码参数（分辨率/帧率/音轨）各自不同，直接 concat 会花屏/丢音。
  *
  * 三段式（每段都可单独复跑）：
@@ -28,13 +28,14 @@ import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
   avSyncPolicyForClipCount,
-  buildCutAudioStep,
   candidateSyncWindows,
   crossCorrelationLag,
   describeAvSync,
   evaluateAvSync,
   type AvSyncSample,
 } from "../../packages/video-studio/src/av-sync.js";
+import { filmReviewPolicy, renderedAcceptanceReceipt } from "../../packages/video-studio/src/rendered-output-policy.js";
+import { assertPreservedSourceTiming, endCardSeconds, parseClipTailHolds } from "../../packages/video-studio/src/film-post-options.js";
 
 const REPO_ROOT = resolve(import.meta.dirname ?? process.cwd(), "../..");
 const FFMPEG = process.env.WL_FFMPEG ?? "ffmpeg";
@@ -91,6 +92,9 @@ export function probeDuration(file: string): number {
 const clipsArg = arg("--clips");
 if (!clipsArg) throw new Error("需要 --clips a.mp4,b.mp4（按成片顺序）");
 const clips = clipsArg.split(",").map((c) => abs(c.trim())).filter(Boolean);
+const shotIds = arg("--shot-ids").split(",").map(value => value.trim()).filter(Boolean);
+if (shotIds.length && (shotIds.length !== clips.length || new Set(shotIds).size !== shotIds.length)) throw new Error("COMPOSE_SHOT_SCOPE_INVALID");
+const clipTailHolds = parseClipTailHolds(arg("--clip-tail-holds"), clips.length);
 for (const clip of clips) {
   if (!existsSync(clip)) throw new Error(`镜头产物不存在：${clip}`);
 }
@@ -98,33 +102,16 @@ const out = abs(arg("--out", "outputs/film-master.mp4"));
 const width = Number(arg("--width", "1080"));
 const height = Number(arg("--height", "1920"));
 const fps = Number(arg("--fps", "30"));
+const reviewPolicy = filmReviewPolicy(arg("--review-policy", "off"));
 const fade = Number(arg("--fade", "0.5"));
-/**
- * 逐刀转场（2026-09-25 新增）：
- * 早先本工具只做 `concat`（纯硬切）+ 首尾淡入淡出，`--fade` 并不作用在刀口上——
- * 于是"硬切 0.12s + 甩镜"这类口径在成片里根本没发生（真机复核实锤）。
- * 现在：`--transition <xfade 名>` + `--transition-duration <秒>` 时，用 xfade/acrossfade
- * **在每一刀**做转场（`hblur` ≈ 甩镜拖影、`smoothleft` ≈ 横向擦除，按片子的剪辑风格选）；
- * 不传则维持纯硬切（默认行为不变）。
- */
+/** Legacy overlap and retime arguments are checked before writing any output. Source shots keep their full duration. */
 const transition = arg("--transition");
 const transitionDuration = Number(arg("--transition-duration", "0"));
-/**
- * 只在指定刀口做转场（`--transition-at 2,3,4,5` = 第 2/3/4/5 个入点做转场，其余硬切）。
- * 为什么要能挑刀口：xfade 每做一刀就吃掉 transitionDuration 的总时长。
- * 六镜各 5s 的片子若满刀做 0.18s 转场，总长会从 30.1s 掉到 29.2s（真机实测打回），
- * 而"人物口播 → 地标"这类刀口本来就该硬切——只在快剪段做甩镜转场，时长与节奏都更稳。
- */
-const transitionAt = arg("--transition-at")
-  .split(",")
-  .map((value) => Number(value.trim()))
-  .filter((value) => Number.isFinite(value) && value > 0);
-/**
- * 时长补偿（2026-09-25）：逐刀转场会按刀数吃掉总时长（6 镜 @0.18s × 4 刀 = 0.72s）。
- * 传 `--retime-to <秒>` 时，整片按 `目标/实际` 做一次**统一微调**（视频 setpts + 音频同倍率 atempo），
- * 把总长对齐到目标（2% 量级的微调肉眼不可辨），而不是靠截断/冻结帧——后者会在片尾留静帧。
- */
 const retimeTo = Number(arg("--retime-to", "0"));
+assertPreservedSourceTiming({ retimeTo, transition, transitionDuration });
+const endCardImage = arg("--end-card-image") ? abs(arg("--end-card-image")) : "";
+const endCardDuration = endCardSeconds(endCardImage, arg("--end-card-seconds"));
+if (endCardImage && !existsSync(endCardImage)) throw new Error("END_CARD_IMAGE_MISSING");
 const title = arg("--title");
 const subtitle = arg("--subtitle");
 /**
@@ -146,6 +133,19 @@ const gradedOut = arg("--graded-out");
 mkdirSync(dirname(out), { recursive: true });
 const temp = mkdtempSync(join(tmpdir(), "wl-compose-"));
 console.log(`拼接 ${clips.length} 个镜头 → ${width}x${height} @${fps}fps（临时目录 ${temp}）`);
+const sourceTiming = await Promise.all(clips.map(async (path, index) => ({ path, ...(shotIds.length ? { shotId: shotIds[index] } : {}), sha256: await sha256File(path),
+  videoSeconds: Number(run(FFPROBE, ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=duration", "-of", "csv=p=0", path]).trim()) })));
+if (sourceTiming.some(row => !Number.isFinite(row.videoSeconds) || row.videoSeconds <= 0)) throw new Error("SOURCE_VIDEO_DURATION_UNVERIFIED");
+if (endCardImage) {
+  const card = join(temp, "end-card.mp4");
+  run(FFMPEG, ["-v", "error", "-y", "-loop", "1", "-framerate", String(fps), "-i", endCardImage,
+    "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-t", String(endCardDuration),
+    "-vf", `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1`,
+    "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", card]);
+  clips.push(card);
+  clipTailHolds.push(0);
+  console.log(`  独立后期引导卡 ${endCardDuration}s；不冻结、不变速、不裁短源镜头`);
+}
 
 /* ---------- ① 归一化 ---------- */
 const normalized: string[] = [];
@@ -158,7 +158,8 @@ clips.forEach((clip, index) => {
    * 因此归一化时用 `apad` 把声音补到画面时长（补的是静音，≤20ms，听不出来），
    * 下游无论走 concat 滤镜还是 demuxer，时间轴都不会再漂。
    */
-  const inFrames = Math.max(1, Math.round(probeDuration(clip) * fps));
+  const videoSeconds = sourceTiming[index]?.videoSeconds ?? endCardDuration;
+  const inFrames = Math.max(1, Math.round(videoSeconds * fps));
   const targetDuration = inFrames / fps;
   run(FFMPEG, [
     "-y", "-i", clip,
@@ -181,6 +182,7 @@ clips.forEach((clip, index) => {
     console.log(`       ⚠ 该段音画长度差 ${(avDelta * 1000).toFixed(0)}ms > 10ms，拼接前请确认（对齐自检会再实测一次）`);
   }
 });
+for (const source of sourceTiming) if (await sha256File(source.path) !== source.sha256) throw new Error("SOURCE_CHANGED_DURING_COMPOSE");
 
 /* ---------- ② 拼接 ---------- */
 const raw = join(temp, "raw.mp4");
@@ -208,83 +210,30 @@ writeFileSync(listFile, normalized.map((file, index) =>
 const audioExact = normalized.map((_, index) =>
   `[${index}:a]atrim=end=${shotSeconds[index]!.toFixed(6)},asetpts=N/SR/TB,`
   + `apad=whole_dur=${shotSeconds[index]!.toFixed(6)}[aex${index}]`);
-if (transition && transitionDuration > 0) {
-  /**
-   * xfade 链：每刀的 offset = 到该刀为止的累计时长 − 已消耗的转场重叠。
-   * 视频用 xfade（`transition` 指定名），音频用 acrossfade 同步收口；
-   * 归一化阶段已统一分辨率/帧率/采样率，因此这里不会出现参数不匹配。
-   */
-  const durations = shotSeconds;
-  const inputs: string[] = [];
-  normalized.forEach((file) => inputs.push("-i", file));
-  /** concat 的输出 timebase 与裸 MP4 输入不同；统一到 AVTB 后可继续接 xfade。 */
-  const videoExact = normalized.map((_, index) => `[${index}:v]settb=AVTB,setpts=PTS-STARTPTS[vex${index}]`);
-  let videoLabel = "[vex0]";
-  let audioLabel = "[aex0]";
-  let offset = 0;
-  const steps: string[] = [];
-  for (let index = 1; index < normalized.length; index += 1) {
-    // --transition-at is the entering shot's 1-based number, not the zero-based input index.
-    const useTransition = transitionAt.length === 0 || transitionAt.includes(index + 1);
-    /** 硬切走 concat；0 秒 xfade 会在混合刀口上提前切走上一镜。 */
-    const overlap = useTransition ? transitionDuration : 0;
-    offset += durations[index - 1]! - overlap;
-    const vOut = `[v${index}]`;
-    const aOut = `[a${index}]`;
-    steps.push(useTransition
-      ? `${videoLabel}[vex${index}]xfade=transition=${transition}:duration=${overlap}:offset=${Math.max(0, offset).toFixed(3)}${vOut}`
-      : `${videoLabel}[vex${index}]concat=n=2:v=1:a=0${vOut}`);
-    /**
-     * 硬切口**不能**用 `acrossfade=d=0.01` 凑数（2026-09-27 真机事故）：
-     * acrossfade 每做一刀就吃掉 10ms 音频，而视频侧 `xfade duration=0` 一点不损，
-     * 于是声音相对画面**逐刀提前**（本片 18 镜 14 刀硬切 → 尾镜实测 -132.9ms、
-     * 整条音轨比画面短 294ms），被 compose 的音画对齐硬闸判红。
-     * 现在：硬切口走 `concat`（样点级顺序拼接、长度守恒），只有真转场才 acrossfade。
-     */
-    steps.push(buildCutAudioStep({
-      prevLabel: audioLabel,
-      nextLabel: `[aex${index}]`,
-      outLabel: aOut,
-      overlapSec: overlap,
-    }));
-    videoLabel = vOut;
-    audioLabel = aOut;
-  }
-  run(FFMPEG, ["-y", ...inputs,
-    "-filter_complex", [...audioExact, ...videoExact, ...steps].join(";"),
-    "-map", videoLabel, "-map", audioLabel,
-    "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
-    "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
-    "-movflags", "+faststart", raw]);
-  const usedCuts = transitionAt.length === 0 ? normalized.length - 1
-    : transitionAt.filter((i) => i >= 2 && i <= normalized.length).length;
-  console.log(`  ② 逐刀转场：${transition} @${transitionDuration}s × ${usedCuts} 刀（其余硬切）`);
-} else {
-  /**
-   * 硬切拼接的**音画对齐纪律**（2026-09-26 真机事故修复）：
-   * 逐段 mp4 里 aac 音轨普遍比画面短几毫秒（编码器 priming + 帧对齐），
-   * `-f concat -c copy` 会让 demuxer **按各自流的时长**分别累计偏移 →
-   * 声音相对画面逐镜漂移（真机实测 15 镜尾镜 +125ms，听感="上一镜的音效串到下一镜"）。
-   * 现在：画面仍无损直拷（帧级不重编码），声音改走 **concat 滤镜**（样点级顺序拼接、
-   * 不足处按画面时长补静音），再与画面合流。代价只有一次音频重编码。
-   */
-  const videoOnly = join(temp, "video-only.mp4");
-  run(FFMPEG, ["-y", "-f", "concat", "-safe", "0", "-i", listFile, "-c:v", "copy", "-an", videoOnly]);
-  const voiceWav = join(temp, "voice.wav");
-  const audioInputs = normalized.flatMap((file) => ["-i", file]);
-  const audioConcat = `${normalized.map((_, index) => `[aex${index}]`).join("")}concat=n=${normalized.length}:v=0:a=1[aout]`;
-  run(FFMPEG, [
-    "-y", ...audioInputs,
-    "-filter_complex", [...audioExact, audioConcat].join(";"),
-    "-map", "[aout]", "-c:a", "pcm_s16le", "-ar", "48000", "-ac", "2", voiceWav,
-  ]);
-  run(FFMPEG, [
-    "-y", "-i", videoOnly, "-i", voiceWav,
-    "-map", "0:v:0", "-map", "1:a:0",
-    "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
-    "-shortest", "-movflags", "+faststart", raw,
-  ]);
-}
+/**
+ * 硬切拼接的**音画对齐纪律**（2026-09-26 真机事故修复）：
+ * 逐段 mp4 里 aac 音轨普遍比画面短几毫秒（编码器 priming + 帧对齐），
+ * `-f concat -c copy` 会让 demuxer **按各自流的时长**分别累计偏移 →
+ * 声音相对画面逐镜漂移（真机实测 15 镜尾镜 +125ms，听感="上一镜的音效串到下一镜"）。
+ * 现在：画面仍无损直拷（帧级不重编码），声音改走 **concat 滤镜**（样点级顺序拼接、
+ * 不足处按画面时长补静音），再与画面合流。代价只有一次音频重编码。
+ */
+const videoOnly = join(temp, "video-only.mp4");
+run(FFMPEG, ["-y", "-f", "concat", "-safe", "0", "-i", listFile, "-c:v", "copy", "-an", videoOnly]);
+const voiceWav = join(temp, "voice.wav");
+const audioInputs = normalized.flatMap((file) => ["-i", file]);
+const audioConcat = `${normalized.map((_, index) => `[aex${index}]`).join("")}concat=n=${normalized.length}:v=0:a=1[aout]`;
+run(FFMPEG, [
+  "-y", ...audioInputs,
+  "-filter_complex", [...audioExact, audioConcat].join(";"),
+  "-map", "[aout]", "-c:a", "pcm_s16le", "-ar", "48000", "-ac", "2", voiceWav,
+]);
+run(FFMPEG, [
+  "-y", "-i", videoOnly, "-i", voiceWav,
+  "-map", "0:v:0", "-map", "1:a:0",
+  "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
+  "-shortest", "-movflags", "+faststart", raw,
+]);
 const rawDuration = probeDuration(raw);
 console.log(`  ② 拼接完成 → ${rawDuration.toFixed(2)}s`);
 
@@ -312,32 +261,13 @@ if (subtitle) {
     + `enable='between(t,${fade},${Math.min(rawDuration, fade + 4).toFixed(2)})'`
   );
 }
-const retimeFactor = retimeTo > 0 && rawDuration > 0 ? Number((retimeTo / rawDuration).toFixed(6)) : 1;
-if (Math.abs(retimeFactor - 1) > 0.0005) {
-  /** atempo 单实例限制 0.5–2.0：把倍率拆成链（微调场景通常只有一段） */
-  const tempo = 1 / retimeFactor;
-  const chain: string[] = [];
-  let remaining = tempo;
-  while (remaining > 2) { chain.push("atempo=2"); remaining /= 2; }
-  while (remaining < 0.5) { chain.push("atempo=0.5"); remaining /= 0.5; }
-  chain.push(`atempo=${remaining.toFixed(6)}`);
-  const videoFilters = [...filters, `setpts=PTS*${retimeFactor.toFixed(6)}`];
-  run(FFMPEG, [
-    "-y", "-i", raw,
-    "-vf", videoFilters.join(","),
-    "-af", chain.join(","),
-    "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
-    "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", out,
-  ]);
-  console.log(`  ③ 时长补偿：${rawDuration.toFixed(2)}s → 目标 ${retimeTo}s（整片 ×${retimeFactor.toFixed(4)}）`);
-} else {
-  run(FFMPEG, [
-    "-y", "-i", raw,
-    ...(filters.length > 0 ? ["-vf", filters.join(",")] : []),
-    "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
-    "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", out,
-  ]);
-}
+const retimeFactor = 1;
+run(FFMPEG, [
+  "-y", "-i", raw,
+  ...(filters.length > 0 ? ["-vf", filters.join(",")] : []),
+  "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
+  "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", out,
+]);
 const outDuration = probeDuration(out);
 console.log(`  ③ 母版 → ${out}（${outDuration.toFixed(2)}s）`);
 
@@ -356,26 +286,10 @@ const shotStarts: number[] = [];
   for (let index = 0; index < normalized.length; index += 1) {
     shotStarts.push(cursor);
     if (index < normalized.length - 1) {
-      const enteringShot = index + 2;
-      const useTransition = Boolean(transition && transitionDuration > 0)
-        && (transitionAt.length === 0 || transitionAt.includes(enteringShot));
-      cursor += shotDurations[index]! - (useTransition ? transitionDuration : 0);
+      cursor += shotDurations[index]!;
     }
   }
 }
-/** 参考信号按整片倍率重采样（时长补偿时音画同倍率缩放，先对齐再比幅度） */
-const resample = (input: Float32Array, factor: number): Float32Array => {
-  if (Math.abs(factor - 1) < 0.0005) return input;
-  const length = Math.max(1, Math.round(input.length * factor));
-  const output = new Float32Array(length);
-  for (let i = 0; i < length; i += 1) {
-    const src = i / factor;
-    const i0 = Math.floor(src);
-    const frac = src - i0;
-    output[i] = (input[i0] ?? 0) * (1 - frac) + (input[i0 + 1] ?? 0) * frac;
-  }
-  return output;
-};
 const masterPcm = readAllPcm(out, avSyncSampleRate);
 const searchMs = 300;
 const searchSamples = Math.round((searchMs / 1000) * avSyncSampleRate);
@@ -392,14 +306,14 @@ for (let index = 0; index < normalized.length; index += 1) {
   if (windows.length === 0) continue;
   const winLen = windows[0]!.lengthSec;
   const segmentPcm = readAllPcm(normalized[index]!, avSyncSampleRate);
-  const refFull = resample(segmentPcm, retimeFactor);
-  const refLen = Math.round(winLen * retimeFactor * avSyncSampleRate);
+  const refFull = segmentPcm;
+  const refLen = Math.round(winLen * avSyncSampleRate);
   let best: { lagMs: number; correlation: number } | null = null;
   for (const { startSec: winStart } of windows) {
-    const refStart = Math.round(winStart * retimeFactor * avSyncSampleRate);
+    const refStart = Math.round(winStart * avSyncSampleRate);
     if (refStart + refLen > refFull.length) continue;
     const ref = refFull.subarray(refStart, refStart + refLen);
-    const expected = Math.round((shotStarts[index]! + winStart) * retimeFactor * avSyncSampleRate);
+    const expected = Math.round((shotStarts[index]! + winStart) * avSyncSampleRate);
     const targetStart = Math.max(0, expected - searchSamples);
     const targetEnd = Math.min(masterPcm.length, expected + refLen + searchSamples);
     const target = masterPcm.subarray(targetStart, targetEnd);
@@ -430,23 +344,33 @@ writeFileSync(avReportPath, `${JSON.stringify({
   policy: avPolicy,
   sampleRate: avSyncSampleRate,
   clipCount: normalized.length,
+  clipTailHolds,
+  sourceTiming,
+  normalizedTimeline: sourceTiming.map((source, index) => ({ ...source, composedSeconds: shotSeconds[index],
+    frameQuantizationSeconds: Number((shotSeconds[index]! - source.videoSeconds).toFixed(6)), speedFactor: 1 })),
+  sourceTimingPolicy: "original speed and complete video timeline; only encoding/frame-rate quantization within one frame",
+  independentEndCard: endCardImage ? { image: endCardImage, sha256: await sha256File(endCardImage), seconds: endCardDuration } : null,
   retimeFactor,
   output: out,
   outputSha256: await sha256File(out),
+  reviewPolicy,
+  ...(reviewPolicy === "off" ? renderedAcceptanceReceipt(reviewPolicy) : {}),
 }, null, 2)}\n`, "utf8");
 console.log(`  ③-1 ${describeAvSync(avReport)}`);
 console.log(`       报告：${avReportPath}`);
 if (avReport.warnings.length > 0) {
   for (const warning of avReport.warnings) console.log(`       ⚠ ${warning}`);
 }
-if (!avReport.ok && !flag("--accept-av-sync-drift")) {
+if (!avReport.ok && reviewPolicy === "blocking" && !flag("--accept-av-sync-drift")) {
   throw new Error(
     `音画对齐实测不通过：${avReport.violations.join("；")}。`
     + `报告见 ${avReportPath}；确属客观条件必须放行时，显式加 --accept-av-sync-drift 并留痕。`,
   );
 }
 if (!avReport.ok) {
-  console.log(`       ⚠ 已按 --accept-av-sync-drift 显式放行（留痕在报告里，属"带瑕疵放行"）`);
+  console.log(reviewPolicy === "blocking"
+    ? "       ⚠ 已按 --accept-av-sync-drift 显式放行，实测失败保留在报告"
+    : `       ⓘ ${reviewPolicy}：实测结果仅供查看，不阻断后期；未把实测失败改成通过`);
 }
 
 /* ---------- ④ 调色：择优（不劣化优先） ---------- */
