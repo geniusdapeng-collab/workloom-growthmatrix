@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3324,
+  "revision": 3326,
   "tasks": {
     "132": {
       "number": 132,
@@ -3281,7 +3281,7 @@
         "ciPolicyChanges": []
       },
       "updatedAt": 1791403724050,
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "error": "主干对齐失败：CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 1791404324050,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    143\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.6\"\n    }\n  ]\n}\n-->",
       "files": [
@@ -3299,9 +3299,9 @@
       "repairRequired": {
         "provider": "codex",
         "headSha": "cf9b8a69f5d9a7eb361a0076e502474f894d09a8",
-        "mainSha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
-        "reason": "检查/评审阻断：Required check static-gate missing/failed/ambiguous; Codex review identity differs from the exact repository/source/main/policy",
-        "at": 1791403215350
+        "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+        "reason": "主干对齐失败：CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+        "at": 1791403724050
       },
       "recoveryIntent": null,
       "alignmentCount": 1,
@@ -83694,6 +83694,39 @@
       },
       "previous": "57c4c07df32dc0c8c12b81ec46ccedaf734b2ef94b7ba06df3466266dd76cb3f",
       "digest": "b089dd65614b312a7e17d3ee709c1766ad224e13c13aa6316047d8e43d38fd9a"
+    },
+    {
+      "sequence": 3325,
+      "at": "2026-10-07T20:08:44.050Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "status": "parked",
+          "error": "主干对齐失败：CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "cf9b8a69f5d9a7eb361a0076e502474f894d09a8",
+            "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+            "reason": "主干对齐失败：CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+            "at": 1791403724050
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791404324050
+        }
+      },
+      "previous": "b089dd65614b312a7e17d3ee709c1766ad224e13c13aa6316047d8e43d38fd9a",
+      "digest": "0f3d7f47050e7f4489ba67bbd1086a86e8757970ac1f41b96d76938180215ded"
+    },
+    {
+      "sequence": 3326,
+      "at": "2026-10-07T20:10:29.938Z",
+      "kind": "transaction",
+      "data": {
+        "id": "4acb7c8a-f486-406f-b3bd-71888209aca3"
+      },
+      "previous": "0f3d7f47050e7f4489ba67bbd1086a86e8757970ac1f41b96d76938180215ded",
+      "digest": "3d56a7b1049956db00fbc22bd560176282bc706a2b85ab522f0af01fcb21dea2"
     }
   ]
 }
