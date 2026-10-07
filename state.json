@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3071,
+  "revision": 3074,
   "tasks": {
     "132": {
       "number": 132,
@@ -8229,7 +8229,7 @@
     },
     "180": {
       "number": 180,
-      "status": "merging",
+      "status": "integrated",
       "firstSeen": 1791399696604,
       "attempts": {},
       "headSha": "e46adba2e883cf1c4453348a6486828d775ea649",
@@ -8443,7 +8443,7 @@
         "marker": "delivery-origin:180:e46adba2e883cf1c4453348a6486828d775ea649:d4431bae77c5af2345402949978f95a70c1db5f1",
         "at": 1791400515635
       },
-      "mergePhase": "merge_verified",
+      "mergePhase": null,
       "mergeSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 181,
@@ -8576,7 +8576,18 @@
         "checkSha": "4d094d8248b570c6d10da13f0cdbdbf57dce2b61",
         "mergedBy": "cnb.dYiF05kxAGA",
         "verifiedAt": "2026-10-07T19:29:22.121Z"
-      }
+      },
+      "error": null,
+      "integrationHistory": [
+        {
+          "sha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
+          "sourceSha": "e46adba2e883cf1c4453348a6486828d775ea649",
+          "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+          "checkSha": "4d094d8248b570c6d10da13f0cdbdbf57dce2b61",
+          "mergedBy": "cnb.dYiF05kxAGA",
+          "verifiedAt": "2026-10-07T19:29:22.121Z"
+        }
+      ]
     },
     "181": {
       "number": 181,
@@ -8601,10 +8612,10 @@
   },
   "leases": {
     "protocol": {
-      "owner": "integration/pr-180",
+      "owner": null,
       "generation": 66,
       "acquiredAt": 1791401116024,
-      "expiresAt": 1791402016024
+      "expiresAt": 1791401116024
     },
     "migrations": {
       "owner": null,
@@ -78298,6 +78309,65 @@
       },
       "previous": "f2c233603bec48291a28be482faa60726302b5937e1843e42249cf492dd221cd",
       "digest": "e0a83afa7c11e66dd8d6b05494d2f7dda33cb967c0afaefd5a7c83a3f2e511d4"
+    },
+    {
+      "sequence": 3072,
+      "at": "2026-10-07T19:25:16.024Z",
+      "kind": "lease_release",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "integration/pr-180",
+        "generation": {
+          "protocol": 66
+        }
+      },
+      "previous": "e0a83afa7c11e66dd8d6b05494d2f7dda33cb967c0afaefd5a7c83a3f2e511d4",
+      "digest": "abdfde0829571963054301aec9e5b907ce6b605ffd681ccf8f439f81204354aa"
+    },
+    {
+      "sequence": 3073,
+      "at": "2026-10-07T19:25:16.024Z",
+      "kind": "task",
+      "data": {
+        "number": 180,
+        "patch": {
+          "status": "integrated",
+          "merge": {
+            "sha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
+            "sourceSha": "e46adba2e883cf1c4453348a6486828d775ea649",
+            "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+            "checkSha": "4d094d8248b570c6d10da13f0cdbdbf57dce2b61",
+            "mergedBy": "cnb.dYiF05kxAGA",
+            "verifiedAt": "2026-10-07T19:29:22.121Z"
+          },
+          "mergePhase": null,
+          "error": null,
+          "integrationHistory": [
+            {
+              "sha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
+              "sourceSha": "e46adba2e883cf1c4453348a6486828d775ea649",
+              "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+              "checkSha": "4d094d8248b570c6d10da13f0cdbdbf57dce2b61",
+              "mergedBy": "cnb.dYiF05kxAGA",
+              "verifiedAt": "2026-10-07T19:29:22.121Z"
+            }
+          ]
+        }
+      },
+      "previous": "abdfde0829571963054301aec9e5b907ce6b605ffd681ccf8f439f81204354aa",
+      "digest": "11f38fd150ff46bbfefcc8f0161f31bca991c266c96f38241c0ef6df1da5eab9"
+    },
+    {
+      "sequence": 3074,
+      "at": "2026-10-07T19:29:25.299Z",
+      "kind": "transaction",
+      "data": {
+        "id": "73dcda0a-4677-44c3-8896-33017acf9389"
+      },
+      "previous": "11f38fd150ff46bbfefcc8f0161f31bca991c266c96f38241c0ef6df1da5eab9",
+      "digest": "0c236093006aa841ad01d63352516fcbcd7ff86f3828c4ba5b78d600398a7e79"
     }
   ]
 }
