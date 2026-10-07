@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2366,
+  "revision": 2369,
   "tasks": {
     "132": {
       "number": 132,
@@ -2936,7 +2936,7 @@
         "owner": "admission/pr-143",
         "generation": {}
       },
-      "updatedAt": 1791386715475,
+      "updatedAt": 1791387805658,
       "headSha": "67f9b2b1150a3bdeb472789179f81c6dd0acaee7",
       "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
       "branch": "fix/T-2026-1007-0918-first-pass-camera",
@@ -2953,7 +2953,37 @@
           }
         ]
       },
-      "developerReview": null,
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 143,
+        "headSha": "67f9b2b1150a3bdeb472789179f81c6dd0acaee7",
+        "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "packages/video-studio/src/first-pass.test.ts",
+          "packages/video-studio/src/first-pass.ts"
+        ],
+        "filesHash": "6a0be61d7fc9ed3bc4ff0ba0baa8ca8fa356592159d7703c7c861ba05faaeba2",
+        "dependsOn": [
+          142
+        ],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/first-pass.test.ts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T15:42:51.165880+00:00",
+            "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+          }
+        ],
+        "reviewedAt": "2026-10-07T15:43:18.601329+00:00",
+        "summary": "当前 Codex 完整读取 first-pass 实现及完整测试，复核否定运镜仅作用于动词，时间段严格解析、边界相接不重叠、完整静止覆盖和前缀运动不被后段遮盖。实现保持输入不变；真实运动重叠、静止缺口、未标时段和非法区间继续阻断。无数据库/权限/外部写变更，无新依赖。准确提交后14项实跑通过。回滚普通 Revert 本提交，不删除源片或模型回执。未发现未解决问题。 Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Byte comparison proves every source-owned reviewed blob is unchanged from the referenced complete review. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
+        "passed": true,
+        "id": "e7d84919ce4eb8c79829b687ecf4a4e778ac1f1cbe76c182df0daea5889e9410"
+      },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 143,
@@ -2972,7 +3002,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "sha": "e58d356e51c8c4f26851141972d54a4081da563c",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -2982,7 +3012,7 @@
           },
           "head": {
             "ref": "refs/heads/fix/T-2026-1007-0918-first-pass-camera",
-            "sha": "49140ddd6e6283998fb1522397c9b28abe55d347",
+            "sha": "67f9b2b1150a3bdeb472789179f81c6dd0acaee7",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -2990,7 +3020,7 @@
               "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
             }
           },
-          "blocked_on": "unblocked",
+          "blocked_on": "status_check",
           "merged_by": {
             "is_npc": false
           },
@@ -3000,8 +3030,8 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "49140ddd6e6283998fb1522397c9b28abe55d347",
-        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headSha": "67f9b2b1150a3bdeb472789179f81c6dd0acaee7",
+        "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
         "files": [
           "packages/video-studio/src/first-pass.test.ts",
           "packages/video-studio/src/first-pass.ts"
@@ -3019,8 +3049,8 @@
             }
           ]
         },
-        "headTime": 1791375356000,
-        "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headTime": 1791385106000,
+        "mergeBase": "e58d356e51c8c4f26851141972d54a4081da563c",
         "checkErrors": [],
         "checkSha": null,
         "hasFailedChecks": false,
@@ -61286,6 +61316,161 @@
       },
       "previous": "37ea3492430adfd59586e04a7afdca90845a083c3cf394a82a7a7d60085ca21d",
       "digest": "709babfac3f30026f1a5409122306588d57d8e146cae577c14ac3aeda5fdbfad"
+    },
+    {
+      "sequence": 2367,
+      "at": "2026-10-07T15:43:25.657Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 143,
+        "id": "e7d84919ce4eb8c79829b687ecf4a4e778ac1f1cbe76c182df0daea5889e9410",
+        "headSha": "67f9b2b1150a3bdeb472789179f81c6dd0acaee7",
+        "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c"
+      },
+      "previous": "709babfac3f30026f1a5409122306588d57d8e146cae577c14ac3aeda5fdbfad",
+      "digest": "dcc1b0f699823b650e2487a67d4b21b888b24b374bc526f24e7121c6e688be46"
+    },
+    {
+      "sequence": 2368,
+      "at": "2026-10-07T15:43:25.658Z",
+      "kind": "task",
+      "data": {
+        "number": 143,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "67f9b2b1150a3bdeb472789179f81c6dd0acaee7",
+          "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
+          "branch": "fix/T-2026-1007-0918-first-pass-camera",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              142
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.5"
+              }
+            ]
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 143,
+            "headSha": "67f9b2b1150a3bdeb472789179f81c6dd0acaee7",
+            "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/first-pass.test.ts",
+              "packages/video-studio/src/first-pass.ts"
+            ],
+            "filesHash": "6a0be61d7fc9ed3bc4ff0ba0baa8ca8fa356592159d7703c7c861ba05faaeba2",
+            "dependsOn": [
+              142
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/first-pass.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T15:42:51.165880+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              }
+            ],
+            "reviewedAt": "2026-10-07T15:43:18.601329+00:00",
+            "summary": "当前 Codex 完整读取 first-pass 实现及完整测试，复核否定运镜仅作用于动词，时间段严格解析、边界相接不重叠、完整静止覆盖和前缀运动不被后段遮盖。实现保持输入不变；真实运动重叠、静止缺口、未标时段和非法区间继续阻断。无数据库/权限/外部写变更，无新依赖。准确提交后14项实跑通过。回滚普通 Revert 本提交，不删除源片或模型回执。未发现未解决问题。 Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Byte comparison proves every source-owned reviewed blob is unchanged from the referenced complete review. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
+            "passed": true,
+            "id": "e7d84919ce4eb8c79829b687ecf4a4e778ac1f1cbe76c182df0daea5889e9410"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 143,
+            "pull": {
+              "number": 143,
+              "state": "open",
+              "title": "fix(growth): compare camera locks within timed windows [T-2026-1007-0918]",
+              "body": "正式出镜人物分镜前段推近、尾段定住本来不重叠，旧就绪检查把整镜关键词拼成冲突，并把“无推拉摇移/停止移动”当作肯定运镜。现按时间轴与运镜的同一窗口核对静止覆盖，明确否定不计运动；仍拒绝真实重叠、静止缺口、无时段前缀和非法区间。原稿内容保持不变。\n\n当前 Codex 完整读取并逐行复核两个改动文件；准确提交后运行正常、否定、交界、重叠和缺口回归，不调用模型或付费渲染。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    142\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.5\"\n    }\n  ]\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "e58d356e51c8c4f26851141972d54a4081da563c",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-first-pass-camera",
+                "sha": "67f9b2b1150a3bdeb472789179f81c6dd0acaee7",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "67f9b2b1150a3bdeb472789179f81c6dd0acaee7",
+            "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
+            "files": [
+              "packages/video-studio/src/first-pass.test.ts",
+              "packages/video-studio/src/first-pass.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                142
+              ],
+              "releases": [
+                {
+                  "kind": "desktop",
+                  "version": "0.1.5"
+                }
+              ]
+            },
+            "headTime": 1791385106000,
+            "mergeBase": "e58d356e51c8c4f26851141972d54a4081da563c",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "dcc1b0f699823b650e2487a67d4b21b888b24b374bc526f24e7121c6e688be46",
+      "digest": "d54ed23e8297d5217a1f8e2a7e2ff2e39268f9498077c6a28b653e3f06e038b9"
+    },
+    {
+      "sequence": 2369,
+      "at": "2026-10-07T15:43:20.732Z",
+      "kind": "transaction",
+      "data": {
+        "id": "916bf43a-8e2b-45a1-99b4-88a837f8cf8f"
+      },
+      "previous": "d54ed23e8297d5217a1f8e2a7e2ff2e39268f9498077c6a28b653e3f06e038b9",
+      "digest": "4239e8db3faa2ddc1ebaa88fd26a788433f63e9579d2360a8c8eaf34bd3c2f4c"
     }
   ]
 }
