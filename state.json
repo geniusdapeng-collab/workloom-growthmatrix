@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4084,
+  "revision": 4086,
   "tasks": {
     "132": {
       "number": 132,
@@ -4611,11 +4611,11 @@
     },
     "150": {
       "number": 150,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791357138520,
       "attempts": {},
       "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
-      "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+      "mainSha": "d11f3ce08333142102ef89a1760453cdff4aa581",
       "branch": "fix/T-2026-1007-0918-formal-preproduction-recovery",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -4632,49 +4632,7 @@
           }
         ]
       },
-      "developerReview": {
-        "schemaVersion": 1,
-        "provider": "codex",
-        "repo": "workloom-ai/workloom-growthmatrix",
-        "number": 150,
-        "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
-        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
-        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
-        "reviewedFiles": [
-          "packages/video-studio/src/film-shotlist.test.ts",
-          "packages/video-studio/src/film-shotlist.ts",
-          "packages/video-studio/src/prompt-review-bridge.test.ts",
-          "packages/video-studio/src/prompt-review-bridge.ts",
-          "packages/video-studio/src/requirement-bridge.test.ts",
-          "packages/video-studio/src/requirement-bridge.ts"
-        ],
-        "filesHash": "d1f29cd6ae65e463d6c07619538899da226ff26a7396926a0ff1d94b07d7003a",
-        "dependsOn": [
-          142,
-          144,
-          149
-        ],
-        "ciPolicyChanges": [],
-        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-        "tests": [
-          {
-            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/requirement-bridge.test.ts packages/video-studio/src/prompt-review-bridge.test.ts packages/video-studio/src/film-shotlist.test.ts packages/video-studio/src/creative-duration-policy.test.ts",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T22:23:23.573540+00:00",
-            "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
-          },
-          {
-            "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T22:23:23.915750+00:00",
-            "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
-          }
-        ],
-        "reviewedAt": "2026-10-07T22:31:37.427716+00:00",
-        "summary": "Current Codex fully read and reviewed all eight changed files and direct dependencies. Structured LLM failure and required nested fields are checked before vendor defaults, awaited conversion is cached per discovery, and restoration closes all proxies. Scene JSON carries real props/actions, exact self-consistent totals and explicit cast; total target is flexible by default. Original rejected G6 verdict and actual failed repair are preserved, retry budget remains two and nonretryable failures stop. Checkpoint reuse binds project, complete original prompts, brief/cast and actual complete-contract rejection; recomputed response errors must match. It never grants approval. Output schema, speaker, individual frozen duration, speech budgets and original render redlines remain checked before original G6/G7. No-person mapping rejects contradictions. Same-source valid prompt candidate is reused with a new review, avoiding upstream regeneration. Exact-source tests and typecheck pass; no unresolved finding. No vendor, CI, permission or new live paid call. Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main 5e148fc1ae3ad097bce2fcecf5d724fee9075219. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
-        "passed": true,
-        "id": "e34a34fe5a9b416ef6ab2e1efd199fdf7aff7073b31cea5124028d8743690df9"
-      },
+      "developerReview": null,
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 150,
@@ -4753,7 +4711,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791414018724,
+      "updatedAt": 1791416314852,
       "admission": {
         "number": 150,
         "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
@@ -4767,7 +4725,21 @@
         149
       ],
       "error": "Prerequisite #149 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/149 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791414311542
+      "blockedUntil": 0,
+      "alignmentCount": 0,
+      "recoveryCount": 0,
+      "reviewFailures": null,
+      "candidate": null,
+      "originalBody": "Failed audience JSON was silently replaced by vendor defaults, and unsuccessful prompt repair lost the original rejection needed for same-stage recovery. The host now awaits the real requirement conversion, validates nested model output before fallback, retains the real rejected verdict and repair response, and reuses checkpoints only after exact source/contract/error verification. Legal candidates still undergo fresh G6/G7 approval; no old approval is reused. Environment errors collect every shot and first-hook mismatch. Explicit no-person shots retain no-person metadata and reject contradictory human declarations. The completeness principle is fed to requirement and prompt workstations; default overall seconds are a creative target while already planned individual shot durations stay frozen during repair. PR144 owns the matching duration core and PR142 its render redline correctness. The actual task completed real G1-G7 and six render tasks after this repair; test fixtures make no live paid calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    142,\n    144,\n    149\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.10\"\n    }\n  ]\n}\n-->",
+      "files": [
+        "packages/video-studio/src/film-shotlist.test.ts",
+        "packages/video-studio/src/film-shotlist.ts",
+        "packages/video-studio/src/prompt-review-bridge.test.ts",
+        "packages/video-studio/src/prompt-review-bridge.ts",
+        "packages/video-studio/src/requirement-bridge.test.ts",
+        "packages/video-studio/src/requirement-bridge.ts"
+      ],
+      "ciSince": 1791416314852
     },
     "151": {
       "number": 151,
@@ -101142,6 +101114,63 @@
       },
       "previous": "01edd287eb217464df148028c32a4183f621f43df9490989fe0b7c4ee6a93686",
       "digest": "eb88692f26c2d6ce4dcea4635ceaa37dea6748d575e650234385c3f1063be946"
+    },
+    {
+      "sequence": 4085,
+      "at": "2026-10-07T23:38:34.852Z",
+      "kind": "task",
+      "data": {
+        "number": 150,
+        "patch": {
+          "alignmentCount": 0,
+          "recoveryCount": 0,
+          "reviewFailures": null,
+          "blockedUntil": 0,
+          "developerReview": null,
+          "candidate": null,
+          "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
+          "mainSha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+          "branch": "fix/T-2026-1007-0918-formal-preproduction-recovery",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              142,
+              144,
+              149
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.10"
+              }
+            ]
+          },
+          "originalBody": "Failed audience JSON was silently replaced by vendor defaults, and unsuccessful prompt repair lost the original rejection needed for same-stage recovery. The host now awaits the real requirement conversion, validates nested model output before fallback, retains the real rejected verdict and repair response, and reuses checkpoints only after exact source/contract/error verification. Legal candidates still undergo fresh G6/G7 approval; no old approval is reused. Environment errors collect every shot and first-hook mismatch. Explicit no-person shots retain no-person metadata and reject contradictory human declarations. The completeness principle is fed to requirement and prompt workstations; default overall seconds are a creative target while already planned individual shot durations stay frozen during repair. PR144 owns the matching duration core and PR142 its render redline correctness. The actual task completed real G1-G7 and six render tasks after this repair; test fixtures make no live paid calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    142,\n    144,\n    149\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.10\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "packages/video-studio/src/film-shotlist.test.ts",
+            "packages/video-studio/src/film-shotlist.ts",
+            "packages/video-studio/src/prompt-review-bridge.test.ts",
+            "packages/video-studio/src/prompt-review-bridge.ts",
+            "packages/video-studio/src/requirement-bridge.test.ts",
+            "packages/video-studio/src/requirement-bridge.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791416314852
+        }
+      },
+      "previous": "eb88692f26c2d6ce4dcea4635ceaa37dea6748d575e650234385c3f1063be946",
+      "digest": "f03291f3287ba357c8e51390e67fb3931a3562b0e009ca62d206e71d13a4db5b"
+    },
+    {
+      "sequence": 4086,
+      "at": "2026-10-07T23:40:32.188Z",
+      "kind": "transaction",
+      "data": {
+        "id": "ff7e3fa9-0222-4e26-8c90-6bd0bcd29720"
+      },
+      "previous": "f03291f3287ba357c8e51390e67fb3931a3562b0e009ca62d206e71d13a4db5b",
+      "digest": "bd1f7352beda0a7eaf2c45082ddd2fecb167f7e36c71f78f63f6752a482717c7"
     }
   ]
 }
