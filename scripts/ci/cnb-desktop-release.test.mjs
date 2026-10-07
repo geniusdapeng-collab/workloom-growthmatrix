@@ -91,6 +91,9 @@ class FakeCnb {
     this.mainSha = SHA;
     this.mainName = "refs/heads/main";
     this.mainProtected = true;
+    this.acceptAncestor = false;
+    this.compareResponse = undefined;
+    this.compareStatus = 200;
     this.tagSha = SHA;
     this.tagName = `refs/tags/${TAG}`;
     this.commitAssets = new Map();
@@ -161,6 +164,12 @@ class FakeCnb {
     const path = url.pathname.slice(PREFIX.length);
     if (method === "GET" && path === "git/branches/main") {
       return json({ name: this.mainName, protected: this.mainProtected, commit: { sha: this.mainSha } });
+    }
+    if (method === "GET" && path === `git/compare/${SHA}...${this.mainSha}`) {
+      return json(this.compareResponse === undefined ? {
+        base_commit: { sha: SHA }, head_commit: { sha: this.mainSha },
+        merge_base_commit: { sha: this.acceptAncestor ? SHA : "c".repeat(40) },
+      } : this.compareResponse, this.compareStatus);
     }
     if (method === "GET" && path === `git/tags/${TAG}`) {
       return json({ name: this.tagName, target_type: "commit", target: this.tagSha,
@@ -347,7 +356,7 @@ test("preflight binds remote main and tag and refuses an existing Release", asyn
   await assert.rejects(assertGitBinding(client, identity), /分支保护/u);
   fake.mainProtected = true;
   fake.mainSha = "b".repeat(40);
-  await assert.rejects(assertGitBinding(client, identity), /main 已偏离/u);
+  await assert.rejects(assertGitBinding(client, identity), /发布提交不在受保护 main 历史中/u);
   fake.mainSha = SHA;
   fake.tagSha = "b".repeat(40);
   await assert.rejects(assertGitBinding(client, identity), /tag 未精确指向/u);
@@ -515,15 +524,99 @@ test("publisher rejects a corrupted downloaded installer before the first Releas
   } finally { f.cleanup(); }
 });
 
-test("publisher keeps an incomplete draft if main moves before public promotion", async () => {
+test("publisher keeps an incomplete draft if main excludes the frozen source before public promotion", async () => {
   const f = fixture();
   const fake = new FakeCnb();
   try {
     fake.addCandidates(f.root);
     fake.onCreateRelease = () => { fake.mainSha = "b".repeat(40); };
     await assert.rejects(publishRelease({ env: publisherEnv(fake), cwd: f.root,
-      checkoutSha: SHA, fetchImpl: fake.fetch, sleep: async () => {} }), /main 已偏离/u);
+      checkoutSha: SHA, fetchImpl: fake.fetch, sleep: async () => {} }), /发布提交不在受保护 main 历史中/u);
     assert.equal(fake.release.draft, true);
     assert.ok(!fake.calls.some((call) => call.method === "PATCH"));
   } finally { f.cleanup(); }
+});
+
+test("protected main can advance only with an exact fresh ancestry receipt; an equal head needs no compare", async () => {
+  const fake = new FakeCnb();
+  const client = new CnbClient({ token: "test", fetchImpl: fake.fetch });
+  const identity = { tag: TAG, sha: SHA };
+  await assertGitBinding(client, identity);
+  assert.equal(fake.calls.filter(call => call.url.includes("/git/compare/")).length, 0);
+  fake.mainSha = "b".repeat(40);
+  fake.acceptAncestor = true;
+  await assertGitBinding(client, identity);
+  await assertGitBinding(client, identity);
+  const comparisons = fake.calls.filter(call => call.url.includes("/git/compare/"));
+  assert.equal(comparisons.length, 2, "never cache mutable ancestry or main metadata");
+  assert.ok(comparisons.every(call => call.url.endsWith(`/git/compare/${SHA}...${fake.mainSha}`)));
+  assert.ok(fake.calls.every(call => call.method === "GET"));
+});
+
+test("forks, missing or substituted compare identities and denied history stop before any write", async () => {
+  const advanced = "b".repeat(40);
+  const valid = { base_commit: { sha: SHA }, head_commit: { sha: advanced }, merge_base_commit: { sha: SHA } };
+  const invalid = [null, {}, { ...valid, base_commit: { sha: advanced } },
+    { ...valid, head_commit: { sha: SHA } }, { ...valid, merge_base_commit: { sha: "c".repeat(40) } },
+    { ...valid, merge_base_commit: null }];
+  for (const compareResponse of invalid) {
+    const fake = new FakeCnb();
+    fake.mainSha = advanced; fake.compareResponse = compareResponse;
+    await assert.rejects(assertGitBinding(new CnbClient({ token: "test", fetchImpl: fake.fetch }),
+      { tag: TAG, sha: SHA }), /发布提交不在受保护 main 历史中/u);
+    assert.ok(fake.calls.every(call => call.method === "GET"));
+  }
+  const denied = new FakeCnb();
+  denied.mainSha = advanced; denied.compareStatus = 403;
+  await assert.rejects(assertGitBinding(new CnbClient({ token: "test", fetchImpl: denied.fetch }),
+    { tag: TAG, sha: SHA }), /HTTP 403/u);
+  assert.ok(denied.calls.every(call => call.method === "GET"));
+});
+
+test("producer seals the exact frozen source after a verified descendant main advance", async () => {
+  const f = fixture(), fake = new FakeCnb();
+  try {
+    fake.mainSha = "b".repeat(40); fake.acceptAncestor = true;
+    const result = await stagePlatform({ env: env("macos"), platform: "macos", releaseDir: f.release,
+      cwd: f.root, checkoutSha: SHA, fetchImpl: fake.fetch });
+    assert.equal(result.sha, SHA);
+    assert.equal(fake.release, null);
+    assert.equal(fake.commitAssets.size, 3);
+    const manifest = JSON.parse(fake.commitAssets.get(`desktop-macos-candidate-${BUILD_ID}-desktop-macos-manifest.json`));
+    assert.equal(manifest.sha, SHA);
+    assert.equal(manifest.platformSigning, "signed");
+  } finally { f.cleanup(); }
+});
+
+test("publisher verifies original candidate and remote bytes when main advances during draft upload", async () => {
+  const f = fixture(), fake = new FakeCnb();
+  try {
+    fake.addCandidates(f.root);
+    fake.onCreateRelease = () => { fake.mainSha = "b".repeat(40); fake.acceptAncestor = true; };
+    const result = await publishRelease({ env: publisherEnv(fake), cwd: f.root,
+      checkoutSha: SHA, fetchImpl: fake.fetch, sleep: async () => {} });
+    assert.equal(result.sha, SHA);
+    assert.equal(fake.release.draft, false);
+    assert.equal(fake.release.latest, true);
+    const manifest = JSON.parse(fake.releaseAssets.get("WorkLoom-release-manifest.json"));
+    assert.equal(manifest.sha, SHA);
+    assert.equal(fake.releaseAssets.size, 5);
+    assert.ok(fake.calls.filter(call => call.url.includes("/git/compare/")).length >= 2);
+  } finally { f.cleanup(); }
+});
+
+test("descendant main never excuses moved tags or disabled protection before public promotion", async () => {
+  for (const invalidate of [fake => { fake.tagSha = "c".repeat(40); }, fake => { fake.mainProtected = false; }]) {
+    const f = fixture(), fake = new FakeCnb();
+    try {
+      fake.addCandidates(f.root);
+      fake.onCreateRelease = () => {
+        fake.mainSha = "b".repeat(40); fake.acceptAncestor = true; invalidate(fake);
+      };
+      await assert.rejects(publishRelease({ env: publisherEnv(fake), cwd: f.root,
+        checkoutSha: SHA, fetchImpl: fake.fetch, sleep: async () => {} }), /tag 未精确指向|分支保护/u);
+      assert.equal(fake.release.draft, true);
+      assert.ok(!fake.calls.some(call => call.method === "PATCH"));
+    } finally { f.cleanup(); }
+  }
 });
