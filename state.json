@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 337,
+  "revision": 340,
   "tasks": {
     "132": {
       "number": 132,
@@ -1753,7 +1753,7 @@
     },
     "140": {
       "number": 140,
-      "status": "parked",
+      "status": "waiting_ci",
       "firstSeen": 1791334789636,
       "attempts": {},
       "admission": {
@@ -1769,10 +1769,10 @@
           "protocol": 10
         }
       },
-      "updatedAt": 1791343628062,
+      "updatedAt": 1791343678881,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls?state=all&base_ref=main&page_size=100&page=2 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 1791343513169,
-      "headSha": "4ae528d2963ac327bd2faec2012a91095b157d7a",
+      "headSha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
       "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
       "branch": "task/T-2026-1007-0001",
       "intent": {
@@ -1786,7 +1786,7 @@
         "provider": "codex",
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 140,
-        "headSha": "4ae528d2963ac327bd2faec2012a91095b157d7a",
+        "headSha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
         "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
@@ -1812,7 +1812,7 @@
         "ciPolicyChanges": [
           {
             "id": "CI-001",
-            "rationale": "静态导入本仓固定指南的离线回归；保留原有身份、输入、错误脱敏、权限和MCP断言。已全文审查现有入口及新增测试，实际对应回归全绿；回滚可revert本任务提交。"
+            "rationale": "仅将固定docs/ai-video-workbench-guide.md加入文档白名单并要求该固定源存在，沿现有规范化、软链逃逸、摘要和写入边界执行；未开放docs目录树。真实复制受控夹具和载荷CLI/MCP回读通过。"
           },
           {
             "id": "CI-002",
@@ -1820,40 +1820,40 @@
           },
           {
             "id": "CI-003",
-            "rationale": "仅将固定docs/ai-video-workbench-guide.md加入文档白名单并要求该固定源存在，沿现有规范化、软链逃逸、摘要和写入边界执行；未开放docs目录树。真实复制受控夹具和载荷CLI/MCP回读通过。"
+            "rationale": "静态导入本仓固定指南的离线回归；保留原有身份、输入、错误脱敏、权限和MCP断言。已全文审查现有入口及新增测试，实际对应回归全绿；回滚可revert本任务提交。"
           }
         ],
-        "ciPolicyChangesHash": "0ee6e385635e99b5dbfed0a34cda353634dc822152f8b933f5a462b19f3b15ae",
+        "ciPolicyChangesHash": "325358ba51e4c5b0b6efcaa93200b75731327439b27e2685730352148e4bb458",
         "tests": [
           {
             "command": "/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test scripts/agent-capabilities.test.mjs scripts/agent-execution.test.mjs scripts/product-runtime-assets.test.mjs scripts/video-capabilities.test.mjs",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T00:57:16.375395Z",
-            "result": "on never promotes a source receipt to verified real business data (22.3625ms)\n✔ real stdio MCP call uses the same mutation and preserves the pending envelope (340.722084ms)\n✔ canonical allowlist preserves director/media/agent sources and rejects dev/secret assets (0.915583ms)\n✔ normal physical source copy records canonical source and generated contract bytes (356.645542ms)\n✔ missing fixed guide fails assembly before compiler or runtime writes (54.238625ms)\n✔ fixed guide symlink cannot include external content in runtime (51.892334ms)\n✔ cross-target structure checks the installed video package without requiring Growthtest-only director sources (130.708209ms)\n✔ tracked source through an ancestor symlink is refused before copying outside bytes (75.645459ms)\n✔ destination ancestor symlink cannot redirect writes outside the nominated runtime (132.488ms)\n✔ existing derived-output symlink cannot replace an external file (157.570917ms)\n✔ derived .env.defaults symlink is rejected before the compiler or any outside write (52.383541ms)\n✔ derived RUNTIME_ASSETS.json symlink is rejected before the compiler or any outside write (77.851583ms)\n✔ derived vendor/supermickey/package.json symlink is rejected before the compiler or any outside write (61.46075ms)\n✔ existing compiler output file symlink cannot redirect TypeScript writes (50.798084ms)\n✔ dangling destination links fail before writes and deleted tracked files remain optional (125.992708ms)\n✔ payload cannot be created inside a selected source tree (47.821084ms)\n✔ compiler output ancestor symlink is rejected before the compiler can write outside (39.902583ms)\n✔ canonical output aliases cannot overwrite the checkout (56.212833ms)\n✔ delivery hashes main, attachments and asset list; later tampering is detected (13.398917ms)\n✔ empty manifest, missing or empty main, directory and missing digest never pass (8.858667ms)\n✔ cross-project manifests, conflicting digests, invalid JSON and path escapes fail (8.505958ms)\n✔ suggested POSIX command preserves every argument literally and supplies a PowerShell representation (123.890333ms)\nℹ tests 53\nℹ suites 0\nℹ pass 53\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1843.326667\n"
+            "finishedAt": "2026-10-07T03:16:12.883233Z",
+            "result": " execution never promotes a source receipt to verified real business data (4.807042ms)\n✔ real stdio MCP call uses the same mutation and preserves the pending envelope (76.389708ms)\n✔ canonical allowlist preserves director/media/agent sources and rejects dev/secret assets (0.801083ms)\n✔ normal physical source copy records canonical source and generated contract bytes (183.921584ms)\n✔ missing fixed guide fails assembly before compiler or runtime writes (33.820125ms)\n✔ fixed guide symlink cannot include external content in runtime (37.441667ms)\n✔ cross-target structure checks the installed video package without requiring Growthtest-only director sources (74.902125ms)\n✔ tracked source through an ancestor symlink is refused before copying outside bytes (40.43375ms)\n✔ destination ancestor symlink cannot redirect writes outside the nominated runtime (40.227ms)\n✔ existing derived-output symlink cannot replace an external file (41.062708ms)\n✔ derived .env.defaults symlink is rejected before the compiler or any outside write (40.571333ms)\n✔ derived RUNTIME_ASSETS.json symlink is rejected before the compiler or any outside write (38.892042ms)\n✔ derived vendor/supermickey/package.json symlink is rejected before the compiler or any outside write (39.556916ms)\n✔ existing compiler output file symlink cannot redirect TypeScript writes (31.233458ms)\n✔ dangling destination links fail before writes and deleted tracked files remain optional (75.316792ms)\n✔ payload cannot be created inside a selected source tree (32.40975ms)\n✔ compiler output ancestor symlink is rejected before the compiler can write outside (32.051875ms)\n✔ canonical output aliases cannot overwrite the checkout (33.334083ms)\n✔ delivery hashes main, attachments and asset list; later tampering is detected (4.177375ms)\n✔ empty manifest, missing or empty main, directory and missing digest never pass (1.835583ms)\n✔ cross-project manifests, conflicting digests, invalid JSON and path escapes fail (5.099208ms)\n✔ suggested POSIX command preserves every argument literally and supplies a PowerShell representation (74.053791ms)\nℹ tests 53\nℹ suites 0\nℹ pass 53\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 831.285708\n"
           },
           {
             "command": "/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/generate-capabilities.mjs --check",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T00:57:16.446172Z",
+            "finishedAt": "2026-10-07T03:16:12.933704Z",
             "result": "  ✓ docs/capabilities.auto.md（已最新）\n  ✓ docs/capabilities.auto.json（已最新）\n  ✓ README.md（已最新）\n能力文档与生成器一致 ✓（不代表生产验证）\n"
           },
           {
             "command": "git diff --check",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T00:57:16.461553Z",
+            "finishedAt": "2026-10-07T03:16:12.945964Z",
             "result": "PASS: command completed with exit 0 and no diagnostics"
           },
           {
             "command": "/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/secret-scan.mjs --range 6e7bb78749a4ade1955cf03476ed249f630aa3f8 HEAD",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T00:57:16.942727Z",
+            "finishedAt": "2026-10-07T03:16:13.302410Z",
             "result": "secret-scan: PASS (16 scan target(s))\n"
           }
         ],
-        "reviewedAt": "2026-10-07T01:00:10.196Z",
-        "summary": "当前Codex会话与三个独立子代理按本仓实际字节完成全部变更及直接发现、传输、打包依赖审查；生成能力文档按全量解析和派生校验B级，生产大入口仅相关C级区段，不冒充全生产审计。固定指南只读、严格空输入、固定代码根、产品、版本、UTF8、大小、路径边界与显式失败已核对；真实CLI和MCP正文一致，Growthtest真实插件启动、tool、resource、hook额外回读通过。用户最新要求已全文复读：每片由正式管线自主拆镜和分配逐镜时长，30秒、6镜、五版与17至30分钟仅历史计时样本，不新增生产默认、超时闸或硬编码拆镜。runtime仅固定指南白名单，缺件失败，实际复制夹具明确标记非完整installer。原有必需CI未删除或弱化，指南测试接入本仓原CI实际执行入口，敏感、隔离、付费经营边界保留。已关闭文档身份、旧接线、客户端端口、导演公开字段和Growth CI接线发现；0未解决。变化无新数据库、媒体、模型、供应商、TTS、ASR或跨仓生产机制移植；回滚为revert本任务提交。准确提交后的真实离线测试另附tests，完整云端CI及普通候选合并由现行交付队列验证；不以本地绿代替生产或桌面GUI验收。",
+        "reviewedAt": "2026-10-07T03:27:48.668Z",
+        "summary": "当前Codex会话与三个独立子代理按本仓实际字节完成全部变更及直接发现、传输、打包依赖审查；生成能力文档按全量解析和派生校验B级，生产大入口仅相关C级区段，不冒充全生产审计。固定指南只读、严格空输入、固定代码根、产品、版本、UTF8、大小、路径边界与显式失败已核对；真实CLI和MCP正文一致，Growthtest真实插件启动、tool、resource、hook额外回读通过。用户最新要求已全文复读：每片由正式管线自主拆镜和分配逐镜时长，30秒、6镜、五版与17至30分钟仅历史计时样本，不新增生产默认、超时闸或硬编码拆镜。runtime仅固定指南白名单，缺件失败，实际复制夹具明确标记非完整installer。原有必需CI未删除或弱化，指南测试接入本仓原CI实际执行入口，敏感、隔离、付费经营边界保留。已关闭文档身份、旧接线、客户端端口、导演公开字段和Growth CI接线发现；0未解决。变化无新数据库、媒体、模型、供应商、TTS、ASR或跨仓生产机制移植；回滚为revert本任务提交。准确提交后的真实离线测试另附tests，完整云端CI及普通候选合并由现行交付队列验证；不以本地绿代替生产或桌面GUI验收。 原4ae候选141接纳步骤真实HTTP429，静态闸缺受信接纳回执失败闭合。追加普通任务空提交，唯一父4ae、完整Git树与16任务字节不变；旧13项回执原样归档，新head实际53测试与独立B连续性完成后再审查handoff。",
         "passed": true,
-        "id": "eca538280566eab4bc081e51338357a3f9d1624af07020c2df9d84adfb91be7b"
+        "id": "5b09b9d5445b2a6cab09c6e05826528216a16299cebd63eadb765da640e6bf9c"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -1862,7 +1862,7 @@
           "number": 140,
           "state": "open",
           "title": "feat(industry): 内置 AI 工作台视频调用指南 [T-2026-1007-0001]",
-          "body": "AI 工作台接到视频任务时，原有入口分散且插件网关与通用 MCP 不同，容易找不到流程或沿用错误参数。本次内置本仓唯一视频调用指南，CLI/MCP 返回同一完整正文与摘要，现有入口引导先读，运行载荷只包含这份固定指南。\n\n每条短片的镜头数、逐镜时长与编排继续由正式管线按本次需求自主规划；30 秒、6 镜、五版及 17–30 分钟仅为历史计时样本，不新增生产默认、全局超时或验收闸。指南核对人物、商品、平台、时长、账号调性、声音及特殊要求，说明正式前期、付费渲染、恢复、后期与真实交付的边界。\n\n固定读取只接受空输入，不接受调用方路径；缺件、产品或版本冲突、UTF-8/大小/链接边界失败均保留错误。新增回归接入原仓实际 CI 测试入口；必需 CI 和主干保护保持原口径。\n\n验证：\n- 当前提交 `4ae528d2963ac327bd2faec2012a91095b157d7a` 的离线回归 53/53 通过，0 失败或跳过。\n- 真实源码 CLI/MCP 全文和 SHA 一致；精确载荷复制及错误路径回归通过，生成器检查、diff 检查、暂存及提交范围秘密扫描通过。\n- 当前 Codex 会话和独立复核已审查变更及直接依赖，0 未解决发现；结构化实际测试及审查回执通过既有交付队列 handoff，云端原 CI 与准确候选合并继续为硬门禁。\n\n边界：本次没有模型、供应商、TTS、ASR 或新媒体调用；没有移植其它仓生产机制。载荷测试中的编译器是受控 fixture，不冒充完整签名安装包、桌面 GUI 或真实新片生产验收。回滚为 revert 本任务提交。\n\n任务卡：#139（T-2026-1007-0001）。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0001\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "body": "AI 工作台接到视频任务时，原有入口分散且插件网关与通用 MCP 不同，容易找不到流程或沿用错误参数。本次内置本仓唯一视频调用指南，CLI/MCP 返回同一完整正文与摘要，现有入口引导先读，运行载荷只包含这份固定指南。\n\n每条短片的镜头数、逐镜时长与编排继续由正式管线按本次需求自主规划；30 秒、6 镜、五版及 17–30 分钟仅为历史计时样本，不新增生产默认、全局超时或验收闸。指南核对人物、商品、平台、时长、账号调性、声音及特殊要求，说明正式前期、付费渲染、恢复、后期与真实交付的边界。\n\n固定读取只接受空输入，不接受调用方路径；缺件、产品或版本冲突、UTF-8/大小/链接边界失败均保留错误。新增回归接入原仓实际 CI 测试入口；必需 CI 和主干保护保持原口径。\n\n验证：\n- 当前提交 `19b31200978ce59e0b25ae279f387b4ea07c813f` 的离线回归 53/53 通过，0 失败或跳过。\n- 真实源码 CLI/MCP 全文和 SHA 一致；精确载荷复制及错误路径回归通过，生成器检查、diff 检查、暂存及提交范围秘密扫描通过。\n- 当前 Codex 会话和独立复核已审查变更及直接依赖，0 未解决发现；结构化实际测试及审查回执通过既有交付队列 handoff，云端原 CI 与准确候选合并继续为硬门禁。\n\n边界：本次没有模型、供应商、TTS、ASR 或新媒体调用；没有移植其它仓生产机制。载荷测试中的编译器是受控 fixture，不冒充完整签名安装包、桌面 GUI 或真实新片生产验收。回滚为 revert 本任务提交。\n\n任务卡：#139（T-2026-1007-0001）。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0001\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
           "author": {
             "username": "cnb.dYiF05kxAGA",
             "nickname": "Genius",
@@ -1883,7 +1883,7 @@
           },
           "head": {
             "ref": "refs/heads/task/T-2026-1007-0001",
-            "sha": "4ae528d2963ac327bd2faec2012a91095b157d7a",
+            "sha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -1901,7 +1901,7 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "4ae528d2963ac327bd2faec2012a91095b157d7a",
+        "headSha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
         "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
         "files": [
           "AGENTS.repo.md",
@@ -1927,7 +1927,7 @@
           "dependsOn": [],
           "releases": []
         },
-        "headTime": 1791334624000,
+        "headTime": 1791342951000,
         "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
         "checkErrors": [],
         "checkSha": null,
@@ -1935,18 +1935,18 @@
         "ciPolicyChanges": [
           {
             "id": "CI-001",
-            "file": "scripts/agent-capabilities.test.mjs",
+            "file": "scripts/product-runtime-assets.mjs",
             "before": {
               "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
-              "path": "scripts/agent-capabilities.test.mjs",
+              "path": "scripts/product-runtime-assets.mjs",
               "absent": false
             },
             "after": {
-              "ref": "4ae528d2963ac327bd2faec2012a91095b157d7a",
-              "path": "scripts/agent-capabilities.test.mjs",
+              "ref": "19b31200978ce59e0b25ae279f387b4ea07c813f",
+              "path": "scripts/product-runtime-assets.mjs",
               "absent": false
             },
-            "digest": "3d04e438b46de421caae67e451f43a68c053dbee7873e07ba1e6dee5a9e6f67b"
+            "digest": "11ebed1c6935d31a36d81da0da0c6dda81db8f5d9fb147a600890f3e4694fd39"
           },
           {
             "id": "CI-002",
@@ -1957,26 +1957,26 @@
               "absent": false
             },
             "after": {
-              "ref": "4ae528d2963ac327bd2faec2012a91095b157d7a",
+              "ref": "19b31200978ce59e0b25ae279f387b4ea07c813f",
               "path": "scripts/product-runtime-assets.test.mjs",
               "absent": false
             },
-            "digest": "55477b67ce9021ba5da232e7815f656f5dfb68d7f85ca559f3e68d851b7214ff"
+            "digest": "5cb38cb0f4b38b0cd1fb18007b2af8733739ecad80594ae029d119c1f39d7013"
           },
           {
             "id": "CI-003",
-            "file": "scripts/product-runtime-assets.mjs",
+            "file": "scripts/agent-capabilities.test.mjs",
             "before": {
               "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
-              "path": "scripts/product-runtime-assets.mjs",
+              "path": "scripts/agent-capabilities.test.mjs",
               "absent": false
             },
             "after": {
-              "ref": "4ae528d2963ac327bd2faec2012a91095b157d7a",
-              "path": "scripts/product-runtime-assets.mjs",
+              "ref": "19b31200978ce59e0b25ae279f387b4ea07c813f",
+              "path": "scripts/agent-capabilities.test.mjs",
               "absent": false
             },
-            "digest": "ca6cf6e20aa52c11fa32e9792f06d8a792e41711f3930ac9d4199b4758cd0bd2"
+            "digest": "bdf5a57508ccc5395a8bb0c6fa377be628ed944d770a69eb94087bfda4b3c76e"
           }
         ]
       },
@@ -9708,6 +9708,250 @@
       },
       "previous": "8f58d8749ec3134ccd6d19efa7e4e324c1105ba2fe4ce08c731fbbd462727f4f",
       "digest": "ae913416958ffe3d6081adc499b5ac06ac7d60c68928388880b6fabac8642471"
+    },
+    {
+      "sequence": 338,
+      "at": "2026-10-07T03:27:58.880Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 140,
+        "id": "5b09b9d5445b2a6cab09c6e05826528216a16299cebd63eadb765da640e6bf9c",
+        "headSha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8"
+      },
+      "previous": "ae913416958ffe3d6081adc499b5ac06ac7d60c68928388880b6fabac8642471",
+      "digest": "4e0db869c84827ee72361021543d12d638edc205baf2d7a63ddf8721aa7d23ba"
+    },
+    {
+      "sequence": 339,
+      "at": "2026-10-07T03:27:58.881Z",
+      "kind": "task",
+      "data": {
+        "number": 140,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "task/T-2026-1007-0001",
+          "intent": {
+            "taskId": "T-2026-1007-0001",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 140,
+            "headSha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "AGENTS.repo.md",
+              "README.md",
+              "bundles/ai-video/README.md",
+              "bundles/geo-growthmatrix/agent-capabilities.json",
+              "bundles/geo-growthmatrix/capabilities/video.mjs",
+              "bundles/geo-growthmatrix/capabilities/workbench-guide.mjs",
+              "bundles/geo-growthmatrix/capabilities/workbench-guide.test.mjs",
+              "docs/AGENT-CLIENTS.md",
+              "docs/agent-cli-mcp.md",
+              "docs/ai-video-workbench-guide.md",
+              "docs/capabilities.auto.json",
+              "docs/capabilities.auto.md",
+              "scripts/AGENT-CAPABILITIES.md",
+              "scripts/agent-capabilities.test.mjs",
+              "scripts/product-runtime-assets.mjs",
+              "scripts/product-runtime-assets.test.mjs"
+            ],
+            "filesHash": "6ed0fb4aaa3d7af5de44eb369ba8c6a9a81179f1249716c29a196d2ead9d24cb",
+            "dependsOn": [],
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "rationale": "仅将固定docs/ai-video-workbench-guide.md加入文档白名单并要求该固定源存在，沿现有规范化、软链逃逸、摘要和写入边界执行；未开放docs目录树。真实复制受控夹具和载荷CLI/MCP回读通过。"
+              },
+              {
+                "id": "CI-002",
+                "rationale": "追加真实指南复制及缺件/软链失败断言；保留原compiler/destination/path隔离回归。受控编译器fixture明确标注，不冒充完整安装构建；未修改任何必需CI stage。"
+              },
+              {
+                "id": "CI-003",
+                "rationale": "静态导入本仓固定指南的离线回归；保留原有身份、输入、错误脱敏、权限和MCP断言。已全文审查现有入口及新增测试，实际对应回归全绿；回滚可revert本任务提交。"
+              }
+            ],
+            "ciPolicyChangesHash": "325358ba51e4c5b0b6efcaa93200b75731327439b27e2685730352148e4bb458",
+            "tests": [
+              {
+                "command": "/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test scripts/agent-capabilities.test.mjs scripts/agent-execution.test.mjs scripts/product-runtime-assets.test.mjs scripts/video-capabilities.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T03:16:12.883233Z",
+                "result": " execution never promotes a source receipt to verified real business data (4.807042ms)\n✔ real stdio MCP call uses the same mutation and preserves the pending envelope (76.389708ms)\n✔ canonical allowlist preserves director/media/agent sources and rejects dev/secret assets (0.801083ms)\n✔ normal physical source copy records canonical source and generated contract bytes (183.921584ms)\n✔ missing fixed guide fails assembly before compiler or runtime writes (33.820125ms)\n✔ fixed guide symlink cannot include external content in runtime (37.441667ms)\n✔ cross-target structure checks the installed video package without requiring Growthtest-only director sources (74.902125ms)\n✔ tracked source through an ancestor symlink is refused before copying outside bytes (40.43375ms)\n✔ destination ancestor symlink cannot redirect writes outside the nominated runtime (40.227ms)\n✔ existing derived-output symlink cannot replace an external file (41.062708ms)\n✔ derived .env.defaults symlink is rejected before the compiler or any outside write (40.571333ms)\n✔ derived RUNTIME_ASSETS.json symlink is rejected before the compiler or any outside write (38.892042ms)\n✔ derived vendor/supermickey/package.json symlink is rejected before the compiler or any outside write (39.556916ms)\n✔ existing compiler output file symlink cannot redirect TypeScript writes (31.233458ms)\n✔ dangling destination links fail before writes and deleted tracked files remain optional (75.316792ms)\n✔ payload cannot be created inside a selected source tree (32.40975ms)\n✔ compiler output ancestor symlink is rejected before the compiler can write outside (32.051875ms)\n✔ canonical output aliases cannot overwrite the checkout (33.334083ms)\n✔ delivery hashes main, attachments and asset list; later tampering is detected (4.177375ms)\n✔ empty manifest, missing or empty main, directory and missing digest never pass (1.835583ms)\n✔ cross-project manifests, conflicting digests, invalid JSON and path escapes fail (5.099208ms)\n✔ suggested POSIX command preserves every argument literally and supplies a PowerShell representation (74.053791ms)\nℹ tests 53\nℹ suites 0\nℹ pass 53\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 831.285708\n"
+              },
+              {
+                "command": "/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/generate-capabilities.mjs --check",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T03:16:12.933704Z",
+                "result": "  ✓ docs/capabilities.auto.md（已最新）\n  ✓ docs/capabilities.auto.json（已最新）\n  ✓ README.md（已最新）\n能力文档与生成器一致 ✓（不代表生产验证）\n"
+              },
+              {
+                "command": "git diff --check",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T03:16:12.945964Z",
+                "result": "PASS: command completed with exit 0 and no diagnostics"
+              },
+              {
+                "command": "/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/secret-scan.mjs --range 6e7bb78749a4ade1955cf03476ed249f630aa3f8 HEAD",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T03:16:13.302410Z",
+                "result": "secret-scan: PASS (16 scan target(s))\n"
+              }
+            ],
+            "reviewedAt": "2026-10-07T03:27:48.668Z",
+            "summary": "当前Codex会话与三个独立子代理按本仓实际字节完成全部变更及直接发现、传输、打包依赖审查；生成能力文档按全量解析和派生校验B级，生产大入口仅相关C级区段，不冒充全生产审计。固定指南只读、严格空输入、固定代码根、产品、版本、UTF8、大小、路径边界与显式失败已核对；真实CLI和MCP正文一致，Growthtest真实插件启动、tool、resource、hook额外回读通过。用户最新要求已全文复读：每片由正式管线自主拆镜和分配逐镜时长，30秒、6镜、五版与17至30分钟仅历史计时样本，不新增生产默认、超时闸或硬编码拆镜。runtime仅固定指南白名单，缺件失败，实际复制夹具明确标记非完整installer。原有必需CI未删除或弱化，指南测试接入本仓原CI实际执行入口，敏感、隔离、付费经营边界保留。已关闭文档身份、旧接线、客户端端口、导演公开字段和Growth CI接线发现；0未解决。变化无新数据库、媒体、模型、供应商、TTS、ASR或跨仓生产机制移植；回滚为revert本任务提交。准确提交后的真实离线测试另附tests，完整云端CI及普通候选合并由现行交付队列验证；不以本地绿代替生产或桌面GUI验收。 原4ae候选141接纳步骤真实HTTP429，静态闸缺受信接纳回执失败闭合。追加普通任务空提交，唯一父4ae、完整Git树与16任务字节不变；旧13项回执原样归档，新head实际53测试与独立B连续性完成后再审查handoff。",
+            "passed": true,
+            "id": "5b09b9d5445b2a6cab09c6e05826528216a16299cebd63eadb765da640e6bf9c"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 140,
+            "pull": {
+              "number": 140,
+              "state": "open",
+              "title": "feat(industry): 内置 AI 工作台视频调用指南 [T-2026-1007-0001]",
+              "body": "AI 工作台接到视频任务时，原有入口分散且插件网关与通用 MCP 不同，容易找不到流程或沿用错误参数。本次内置本仓唯一视频调用指南，CLI/MCP 返回同一完整正文与摘要，现有入口引导先读，运行载荷只包含这份固定指南。\n\n每条短片的镜头数、逐镜时长与编排继续由正式管线按本次需求自主规划；30 秒、6 镜、五版及 17–30 分钟仅为历史计时样本，不新增生产默认、全局超时或验收闸。指南核对人物、商品、平台、时长、账号调性、声音及特殊要求，说明正式前期、付费渲染、恢复、后期与真实交付的边界。\n\n固定读取只接受空输入，不接受调用方路径；缺件、产品或版本冲突、UTF-8/大小/链接边界失败均保留错误。新增回归接入原仓实际 CI 测试入口；必需 CI 和主干保护保持原口径。\n\n验证：\n- 当前提交 `19b31200978ce59e0b25ae279f387b4ea07c813f` 的离线回归 53/53 通过，0 失败或跳过。\n- 真实源码 CLI/MCP 全文和 SHA 一致；精确载荷复制及错误路径回归通过，生成器检查、diff 检查、暂存及提交范围秘密扫描通过。\n- 当前 Codex 会话和独立复核已审查变更及直接依赖，0 未解决发现；结构化实际测试及审查回执通过既有交付队列 handoff，云端原 CI 与准确候选合并继续为硬门禁。\n\n边界：本次没有模型、供应商、TTS、ASR 或新媒体调用；没有移植其它仓生产机制。载荷测试中的编译器是受控 fixture，不冒充完整签名安装包、桌面 GUI 或真实新片生产验收。回滚为 revert 本任务提交。\n\n任务卡：#139（T-2026-1007-0001）。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0001\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/task/T-2026-1007-0001",
+                "sha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "files": [
+              "AGENTS.repo.md",
+              "README.md",
+              "bundles/ai-video/README.md",
+              "bundles/geo-growthmatrix/agent-capabilities.json",
+              "bundles/geo-growthmatrix/capabilities/video.mjs",
+              "bundles/geo-growthmatrix/capabilities/workbench-guide.mjs",
+              "bundles/geo-growthmatrix/capabilities/workbench-guide.test.mjs",
+              "docs/AGENT-CLIENTS.md",
+              "docs/agent-cli-mcp.md",
+              "docs/ai-video-workbench-guide.md",
+              "docs/capabilities.auto.json",
+              "docs/capabilities.auto.md",
+              "scripts/AGENT-CAPABILITIES.md",
+              "scripts/agent-capabilities.test.mjs",
+              "scripts/product-runtime-assets.mjs",
+              "scripts/product-runtime-assets.test.mjs"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0001",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791342951000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": "scripts/product-runtime-assets.mjs",
+                "before": {
+                  "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                  "path": "scripts/product-runtime-assets.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "19b31200978ce59e0b25ae279f387b4ea07c813f",
+                  "path": "scripts/product-runtime-assets.mjs",
+                  "absent": false
+                },
+                "digest": "11ebed1c6935d31a36d81da0da0c6dda81db8f5d9fb147a600890f3e4694fd39"
+              },
+              {
+                "id": "CI-002",
+                "file": "scripts/product-runtime-assets.test.mjs",
+                "before": {
+                  "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                  "path": "scripts/product-runtime-assets.test.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "19b31200978ce59e0b25ae279f387b4ea07c813f",
+                  "path": "scripts/product-runtime-assets.test.mjs",
+                  "absent": false
+                },
+                "digest": "5cb38cb0f4b38b0cd1fb18007b2af8733739ecad80594ae029d119c1f39d7013"
+              },
+              {
+                "id": "CI-003",
+                "file": "scripts/agent-capabilities.test.mjs",
+                "before": {
+                  "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                  "path": "scripts/agent-capabilities.test.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "19b31200978ce59e0b25ae279f387b4ea07c813f",
+                  "path": "scripts/agent-capabilities.test.mjs",
+                  "absent": false
+                },
+                "digest": "bdf5a57508ccc5395a8bb0c6fa377be628ed944d770a69eb94087bfda4b3c76e"
+              }
+            ]
+          }
+        }
+      },
+      "previous": "4e0db869c84827ee72361021543d12d638edc205baf2d7a63ddf8721aa7d23ba",
+      "digest": "2cb3d8bd6f9be2105a15cc59eecdb3f87bd3f2575c981700c43c5c0180bc5de2"
+    },
+    {
+      "sequence": 340,
+      "at": "2026-10-07T03:27:57.850Z",
+      "kind": "transaction",
+      "data": {
+        "id": "6317e860-2c57-4998-a21c-c4aff759dc71"
+      },
+      "previous": "2cb3d8bd6f9be2105a15cc59eecdb3f87bd3f2575c981700c43c5c0180bc5de2",
+      "digest": "6769b64a98df34ca5ff0875dbc235b930be5ef81649e8cdfbe212fa4aded8456"
     }
   ]
 }
