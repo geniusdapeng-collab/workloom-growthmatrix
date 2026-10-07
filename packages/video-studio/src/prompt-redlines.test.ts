@@ -4,6 +4,26 @@ import { auditFilmRedlines, auditShotRedlines, PROMPT_REDLINE_POLICY_VERSION } f
 const base = { shotId: "T-01", scene: "酒店大堂", sceneDescription: "明亮通透的大堂", action: "她开口", props: "自助入住机", negative: "无卡通、无文字水印" };
 
 describe("花钱前提示词红线（提高一次过率）", () => {
+  it.each([
+    "无额外道具，仅人物本身与虚化的大堂环境，画面中不出现屏幕、卡片、单据或可读标识。",
+    "出镜人物本人为画面唯一主体；不出现房卡、单据、证件或可读标识。",
+    "画面中没有证件、菜单或书页。",
+    "无房卡、单据、屏幕。",
+  ])("否定顿号清单不被拆成肯定道具：%s", props => {
+    expect(auditShotRedlines({ ...base, props }).filter(issue => issue.hard)).toEqual([]);
+  });
+  it.each([
+    "不出现房卡、单据，屏幕显示可读界面。",
+    "不出现房卡、单据、屏幕显示可读界面。",
+    "机身无LOGO、屏幕正面可见。",
+  ])("否定不掩盖后续明确肯定的屏幕：%s", props => {
+    expect(auditShotRedlines({ ...base, props }).map(issue => issue.id)).toContain("screen-must-be-blurred");
+  });
+  it("肯定枚举与后续证件动作仍按隐私红线拒绝", () => {
+    for (const props of ["台式机、身份证、房卡", "不出现单据、手持身份证放到感应区"]) {
+      expect(auditShotRedlines({ ...base, props }).map(issue => issue.id)).toContain("document-must-be-unreadable");
+    }
+  });
   it("屏幕镜头必须写明虚化 + 负面排除文字与 LOGO", () => {
     const bad = auditShotRedlines({ ...base, sceneDescription: "机器触控面亮着界面" });
     expect(bad.map((i) => i.id)).toEqual(expect.arrayContaining(["screen-must-be-blurred", "screen-no-text-negative", "screen-no-logo-negative"]));
