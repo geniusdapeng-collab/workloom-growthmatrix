@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 348,
+  "revision": 350,
   "tasks": {
     "132": {
       "number": 132,
@@ -1753,7 +1753,7 @@
     },
     "140": {
       "number": 140,
-      "status": "waiting_ci",
+      "status": "parked",
       "firstSeen": 1791334789636,
       "attempts": {},
       "admission": {
@@ -1771,7 +1771,7 @@
       },
       "updatedAt": 1791344711725,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls?state=all&base_ref=main&page_size=100&page=2 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791343513169,
+      "blockedUntil": 1791345311725,
       "headSha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
       "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
       "branch": "task/T-2026-1007-0001",
@@ -10102,6 +10102,31 @@
       },
       "previous": "d13e5f7c65849f2af000632dc2fe1258fea6cb1b9242c48dd1a3b4544ad71064",
       "digest": "23e38f79aee8d1e580a48f4f70973e0bf5e07cebda1da1e0a404b56868d0832e"
+    },
+    {
+      "sequence": 349,
+      "at": "2026-10-07T03:45:11.725Z",
+      "kind": "task",
+      "data": {
+        "number": 140,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls?state=all&base_ref=main&page_size=100&page=2 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791345311725
+        }
+      },
+      "previous": "23e38f79aee8d1e580a48f4f70973e0bf5e07cebda1da1e0a404b56868d0832e",
+      "digest": "86bd5302e73692bc56542f0840b63d07603be8021f3749217a80bfc2e2e67966"
+    },
+    {
+      "sequence": 350,
+      "at": "2026-10-07T03:45:19.780Z",
+      "kind": "transaction",
+      "data": {
+        "id": "be713a5b-87f2-43f4-943b-24af02e22b3a"
+      },
+      "previous": "86bd5302e73692bc56542f0840b63d07603be8021f3749217a80bfc2e2e67966",
+      "digest": "4227bc18a443d56c7a09acba7f88939ddd207619e713799fe5433a2b3f8e024b"
     }
   ]
 }
