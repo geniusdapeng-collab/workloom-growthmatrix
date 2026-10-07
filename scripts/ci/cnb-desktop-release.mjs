@@ -301,8 +301,18 @@ export async function assertGitBinding(client, identity, { requireAbsentRelease 
   const main = await client.api("GET", "git/branches/main");
   assert(["main", "refs/heads/main"].includes(main?.name) && main.protected === true,
     "远端 main 必须已启用 CNB 分支保护");
-  assert(requireSha(main?.commit?.sha, "远端 main SHA") === identity.sha,
-    "远端 main 已偏离 RELEASE_SHA");
+  const mainSha = requireSha(main?.commit?.sha, "远端 main SHA");
+  if (mainSha !== identity.sha) {
+    // Integration and release have independent queues. Keep the release source
+    // frozen while newer, normally reviewed commits advance protected main.
+    // A fresh, exact compare must prove that source is still in main's history;
+    // an unrelated head, missing proof or permission failure cannot publish.
+    const comparison = await client.api("GET", `git/compare/${identity.sha}...${mainSha}`);
+    assert(comparison?.base_commit?.sha === identity.sha
+      && comparison?.head_commit?.sha === mainSha
+      && comparison?.merge_base_commit?.sha === identity.sha,
+    "发布提交不在受保护 main 历史中，或比较回执身份不符");
+  }
 
   const tag = await client.api("GET", `git/tags/${encodeURIComponent(identity.tag)}`);
   const tagSha = tag?.commit?.sha
@@ -546,7 +556,8 @@ export async function publishRelease({ env, cwd = process.cwd(), fetchImpl, chec
     for (const name of names) await uploadReleaseAsset(client, identity, release.id, name, join(releaseDir, name));
     await checkRemoteReleaseBytes(client, identity, release.id, releaseDir, remoteDir);
 
-    // A moved tag or main invalidates the draft. It remains a draft for manual inspection.
+    // Tag drift, lost protection or a main history that excludes the frozen
+    // source invalidates the draft. Ordinary descendant advancement is allowed.
     await assertGitBinding(client, identity, { requireAbsentRelease: false });
     await client.api("PATCH", `releases/${encodeURIComponent(release.id)}`, {
       body: { draft: false, prerelease: false, make_latest: "true" },
