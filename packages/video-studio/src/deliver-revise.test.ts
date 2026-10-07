@@ -56,7 +56,7 @@ describe("多风格交付包（deliver · G-DLV1 变体雷同否决）", () => {
     expect(manifest.generatedAt).toBe("2026-09-25T00:00:00Z");
     expect(manifest.variants[0]!.sha256).toBe("v1");
     expect(manifest.reuseDiscipline).toContain("零 token");
-    expect(manifest.distinctness.approved).toBe(true);
+    expect(manifest.distinctness?.approved).toBe(true);
   });
 });
 

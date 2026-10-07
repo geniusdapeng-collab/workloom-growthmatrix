@@ -1,7 +1,7 @@
 # 标题字幕 bridge 连接器（ai-video）
 
 把 `subtitleread.* / subtitlewrite.*` 工具接到本地字幕工位（ffmpeg + libass + **随包字体目录**），
-供「字幕师」数字员工在后期环节做**选型 → 版式 → 烧录（字幕/标题/弹幕/贴纸/卡拉OK/双语）→ 复检**。
+供「字幕师」数字员工在后期环节做**选型 → 请求配方 → 烧录（字幕/标题/弹幕/贴纸/卡拉OK/双语）→ 处理回执**。
 
 ## 部署形态
 
@@ -12,11 +12,11 @@ WorkLoom（大脑：岗位/技能/围栏/事件账本）          Mac 字幕工�
                                             ├─ libass（ass/subtitles 滤镜）
                                             ├─ 工位字体目录（kit/install-fonts.sh 按 sha256 安装）
                                             ├─ 素材区（原片只读）
-                                            ├─ 产物区（新文件 + 版本链 + 证据帧）
-                                            └─ 回执：sha256 / 版式体检 / 可现度 / 时间轴回读 / 字体解析
+                                            ├─ 产物区（新文件 + 版本链 + 源字节保护）
+                                            └─ 回执：sha256 / 输出规格 / 时间轴回读 / 字体解析
 ```
 
-**大文件不出工位**：服务器只传路径与参数，工位本地读写素材，只回元数据、小图（证据帧）与哈希。
+**大文件不出工位**：服务器只传路径与参数，工位本地读写素材，默认只回处理元数据与哈希。
 
 ## 接线
 
@@ -36,7 +36,7 @@ const toolExecutor = createSubtitleBridgeExecutor({
 与调色/配乐工位同款：基座 seam 提案仍处「暂缓」（`proposals/workloom-im/0001-deployment-tool-executor-seam.md`），
 因此当前生产入口是**行业侧脚本注入**（见 `runtime-smoke.mts` 与部署层 `server-adapter.mts`），不改任何基座文件。
 
-## 工具面（12 个）
+## 工具面（14 个）
 
 | 工具 | 类型 | 用途 |
 |---|---|---|
@@ -45,13 +45,15 @@ const toolExecutor = createSubtitleBridgeExecutor({
 | `subtitleread.analyze` | 读 | 画面可读性诊断：抽帧量化文字带**亮度**与**细节密度**、遮挡区命中、证据帧 |
 | `subtitleread.fonts` | 读 | 字体档案检索与打分（场景×语言硬过滤 + 五维加权 + 账号锁定字体） |
 | `subtitleread.recipes` | 读 | 平台版式与题材配方检索（安全区/字号倍率/描边/底衬/禁忌） |
-| `subtitlewrite.plan` | 写 | **出方案包**：ASS 样式与事件 + 选型理由 + 版式体检（不改成片） |
-| `subtitlewrite.burn` | 写 | 字幕烧录出片（SRT→ASS→libass，带六项复检；`srt_path_en` 即双语） |
-| `subtitlewrite.title` | 写 | 片头标题/花字渲染出片（平台版式 + 描边/底衬 + 安全区校验） |
-| `subtitlewrite.danmaku` | 写 | 弹幕轨：滚动（顶部 1/4 轨道）+ 顶部/底部固定；密度熔断 + 抽稀如实报告 |
-| `subtitlewrite.sticker` | 写 | 贴纸/花字：200ms 弹入 + 停留 1.5~3s；安全区与遮挡区双校验 |
+| `subtitlewrite.plan` | 写 | **出方案包**：ASS 样式与事件 + 选型理由（不改成片）；诊断仅显式 `analyze=true` |
+| `subtitlewrite.burn` | 写 | 字幕烧录出片（SRT→ASS→libass，带真实处理回执；`srt_path_en` 即双语） |
+| `subtitlewrite.title` | 写 | 片头标题/花字渲染出片（请求平台版式 + 描边/底衬 + 输出规格） |
+| `subtitlewrite.danmaku` | 写 | 弹幕轨：滚动（顶部 1/4 轨道）+ 顶部/底部固定；按请求完整渲染条目，记录密度事实 |
+| `subtitlewrite.sticker` | 写 | 贴纸/花字：200ms 弹入；按请求有效时间和位置处理 |
 | `subtitlewrite.karaoke` | 写 | 卡拉OK：`\kf` 逐字扫过；逐字时间轴显式或均分（如实标注）；可双语 |
-| `subtitlewrite.best` | 写 | 择优出片：字体×描边候选池打分；**允许结论是"无需加字幕"**（不产出文件） |
+| `subtitlewrite.sidecar` | 写 | 导出 SRT/ASS/VTT 与清单，源母版只读 |
+| `subtitlewrite.softmux` | 写 | 按 copy 参数添加可开关字幕轨，记录实际轨道与源字节 |
+| `subtitlewrite.best` | 写 | 兼容入口：请求配方确定字体，渲染一次；没有字幕需求时不产出文件 |
 
 ## 字号与版式怎么定（可解释、可复算）
 
@@ -64,28 +66,22 @@ const toolExecutor = createSubtitleBridgeExecutor({
 平台版式（画幅 / 字幕位置 / 字号倍率 / 封面风格）与 **UI 遮挡区矩形**见
 `library/font-catalog/font_db.json#layout_policy`；抖音/快手字幕默认上抬至底部 18%（避开点赞栏与文案区）。
 
-## 弹幕 / 贴纸 / 卡拉OK / 双语（v1.1 二期）
+## 默认处理政策（2026-10-07.2）
 
-| 能力 | 口径 | 复检 |
+已经成功渲染且能取得真实字节的原片直接进入正式字幕处理。默认不抽样原片、不计算亮度/边缘/对比度/可现度、不进行候选画面评分，也不因字号、行宽、平台遮挡区或密度建议删除成功产物。`qualityReviewed=false`、`presence=null`、空 `evidence` 是如实记录，不能当作通过了品质复评。
+
+| 能力 | 实际行为 | 处理事实 |
 |---|---|---|
-| 弹幕 | 滚动走顶部 1/4 轨道（round-robin 分道）、顶部/底部固定各占行位；单条 ≤20 字；透明度默认 0.85；1s 窗口并发 ≤8（超出按窗口抽稀并如实报告条数） | 条数回读 / 密度 / 字体解析 / 可现度 / 分辨率 / 音轨 / 证据帧 |
-| 贴纸·花字 | 200ms 弹入（`\t(0,200,\fscx/\fscy)`）+ 停留 1.5~3s；五种预设（撞色/奶油/国风/科技/促销）；位置必须落在安全区且与遮挡区零相交 | 停留时长 / 字体解析 / 可现度 / 分辨率 / 音轨 / 证据帧 |
-| 卡拉OK | `\kf` 逐字扫过（高亮色可配）；逐字时间轴优先用显式传入，缺省按字数均分并**如实标注"非真实发音对齐"** | 逐字时长合计 = 字幕条时长（±0.05s）/ `\kf` 标签齐备 / 可现度 / 字体解析 / 分辨率 / 音轨 |
-| 双语字幕 | `subtitlewrite.burn --srt-en`：第二语言小 12% 叠在同侧（先中后英），两行都在同一安全区带内 | 时间轴回读（主+次）/ 版式体检 / 可现度 / 字体解析 / 分辨率 / 音轨 |
+| 弹幕 | 滚动/顶部/底部按请求条目完整渲染，透明度默认 0.85 | ASS 事件数、字体解析、输出规格、源字节 |
+| 贴纸·花字 | 200ms 弹入；采用请求的有效时间、位置与预设 | ASS 事件数、字体解析、输出规格、源字节 |
+| 卡拉OK | 显式逐字时间或按字数均分；均分标注为非真实发音对齐 | 逐字时间合计、标签、字体解析、输出规格 |
+| 双语字幕 | 第二语言单独样式，采用所给时间轴 | ASS 回读、字体解析、输出规格 |
+| 旁挂 | 输出 SRT/ASS/VTT 与清单，默认 `analyze=false` | 文件哈希、时间轴回读、源母版哈希保持 |
+| 软轨 | 视频/音频执行 `copy`，添加可开关字幕轨 | 实际命令参数、轨道元数据、视频时长、源母版哈希保持 |
 
-**纪律**：弹幕密度与安全区不允许用参数绕过（`allow_flood` / `ignore_density` / `skip_safe_area` 被 G-SUB6 一票否决）；
-卡拉OK 的均分时间轴必须标注口径，不得当真实对齐交付。
+默认校验保留缺失/损坏素材、原片覆盖、字体缺失或实际解析失败、ASS 时间轴回读失败、真实 FFmpeg 处理失败、输出缺失及实际规格变化等错误。旧 `skip_verify` / `verify=false` 不会关闭这些处理事实校验。
 
-## 六项复检（不达标即删产物，do-no-harm）
-
-| 复检 | 口径 |
-|---|---|
-| 时间轴回读 | 写出的 ASS 事件与源 SRT 逐条一致（条数 + 起止） |
-| 字幕可现度 | 字幕带加字前后 Δ ≥ 0.004（"配了跟没配一样"直接判失败） |
-| 版式体检 | 字号占短边 / 行宽 / 安全区（实测墨迹外接框 × 遮挡区）/ 对比度 |
-| 字体解析 | `fontselect` 日志全部命中工位字体目录（防空回落系统字体） |
-| 分辨率保持 | 输出与母版宽高一致 |
-| 音轨保持 | 有/无音轨与母版一致（音轨恒 copy，字幕不动音频） |
+显式 `subtitleread.analyze` 仍可做只读诊断；`plan` / `sidecar` 的 `analyze=true` 返回建议，建议不成为处理或发布的品质闸。`best` 兼容旧参数，但不使用 `min_score` 或候选数进行原片评分；没有内容或请求说明已有硬字幕时返回 `no_change_needed`。
 
 ## 字体：29 款随包分发（无需工位安装）
 
@@ -110,7 +106,7 @@ node bundles/ai-video/connectors/subtitle-bridge/demo-artifacts.mjs --out /tmp/s
 ```
 
 产出 `source.mp4`（自造竖屏素材：深/浅/花三种底 + 环境声）、`subtitle.srt`、`brief.json`、
-`subtitle-plan.json` / `.ass`、`burned.mp4`、`best.mp4`、`evidence-*.png`、`analyze-*.png`、`report.json`、`README.md`。
+`subtitle-plan.json` / `.ass`、`burned.mp4`、`best.mp4`、显式诊断的 `analyze-*.png`、`report.json`、`README.md`。
 
 ## 运行时端到端（真实 PG + 真实围栏 + 真实 bridge + 真实 ffmpeg + 真实字体）
 
@@ -148,11 +144,9 @@ node_modules/.bin/tsx bundles/ai-video/connectors/subtitle-bridge/runtime-smoke.
 
 | 纪律 | 落点 |
 |---|---|
-| 字幕必须看得清 | `analyze → decideTextStyle`（亮度/细节密度决定字色/描边/底衬）+ 对比度复检 |
-| 字幕不得压平台 UI | 实测墨迹外接框 × `occlusion_zones` 求交（G-SUB3 硬闸） |
-| 选了字体就真用它 | `fontselect` 日志核验（防空回落系统字体） |
-| 时间轴不许漂 | ASS 回读 × 源 SRT 逐条对比 |
-| 配了不能像没配 | 字幕可现度 Δ < 0.004 直接 `verify_failed` 并删除产物 |
-| 原片只读 | `assertOutputWritable` 同款检查 + 围栏 G-SUB2 |
-| 字体许可干净 | 白名单 + G-SUB1/G-SUB5；字体不进仓库、不子集化 |
-| 无回执不算完成 | 六项复检 + sha256 回执 + outage 负例 |
+| 请求内容实际落盘 | ASS/SRT/VTT 时间轴与事件回读、真实 FFmpeg 输出 |
+| 选了字体就真用它 | 实际渲染 `fontselect` 日志与随包字体目录 |
+| 原片只读 | 输出不能覆盖原片、处理前后源哈希一致 |
+| 字体许可干净 | 许可白名单与既有预审批；字体不子集化 |
+| 无回执不算完成 | 输出哈希、元数据和真实处理错误；outage 不伪造回执 |
+| 已成功渲染原片默认直通 | 无画面评分、无品质触发重渲染；`qualityReviewed=false` |
