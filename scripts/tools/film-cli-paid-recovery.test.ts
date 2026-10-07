@@ -89,21 +89,26 @@ function fixture(kind: Kind) {
     postCalls: () => readRows(calls).filter(value => value.method === "POST") };
 }
 function sha(file: string): string { return createHash("sha256").update(readFileSync(file)).digest("hex"); }
+function requiredRow(rows: Row[], predicate: (row: Row) => boolean): Row {
+  const row = rows.find(predicate);
+  if (!row) throw new Error("Expected intercepted network operation is missing");
+  return row;
+}
 
 describe("实际制片CLI的持久受理与原片保留", () => {
   it("关键帧下载失败后换运行目录，从已存URL恢复且不重新付费；默认接收小图", () => {
     const setup = fixture("image");
     const first = setup.run("first", "download-loss");
     expect(first.result.status, first.diagnostic).not.toBe(0);
-    expect(first.rows().findLast(row => row.stage === "keyframe")).toMatchObject({ ok: false, evidence: { error: "INJECTED_DOWNLOAD_LOSS" } });
+    expect(first.rows().filter(row => row.stage === "keyframe").at(-1)).toMatchObject({ ok: false, evidence: { error: "INJECTED_DOWNLOAD_LOSS" } });
     const post = setup.postCalls(); expect(post).toHaveLength(1);
     expect(post[0].receipts).toEqual([expect.objectContaining({ state: "submitting", identity: expect.objectContaining({ projectId: setup.project, slotId: "plate:EMPTY", provider: "ark", endpoint: post[0].url }) })]);
-    const get = setup.calls().find(row => row.url.endsWith("/result/image.png"));
+    const get = requiredRow(setup.calls(), row => row.url.endsWith("/result/image.png"));
     expect(get.receipts).toEqual([expect.objectContaining({ state: "accepted", resultUrl: get.url })]);
     const second = setup.run("second", "ok");
     expect(second.result.status, second.diagnostic).toBe(0);
     expect(setup.postCalls()).toHaveLength(1);
-    expect(second.rows().findLast(row => row.stage === "keyframe")).toMatchObject({ ok: true, verdict: { via: "deterministic", score: 0, degraded: false } });
+    expect(second.rows().filter(row => row.stage === "keyframe").at(-1)).toMatchObject({ ok: true, verdict: { via: "deterministic", score: 0, degraded: false } });
     const delivered = join(second.workDir, "plates", setup.project, "EMPTY-plate.png");
     expect(sha(delivered)).toBe(sha(setup.media));
     expect(setup.calls().every(row => row.url.startsWith("https://fixture.invalid/"))).toBe(true);
@@ -127,9 +132,9 @@ describe("实际制片CLI的持久受理与原片保留", () => {
     expect(first.result.status, first.diagnostic).not.toBe(0);
     const post = setup.postCalls(); expect(post).toHaveLength(1);
     expect(post[0].receipts).toEqual([expect.objectContaining({ state: "submitting", identity: expect.objectContaining({ projectId: setup.project, shotId: "EMPTY", endpoint: post[0].url, body: expect.objectContaining({ duration: 4 }) }) })]);
-    const poll = setup.calls().find(row => row.url.endsWith("/fixture-task-1"));
+    const poll = requiredRow(setup.calls(), row => row.url.endsWith("/fixture-task-1"));
     expect(poll.receipts).toEqual([expect.objectContaining({ state: "submitted", taskId: "fixture-task-1" })]);
-    const get = setup.calls().find(row => row.url.endsWith("/result/video.mp4"));
+    const get = requiredRow(setup.calls(), row => row.url.endsWith("/result/video.mp4"));
     expect(get.receipts).toEqual([expect.objectContaining({ state: "succeeded", taskId: "fixture-task-1", resultUrl: get.url })]);
     const second = setup.run("second", "ok");
     expect(second.result.status, second.diagnostic).toBe(0);
@@ -140,7 +145,7 @@ describe("实际制片CLI的持久受理与原片保留", () => {
     const probe = spawnSync(ffprobe, ["-v", "error", "-show_entries", "format=duration", "-of", "json", clip], { encoding: "utf8", timeout: 5_000 });
     expect(probe.status, probe.stderr).toBe(0);
     expect(Number(JSON.parse(probe.stdout).format.duration)).toBeLessThan(1.1);
-    expect(second.rows().findLast(row => row.stage === "material-gen")).toMatchObject({ ok: true, evidence: { taskId: "fixture-task-1", measurements: { motion: null, identity: null, referenceReuse: null } } });
+    expect(second.rows().filter(row => row.stage === "material-gen").at(-1)).toMatchObject({ ok: true, evidence: { taskId: "fixture-task-1", measurements: { motion: null, identity: null, referenceReuse: null } } });
   }, 85_000);
 
   it.each(["image", "video"] as const)("%s旧产物缺受理记录时，不因为换目录或禁用缓存而重新付费", kind => {
