@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2625,
+  "revision": 2627,
   "tasks": {
     "132": {
       "number": 132,
@@ -7592,7 +7592,7 @@
     },
     "176": {
       "number": 176,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791391664418,
       "attempts": {},
       "headSha": "309d830dd6f7ef77627da282933d96b4b1fd42d7",
@@ -7730,7 +7730,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791391675072,
+      "updatedAt": 1791392115502,
       "admission": {
         "number": 176,
         "headSha": "309d830dd6f7ef77627da282933d96b4b1fd42d7",
@@ -7739,7 +7739,10 @@
         "scopes": [],
         "owner": "admission/pr-176",
         "generation": {}
-      }
+      },
+      "dependencies": [
+        167
+      ]
     },
     "177": {
       "number": 177,
@@ -67944,6 +67947,46 @@
       },
       "previous": "572b190f69ebdb0d9a650e8c2bd0982d109885e6e3fc18da2e7c037ea02850f6",
       "digest": "422120df6741785a0d2a6cc91dbabe192dcc1683ea576a1257814c5a7a8a48b3"
+    },
+    {
+      "sequence": 2626,
+      "at": "2026-10-07T16:55:15.502Z",
+      "kind": "task",
+      "data": {
+        "number": 176,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "309d830dd6f7ef77627da282933d96b4b1fd42d7",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              167
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.24"
+              }
+            ]
+          },
+          "dependencies": [
+            167
+          ]
+        }
+      },
+      "previous": "422120df6741785a0d2a6cc91dbabe192dcc1683ea576a1257814c5a7a8a48b3",
+      "digest": "a2fda66479b1f76887ede89d2f02d901054a2fde86e26219662f7aad94223fc3"
+    },
+    {
+      "sequence": 2627,
+      "at": "2026-10-07T16:58:44.975Z",
+      "kind": "transaction",
+      "data": {
+        "id": "9f02068f-1f56-4a34-8b3c-5f081a8a0800"
+      },
+      "previous": "a2fda66479b1f76887ede89d2f02d901054a2fde86e26219662f7aad94223fc3",
+      "digest": "a1090a9f70ca47e5721f0157d12ae0d1e8921a3d43aaa7e34664f4bdcec22be8"
     }
   ]
 }
