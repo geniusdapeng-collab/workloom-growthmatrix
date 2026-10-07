@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2963,
+  "revision": 2965,
   "tasks": {
     "132": {
       "number": 132,
@@ -8414,7 +8414,7 @@
           }
         ]
       },
-      "updatedAt": 1791399914273,
+      "updatedAt": 1791400515635,
       "admission": {
         "number": 180,
         "headSha": "e46adba2e883cf1c4453348a6486828d775ea649",
@@ -75869,6 +75869,47 @@
       },
       "previous": "bf2bbd68b97518652946a2f3727080f192fe5491be413ce82b441a0fa7774b4c",
       "digest": "7f6ccbebda2df78195cbb6cdb42f1b1f5116650a6958f2b95ef650a9556bef6e"
+    },
+    {
+      "sequence": 2964,
+      "at": "2026-10-07T19:15:15.635Z",
+      "kind": "task",
+      "data": {
+        "number": 180,
+        "patch": {
+          "headSha": "e46adba2e883cf1c4453348a6486828d775ea649",
+          "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+          "branch": "fix/T-2026-1007-0918-desktop-release-ancestor",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              178
+            ],
+            "releases": []
+          },
+          "originalBody": "The actual native publisher rejected the frozen, integrated release as soon as another independent repair advanced main. Check a fresh exact Git compare instead: the release SHA must equal the protected head or be its verified ancestor, with exact base/head/merge-base identities. Keep the frozen CNB event/workspace, stable tag, signed candidate manifests and every remote installer byte check. A fork, missing/denied/substituted history, moved tag or lost protection stops publication. Existing tags and pinned source are never rewritten; this repair applies to later releases containing it. Native integration and signed production bytes remain necessary.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    178\n  ],\n  \"releases\": []\n}\n-->",
+          "files": [
+            ".cnb.yml",
+            "scripts/ci/cnb-desktop-release.mjs",
+            "scripts/ci/cnb-desktop-release.test.mjs"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791399914273
+        }
+      },
+      "previous": "7f6ccbebda2df78195cbb6cdb42f1b1f5116650a6958f2b95ef650a9556bef6e",
+      "digest": "b8c5b7a6793ab075e52618fba7ea7d4dc800f6f8b5291f555dbc83e69648ef1b"
+    },
+    {
+      "sequence": 2965,
+      "at": "2026-10-07T19:18:28.282Z",
+      "kind": "transaction",
+      "data": {
+        "id": "fdcbfa98-f8cf-46d6-933e-f742fa479df4"
+      },
+      "previous": "b8c5b7a6793ab075e52618fba7ea7d4dc800f6f8b5291f555dbc83e69648ef1b",
+      "digest": "acd5ebb712bc7a08671a08d931372aeb6b18a5db1ea7578b3258d961f18adac5"
     }
   ]
 }
