@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 747,
+  "revision": 749,
   "tasks": {
     "132": {
       "number": 132,
@@ -3320,7 +3320,7 @@
     },
     "152": {
       "number": 152,
-      "status": "waiting_ci",
+      "status": "parked",
       "firstSeen": 1791358731486,
       "attempts": {},
       "headSha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
@@ -3447,7 +3447,9 @@
         "apps/server/src/video/marketing-authority.test.ts",
         "apps/server/src/video/marketing-authority.ts"
       ],
-      "ciSince": 1791358810413
+      "ciSince": 1791358810413,
+      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791360009167
     },
     "153": {
       "number": 153,
@@ -19366,6 +19368,31 @@
       },
       "previous": "dba16135c32724d517448dbc63d3184b0d295f5b5442a76dba828218a1e07ec9",
       "digest": "f11e52df09944d1c5881fedfb88e27df333557505abd17aa0cdaf4cc7e64acfe"
+    },
+    {
+      "sequence": 748,
+      "at": "2026-10-07T07:50:09.167Z",
+      "kind": "task",
+      "data": {
+        "number": 152,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791360009167
+        }
+      },
+      "previous": "f11e52df09944d1c5881fedfb88e27df333557505abd17aa0cdaf4cc7e64acfe",
+      "digest": "9c905c1186c9e8cf38c6be6d903af501d7b02753bc3e906ebd5bd58317cd9d9b"
+    },
+    {
+      "sequence": 749,
+      "at": "2026-10-07T07:51:41.085Z",
+      "kind": "transaction",
+      "data": {
+        "id": "d7387c8d-d891-4cff-895f-1b61f132a54e"
+      },
+      "previous": "9c905c1186c9e8cf38c6be6d903af501d7b02753bc3e906ebd5bd58317cd9d9b",
+      "digest": "55a96b145d1a3a12fa35df0e2249a1fb546e862c010d0f48a32cd8d92bc84cc2"
     }
   ]
 }
