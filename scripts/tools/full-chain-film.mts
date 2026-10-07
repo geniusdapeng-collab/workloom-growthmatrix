@@ -4412,6 +4412,25 @@ if (DANMAKU_ENABLED && STAGES.has("danmaku") && existsSync(subtitled)) {
 }
 
 /* ---------- ⑧ 配乐（bgm-bridge） ---------- */
+const requestedBgmTracks = new Map<string, { requested: string; path: string; bpm: number | null }>();
+/** A registered track ID and a local path use the same resolved bytes in every requested mix. */
+async function resolveRequestedBgmTrack(requested: string): Promise<{ requested: string; path: string; bpm: number | null }> {
+  let resolved = requestedBgmTracks.get(requested);
+  if (!resolved) {
+    if (existsSync(requested)) resolved = { requested, path: abs(requested), bpm: null };
+    else {
+      const core = await import(join(REPO_ROOT, "bundles/ai-video/connectors/bgm-bridge/core.mjs")) as {
+        findTracks: (q: Record<string, unknown>) => { track?: { path?: string; bpm?: number } };
+      };
+      const track = core.findTracks({ trackId: requested, commercialUse: true }).track;
+      if (!track?.path || !existsSync(track.path)) throw new Error(`BGM_TRACK_MISSING: ${requested}`);
+      resolved = { requested, path: track.path, bpm: Number.isFinite(track.bpm) && Number(track.bpm) > 0 ? Number(track.bpm) : null };
+    }
+    requestedBgmTracks.set(requested, resolved);
+  }
+  if (!existsSync(resolved.path)) throw new Error(`BGM_TRACK_MISSING: ${requested}`);
+  return resolved;
+}
 /** 未重跑配乐时沿用磁盘上不早于上游的配乐版；重跑则由下面的 bgm 环节覆盖 */
 let scored = STAGES.has("bgm") ? danmakuOut : preferDownstream(join(POST_DIR, "master-scored.mp4"), danmakuOut, "bgm");
 if (STAGES.has("bgm") && existsSync(danmakuOut) && !DRY_RUN) {
@@ -4430,16 +4449,9 @@ if (STAGES.has("bgm") && existsSync(danmakuOut) && !DRY_RUN) {
       "--lufs", arg("--bgm-lufs", "-14"), "--true-peak", arg("--bgm-true-peak", "-1.5"),
       "--section", arg("--bgm-section", "auto"), "--bpm-strategy", "cut-driven", "--cut-times", CUT_GRID.join(","),
       "--evidence-dir", join(POST_DIR, "bgm-evidence")];
-    let trackPath = chosenTrack;
-    if (chosenTrack && !existsSync(trackPath)) {
-      const core = await import(join(REPO_ROOT, "bundles/ai-video/connectors/bgm-bridge/core.mjs")) as {
-        findTracks: (q: Record<string, unknown>) => { track?: { path?: string; bpm?: number } };
-      };
-      const track = core.findTracks({ trackId: chosenTrack, commercialUse: true }).track;
-      if (!track?.path || !existsSync(track.path)) throw new Error(`BGM_TRACK_MISSING: ${chosenTrack}`);
-      trackPath = track.path;
-      if (Number.isFinite(track.bpm) && Number(track.bpm) > 0) mixArgs.push("--bgm-bpm", String(track.bpm));
-    }
+    const resolvedTrack = chosenTrack ? await resolveRequestedBgmTrack(chosenTrack) : null;
+    const trackPath = resolvedTrack?.path ?? "";
+    if (resolvedTrack?.bpm) mixArgs.push("--bgm-bpm", String(resolvedTrack.bpm));
     if (trackPath) rememberInputs("bgm", [danmakuOut, trackPath]);
     const result = chosenTrack
       ? runCli(BGM_CLI, ["mix", ...mixArgs, "--bgm", trackPath])
@@ -4454,7 +4466,7 @@ if (STAGES.has("bgm") && existsSync(danmakuOut) && !DRY_RUN) {
       context: { genre, mood, policy, qualityReviewed: false }, env: ENV });
     bgmManifestInfo = { layer: "on", via: chosenTrack ? "requested-track-once" : "deterministic-recipe-once",
       sourceAuthority: "original-program-bytes", stemsVerified: false, output: existsSync(out) ? basename(out) : null,
-      requestedTrack: chosenTrack || null, qualityReviewed: false };
+      requestedTrack: chosenTrack || null, resolvedTrackPath: trackPath || null, qualityReviewed: false };
     record({ stage: "bgm", shotId: null, invoked: true, ok: result.ok && verdict.approved, cached: false,
       degraded: false, attempt: 1, ms: Date.now() - started, artifact: existsSync(out) ? out : null,
       evidence: { ...bgmManifestInfo, ...info, policy, tool: "bgm-bridge", toolOutput: result.out.slice(-700) }, verdict });
@@ -4815,13 +4827,19 @@ if (QUALITY === "uhd" && STAGES.has("deliver") && !DRY_RUN && !masterApprovedFor
  */
 if (STAGES.has("deliver") && !DRY_RUN && (QUALITY !== "uhd" || masterApprovedForUhd)
   && artifactReusable("master", deliverablePath, scored)) {
-  rememberInputs("deliver", [deliverablePath]);
+  const deliveryInputPaths = [deliverablePath];
+  rememberInputs("deliver", deliveryInputPaths);
   const started = Date.now();
   /**
    * 从尚未添加当前配乐的字幕/节目层派生请求变体，避免重复叠加配乐。
    * 各变体按真实请求与配方生成文件；没有配乐可闻度或跨变体差异品质二检。
    */
   const variantSource = danmakuOut;
+  deliveryInputPaths.push(variantSource);
+  const requestedVariantTrack = !flag("--no-music") && arg("--bgm-track", "")
+    ? await resolveRequestedBgmTrack(arg("--bgm-track", "")) : null;
+  if (requestedVariantTrack) deliveryInputPaths.push(requestedVariantTrack.path);
+  rememberInputs("deliver", deliveryInputPaths);
   const allVariantPlans = buildVariantPlan({ master: variantSource, outDir: OUT_DIR, projectId: PROJECT,
     coverHook: arg("--cover-hook", shotlist.title ?? "") });
   const requestedVariantIds = arg("--variants", "").split(",").map(id => id.trim()).filter(Boolean);
@@ -4850,17 +4868,17 @@ if (STAGES.has("deliver") && !DRY_RUN && (QUALITY !== "uhd" || masterApprovedFor
       let variantBgm: { track: string; sha256: string } | null = null;
       if (!flag("--no-music")) {
         const mixed = plan.output.replace(/\.mp4$/i, "-bgm.mp4");
-        const track = arg("--bgm-track", "");
         const mixArgs = ["--in", plan.output, "--out", mixed, "--policy", "keep-dialogue",
           "--music-level", String(-26 + plan.variant.musicLevelDeltaDb), "--ducking", "14", "--lufs", "-14",
           "--section", "auto", "--bpm-strategy", "cut-driven", "--cut-times", CUT_GRID.join(","),
           "--evidence-dir", join(POST_DIR, "bgm-evidence", plan.variant.id)];
-        const mix = track ? runCli(BGM_CLI, ["mix", ...mixArgs, "--bgm", track])
+        if (requestedVariantTrack?.bpm) mixArgs.push("--bgm-bpm", String(requestedVariantTrack.bpm));
+        const mix = requestedVariantTrack ? runCli(BGM_CLI, ["mix", ...mixArgs, "--bgm", requestedVariantTrack.path])
           : runCli(BGM_CLI, ["best", ...mixArgs, "--genre", plan.variant.bgmGenre, "--mood", plan.variant.bgmMood,
             "--source-policy", arg("--bgm-source-policy", "local-only")]);
         if (!mix.ok) throw new Error(`VARIANT_BGM_FAILED: ${mix.out.slice(-400)}`);
         inspectPostInput({ file: mixed, ffprobe: FFPROBE }); renameSync(mixed, plan.output);
-        variantBgm = { track: track || `deterministic:${plan.variant.bgmGenre}:${plan.variant.bgmMood}`, sha256: fingerprintArtifact(plan.output).sha256 };
+        variantBgm = { track: requestedVariantTrack?.requested || `deterministic:${plan.variant.bgmGenre}:${plan.variant.bgmMood}`, sha256: fingerprintArtifact(plan.output).sha256 };
       }
       let variantCover: { path: string; sha256: string } | null = null;
       if (STAGES.has("cover") || existsSync(join(OUT_DIR, `${PROJECT}-cover.png`))) {
@@ -4994,7 +5012,7 @@ if (STAGES.has("deliver") && !DRY_RUN && (QUALITY !== "uhd" || masterApprovedFor
       throw new Error(`UHD 交付包未放行（G-DLV1）：${gate.reason}`);
     }
     const stagedAssets = [...stagedContentAssets, manifestFile];
-    rememberInputs("deliver", [deliverablePath, manifestFile, ...variantManifest.map((variant) => variant.path)]);
+    rememberInputs("deliver", [...deliveryInputPaths, manifestFile, ...variantManifest.map((variant) => variant.path)]);
     try {
       const published = await publishUhdDelivery({
         stagingDir: OUT_DIR, publicRoot: PUBLIC_OUT_DIR, releaseId: RUN_ID,

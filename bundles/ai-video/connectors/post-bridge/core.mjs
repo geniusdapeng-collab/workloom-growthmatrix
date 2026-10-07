@@ -328,6 +328,18 @@ async function contentKey(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex").slice(0, 16);
 }
 
+/** Only omission selects original program audio; explicitly supplied sources must retain all roles. */
+function assertShotAudioStems(value, label) {
+  const roles = ["dialogue", "ambience", "foley", "music"];
+  if (!value || typeof value !== "object" || Array.isArray(value)
+      || ![Object.prototype, null].includes(Object.getPrototypeOf(value))
+      || Object.keys(value).some((role) => !roles.includes(role))
+      || roles.some((role) => !Object.hasOwn(value, role) || !value[role]
+        || typeof value[role] !== "object" || Array.isArray(value[role]))) {
+    throw new PostError(`${label} 必须是包含 dialogue/ambience/foley/music 的完整显式来源对象，不能丢弃后改用原节目音`, "audio_stems_source_unverified");
+  }
+}
+
 /**
  * 逐镜归一化：统一 WxH / fps / yuv420p / AAC 48k 立体声，**并按内容哈希缓存**。
  * 缓存命中即复用（不重编码）——这正是"返修不重新生成镜头"的地基：镜头没换，归一化产物就不该重算。
@@ -335,6 +347,9 @@ async function contentKey(value) {
 export async function normaliseShots({
   shots = [], project = {}, workDir, bins = resolveBinaries(), reuse = true, force = false, env = process.env,
 }) {
+  for (const shot of shots) {
+    if (Object.hasOwn(shot, "audioStems")) assertShotAudioStems(shot.audioStems, "shots[].audioStems");
+  }
   const [width, height] = resolveResolution(project);
   const quality = resolveQuality(project);
   const fps = optionalNumber(project.fps, 30);
@@ -347,7 +362,8 @@ export async function normaliseShots({
     const shotId = String(shot.shotId ?? shot.shot_id ?? path.basename(source));
     const sourceHash = await sha256File(source);
     let frozenSource = source;
-    if (shot.audioStems) {
+    const audioStemsProvided = Object.hasOwn(shot, "audioStems");
+    if (audioStemsProvided) {
       const snapshotDir = await fsp.mkdtemp(path.join(dir, ".source-"));
       frozenSource = (await snapshotAudioStemArtifact({ file: source, sha256: sourceHash,
         output: path.join(snapshotDir, "original"), allowedRoots: allowedRoots(env) })).path;
@@ -391,7 +407,7 @@ export async function normaliseShots({
         throw new PostError(`镜头 ${shotId} 归一化缓存读取期间原素材发生变化`, "verify_failed");
       }
       out.push({
-        shotId, source, sourceHash, sourceDuration, audioStems: shot.audioStems ?? null, sourceKind, enhancement, quality, path: target, reused: true,
+        shotId, source, sourceHash, sourceDuration, audioStems: shot.audioStems ?? null, audioStemsProvided, sourceKind, enhancement, quality, path: target, reused: true,
         sha256: cachedHash, bytes: stat.size, mtimeMs: Math.round(stat.mtimeMs),
         duration: cachedProbe.videoDuration,
       });
@@ -441,7 +457,7 @@ export async function normaliseShots({
       await fsp.rm(tempTarget, { force: true });
     }
     out.push({
-      shotId, source, sourceHash, sourceDuration, audioStems: shot.audioStems ?? null, sourceKind, enhancement, quality, path: target, reused: false,
+      shotId, source, sourceHash, sourceDuration, audioStems: shot.audioStems ?? null, audioStemsProvided, sourceKind, enhancement, quality, path: target, reused: false,
       sha256: outputHash, bytes: stat.size, mtimeMs: Math.round((await fsp.stat(target)).mtimeMs),
       duration: outputProbe.videoDuration,
     });
@@ -881,8 +897,10 @@ async function verifyStoredStems(reference, project, base, env, bins) {
     verifySource: createAudioStemReceiptVerifier({ env, expectedTenant: env.WORKLOOM_POST_BRIDGE_TENANT }), allowedRoots: allowedRoots(env), bins });
 }
 async function timelineStems({ project, clips, transitions, workDir, env, bins }) {
-  if (clips.every(clip => !clip.audioStems)) return null;
-  if (!audioScope(project) || clips.some(clip => !clip.audioStems)) throw new PostError("显式独立音轨缺作用域或逐镜来源", "audio_stems_source_unverified");
+  const provided = clips.map((clip) => clip.audioStemsProvided ?? Object.hasOwn(clip, "audioStems"));
+  if (provided.every((present) => !present)) return null;
+  if (!audioScope(project) || provided.some((present) => !present)) throw new PostError("显式独立音轨缺作用域或逐镜来源", "audio_stems_source_unverified");
+  for (const clip of clips) assertShotAudioStems(clip.audioStems, `${clip.shotId}.audioStems`);
   const shots = clips.map((clip) => ({ shotId: clip.shotId, videoSha256: clip.sourceHash,
     normalisedVideoSha256: clip.sha256, sourceDurationSec: clip.sourceDuration,
     durationSec: clip.duration, stems: clip.audioStems }));
@@ -1898,7 +1916,8 @@ async function withRevisionClaim({ base, snapshot, expectedVersion, expectedProj
  * shotPaths?: Record<string, string>|null, bins?: {ffmpeg: string, ffprobe: string},
  * dryRun?: boolean, env?: NodeJS.ProcessEnv}} options
  */
-export async function reedit({
+export async function reedit(options = {}) {
+  const {
   projectPath,
   deliveryDir = null,
   expectedVersion = null,
@@ -1906,11 +1925,23 @@ export async function reedit({
   patch = {},
   outDir = null,
   shotPaths = null,
-  audioStemsByShot = null,
+  audioStemsByShot,
   bins = resolveBinaries(),
   dryRun = false,
   env = process.env,
-} = {}) {
+  } = options;
+  if (Object.hasOwn(options, "audioStemsByShot")) {
+    if (!audioStemsByShot || typeof audioStemsByShot !== "object" || Array.isArray(audioStemsByShot) || Object.keys(audioStemsByShot).length === 0
+        || ![Object.prototype, null].includes(Object.getPrototypeOf(audioStemsByShot))) {
+      throw new PostError("audioStemsByShot 必须是逐镜显式来源对象，不能丢弃后改用原节目音", "audio_stems_source_unverified");
+    }
+    for (const [shotId, stems] of Object.entries(audioStemsByShot)) {
+      assertShotAudioStems(stems, `audioStemsByShot.${shotId}`);
+      if (!shotPaths || !Object.hasOwn(shotPaths, shotId)) {
+        throw new PostError(`audioStemsByShot.${shotId} 未绑定本次替换镜头，不能静默丢弃`, "bad_request");
+      }
+    }
+  }
   const snapshot = readRevisionBase(projectPath);
   const projectFile = snapshot.file;
   const project = snapshot.project;
@@ -1968,7 +1999,7 @@ export async function reedit({
 
     const rebuilt = [];
     const reused = [];
-    const hasIndependentAudio = Boolean(project.layers?.audioStems);
+    let hasIndependentAudio = project.layers?.audioStems != null;
     const priorMasterStems = hasIndependentAudio
       ? await verifyStoredStems(project.layers.audioStems, project, projectDir, env, bins) : null;
     const priorSources = priorMasterStems ? descriptorsFromBundle(priorMasterStems) : {};
@@ -1984,9 +2015,11 @@ export async function reedit({
     for (const entry of projectShots) {
       const replacement = shotPaths?.[entry.shotId];
       if (replacement) {
-        if (hasIndependentAudio && !audioStemsByShot?.[entry.shotId]) throw new PostError(`显式分轨工程替换镜头 ${entry.shotId} 缺新的音轨来源`, "audio_stems_source_unverified");
+        const replacementStemsProvided = audioStemsByShot !== undefined && Object.hasOwn(audioStemsByShot, entry.shotId);
+        if (hasIndependentAudio && !replacementStemsProvided) throw new PostError(`显式分轨工程替换镜头 ${entry.shotId} 缺新的音轨来源`, "audio_stems_source_unverified");
         const [clip] = await normaliseShots({
-          shots: [{ shotId: entry.shotId, path: replacement, kind: entry.stored.kind ?? "live-action", audioStems: audioStemsByShot?.[entry.shotId] }],
+          shots: [{ shotId: entry.shotId, path: replacement, kind: entry.stored.kind ?? "live-action",
+            ...(replacementStemsProvided ? { audioStems: audioStemsByShot[entry.shotId] } : {}) }],
           project: { projectId: project.projectId, resolution: [width, height], quality, fps },
           workDir,
           bins,
@@ -2012,6 +2045,7 @@ export async function reedit({
         sourceHash: entry.stored.sourceSha256 ?? null,
         sourceDuration: entry.stored.sourceDuration ?? entry.stored.duration,
         audioStems: priorSources[entry.shotId] ?? null,
+        audioStemsProvided: hasIndependentAudio,
         sourceKind: entry.stored.kind ?? "live-action",
         quality,
         enhancement: entry.stored.enhancement ? {
@@ -2028,7 +2062,8 @@ export async function reedit({
       reused.push({ layer: "shots", shotId: clip.shotId, path: file, sha256, note: "复用上次归一化产物（哈希与工程文件一致）" });
     }
 
-    const nextMasterStems = priorMasterStems && patch.shots
+    hasIndependentAudio ||= normalised.some((clip) => clip.audioStemsProvided);
+    const nextMasterStems = hasIndependentAudio && patch.shots
       ? await timelineStems({ project, clips: normalised, transitions: project.layers.transitions ?? {}, workDir, env, bins })
       : priorMasterStems;
     const variantIds = (project.layers?.variants ?? []).map((variant) => variant.id);
@@ -2168,7 +2203,7 @@ export async function reedit({
       const stemTransitions = { ...(project.layers.transitions ?? {}), ...(pack.transitions ?? {}) };
       let stems = null;
       if (hasIndependentAudio) {
-        stems = rebuildVariant.assemble || !stored.audioStems
+        stems = rebuildVariant.assemble || stored.audioStems == null
           ? await timelineStems({ project, clips: normalised, transitions: stemTransitions, workDir, env, bins })
           : await verifyStoredStems(stored.audioStems, project, projectDir, env, bins);
       }
@@ -2721,7 +2756,7 @@ export async function callTool(name, params = {}, { bins = resolveBinaries(), en
         patch: params.patch ?? {},
         outDir: params.out_dir ? assertPathAllowed(params.out_dir, roots, "out_dir") : null,
         shotPaths,
-        audioStemsByShot: params.audio_stems_by_shot ?? null,
+        ...(Object.hasOwn(params, "audio_stems_by_shot") ? { audioStemsByShot: params.audio_stems_by_shot } : {}),
         bins,
         dryRun: params.dry_run === true,
         env,

@@ -69,7 +69,7 @@ function readShots(value) {
       shotId: String(shot.shotId ?? shot.shot_id ?? `SC-${String(index + 1).padStart(2, "0")}`),
       path: String(shot.path ?? shot.localPath ?? ""),
       ...(shot.kind ? { kind: String(shot.kind) } : {}),
-      ...(shot.audioStems ? { audioStems: shot.audioStems } : {}),
+      ...(Object.hasOwn(shot, "audioStems") ? { audioStems: shot.audioStems } : {}),
     }));
   }
   return value.split(",").map((file, index) => ({
@@ -177,7 +177,8 @@ async function main() {
         patch,
         outDir: typeof flags["out-dir"] === "string" ? flags["out-dir"] : null,
         shotPaths: Object.keys(shotPaths).length ? shotPaths : null,
-        audioStemsByShot: flags["audio-stems-by-shot"] ? readJson(flags["audio-stems-by-shot"], "--audio-stems-by-shot") : null,
+        ...(Object.hasOwn(flags, "audio-stems-by-shot")
+          ? { audioStemsByShot: readJson(flags["audio-stems-by-shot"], "--audio-stems-by-shot") } : {}),
         dryRun: flags["dry-run"] === true,
       });
       if (!outcome.executed) {

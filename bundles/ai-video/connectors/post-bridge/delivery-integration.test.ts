@@ -1,12 +1,12 @@
 /** 实际总装回归：本地 FFmpeg、仓内调色/字体/配乐，不替换生产函数。 */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { assembleTimeline, buildDeliveryPackage, readRevisionBase, reedit, resolveBinaries } from "./core.mjs";
+import { assembleTimeline, buildDeliveryPackage, callTool, normaliseShots, readRevisionBase, reedit, resolveBinaries } from "./core.mjs";
 import { describeAudioStemSources } from "../bgm-bridge/audio-stems.mjs";
 import { audioStemReceiptPayload } from "../bgm-bridge/audio-stems-trust.mjs";
 
@@ -98,7 +98,7 @@ describe.skipIf(!hasMediaTools)("后期真实总装与连续返修（需 FFmpeg/
 
   afterAll(() => {
     if (root) fs.rmSync(root, { recursive: true, force: true });
-  });
+  }, 60_000);
 
   it("硬切与淡入淡出执行精确拼接并记录真实字节；不做PCM复评", async () => {
     for (const mode of ["hard", "fade"]) {
@@ -269,6 +269,39 @@ describe.skipIf(!hasMediaTools)("后期真实总装与连续返修（需 FFmpeg/
       variants: ["warm-story"], outDir: path.join(root, "stems-tenant"), bins, env }))
       .rejects.toMatchObject({ code: "audio_stems_source_unverified" });
   }, 120000);
+
+  it("显式 null/false/0/空字符串/数组/缺角色分轨：真实核心、工具和CLI均拒绝且不生成默认交付", async () => {
+    const source = shots[0].path, original = fs.readFileSync(source);
+    const projectFile = path.join(root, "invalid-source-project.json");
+    fs.writeFileSync(projectFile, JSON.stringify(project));
+    const cli = new URL("./cli.mjs", import.meta.url).pathname;
+    for (const [index, audioStems] of [null, false, 0, "", [], {}, { dialogue: {} }].entries()) {
+      const invalid = [{ shotId: "NC-1", path: source, audioStems }];
+      const outDir = path.join(root, `invalid-source-${index}`);
+      const workDir = path.join(root, `invalid-normalise-${index}`);
+      await expect(normaliseShots({ shots: invalid, project, workDir, bins, env }))
+        .rejects.toMatchObject({ code: "audio_stems_source_unverified" });
+      expect(fs.existsSync(workDir)).toBe(false);
+      await expect(buildDeliveryPackage({ project, shots: invalid, variants: ["warm-story"], outDir, bins, env }))
+        .rejects.toMatchObject({ code: "audio_stems_source_unverified" });
+      await expect(callTool("postwrite.package", { project, shots: invalid, variants: ["warm-story"], out_dir: `${outDir}-tool` }, { bins, env }))
+        .rejects.toMatchObject({ code: "audio_stems_source_unverified" });
+      const shotsFile = path.join(root, `invalid-source-${index}.json`);
+      fs.writeFileSync(shotsFile, JSON.stringify(invalid));
+      const result = spawnSync(process.execPath, [cli, "deliver", "--project", projectFile, "--shots", shotsFile,
+        "--variants", "warm-story", "--out-dir", `${outDir}-cli`], {
+        env: { ...env, WORKLOOM_POST_FFMPEG_PATH: bins.ffmpeg, WORKLOOM_POST_FFPROBE_PATH: bins.ffprobe },
+        encoding: "utf8", timeout: 30000,
+      });
+      expect(result.error).toBeUndefined();
+      expect(result.status, result.stdout + result.stderr).toBe(3);
+      expect(result.stderr).toContain("audio_stems_source_unverified");
+      for (const dir of [outDir, `${outDir}-tool`, `${outDir}-cli`]) {
+        expect(fs.existsSync(path.join(dir, "delivery-manifest.json"))).toBe(false);
+      }
+    }
+    expect(fs.readFileSync(source)).toEqual(original);
+  }, 60000);
 
   it("缺失原片与真实后期工具失败明确失败，不出完成清单", async () => {
     const missing = path.join(root, "missing.mp4"), failedDir = path.join(root, "tool-failed");

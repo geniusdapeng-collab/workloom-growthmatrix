@@ -185,5 +185,21 @@ suite("配乐声明式直混（无签章签发者时的正常交付路径）", (
     assert.equal(result.result.independentAudio.sourceAuthority, "original-program-bytes");
     assert.ok(fs.existsSync(output)); assert.equal(result.result.levels, null);
   });
+  it("best实际混音回执绑定新文件与SHA；明确无配乐才返回no-change", { timeout: 30000 }, async () => {
+    const env = { ...process.env, WORKLOOM_BGM_ALLOWED_ROOTS: root, WORKLOOM_BGM_DISCOVER: "0",
+      WORKLOOM_AUDIO_STEM_SIGNING_SECRET: "", WORKLOOM_BGM_LIBRARY_DIR: path.join(root, "empty-library") };
+    const original = fs.readFileSync(source), output = path.join(root, "best-receipt.mp4");
+    const mixed = await callTool("bgmwrite.best", { input_path: source, output_path: output, source_policy: "compose-only" }, { bins, env });
+    const digest = createHash("sha256").update(fs.readFileSync(output)).digest("hex");
+    assert.equal(mixed.result.verdict, "mixed"); assert.equal(mixed.receipt.synced, true);
+    assert.equal(mixed.receipt.snapshot_uri, `bgm://best/${path.basename(output)}?sha256=${digest}`);
+    assert.equal(mixed.receipt.sha256, digest);
+    const untouched = path.join(root, "no-music-needed.mp4");
+    const noMusic = await callTool("bgmwrite.best", { input_path: source, output_path: untouched,
+      prompt_text: "不要音乐，保留纯原声", source_policy: "compose-only" }, { bins, env });
+    assert.equal(noMusic.result.verdict, "no_bgm_needed");
+    assert.equal(fs.existsSync(untouched), false); assert.match(noMusic.receipt.snapshot_uri, /^bgm:\/\/best\/no-change\?/);
+    assert.deepEqual(fs.readFileSync(source), original);
+  });
   after(() => { if (root) fs.rmSync(root, { recursive: true, force: true }); });
 });

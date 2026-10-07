@@ -2348,7 +2348,7 @@ export async function callTool(name, params = {}, { bins = resolveBinaries(), en
         result: outcome,
         receipt: {
           synced: true,
-          snapshot_uri: outcome.verdict === "scored"
+          snapshot_uri: outcome.verdict === "mixed"
             ? `bgm://best/${path.basename(outcome.report.output.path)}?sha256=${outcome.sha256}`
             : `bgm://best/no-change?sha256=${outcome.sha256}`,
           sha256: outcome.sha256,

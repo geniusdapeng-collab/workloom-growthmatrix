@@ -208,6 +208,7 @@ async function bgmStage({ signing = false, declared = false, output = true, tool
     process: { env: { WORKLOOM_AUDIO_STEM_SIGNING_SECRET: signing ? "unit-fixture-signing-present" : "" } },
     flag: name => name === "--no-music" ? noMusic : name === "--bgm-declared-program-mix" && declared,
     arg: (name, fallback = "") => name === "--bgm-track" && chosen ? "/fixture/music.wav" : fallback,
+    resolveRequestedBgmTrack: async requested => ({ requested, path: requested, bpm: null }),
     existsSync: file => file !== out || output, rememberInputs: () => {}, log: () => {},
     runCli: (_cli, args) => { calls.push(args); return { ok: toolOk, out: toolOk ? "mix succeeded" : "fixture tool failure" }; },
     probe: () => ({ duration: 10, hasAudio: true, acodec: "aac" }),
@@ -314,7 +315,7 @@ for(const name of ['spawn','spawnSync','execFileSync']){const original=cp[name];
       WORKLOOM_POST_FFMPEG_PATH: mediaFfmpeg, WORKLOOM_POST_FFPROBE_PATH: mediaFfprobe,
       WORKLOOM_BGM_FFMPEG_PATH: mediaFfmpeg, WORKLOOM_BGM_FFPROBE_PATH: mediaFfprobe,
       WORKLOOM_SUBTITLE_FFMPEG_PATH: mediaFfmpeg, WORKLOOM_SUBTITLE_FFPROBE_PATH: mediaFfprobe,
-      WORKLOOM_BGM_DISCOVER: "0", WORKLOOM_BGM_LIBRARY_DIR: join(root, "empty-library"), WORKLOOM_BGM_HOME: join(root, "empty-bgm-home"),
+      WORKLOOM_BGM_DISCOVER: "0", WORKLOOM_BGM_LIBRARY_DIR: fixture.library ?? join(root, "empty-library"), WORKLOOM_BGM_HOME: join(root, "empty-bgm-home"),
       WORKLOOM_AUDIO_STEM_SIGNING_SECRET: "", ARK_API_KEY: "", VOLCENGINE_ARK_API_KEY: "" } });
   const operations = fs.existsSync(trace) ? fs.readFileSync(trace, "utf8").split("\n").filter(Boolean).map(line => JSON.parse(line)) : [];
   const evidence = { argv, startedAt: new Date(began).toISOString(), elapsedMs: Date.now() - began, status: result.status,
@@ -324,10 +325,19 @@ for(const name of ['spawn','spawnSync','execFileSync']){const original=cp[name];
   return { ...result, operations, evidence };
 }
 
-it("whole actual CLI: old quality-failed black/162x90/23fps/10.04s/no-audio provider success traverses default official post with zero provider/model/ASR/TTS calls", { skip: !actualMediaAvailable, timeout: 150000 }, () => {
+for (const trackSelection of ["local-path", "registered-id"]) {
+it(`whole actual CLI (${trackSelection}): old quality-failed black/162x90/23fps/10.04s/no-audio provider success traverses default official post with zero provider/model/ASR/TTS calls`, { skip: !actualMediaAvailable, timeout: 150000 }, () => {
   const root = fs.realpathSync(fs.mkdtempSync(join(os.tmpdir(), "matrix-actual-post-")));
   try {
-    const fixture = makeActualCliFixture(root, "success"), result = runActualCli(root, fixture);
+    const fixture = makeActualCliFixture(root, "success"), musicPath = fixture.music;
+    if (trackSelection === "registered-id") {
+      fixture.library = join(root, "registered-library"); fs.mkdirSync(fixture.library, { recursive: true });
+      fixture.music = "registered-test-track";
+      fs.writeFileSync(join(fixture.library, "tracks.json"), JSON.stringify({ tracks: [{ id: fixture.music,
+        title: "Offline synthetic registered track", file: musicPath, license: "workloom-self-generated",
+        genre: "旅行", mood: "温润治愈", durationSec: 0.25, bpm: 100 }] }, null, 2));
+    }
+    const result = runActualCli(root, fixture);
     assert.equal(result.status, 0, `${result.error?.message ?? ""}\n${result.stdout}\n${result.stderr}`);
     assert.deepEqual(fs.readFileSync(fixture.raw), fixture.original);
     assert.ok(fs.readFileSync(join(fixture.logDir, "stages.jsonl"), "utf8").startsWith(fixture.oldRow), "legacy failed quality history remains byte-for-byte");
@@ -343,6 +353,12 @@ it("whole actual CLI: old quality-failed black/162x90/23fps/10.04s/no-audio prov
     assert.ok(Math.abs(Number(info.format.duration) - 10) < 0.2);
     assert.ok(fs.existsSync(join(fixture.out, `${fixture.project}-softsub.mp4`))); assert.ok(fs.existsSync(join(fixture.out, `${fixture.project}-with-cover.mp4`)));
     const processes = result.operations.filter(row => row.kind === "process");
+    const mixes = processes.filter(row => row.argv.includes("mix") && row.argv.some(value => String(value).includes('/bgm-bridge/cli.mjs')));
+    assert.equal(mixes.length, 2, "master and requested variant each mix the chosen track once");
+    assert.ok(mixes.every(row => row.argv[row.argv.indexOf("--bgm") + 1] === musicPath), "every mix receives the same actual path, never the registered ID");
+    const delivery = summary.records.find(row => row.stage === "deliver" && row.ok);
+    assert.ok(delivery.lineage.inputs.some(input => input.path === musicPath && input.sha256 === createHash("sha256").update(fs.readFileSync(musicPath)).digest("hex")),
+      "variant delivery lineage binds the actual chosen track bytes");
     assert.equal(processes.filter(row => row.argv.some(value => String(value).includes('/voice-bridge/cli.mjs'))).length, 0);
     const variantGrade = processes.find(row => row.argv.some(value => String(value).includes('/color-bridge/cli.mjs'))
       && row.argv.some(value => String(value).endsWith('-cool-tech.mp4')));
@@ -357,6 +373,7 @@ it("whole actual CLI: old quality-failed black/162x90/23fps/10.04s/no-audio prov
       stages: Object.keys(summary.stages), sourceSha256: createHash("sha256").update(fixture.original).digest("hex"), final, frameExtracts: frameExtracts.length }));
   } finally { if (process.env.WORKLOOM_KEEP_ACTUAL_POST_FIXTURE !== "1") fs.rmSync(root, { recursive: true, force: true }); }
 });
+}
 for (const scenario of ["missing", "tampered", "corrupt", "provider-rejected", "export-failure"]) {
   it(`whole actual CLI: ${scenario} fails truthfully with no provider or quality retries`, { skip: !actualMediaAvailable, timeout: 150000 }, () => {
     const root = fs.realpathSync(fs.mkdtempSync(join(os.tmpdir(), `matrix-post-${scenario}-`)));
