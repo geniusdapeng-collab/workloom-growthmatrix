@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1655,
+  "revision": 1658,
   "tasks": {
     "132": {
       "number": 132,
@@ -6103,6 +6103,183 @@
         "generation": {}
       },
       "updatedAt": 1791374396717
+    },
+    "170": {
+      "number": 170,
+      "status": "waiting_ci",
+      "firstSeen": 1791376490308,
+      "attempts": {},
+      "headSha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+      "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+      "branch": "fix/T-2026-1007-0918-desktop-release-native-contract",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [],
+        "releases": []
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 170,
+        "headSha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "scripts/delivery/queue-release-contract.test.mjs",
+          "scripts/delivery/queue-release.mjs",
+          "scripts/delivery/queue.test.mjs"
+        ],
+        "filesHash": "531f0482600c20d5625f1a2f53a3993cf19e0330bf86fd375550d6c4f6ec081d",
+        "dependsOn": [],
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "rationale": "Read the complete original test file and exact changes. Migrate obsolete test fixture fields to the current native finalizer contract and assert the actual signed publisher variables plus absence of native identity overrides. Existing source, lost-ACK, permissions, bytes and scheduler tests remain. No required test is removed or skipped."
+          },
+          {
+            "id": "CI-002",
+            "rationale": "Read the complete exact before/after release dispatcher/verifier and native publisher/finalizer dependencies. Align the real input/output ABI while preserving stable tag/source binding, signed mode, byte digests, no ref replacement, no fabricated CI identity and no duplicate launch on unknown ACK. Actual native-contract tests pass with real local finalizer bytes. Required native checks are unchanged. Rollback is a normal revert and existing durable release records remain."
+          },
+          {
+            "id": "CI-003",
+            "rationale": "Read and execute the complete new contract suite. It uses actual native finalizer output and real fixture bytes, then exercises tag identity, unknown-write recovery, no duplicate dispatch, signing/source/product/platform and byte mismatch failures. Test-only API fixtures never contact live providers. Native CI remains mandatory."
+          }
+        ],
+        "ciPolicyChangesHash": "4f4fdab17d69221cd6fe3d6e023294441cd70a6fc640c4f5132ddc94cf227086",
+        "tests": [
+          {
+            "command": "node --test scripts/delivery/queue-release-contract.test.mjs scripts/delivery/queue.test.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T12:32:50.079566+00:00",
+            "result": "Native finalizer-byte compatibility, tag/create/lost-ACK/permission/signing/source/platform failures and full delivery queue regression pass."
+          },
+          {
+            "command": "node --test scripts/desktop-release-finalizer.test.mjs scripts/ci/cnb-desktop-release.test.mjs scripts/unsigned-desktop-release.test.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T12:32:50.326374+00:00",
+            "result": "Original native signing, finalizer and publication/source byte contracts pass unchanged."
+          }
+        ],
+        "reviewedAt": "2026-10-07T12:34:44.267873+00:00",
+        "summary": "Current Codex fully read queue-release, complete queue tests, queue model/platform/policy/controller and native desktop publisher/finalizer before editing, plus current official CNB OpenAPI tag/start schemas. Reviewed every added/changed line. The test assembles the actual native finalizer manifest from local byte fixtures and runs the queue verifier against those bytes; it does not assert a real installer or production deployment. Stable tag identity, prior durable intent, permission errors, lost ACK, platform ambiguity, signing/source/product mismatch, and actual byte mismatch are exercised. Original required checks and immutability protection remain. Native pipeline is still required after handoff.",
+        "passed": true,
+        "id": "db70829939777edd0bd3e1b2afe8a4bdbd7d70c1226a03f978eed490ec5363f5"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 170,
+        "pull": {
+          "number": 170,
+          "state": "open",
+          "title": "fix(growth): align delivery with native signed desktop release [T-2026-1007-0918]",
+          "body": "The delivery queue sent obsolete DESKTOP_RELEASE_VERSION and verified sourceSha/static installer names, while the native signed publisher requires RELEASE_TAG/RELEASE_SHA/PLATFORM_SIGNING and emits product/sha plus product/version installer prefixes. Match the actual native contract, create and read back an exact stable tag without replacing existing refs, retain fixed SHA and signed mode, and verify all three downloaded installer sizes and SHA512 bytes. Tag/create acknowledgement loss is recovered by readback; unknown or mismatched state cannot launch. Native CI identities are never overridden. No product rendering or paid model calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/fix/T-2026-1007-0918-desktop-release-native-contract",
+            "sha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "files": [
+          "scripts/delivery/queue-release-contract.test.mjs",
+          "scripts/delivery/queue-release.mjs",
+          "scripts/delivery/queue.test.mjs"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [],
+          "releases": []
+        },
+        "headTime": 1791376359000,
+        "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "file": "scripts/delivery/queue.test.mjs",
+            "before": {
+              "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+              "path": "scripts/delivery/queue.test.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+              "path": "scripts/delivery/queue.test.mjs",
+              "absent": false
+            },
+            "digest": "84c99e40ea529f0512abd8080cd16c0141968743f8d8dfda4e3ca927189b29a2"
+          },
+          {
+            "id": "CI-002",
+            "file": "scripts/delivery/queue-release.mjs",
+            "before": {
+              "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+              "path": "scripts/delivery/queue-release.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+              "path": "scripts/delivery/queue-release.mjs",
+              "absent": false
+            },
+            "digest": "abc94e4809b590d41c512bb61a407df2dddbbc16613355d7aade5a88ecd0dd53"
+          },
+          {
+            "id": "CI-003",
+            "file": "scripts/delivery/queue-release-contract.test.mjs",
+            "before": {
+              "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+              "path": "scripts/delivery/queue-release-contract.test.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+              "path": "scripts/delivery/queue-release-contract.test.mjs",
+              "absent": false
+            },
+            "digest": "f7edc1c540673a070a02af2a7d2f7b995b0370e3819439cd0a330271582961c8"
+          }
+        ]
+      },
+      "updatedAt": 1791376490308
     }
   },
   "leases": {
@@ -41919,6 +42096,212 @@
       },
       "previous": "fe97a185c96cf957a09c7c8c415d06f1856c2bf613bcd7d74bf94b2a1c5d1b42",
       "digest": "9137dbcf7ffff5f6cea9b88d334bc5151b3a564c435f47c06c4b6383a7732212"
+    },
+    {
+      "sequence": 1656,
+      "at": "2026-10-07T12:34:50.308Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 170,
+        "id": "db70829939777edd0bd3e1b2afe8a4bdbd7d70c1226a03f978eed490ec5363f5",
+        "headSha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b"
+      },
+      "previous": "9137dbcf7ffff5f6cea9b88d334bc5151b3a564c435f47c06c4b6383a7732212",
+      "digest": "cc44a20701f28bb988abc37bed76f7fb1c4bd3300638832aee02f55a7f34699e"
+    },
+    {
+      "sequence": 1657,
+      "at": "2026-10-07T12:34:50.308Z",
+      "kind": "task",
+      "data": {
+        "number": 170,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+          "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+          "branch": "fix/T-2026-1007-0918-desktop-release-native-contract",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 170,
+            "headSha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+            "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "scripts/delivery/queue-release-contract.test.mjs",
+              "scripts/delivery/queue-release.mjs",
+              "scripts/delivery/queue.test.mjs"
+            ],
+            "filesHash": "531f0482600c20d5625f1a2f53a3993cf19e0330bf86fd375550d6c4f6ec081d",
+            "dependsOn": [],
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "rationale": "Read the complete original test file and exact changes. Migrate obsolete test fixture fields to the current native finalizer contract and assert the actual signed publisher variables plus absence of native identity overrides. Existing source, lost-ACK, permissions, bytes and scheduler tests remain. No required test is removed or skipped."
+              },
+              {
+                "id": "CI-002",
+                "rationale": "Read the complete exact before/after release dispatcher/verifier and native publisher/finalizer dependencies. Align the real input/output ABI while preserving stable tag/source binding, signed mode, byte digests, no ref replacement, no fabricated CI identity and no duplicate launch on unknown ACK. Actual native-contract tests pass with real local finalizer bytes. Required native checks are unchanged. Rollback is a normal revert and existing durable release records remain."
+              },
+              {
+                "id": "CI-003",
+                "rationale": "Read and execute the complete new contract suite. It uses actual native finalizer output and real fixture bytes, then exercises tag identity, unknown-write recovery, no duplicate dispatch, signing/source/product/platform and byte mismatch failures. Test-only API fixtures never contact live providers. Native CI remains mandatory."
+              }
+            ],
+            "ciPolicyChangesHash": "4f4fdab17d69221cd6fe3d6e023294441cd70a6fc640c4f5132ddc94cf227086",
+            "tests": [
+              {
+                "command": "node --test scripts/delivery/queue-release-contract.test.mjs scripts/delivery/queue.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T12:32:50.079566+00:00",
+                "result": "Native finalizer-byte compatibility, tag/create/lost-ACK/permission/signing/source/platform failures and full delivery queue regression pass."
+              },
+              {
+                "command": "node --test scripts/desktop-release-finalizer.test.mjs scripts/ci/cnb-desktop-release.test.mjs scripts/unsigned-desktop-release.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T12:32:50.326374+00:00",
+                "result": "Original native signing, finalizer and publication/source byte contracts pass unchanged."
+              }
+            ],
+            "reviewedAt": "2026-10-07T12:34:44.267873+00:00",
+            "summary": "Current Codex fully read queue-release, complete queue tests, queue model/platform/policy/controller and native desktop publisher/finalizer before editing, plus current official CNB OpenAPI tag/start schemas. Reviewed every added/changed line. The test assembles the actual native finalizer manifest from local byte fixtures and runs the queue verifier against those bytes; it does not assert a real installer or production deployment. Stable tag identity, prior durable intent, permission errors, lost ACK, platform ambiguity, signing/source/product mismatch, and actual byte mismatch are exercised. Original required checks and immutability protection remain. Native pipeline is still required after handoff.",
+            "passed": true,
+            "id": "db70829939777edd0bd3e1b2afe8a4bdbd7d70c1226a03f978eed490ec5363f5"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 170,
+            "pull": {
+              "number": 170,
+              "state": "open",
+              "title": "fix(growth): align delivery with native signed desktop release [T-2026-1007-0918]",
+              "body": "The delivery queue sent obsolete DESKTOP_RELEASE_VERSION and verified sourceSha/static installer names, while the native signed publisher requires RELEASE_TAG/RELEASE_SHA/PLATFORM_SIGNING and emits product/sha plus product/version installer prefixes. Match the actual native contract, create and read back an exact stable tag without replacing existing refs, retain fixed SHA and signed mode, and verify all three downloaded installer sizes and SHA512 bytes. Tag/create acknowledgement loss is recovered by readback; unknown or mismatched state cannot launch. Native CI identities are never overridden. No product rendering or paid model calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-desktop-release-native-contract",
+                "sha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+            "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "files": [
+              "scripts/delivery/queue-release-contract.test.mjs",
+              "scripts/delivery/queue-release.mjs",
+              "scripts/delivery/queue.test.mjs"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791376359000,
+            "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": "scripts/delivery/queue.test.mjs",
+                "before": {
+                  "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+                  "path": "scripts/delivery/queue.test.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+                  "path": "scripts/delivery/queue.test.mjs",
+                  "absent": false
+                },
+                "digest": "84c99e40ea529f0512abd8080cd16c0141968743f8d8dfda4e3ca927189b29a2"
+              },
+              {
+                "id": "CI-002",
+                "file": "scripts/delivery/queue-release.mjs",
+                "before": {
+                  "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+                  "path": "scripts/delivery/queue-release.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+                  "path": "scripts/delivery/queue-release.mjs",
+                  "absent": false
+                },
+                "digest": "abc94e4809b590d41c512bb61a407df2dddbbc16613355d7aade5a88ecd0dd53"
+              },
+              {
+                "id": "CI-003",
+                "file": "scripts/delivery/queue-release-contract.test.mjs",
+                "before": {
+                  "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+                  "path": "scripts/delivery/queue-release-contract.test.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+                  "path": "scripts/delivery/queue-release-contract.test.mjs",
+                  "absent": false
+                },
+                "digest": "f7edc1c540673a070a02af2a7d2f7b995b0370e3819439cd0a330271582961c8"
+              }
+            ]
+          }
+        }
+      },
+      "previous": "cc44a20701f28bb988abc37bed76f7fb1c4bd3300638832aee02f55a7f34699e",
+      "digest": "9a99a9f574fdea281b4ad70e345a83b63c8803573e648ac6a759fab36374e650"
+    },
+    {
+      "sequence": 1658,
+      "at": "2026-10-07T12:34:46.322Z",
+      "kind": "transaction",
+      "data": {
+        "id": "0c137c9f-c409-4dec-851f-874bbd10b1f8"
+      },
+      "previous": "9a99a9f574fdea281b4ad70e345a83b63c8803573e648ac6a759fab36374e650",
+      "digest": "95a57f1cf103e15ce9bc25b07367d8ee95804feaa53ec0fe2572c2f66d278139"
     }
   ]
 }
