@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3567,
+  "revision": 3570,
   "tasks": {
     "132": {
       "number": 132,
@@ -8912,7 +8912,7 @@
     },
     "184": {
       "number": 184,
-      "status": "parked",
+      "status": "merging",
       "firstSeen": 1791405544313,
       "attempts": {},
       "admission": {
@@ -9137,7 +9137,132 @@
         "mainSha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
         "verifiedAt": "2026-10-07T21:13:17.922Z"
       },
-      "error": "Prerequisite #178 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/178 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n"
+      "error": "Prerequisite #178 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/178 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "mergePhase": "prepared",
+      "mergeSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 185,
+        "pull": {
+          "number": 185,
+          "state": "open",
+          "title": "chore(ci): deliver #184 fix(ci): isolate unreadable PR details without approving their dependents [T-2026-1007-0918]",
+          "body": "Immutable delivery candidate for #184. Exact source 0b5f8201919d83faadc2f94d91034d7b8e77e264; tested main 639ff83ade8ae1c116aae907d5489efd2093d32d.\n\n<!-- delivery-origin:184:0b5f8201919d83faadc2f94d91034d7b8e77e264:639ff83ade8ae1c116aae907d5489efd2093d32d -->\n\n<!-- workloom-delivery\n{\"ready\":true,\"depends_on\":[178],\"releases\":[]}\n-->",
+          "author": {
+            "username": "OCI",
+            "nickname": "Cloud Native Build",
+            "is_npc": true
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/delivery/candidate/pr-184-ebdbd46bcb5a39b8f990da606c9857bd",
+            "sha": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "unblocked",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+        "mainSha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+        "files": [
+          "scripts/delivery/queue-controller.mjs",
+          "scripts/delivery/queue-platform.mjs",
+          "scripts/delivery/queue-read-isolation.test.mjs"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [
+            178
+          ],
+          "releases": []
+        },
+        "headTime": 1791407596000,
+        "mergeBase": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+        "checkErrors": [],
+        "checkSha": "02b6159092ca29292ac7a25e85afd4de3f9d07a6",
+        "hasFailedChecks": false,
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "file": "scripts/delivery/queue-read-isolation.test.mjs",
+            "before": {
+              "ref": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+              "path": "scripts/delivery/queue-read-isolation.test.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+              "path": "scripts/delivery/queue-read-isolation.test.mjs",
+              "absent": false
+            },
+            "digest": "0aa50622f9b7aa4473285fef331da79c914c84d27d6a61fe453f37175b5a55b6"
+          },
+          {
+            "id": "CI-002",
+            "file": "scripts/delivery/queue-platform.mjs",
+            "before": {
+              "ref": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+              "path": "scripts/delivery/queue-platform.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+              "path": "scripts/delivery/queue-platform.mjs",
+              "absent": false
+            },
+            "digest": "0e669abe5c0a76f5b6a1c4ea20f0d8b86fab1561eb3f0416bcac6a68a80f5f01"
+          },
+          {
+            "id": "CI-003",
+            "file": "scripts/delivery/queue-controller.mjs",
+            "before": {
+              "ref": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+              "path": "scripts/delivery/queue-controller.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+              "path": "scripts/delivery/queue-controller.mjs",
+              "absent": false
+            },
+            "digest": "c3178e8f853ff2dd1d2f0df55634d91f2b3d6dcae0d2b30e74f46fe449dc0b9b"
+          }
+        ],
+        "originNumber": 184,
+        "pendingDependencies": []
+      },
+      "integrationLease": {
+        "owner": "integration/pr-184",
+        "scopes": [
+          "protocol"
+        ],
+        "generation": {
+          "protocol": 76
+        }
+      }
     },
     "185": {
       "number": 185,
@@ -9162,10 +9287,10 @@
   },
   "leases": {
     "protocol": {
-      "owner": null,
-      "generation": 75,
-      "acquiredAt": 1791408706038,
-      "expiresAt": 1791408706038
+      "owner": "integration/pr-184",
+      "generation": 76,
+      "acquiredAt": 1791409327077,
+      "expiresAt": 1791410227077
     },
     "migrations": {
       "owner": null,
@@ -89369,6 +89494,170 @@
       },
       "previous": "8c78e53dbcc985c20906445e7e2e33526c0ada40a1a85a0189861d650930c143",
       "digest": "7a47b96224f05bdf18cd662dc3e388f00cd848b4e4146fc27c03ffe14ae6ea8e"
+    },
+    {
+      "sequence": 3568,
+      "at": "2026-10-07T21:42:07.077Z",
+      "kind": "lease_acquire",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "integration/pr-184",
+        "generation": {
+          "protocol": 76
+        }
+      },
+      "previous": "7a47b96224f05bdf18cd662dc3e388f00cd848b4e4146fc27c03ffe14ae6ea8e",
+      "digest": "7fb1ab5664127036dcd3a9f3315e9fb8b7c439d982c0c89484be9860d5f96490"
+    },
+    {
+      "sequence": 3569,
+      "at": "2026-10-07T21:42:07.077Z",
+      "kind": "task",
+      "data": {
+        "number": 184,
+        "patch": {
+          "status": "merging",
+          "mergePhase": "prepared",
+          "mergeSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 185,
+            "pull": {
+              "number": 185,
+              "state": "open",
+              "title": "chore(ci): deliver #184 fix(ci): isolate unreadable PR details without approving their dependents [T-2026-1007-0918]",
+              "body": "Immutable delivery candidate for #184. Exact source 0b5f8201919d83faadc2f94d91034d7b8e77e264; tested main 639ff83ade8ae1c116aae907d5489efd2093d32d.\n\n<!-- delivery-origin:184:0b5f8201919d83faadc2f94d91034d7b8e77e264:639ff83ade8ae1c116aae907d5489efd2093d32d -->\n\n<!-- workloom-delivery\n{\"ready\":true,\"depends_on\":[178],\"releases\":[]}\n-->",
+              "author": {
+                "username": "OCI",
+                "nickname": "Cloud Native Build",
+                "is_npc": true
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/delivery/candidate/pr-184-ebdbd46bcb5a39b8f990da606c9857bd",
+                "sha": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "unblocked",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+            "mainSha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+            "files": [
+              "scripts/delivery/queue-controller.mjs",
+              "scripts/delivery/queue-platform.mjs",
+              "scripts/delivery/queue-read-isolation.test.mjs"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                178
+              ],
+              "releases": []
+            },
+            "headTime": 1791407596000,
+            "mergeBase": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+            "checkErrors": [],
+            "checkSha": "02b6159092ca29292ac7a25e85afd4de3f9d07a6",
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": "scripts/delivery/queue-read-isolation.test.mjs",
+                "before": {
+                  "ref": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+                  "path": "scripts/delivery/queue-read-isolation.test.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+                  "path": "scripts/delivery/queue-read-isolation.test.mjs",
+                  "absent": false
+                },
+                "digest": "0aa50622f9b7aa4473285fef331da79c914c84d27d6a61fe453f37175b5a55b6"
+              },
+              {
+                "id": "CI-002",
+                "file": "scripts/delivery/queue-platform.mjs",
+                "before": {
+                  "ref": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+                  "path": "scripts/delivery/queue-platform.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+                  "path": "scripts/delivery/queue-platform.mjs",
+                  "absent": false
+                },
+                "digest": "0e669abe5c0a76f5b6a1c4ea20f0d8b86fab1561eb3f0416bcac6a68a80f5f01"
+              },
+              {
+                "id": "CI-003",
+                "file": "scripts/delivery/queue-controller.mjs",
+                "before": {
+                  "ref": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+                  "path": "scripts/delivery/queue-controller.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+                  "path": "scripts/delivery/queue-controller.mjs",
+                  "absent": false
+                },
+                "digest": "c3178e8f853ff2dd1d2f0df55634d91f2b3d6dcae0d2b30e74f46fe449dc0b9b"
+              }
+            ],
+            "originNumber": 184,
+            "pendingDependencies": []
+          },
+          "integrationLease": {
+            "owner": "integration/pr-184",
+            "scopes": [
+              "protocol"
+            ],
+            "generation": {
+              "protocol": 76
+            }
+          }
+        }
+      },
+      "previous": "7fb1ab5664127036dcd3a9f3315e9fb8b7c439d982c0c89484be9860d5f96490",
+      "digest": "9946d357abed5346c8d0a560f0c769b2ce1384706ef8dededcecaeff51d6dc6a"
+    },
+    {
+      "sequence": 3570,
+      "at": "2026-10-07T21:43:34.403Z",
+      "kind": "transaction",
+      "data": {
+        "id": "41dc3029-867e-40a6-8137-5f612e8ddb68"
+      },
+      "previous": "9946d357abed5346c8d0a560f0c769b2ce1384706ef8dededcecaeff51d6dc6a",
+      "digest": "1238ce47f3644ceec4915aa2eb922361da2a457f6f0dc54d6ae80eac47adc1d2"
     }
   ]
 }
