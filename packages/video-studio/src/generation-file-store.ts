@@ -1,5 +1,5 @@
 /** Private, durable generation journals. A stale lock is recoverable only with a known acceptance. */
-import { constants, closeSync, existsSync, fsyncSync, fstatSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { constants, closeSync, existsSync, fsyncSync, fstatSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
 
@@ -75,8 +75,21 @@ export class GenerationFileStore {
     const owner = JSON.stringify({ pid: process.pid, token: randomUUID() }), deadline = Date.now() + input.timeoutMs;
     let held = false;
     const createLock = (path: string): void => {
-      this.checkRoot(); const fd = openSync(path, "wx", 0o600);
-      try { writeFileSync(fd, owner); fsyncSync(fd); } finally { closeSync(fd); }
+      this.checkRoot();
+      const temporary = join(this.root, `.owner-${randomUUID()}.tmp`);
+      let fd: number | undefined;
+      try {
+        fd = openSync(temporary, "wx", 0o600);
+        writeFileSync(fd, owner); fsyncSync(fd); closeSync(fd); fd = undefined;
+        this.checkRoot();
+        // Publish a complete owner atomically. O_EXCL on the final file exposed
+        // empty/partial JSON to other processes before its first write finished.
+        // linkSync fails with EEXIST rather than replacing a live owner's lock.
+        linkSync(temporary, path);
+      } finally {
+        if (fd !== undefined) closeSync(fd);
+        if (existsSync(temporary)) unlinkSync(temporary);
+      }
     };
     for (;;) {
       if (this.read(fencePath) !== null) {
