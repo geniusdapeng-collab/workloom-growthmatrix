@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1536,
+  "revision": 1538,
   "tasks": {
     "132": {
       "number": 132,
@@ -3916,7 +3916,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791372239242,
+      "updatedAt": 1791374342093,
       "admission": {
         "number": 151,
         "headSha": "18c1efdb434069de4ac7323c1e88f331439d5db5",
@@ -39333,6 +39333,48 @@
       },
       "previous": "3befccfe763d071dd29f018a4ae38e947c8356f054e1a3330fa625ec75c7b885",
       "digest": "dcf4121b6df275bc8a5232b0e5d3125911c65076c2eae47a59447e2e785e6066"
+    },
+    {
+      "sequence": 1537,
+      "at": "2026-10-07T11:59:02.093Z",
+      "kind": "task",
+      "data": {
+        "number": 151,
+        "patch": {
+          "headSha": "18c1efdb434069de4ac7323c1e88f331439d5db5",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-portrait-agent-paid-once",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148
+            ],
+            "releases": []
+          },
+          "originalBody": "The registered portrait agent automatically hardened prompts and generated another paid image after background checks failed. It also lost the provider URL when downloads failed. The default now accepts produced portraits without background review. Explicit checks preserve their result and never submit a replacement automatically. A stable per-character/angle journal records the exact request before POST and accepted URL before download; candidate changes, corrupt artifacts and restarts restore that URL. Unknown acceptance and matching legacy generation without its acceptance log refuse another POST. Partial candidates preserve the prior active version. PR148 supplies the identical durable image journal helpers.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148\n  ],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/generation-file-store.ts",
+            "packages/video-studio/src/image-task-receipt.ts",
+            "packages/video-studio/src/portrait-agent.test.ts",
+            "packages/video-studio/src/portrait-agent.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791371100874
+        }
+      },
+      "previous": "dcf4121b6df275bc8a5232b0e5d3125911c65076c2eae47a59447e2e785e6066",
+      "digest": "7e2a975489fdc19406e946767e337e61c176f932e2d0aaaad5ca881e0fdc8422"
+    },
+    {
+      "sequence": 1538,
+      "at": "2026-10-07T12:00:59.743Z",
+      "kind": "transaction",
+      "data": {
+        "id": "7976b4cd-797f-4262-aa67-ee4ba6d0f700"
+      },
+      "previous": "7e2a975489fdc19406e946767e337e61c176f932e2d0aaaad5ca881e0fdc8422",
+      "digest": "01d36c31672e0ea4a7d7f32bb7631378a7068fff1232d3e0adcaa4952d6d3515"
     }
   ]
 }
