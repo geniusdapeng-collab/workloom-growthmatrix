@@ -9,15 +9,18 @@
  *   ⑤ beat_lint.py      —— 词落点 |Δ|≤0.1s（本引擎的 beats 由 timing 派生，天然对齐；闸仍要跑）
  *   ⑥ qa_extract.py + contact_sheet.py —— 评审材料（每句 2 帧 + 锚点帧 + 3×4 拼图）
  *
- * 纪律：任一 FAIL 即整体 FAIL；**SKIP 必须带理由**（如"本片未用音效"），不允许静默跳过。
+ * 默认接收已渲染的素材，跳过质量复审。显式 advisory 保留读数；blocking 才限制交付。
+ * 执行失败、缺失或无法读取的成片不属于质量检查，仍然报错且不自动重渲。
  */
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { resolvePython } from "./asr-aligner.js";
 import { engineDirOf } from "./engine.js";
 import type { GateResult, QaReport } from "./types.js";
 import type { ExplainerQuality } from "./types.js";
+import { filmReviewPolicy, type FilmReviewPolicy } from "@hyperreality/video-studio/rendered-output-policy";
+import { probeRenderedSize } from "./remotion-provider.js";
 
 export interface GateInput {
   jobDir: string;
@@ -38,6 +41,7 @@ export interface GateInput {
   env?: NodeJS.ProcessEnv;
   onLog?: (line: string) => void;
   timeoutMs?: number;
+  reviewPolicy?: FilmReviewPolicy;
 }
 
 export interface GateRunResult {
@@ -74,7 +78,49 @@ function summarize(stdout: string, stderr: string): { summary: string; details: 
   return { summary: (key[0] ?? lines[lines.length - 1] ?? "").slice(0, 200), details: key };
 }
 
+/** Legacy reports retain their original blocking behavior; new policy receipts are explicit. */
+export function qaReportAllowsDelivery(report: QaReport): boolean {
+  return report.accepted ?? report.pass;
+}
+
 export async function runMachineGates(input: GateInput): Promise<GateRunResult> {
+  const policy = filmReviewPolicy(input.reviewPolicy);
+  const env = input.env ?? process.env;
+  const video = join(input.jobDir, "out", "v1.mp4");
+  if (!existsSync(video) || !lstatSync(video).isFile() || lstatSync(video).size <= 0) {
+    throw new Error("EXPLAINER_ARTIFACT_MISSING_OR_EMPTY：成片缺失或为空；禁止自动重渲");
+  }
+  await probeRenderedSize(video, env);
+  const qaFramesDir = join(input.jobDir, "out", "qa-frames");
+  const sheetsDir = join(input.jobDir, "out", "qa-sheets");
+  let result: GateRunResult;
+  if (policy === "off") {
+    result = { qaFramesDir, sheetsDir, report: {
+      jobId: input.jobDir, totalFrames: null, pass: false, accepted: true,
+      reviewPolicy: policy, qualityReviewed: false,
+      gates: ["motion_check", "sfx_check:solo", "sfx_check:mix", "card_lint", "beat_lint", "qa_materials"].map(gate => ({
+        gate, status: "skip" as const, command: "", details: [],
+        summary: "rendered-output-accepted：默认接收渲染素材，直接进入后期；质量检查未执行、未评分",
+      })),
+    } };
+  } else {
+    try {
+      result = await runMeasuredMachineGates(input);
+      result.report = { ...result.report, accepted: policy === "advisory" || result.report.pass,
+        reviewPolicy: policy, qualityReviewed: true };
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      result = { qaFramesDir, sheetsDir, report: { jobId: input.jobDir, totalFrames: null,
+        pass: false, accepted: policy === "advisory", reviewPolicy: policy, qualityReviewed: false,
+        gates: [{ gate: "review_execution", status: "fail", command: "", summary: detail,
+          details: ["显式检查无法完成；原成片保留，不自动重新渲染"] }] } };
+    }
+  }
+  writeFileSync(join(input.jobDir, "out", "qa-report.json"), JSON.stringify(result.report, null, 1));
+  return result;
+}
+
+async function runMeasuredMachineGates(input: GateInput): Promise<GateRunResult> {
   const env = input.env ?? process.env;
   const engineDir = input.engineDir ?? engineDirOf(env);
   const python = resolvePython(env);

@@ -25,7 +25,7 @@ import { registerLocalAsset } from "../media/register-local.js";
 import { loadActiveRules } from "../router.js";
 import { buildCardRegistry } from "./card-registry.js";
 import { engineDirOf, engineStatus } from "./engine.js";
-import { runMachineGates } from "./qa-gates.js";
+import { qaReportAllowsDelivery, runMachineGates } from "./qa-gates.js";
 import { deliverFilm } from "./deliver.js";
 import { runExplainerPipeline } from "./pipeline.js";
 import { generateShotbook, validateShotbook } from "./shotbook.js";
@@ -384,7 +384,8 @@ export const explainerRouter = router({
 
   /** 收尾：渲染完成 → 机器闸 → 两遍 loudnorm → 媒资库 final_cut */
   finalize: writeProcedure
-    .input(z.object({ projectId: z.string().min(1).max(120), shotbookId: z.string().min(1).max(120).optional() }))
+    .input(z.object({ projectId: z.string().min(1).max(120), shotbookId: z.string().min(1).max(120).optional(),
+      reviewPolicy: z.enum(["off", "advisory", "blocking"]).default("off") }))
     .mutation(async ({ ctx, input }) => {
       const scope = scopeOf(ctx.identity);
       const row = input.shotbookId ? await shotbookById(scope, input.shotbookId) : await latestShotbook(scope, input.projectId);
@@ -415,11 +416,12 @@ export const explainerRouter = router({
         jobDir: row.job_dir, cards, cueCount, engineDir,
         aspect,
         quality,
+        reviewPolicy: input.reviewPolicy,
         shots: JSON.parse(readFileSync(join(row.job_dir, "remotion", "shots.json"), "utf8")) as Array<{ id: string; start: number; end: number }>,
         onLog: (line) => console.log(`[explainer:finalize] ${line}`),
       });
       await updateShotbook(scope, row.id, { qaReport: report });
-      if (!report.pass) {
+      if (!qaReportAllowsDelivery(report)) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: `机器闸未过（P0 禁止交付）：${report.gates.filter((g) => g.status === "fail").map((g) => `${g.gate}(${g.summary})`).join("；")}`,
@@ -437,6 +439,7 @@ export const explainerRouter = router({
         provenance: {
           shotbookId: row.id, version: row.version, jobDir: row.job_dir,
           enginePin: row.engine_pin, loudnorm: delivery.measurement, qaPass: report.pass,
+          renderedAcceptance: { accepted: report.accepted, reviewPolicy: report.reviewPolicy, qualityReviewed: report.qualityReviewed },
           quality, resolution: explainerOutputSize(aspect, quality),
         },
         by: ctx.identity.memberNo,
@@ -448,6 +451,7 @@ export const explainerRouter = router({
         assetId: registered.assetId,
         sha256: registered.sha256,
         bytes: registered.bytes,
+        renderedAcceptance: { accepted: report.accepted, reviewPolicy: report.reviewPolicy, qualityReviewed: report.qualityReviewed },
         gates: report.gates.map((g) => ({ gate: g.gate, status: g.status, summary: g.summary })),
         loudnorm: delivery.measurement,
       };

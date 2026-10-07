@@ -17,8 +17,9 @@ import { deliverFilm, type DeliverResult } from "./deliver.js";
 import { buildCardRegistry, type CardRegistry } from "./card-registry.js";
 import { engineDirOf, jobsDirOf } from "./engine.js";
 import { buildProject, templateDirOf, type BuildProjectResult } from "./project-builder.js";
-import { runMachineGates } from "./qa-gates.js";
+import { qaReportAllowsDelivery, runMachineGates } from "./qa-gates.js";
 import { RemotionProvider, probeRenderedSize, readJobState } from "./remotion-provider.js";
+import { filmReviewPolicy, type FilmReviewPolicy } from "@hyperreality/video-studio/rendered-output-policy";
 import { annotateSemantics } from "./semantics.js";
 import { generateShotbook, validateShotbook } from "./shotbook.js";
 import { shotbookFromPlan, type ShotPlan } from "./shotbook.js";
@@ -88,6 +89,8 @@ export interface ExplainerRunInput {
   stopAfterRender?: boolean;
   /** 只做到装配段（服务端 submit 用：渲染由 submitGenJob + render-poller 接管） */
   stopAfterAssemble?: boolean;
+  /** 默认直接进入后期；质量复审必须显式请求。 */
+  reviewPolicy?: FilmReviewPolicy;
 }
 
 export interface ExplainerRunOutput {
@@ -111,6 +114,7 @@ export async function runExplainerPipeline(input: ExplainerRunInput): Promise<Ex
   const templateDir = input.templateDir ?? templateDirOf();
   const quality = input.quality ?? "hd";
   const aspect = input.aspect ?? "9:16";
+  const reviewPolicy = filmReviewPolicy(input.reviewPolicy);
   const script = ExplainerScriptSchema.parse(input.script);
   for (const sentence of script.sentences) assertSpokenNumbers(sentence.text);
   const jobDir = input.jobDir ?? join(jobsDirOf(env), input.taskId);
@@ -298,10 +302,12 @@ export async function runExplainerPipeline(input: ExplainerRunInput): Promise<Ex
     const expected = explainerOutputSize(aspect, quality);
     try {
       const actual = await probeRenderedSize(renderedPath, env);
-      canResume = actual.width === expected.width && actual.height === expected.height;
-      if (!canResume) log(`[render] 已有成片尺寸 ${actual.width}×${actual.height} 与 ${expected.width}×${expected.height} 不符 → 重新渲染`);
+      canResume = true;
+      if (actual.width !== expected.width || actual.height !== expected.height) {
+        log(`[render] 已有成片尺寸 ${actual.width}×${actual.height} 与计划 ${expected.width}×${expected.height} 不同；保留原成片，不自动重渲`);
+      }
     } catch (err) {
-      log(`[render] 已有成片尺寸无法核验（${err instanceof Error ? err.message : String(err)}）→ 重新渲染`);
+      throw new Error(`已有成片无法读取；保留原产物，禁止自动重渲：${err instanceof Error ? err.message : String(err)}`);
     }
   }
   const polled = canResume
@@ -332,15 +338,17 @@ export async function runExplainerPipeline(input: ExplainerRunInput): Promise<Ex
     baseline: input.baselineHost ?? null, engineDir, env, onLog: log,
     aspect,
     quality,
+    reviewPolicy,
     shots: JSON.parse(readFileSync(build.shotsPath, "utf8")) as Array<{ id: string; start: number; end: number }>,
   });
   await stage({
-    stageId: "machineGates", status: report.pass ? "done" : "failed",
-    output: { gates: report.gates.map((g) => ({ gate: g.gate, status: g.status, summary: g.summary })) },
-    errorClass: report.pass ? null : "QA_GATE_FAILED",
-    errorMsg: report.pass ? null : report.gates.filter((g) => g.status === "fail").map((g) => `${g.gate}:${g.summary}`).join("；").slice(0, 400),
+    stageId: "machineGates", status: report.reviewPolicy === "off" ? "skipped" : qaReportAllowsDelivery(report) ? "done" : "failed",
+    output: { reviewPolicy, accepted: report.accepted, qualityReviewed: report.qualityReviewed,
+      gates: report.gates.map((g) => ({ gate: g.gate, status: g.status, summary: g.summary })) },
+    errorClass: qaReportAllowsDelivery(report) ? null : "QA_GATE_FAILED",
+    errorMsg: qaReportAllowsDelivery(report) ? null : report.gates.filter((g) => g.status === "fail").map((g) => `${g.gate}:${g.summary}`).join("；").slice(0, 400),
   });
-  if (!report.pass) {
+  if (!qaReportAllowsDelivery(report)) {
     throw new Error(`机器闸未过（P0 级禁止交付）：${report.gates.filter((g) => g.status === "fail").map((g) => g.gate).join("、")}`);
   }
 

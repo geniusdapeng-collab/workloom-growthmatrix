@@ -210,5 +210,9 @@ export const QaReportSchema = z.object({
   totalFrames: z.number().nullable().default(null),
   gates: z.array(GateResultSchema),
   pass: z.boolean(),
+  /** Admission by the requested policy is distinct from actually measured quality. */
+  accepted: z.boolean().optional(),
+  reviewPolicy: z.enum(["off", "advisory", "blocking"]).optional(),
+  qualityReviewed: z.boolean().optional(),
 });
 export type QaReport = z.infer<typeof QaReportSchema>;
