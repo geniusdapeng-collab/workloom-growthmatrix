@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2112,
+  "revision": 2117,
   "tasks": {
     "132": {
       "number": 132,
@@ -7270,15 +7270,28 @@
           }
         ]
       },
-      "updatedAt": 1791381463175
+      "updatedAt": 1791381467890,
+      "admission": {
+        "number": 172,
+        "headSha": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+        "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+        "filesHash": "35f00b7cd9259aa2c118c42c6bca9dcf098e9165e7adcd1d6945271431db35e5",
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-172",
+        "generation": {
+          "protocol": 41
+        }
+      }
     }
   },
   "leases": {
     "protocol": {
       "owner": null,
-      "generation": 40,
-      "acquiredAt": 1791380633825,
-      "expiresAt": 1791381450851
+      "generation": 41,
+      "acquiredAt": 1791381467890,
+      "expiresAt": 1791381467890
     },
     "migrations": {
       "owner": null,
@@ -55527,6 +55540,93 @@
       },
       "previous": "4e03936f5793c71bab5c03ff0fbe260c374ea25e3c2caa71e60116453d62f4b9",
       "digest": "0415fd82614e954113bb65bbd357032f49aa5273801ff6b2b56ba77a06e232a1"
+    },
+    {
+      "sequence": 2113,
+      "at": "2026-10-07T13:57:47.890Z",
+      "kind": "lease_acquire",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-172",
+        "generation": {
+          "protocol": 41
+        }
+      },
+      "previous": "0415fd82614e954113bb65bbd357032f49aa5273801ff6b2b56ba77a06e232a1",
+      "digest": "8d965949a3456350aef8c790c7ee71d8f54a093f3d1236d84b31824d591b8db8"
+    },
+    {
+      "sequence": 2114,
+      "at": "2026-10-07T13:57:47.890Z",
+      "kind": "lease_release",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-172",
+        "generation": {
+          "protocol": 41
+        }
+      },
+      "previous": "8d965949a3456350aef8c790c7ee71d8f54a093f3d1236d84b31824d591b8db8",
+      "digest": "a0d972df28b034d5ffa56865bc0518eba3e886f9faf30a0e11cfd299e597138a"
+    },
+    {
+      "sequence": 2115,
+      "at": "2026-10-07T13:57:47.890Z",
+      "kind": "source_admitted",
+      "data": {
+        "number": 172,
+        "headSha": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+        "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+        "filesHash": "35f00b7cd9259aa2c118c42c6bca9dcf098e9165e7adcd1d6945271431db35e5",
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-172",
+        "generation": {
+          "protocol": 41
+        }
+      },
+      "previous": "a0d972df28b034d5ffa56865bc0518eba3e886f9faf30a0e11cfd299e597138a",
+      "digest": "88fbaa229abd897cd1bcc6cad9a02d72b343792e3b356838740e5e7809accd84"
+    },
+    {
+      "sequence": 2116,
+      "at": "2026-10-07T13:57:47.890Z",
+      "kind": "task",
+      "data": {
+        "number": 172,
+        "patch": {
+          "admission": {
+            "number": 172,
+            "headSha": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+            "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+            "filesHash": "35f00b7cd9259aa2c118c42c6bca9dcf098e9165e7adcd1d6945271431db35e5",
+            "scopes": [
+              "protocol"
+            ],
+            "owner": "admission/pr-172",
+            "generation": {
+              "protocol": 41
+            }
+          }
+        }
+      },
+      "previous": "88fbaa229abd897cd1bcc6cad9a02d72b343792e3b356838740e5e7809accd84",
+      "digest": "1c588dc976e7686eb1cef01d3764d0f6c1cee706ce91347e8e9ae068ef6aec3a"
+    },
+    {
+      "sequence": 2117,
+      "at": "2026-10-07T13:57:44.839Z",
+      "kind": "transaction",
+      "data": {
+        "id": "source-admit:172:c3f529320ca19732709d9c8ffc57a9ee896e0249:8fd04b0a045ae4623c0c4dc822a475645b142baf"
+      },
+      "previous": "1c588dc976e7686eb1cef01d3764d0f6c1cee706ce91347e8e9ae068ef6aec3a",
+      "digest": "6030f6802300abc79a408ce7e481f61dc6886a3cb4619611d8b888b7155284fe"
     }
   ]
 }
