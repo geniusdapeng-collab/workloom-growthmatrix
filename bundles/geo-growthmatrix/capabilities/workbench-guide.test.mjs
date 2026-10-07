@@ -52,6 +52,12 @@ test("empty-input capability returns full canonical UTF-8, identity, version and
   assert.equal(result.result.productId, "workloom-ai-growthmatrix");
   assert.equal(result.result.repository, "workloom-ai/WorkLoom-growthmatrix");
   assert.equal(result.result.boundaries.nativeStandardPostAvailable, false);
+  assert.equal(result.result.boundaries.providerSuccessDirectPostAvailable, true);
+  assert.equal(result.result.boundaries.sourceQualityReviewDefault, false);
+  assert.equal(result.result.boundaries.automaticAsrTts, false);
+  assert.match(result.result.content, /供应商成功渲染的镜头默认接受/);
+  assert.match(result.result.content, /voice 默认沿用成功片段的节目音轨/);
+  assert.match(result.result.content, /旧品质分为 0/);
   const tool = mcpTools(catalog).find(entry => entry.name === "workloom_growth_video_workbench_guide");
   assert.equal(tool.annotations.readOnlyHint, true);
   assert.deepEqual(tool.inputSchema, { type: "object", properties: {}, additionalProperties: false });

@@ -1,5 +1,5 @@
 ---
-guideVersion: 2026-10-07.1
+guideVersion: 2026-10-07.2
 productId: workloom-ai-growthmatrix
 repository: workloom-ai/WorkLoom-growthmatrix
 ---
@@ -9,6 +9,8 @@ repository: workloom-ai/WorkLoom-growthmatrix
 本指南供本仓内置 AI 工作台、数字员工及连接本仓的外部 Agent 使用。接到视频需求后，先读完整指南，再保留完整需求、选择入口、检查依赖，最后调用既有工位并核对回执。指南可被 CLI 和 MCP 读取，读取本身只访问本仓固定文件，不启动服务、不调模型、不生成媒体。
 
 本仓是 Matrix 隔离实验副本。本指南按 Matrix 当前代码编写；不可拿 Growthtest 的 `film-standard-post.mts`、`standard-post-contract.ts` 或 native standard-post 修复当成本仓已有能力。
+
+**当前出片口径：供应商成功渲染的镜头默认接受，直接进入本仓正式后期。** 不再对已成功源片做人物、服装、动作、黑画面、原始帧率/尺寸/精确时长、音频、对白、口型、canary 或模型/人类二次品质放行，也不由这类结论触发重渲染、ASR 或 TTS。保留真实项目/镜头/taskId/源请求与文件摘要，旧品质失败记录原样留存；代码配方变了不代表必须再花钱生成。文件缺失、摘要被改、供应商真实失败、实际加工失败与最终请求的导出合同仍如实失败。
 
 ## 1. 首先读取这份指南
 
@@ -62,7 +64,7 @@ MCP 工具名为 `workloom_growth_video_workbench_guide`，参数只能是 `{}`�
 |---|---|---|
 | 新做一条有明确商品的营销片 | 内置视频 Studio 建项目，分流营销；核对商品档案和 G1，再形成镜头卡 | 商品来源/授权缺失、分流待澄清、预算或依赖未就绪 |
 | 已有叙事项目和冻结镜头卡，需要继续后期或取件 | `video.film.start` 运行固定阶段；同一 `invocationId` 查 `video.film.receipt`、`video.film.artifact` | 原稿/阶段/文件摘要不符、项目不属当前成员、未知执行状态 |
-| 要求原生对白原样保留，并禁止 TTS 的既有片段剪辑 | 先核查本仓能力并报告严格原生后期缺口 | 本仓没有 native standard-post 合同；不得改走 voice/TTS 冒充完成 |
+| 成功渲染镜头继续剪辑，保留源节目音轨并禁止自动 ASR/TTS | 用同仓成功任务与字节证据复用源片，运行本仓默认正式后期；voice 默认保留源音 | 来源证据不符、文件不可读取或实际加工/请求导出失败；不得自动统一旁白或重生成 |
 
 通用岗位问询可用 `core.task.dispatch` 自动选岗或指定 `presetKey`，它适合职责、缺口及短目标问询。调用视频生成时应使用视频专用入口并保留完整原稿。岗位名称、一次工具成功、CLI 退出码 0 都不能证明整片已经交付。
 
@@ -102,7 +104,7 @@ node scripts/workloom-agent.mjs invoke video.film.artifact --input-file artifact
 }
 ```
 
-`maxBudgetCny=100` 只是结构示例，应替换成用户实际批准预算；缺预算不代表无限费用。阶段按现有素材和真实需求选择，不能跳规范闸。服务端已接线 `FullChainFilmWorker`：冻结原稿和摘要，运行固定 CLI 工位，通过父通道处理受限组件调用、期限、预算与评审。它不是任意本地 shell 代理。
+`maxBudgetCny=100` 只是结构示例，应替换成用户实际批准预算；缺预算不代表无限费用。新生成保留预生产规范、授权、预算与支付要求；有真实成功源片时直接续用后期，不重做生成资格或源片品质放行。服务端已接线 `FullChainFilmWorker`：冻结原稿和摘要，运行固定 CLI 工位，通过父通道处理受限组件调用、期限与预算；后期接收只读取实际文件与技术回执，不调用品质模型，也不为品质评审预留费用。它不是任意本地 shell 代理。
 
 回执输入为 `{"invocationId":"真实调用 UUID"}`；取件输入再加 `"index":0`，索引必须来自实际回执。保存 `result.artifact.base64` 前核对 MIME、长度与 SHA-256。pending 继续查原调用；超时或状态未知保留原幂等键，不再派一次。相同键相同参数重查原请求，同键异参会拒绝。`core.task.cancel` 不提供影片异步作业或外部动作的假回滚。
 
@@ -130,15 +132,17 @@ pnpm exec tsx scripts/tools/full-chain-film.mts \
   --subtitle-mode both --review-policy off
 ```
 
-实际生成会使用用户已配置供应商/组件并可能产生费用；读取指南和计划并未授予费用权限。营销片先确认商品档案/G1，真人先确认授权和清单；逐镜卡要通过 spec。默认成功渲染后沿用完整后期链，创作偏好咨询与事实硬闸分开；不能用删除失败记录、豁免参数或手工混音绕过工位。
+新生成会使用用户已配置供应商/组件并可能产生费用；读取指南和计划并未授予费用权限。新营销片先确认商品档案/G1，真人先确认授权和清单；新逐镜卡通过 spec 后才提交。已成功镜头按真实 taskId、源请求与原文件 SHA-256 复用，即使旧品质分为 0 或历史记录为 failed 也直接进入后期；供应商 rejected/failed 或文件被改不属于成功复用。不删除旧失败记录，不因组件版本变化重生成；同一成功素材续跑不要求重新配置图片/视频生成或品质模型密钥。
 
 ## 7. 声音、后期和既有素材的真实边界
 
-本仓普通链有 `voice → compose → color → subtitle → bgm → cover → mux → master → deliver`，可选 danmaku/sfx，按请求和素材选择。旧 voice 工位会核查片段声音，必要时补配音；统一旁白选项也会重配对白。因此严格要求「保留原生音轨、禁止 ASR/TTS/重配音」时，不能启动旧 voice 链后把声音改变称为修复。禁止自动改用口播解说片。服务 options 中 `unifiedNarration` 和 CLI 旧统一旁白开关都需要单独授权。
+本仓普通链有 `voice → compose → color → subtitle → bgm → cover → mux → master → deliver`，可选 danmaku/sfx，按请求和素材选择。**voice 默认沿用成功片段的节目音轨，不核听、不做 ASR/口型/对白品质审核、不自动补 TTS。** 仅用户明确要求统一旁白时，服务 options `unifiedNarration` 或 CLI `--unified-narration` 才调用实际配音加工；工具失败如实失败，不偷偷改用口播片。无音轨的成功片段也可进入后期，所需无声时间轴由实际合成工位产生，不能声称它原本有人声。
 
-Matrix 当前没有 Growthtest 的 `film-standard-post.mts` 或原生标准后期合同，所以严格 native 请求先报告能力缺口并停止该生产路径。没有缺口修复或另获用户授权就不得产出冒充合规的交付；指南不移植跨仓生产机制。
+Matrix 没有 Growthtest 的命名入口 `film-standard-post.mts` 或其 `standard-post-contract.ts`。本仓现有默认正式后期已可接收成功源片并保留原节目音作为加工来源；是否最终满足用户逐项要求，应看本仓实际回执与导出。`sourceAudioPreserved`/`original-program-bytes` 表示使用原节目音作来源，不是逐字节不变的最终音频承诺；剪辑、混音或编码会生成新文件，不能冒充签章独立分轨。
 
-已有片段 `post-only` 需要显式声明 `assembly-mode=post-only` 与至少 8 字的 `assembly-reason`，规范 spec 自动补入；这只声明复用组装，不证明原生对白/源片字节保持，也不是 strict native 替代品。调色、字幕、配乐、封面之后要查音轨、时长和所需变体。配乐来源若是 declared-unverified，应保留来源口径，不冒充签章分轨；用户禁止配乐时不能偷偷加音乐。
+手工提供的已有片段 `post-only` 仍声明 `assembly-mode=post-only` 与至少 8 字的 `assembly-reason`；来源不属于成功任务缓存时，组装卡按入口合同核对。成功任务续跑不重做源片品质审查。调色、字幕、弹幕、配乐、封面与变体各按请求实际加工一次；不抽样评分、选优或根据像素/音频分数自动返修。字幕实际 ASS/font/timeline、文件摘要、请求尺寸、软轨、实际编码与取件失败保留，`qualityReviewed=false` 不等于「品质已验收」。
+
+配乐没有显式分轨输入时默认按原节目音混音，回执为 `sourceAuthority=original-program-bytes`、`stemsVerified=false`；不要求签发密钥。无音轨时如实建立无声底轨；短配乐先生成有限长度材料，实际混音结束后取件。有显式签章分轨输入时校验租户、项目、签名、时限和文件字节，错误直接失败，不能因旧 `--declared-program-mix` 开关丢掉分轨引用；两种声明冲突也报错。用户禁止配乐时使用 `--no-music`，不偷偷加音乐。默认全链有三个变体，也可明确请求其中一个；清单保留真实配方与文件，风格差异指标为 `null`，不做品质差异放行。
 
 ## 8. 时间、失败和续跑
 
@@ -157,7 +161,7 @@ Matrix 当前没有 Growthtest 的 `film-standard-post.mts` 或原生标准后�
 | 未登录/无权限/跨成员或工作区 | 使用本机受控身份；按 401/403/404 原样失败，不代换身份 |
 | 模型未配置、quota/AccountOverdue、预算不够 | 停止提交，报告实际错误；不得盲目重试、换模型或借账户 |
 | 请求超时、pending、终态未知 | 查同一 invocation/job 与事件；不换幂等键重复提交 |
-| 文件缺失/摘要变了/音轨或字幕不符 | 保留失败证据，修对应阶段并核对新回执；不能把旧文件标成新完成 |
+| 文件缺失/源摘要变了/实际加工失败/最终请求导出不符 | 保留失败证据，只修对应工位；不重生成成功源片，不把旧文件标成新完成 |
 
 ## 9. 最终交付与如实汇报
 
@@ -174,6 +178,7 @@ Matrix 当前没有 Growthtest 的 `film-standard-post.mts` 或原生标准后�
 - 岗位/影片契约：[核心清单](../scripts/agent-capabilities.core.json)、[agentRouter](../apps/server/src/trpc/agent-router.ts)、[filmRouter](../apps/server/src/video/film-router.ts)、[工位服务](../apps/server/src/video/film-worker.ts)。
 - Studio 的 intent/metadata 与 30 秒构建：[videoRouter](../apps/server/src/video/router.ts) 的 `studioRouter.start`。
 - 阶段、options、父通道：[normalizeFilmJobRequest / FullChainFilmWorker](../packages/video-studio/src/film-worker-runtime.ts)。
+- 成功源片与后期技术接收：[post-render-acceptance](../packages/video-studio/src/post-render-acceptance.ts)、[producer-gate](../packages/video-studio/src/producer-gate.ts)；CLI、HTTP 与 worker 共用默认接受策略。
 - CLI 分流与旧出片：[route-video](../scripts/tools/route-video.mts)、[full-chain-film](../scripts/tools/full-chain-film.mts)。
 - 打包固定指南：[product-runtime-assets](../scripts/product-runtime-assets.mjs)，单独白名单此文档并登记 RUNTIME_ASSETS.json 摘要，不包含整个 docs 目录。
 

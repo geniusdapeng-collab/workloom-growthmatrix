@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { TextDecoder } from "node:util";
 
 export const GUIDE_PATH = "docs/ai-video-workbench-guide.md";
-export const GUIDE_VERSION = "2026-10-07.1";
+export const GUIDE_VERSION = "2026-10-07.2";
 const PRODUCT_ID = "workloom-ai-growthmatrix";
 const REPOSITORY = "workloom-ai/WorkLoom-growthmatrix";
 const MAX_BYTES = 512 * 1024;
@@ -74,7 +74,8 @@ export function workbenchGuide(input = {}) {
     format: "text/markdown; charset=utf-8", content,
     boundaries: {
       readOnly: true, networkCalled: false, modelCalled: false, mediaGenerated: false,
-      nativeStandardPostAvailable: false, serviceProjectRequiredForFilmStart: true,
+      nativeStandardPostAvailable: false, providerSuccessDirectPostAvailable: true,
+      sourceQualityReviewDefault: false, automaticAsrTts: false, serviceProjectRequiredForFilmStart: true,
     },
   };
 }

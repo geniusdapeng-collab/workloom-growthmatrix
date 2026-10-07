@@ -10,7 +10,9 @@
 或调用 `node scripts/workloom-agent.mjs invoke growth.video.workbench.guide`（MCP 同名能力，空输入）。
 保留完整 brief 原文与声音/时长/授权等约束；`core.task.dispatch.title` 只有 120 字符，不能替代完整原稿。
 本仓 Studio 当前构建 30 秒意图；非 30 秒请求须核对并在冲突时停止。Matrix 未包含 Growthtest 的
-native standard-post 机制；严格保留原生对白且禁止 TTS 的请求不能偷偷改走旧 voice/统一旁白工位。
+命名 native standard-post 机制。成功渲染镜头直接进入本仓正式后期，voice 默认沿用原节目音，
+不做渲后品质审核、不自动 ASR/TTS；统一旁白须用户明确要求。复用须核对真实任务和源字节，
+旧品质失败记录不可改写；实际加工与最终请求导出错误仍如实失败。
 
 **本仓自带默认模特「陈卓」（`chen-zhuo`），开箱即用——不要以为"仓库里没有人物资产"而重复建档。**
 
@@ -40,4 +42,4 @@ native standard-post 机制；严格保留原生对白且禁止 TTS 的请求不
 
 ## 认证真人素材：先建档再出镜（T-2026-0929-0007）
 
-拿到 `asset://` 认证真人 ID 的第一动作是**问属性（性别/年龄段/授权/有效期）并建主档** `bundles/ai-video/library/real-person-assets/<assetId>/profile.json`；镜头卡（含代词）必须与主档一致（G-RP1 门 fail-closed）；多镜片先出 1 镜 canary 并通过身份比对再渲其余。细则见 `docs/real-person-asset.md`。
+新生成使用 `asset://` 认证真人 ID 时，先从客户或已有授权证据取得属性（性别/年龄段/授权/有效期）并建主档 `bundles/ai-video/library/real-person-assets/<assetId>/profile.json`；新镜头卡（含代词）与主档一致（G-RP1 门 fail-closed）。成功渲染镜头默认接受，不跑 canary 身份比对，也不由人物、服装、动作、原始规格、音频、台词或口型结论触发重生成。细则见 `docs/real-person-asset.md`。

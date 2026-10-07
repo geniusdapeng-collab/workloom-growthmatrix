@@ -135,7 +135,7 @@ async function main() {
       }
       line("  变体差异（实测）：");
       for (const row of outcome.manifest.divergence) {
-        line(`    ${row.a} × ${row.b}：画面平均像素差 ${row.visual.meanAbsDiff}/255（${row.visual.verdict}）· 音频 ${row.audio.differs ? "不同" : "相同"}`);
+        line(`    ${row.a} × ${row.b}：请求配方 ${row.recipeDiffers ? "不同" : "相同"}；产物 SHA 已记录（不进行质量评分）`);
       }
       line(`  清单：${outcome.manifestPath}`);
       line(`  工程文件：${outcome.projectPath}（返修入口）`);
