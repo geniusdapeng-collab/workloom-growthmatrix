@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1362,
+  "revision": 1364,
   "tasks": {
     "132": {
       "number": 132,
@@ -2025,9 +2025,9 @@
         "owner": "admission/pr-142",
         "generation": {}
       },
-      "updatedAt": 1791371003713,
+      "updatedAt": 1791371100874,
       "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
-      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-prompt-redlines",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -2035,35 +2035,7 @@
         "dependsOn": [],
         "releases": []
       },
-      "developerReview": {
-        "schemaVersion": 1,
-        "provider": "codex",
-        "repo": "workloom-ai/workloom-growthmatrix",
-        "number": 142,
-        "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
-        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
-        "reviewedFiles": [
-          "packages/video-studio/src/prompt-redlines.test.ts",
-          "packages/video-studio/src/prompt-redlines.ts"
-        ],
-        "filesHash": "b4a20ae8cb6aec4159cc1221b9be7a9e5928e3abc28bce0c23f1299ba4bc6e91",
-        "dependsOn": [],
-        "ciPolicyChanges": [],
-        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-        "tests": [
-          {
-            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/prompt-redlines.test.ts",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T05:17:10.797884+00:00",
-            "result": "1 test file passed; 13 tests passed; zero failed/skip. Actual result log work/evidence/delivery-01-tests-exact.log."
-          }
-        ],
-        "reviewedAt": "2026-10-07T05:19:57.057966+00:00",
-        "summary": "当前 Codex 完整读取两个改动文件。逐行复核 positiveOnly 的分句及顿号枚举否定范围、独立肯定动作重新启用、字段边界和原风险判据；否定不跨字段或标点，新可见屏幕和手持证件仍触发原检查。无外部写调用、数据库或权限变更，不新增依赖。13 项准确提交后回归通过。回滚可普通 Revert 该单一提交；回滚不删除任何模型回执或素材。未发现未解决问题。",
-        "passed": true,
-        "id": "e0e1d1e576dfe6965dd460f81d31f1913c6ca5c0849204691f960812f2105a7c"
-      },
+      "developerReview": null,
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 142,
@@ -2136,15 +2108,8 @@
       ],
       "ciSince": 1791350411754,
       "error": "CNB 409 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/162/merge :: {\"errcode\":2009014,\"errmsg\":\"the pull can not merge yet\"}\n",
-      "blockedUntil": 1791371603713,
-      "candidate": {
-        "number": 162,
-        "branch": "delivery/candidate/pr-142-519eae638304aeb07110e5871004ce99",
-        "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
-        "marker": "delivery-origin:142:455a03def02419fc9b071d26edde019a7a4a7402:6e7bb78749a4ade1955cf03476ed249f630aa3f8",
-        "at": 1791369013609
-      },
+      "blockedUntil": 0,
+      "candidate": null,
       "mergePhase": null,
       "mergeSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -2217,7 +2182,10 @@
         "scopes": [],
         "generation": {}
       },
-      "mergeRequestedAt": 1791371003713
+      "mergeRequestedAt": 1791371003713,
+      "alignmentCount": 0,
+      "recoveryCount": 0,
+      "reviewFailures": null
     },
     "143": {
       "number": 143,
@@ -32806,6 +32774,50 @@
       },
       "previous": "b7d7e2fd027f9c0d42e159ffc457738dbe7ba65e7d6145a65b06ed734c252ef3",
       "digest": "078ab85e7a2244fbb97338321356ae6086a872bb186e05d940fdb3382033c155"
+    },
+    {
+      "sequence": 1363,
+      "at": "2026-10-07T11:05:00.874Z",
+      "kind": "task",
+      "data": {
+        "number": 142,
+        "patch": {
+          "alignmentCount": 0,
+          "recoveryCount": 0,
+          "reviewFailures": null,
+          "blockedUntil": 0,
+          "developerReview": null,
+          "candidate": null,
+          "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-prompt-redlines",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "画面字段明确写“不出现房卡、单据、证件”时，原红线检查将顿号后的名词误判为可见道具，阻断合法前期并触发修订。现在否定范围保持到同一名词清单末尾，遇到明确肯定动作或新分句重新检查；后续可见屏幕、手持证件和肯定枚举仍按原规则处理。\n\n当前 Codex 完整读取两个改动文件，复核否定范围、字段边界和肯定重启分支。准确提交后实际运行 prompt-redlines.test.ts，正常、否定清单、肯定恢复、证件与屏幕红线回归均通过。没有模型调用或新付费渲染。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/prompt-redlines.test.ts",
+            "packages/video-studio/src/prompt-redlines.ts"
+          ],
+          "status": "parked",
+          "ciSince": 1791350411754
+        }
+      },
+      "previous": "078ab85e7a2244fbb97338321356ae6086a872bb186e05d940fdb3382033c155",
+      "digest": "1fdfc0aecdc651cdb23f8146cadec0e22cbfc42419b1ad55d18eec1f03a3a8ae"
+    },
+    {
+      "sequence": 1364,
+      "at": "2026-10-07T11:05:30.196Z",
+      "kind": "transaction",
+      "data": {
+        "id": "fe195c01-2ffe-43ff-8e99-db793849f874"
+      },
+      "previous": "1fdfc0aecdc651cdb23f8146cadec0e22cbfc42419b1ad55d18eec1f03a3a8ae",
+      "digest": "9fb2e1e7ddd25bfedb877431d407a2e0280f91562367af003c735cd4a76230bd"
     }
   ]
 }
