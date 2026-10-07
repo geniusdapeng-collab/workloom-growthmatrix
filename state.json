@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2847,
+  "revision": 2850,
   "tasks": {
     "132": {
       "number": 132,
@@ -8282,6 +8282,195 @@
         }
       },
       "updatedAt": 1791398239462
+    },
+    "180": {
+      "number": 180,
+      "status": "waiting_ci",
+      "firstSeen": 1791399696604,
+      "attempts": {},
+      "headSha": "e46adba2e883cf1c4453348a6486828d775ea649",
+      "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+      "branch": "fix/T-2026-1007-0918-desktop-release-ancestor",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [
+          178
+        ],
+        "releases": []
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 180,
+        "headSha": "e46adba2e883cf1c4453348a6486828d775ea649",
+        "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          ".cnb.yml",
+          "scripts/ci/cnb-desktop-release.mjs",
+          "scripts/ci/cnb-desktop-release.test.mjs"
+        ],
+        "filesHash": "93dd29050aeb34db5ea828fa76e349e7ae509e890f679da749463436047ecd9e",
+        "dependsOn": [
+          178
+        ],
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "rationale": "Comment-only explanation of the frozen integrated source and fresh protected-main ancestry proof. YAML jobs, roles, node tags, signatures, native checks, locks, commands and configuration semantics remain exactly the same. Fully read the complete config; the existing parse/config regression still verifies real producer/publisher declarations."
+          },
+          {
+            "id": "CI-002",
+            "rationale": "Replace live main-head equality with an actual fresh exact Git ancestry receipt for the frozen, integrated source. Preserve default-main protection, complete CNB event/checkout/source identity, exact stable tag, required signed candidates, candidate digest binding, all remote installer bytes and final public promotion checks. Nonancestor or unreadable/denied/mismatched comparisons, tag drift and lost protection fail closed. Revert this predicate and its additive tests together; never rewrite existing tags."
+          },
+          {
+            "id": "CI-003",
+            "rationale": "Add meaningful positive descendant advancement and negative fork, malformed/substituted range, permission failure, tag drift and lost-protection cases, plus producer/publisher byte checks. Update the existing moved-main cases to represent an unrelated head; all original integrity assertions remain. The complete regression and direct finalizer were fully read; fixtures are explicitly distinct from physical signing and publication."
+          }
+        ],
+        "ciPolicyChangesHash": "61a9a85fb6e1fea639c7b78fbf2a421a3fd0fee3eceedac45fb958e4fa851879",
+        "tests": [
+          {
+            "command": "node --test scripts/ci/cnb-desktop-release.test.mjs scripts/desktop-release-finalizer.test.mjs scripts/unsigned-desktop-release.test.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T18:59:18.410078+00:00",
+            "result": "The actual complete native publisher/finalizer and unsigned path fixture regressions pass at this committed source. Descendant main advancement, fresh compares, invalid/unrelated/denied history, exact source/tag/protection and real local candidate/remote fixture byte integrity are exercised; physical platform signing is not claimed."
+          },
+          {
+            "command": "node --test scripts/delivery/queue-release-contract.test.mjs scripts/delivery/queue-release-history.test.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T18:59:18.553919+00:00",
+            "result": "Existing source/tag/manifest/remote-byte and complete native build history contracts pass. This does not replace original required source and immutable-candidate CI or actual production bytes."
+          },
+          {
+            "command": "node scripts/generate-capabilities.mjs --check",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T18:59:18.660396+00:00",
+            "result": "The repository capability inventory remains consistent; no capability declaration or existing entry was removed."
+          }
+        ],
+        "reviewedAt": "2026-10-07T19:01:17.376905+00:00",
+        "summary": "Current Codex fully read the complete 626-line publisher, 529-line existing regression, 238-line direct finalizer and full 595-line CI configuration before editing. The final patch and all new failure/concurrency assertions were reviewed in this session. Compared two approaches: freeze integration until packaging finishes, or prove that the fixed release remains in protected main history. Selected exact ancestry proof so ordinary independent integration can continue while publication retains its complete source/tag/signature/remote-byte binding. The official CNB OpenAPI CompareResponse exposes base_commit, head_commit and merge_base_commit; the implementation rejects all incomplete or mismatched identities and failed reads. Tests use explicit local platform fixtures and real local candidate/finalizer byte hashing, not signed production installers. No paid model, render, tag rewrite, force merge or main push. Old frozen releases keep their old code; no success for those or missing native runners is claimed.",
+        "passed": true,
+        "id": "0d05df00d970979516b63f185c279305af662728d6457858ec029d3475e25c23"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 180,
+        "pull": {
+          "number": 180,
+          "state": "open",
+          "title": "fix(ci): bind frozen desktop releases to protected main history [T-2026-1007-0918]",
+          "body": "The actual native publisher rejected the frozen, integrated release as soon as another independent repair advanced main. Check a fresh exact Git compare instead: the release SHA must equal the protected head or be its verified ancestor, with exact base/head/merge-base identities. Keep the frozen CNB event/workspace, stable tag, signed candidate manifests and every remote installer byte check. A fork, missing/denied/substituted history, moved tag or lost protection stops publication. Existing tags and pinned source are never rewritten; this repair applies to later releases containing it. Native integration and signed production bytes remain necessary.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    178\n  ],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/fix/T-2026-1007-0918-desktop-release-ancestor",
+            "sha": "e46adba2e883cf1c4453348a6486828d775ea649",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "e46adba2e883cf1c4453348a6486828d775ea649",
+        "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+        "files": [
+          ".cnb.yml",
+          "scripts/ci/cnb-desktop-release.mjs",
+          "scripts/ci/cnb-desktop-release.test.mjs"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [
+            178
+          ],
+          "releases": []
+        },
+        "headTime": 1791399510000,
+        "mergeBase": "d4431bae77c5af2345402949978f95a70c1db5f1",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "file": ".cnb.yml",
+            "before": {
+              "ref": "d4431bae77c5af2345402949978f95a70c1db5f1",
+              "path": ".cnb.yml",
+              "absent": false
+            },
+            "after": {
+              "ref": "e46adba2e883cf1c4453348a6486828d775ea649",
+              "path": ".cnb.yml",
+              "absent": false
+            },
+            "digest": "513f4475f759dcb10b7143650ba84ba9f2b11a3ed626900f6bfb60f39483292f"
+          },
+          {
+            "id": "CI-002",
+            "file": "scripts/ci/cnb-desktop-release.mjs",
+            "before": {
+              "ref": "d4431bae77c5af2345402949978f95a70c1db5f1",
+              "path": "scripts/ci/cnb-desktop-release.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "e46adba2e883cf1c4453348a6486828d775ea649",
+              "path": "scripts/ci/cnb-desktop-release.mjs",
+              "absent": false
+            },
+            "digest": "a555aff95e5b522e8ac682f2af25c3736c4f95f3146387370dedcfd629533c9f"
+          },
+          {
+            "id": "CI-003",
+            "file": "scripts/ci/cnb-desktop-release.test.mjs",
+            "before": {
+              "ref": "d4431bae77c5af2345402949978f95a70c1db5f1",
+              "path": "scripts/ci/cnb-desktop-release.test.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "e46adba2e883cf1c4453348a6486828d775ea649",
+              "path": "scripts/ci/cnb-desktop-release.test.mjs",
+              "absent": false
+            },
+            "digest": "ba5fb4fde97028a8caa821b7e98c2b579f26bd9c0da0d7256564ff48aa9d9430"
+          }
+        ]
+      },
+      "updatedAt": 1791399696604
     }
   },
   "leases": {
@@ -73234,6 +73423,224 @@
       },
       "previous": "ea03f201edcdfc5ce98ee522a9fa44e24446b83435ad151f38559094c784d227",
       "digest": "ee8e45b0e303eb51025859e6268c1f1856c1fb1fb26b05a458bed9c4a6a871a5"
+    },
+    {
+      "sequence": 2848,
+      "at": "2026-10-07T19:01:36.597Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 180,
+        "id": "0d05df00d970979516b63f185c279305af662728d6457858ec029d3475e25c23",
+        "headSha": "e46adba2e883cf1c4453348a6486828d775ea649",
+        "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1"
+      },
+      "previous": "ee8e45b0e303eb51025859e6268c1f1856c1fb1fb26b05a458bed9c4a6a871a5",
+      "digest": "fb7f487a9263e313db402c05a683efd69de3fb132d4470ffec4b36e626da9ed5"
+    },
+    {
+      "sequence": 2849,
+      "at": "2026-10-07T19:01:36.604Z",
+      "kind": "task",
+      "data": {
+        "number": 180,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "e46adba2e883cf1c4453348a6486828d775ea649",
+          "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+          "branch": "fix/T-2026-1007-0918-desktop-release-ancestor",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              178
+            ],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 180,
+            "headSha": "e46adba2e883cf1c4453348a6486828d775ea649",
+            "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              ".cnb.yml",
+              "scripts/ci/cnb-desktop-release.mjs",
+              "scripts/ci/cnb-desktop-release.test.mjs"
+            ],
+            "filesHash": "93dd29050aeb34db5ea828fa76e349e7ae509e890f679da749463436047ecd9e",
+            "dependsOn": [
+              178
+            ],
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "rationale": "Comment-only explanation of the frozen integrated source and fresh protected-main ancestry proof. YAML jobs, roles, node tags, signatures, native checks, locks, commands and configuration semantics remain exactly the same. Fully read the complete config; the existing parse/config regression still verifies real producer/publisher declarations."
+              },
+              {
+                "id": "CI-002",
+                "rationale": "Replace live main-head equality with an actual fresh exact Git ancestry receipt for the frozen, integrated source. Preserve default-main protection, complete CNB event/checkout/source identity, exact stable tag, required signed candidates, candidate digest binding, all remote installer bytes and final public promotion checks. Nonancestor or unreadable/denied/mismatched comparisons, tag drift and lost protection fail closed. Revert this predicate and its additive tests together; never rewrite existing tags."
+              },
+              {
+                "id": "CI-003",
+                "rationale": "Add meaningful positive descendant advancement and negative fork, malformed/substituted range, permission failure, tag drift and lost-protection cases, plus producer/publisher byte checks. Update the existing moved-main cases to represent an unrelated head; all original integrity assertions remain. The complete regression and direct finalizer were fully read; fixtures are explicitly distinct from physical signing and publication."
+              }
+            ],
+            "ciPolicyChangesHash": "61a9a85fb6e1fea639c7b78fbf2a421a3fd0fee3eceedac45fb958e4fa851879",
+            "tests": [
+              {
+                "command": "node --test scripts/ci/cnb-desktop-release.test.mjs scripts/desktop-release-finalizer.test.mjs scripts/unsigned-desktop-release.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T18:59:18.410078+00:00",
+                "result": "The actual complete native publisher/finalizer and unsigned path fixture regressions pass at this committed source. Descendant main advancement, fresh compares, invalid/unrelated/denied history, exact source/tag/protection and real local candidate/remote fixture byte integrity are exercised; physical platform signing is not claimed."
+              },
+              {
+                "command": "node --test scripts/delivery/queue-release-contract.test.mjs scripts/delivery/queue-release-history.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T18:59:18.553919+00:00",
+                "result": "Existing source/tag/manifest/remote-byte and complete native build history contracts pass. This does not replace original required source and immutable-candidate CI or actual production bytes."
+              },
+              {
+                "command": "node scripts/generate-capabilities.mjs --check",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T18:59:18.660396+00:00",
+                "result": "The repository capability inventory remains consistent; no capability declaration or existing entry was removed."
+              }
+            ],
+            "reviewedAt": "2026-10-07T19:01:17.376905+00:00",
+            "summary": "Current Codex fully read the complete 626-line publisher, 529-line existing regression, 238-line direct finalizer and full 595-line CI configuration before editing. The final patch and all new failure/concurrency assertions were reviewed in this session. Compared two approaches: freeze integration until packaging finishes, or prove that the fixed release remains in protected main history. Selected exact ancestry proof so ordinary independent integration can continue while publication retains its complete source/tag/signature/remote-byte binding. The official CNB OpenAPI CompareResponse exposes base_commit, head_commit and merge_base_commit; the implementation rejects all incomplete or mismatched identities and failed reads. Tests use explicit local platform fixtures and real local candidate/finalizer byte hashing, not signed production installers. No paid model, render, tag rewrite, force merge or main push. Old frozen releases keep their old code; no success for those or missing native runners is claimed.",
+            "passed": true,
+            "id": "0d05df00d970979516b63f185c279305af662728d6457858ec029d3475e25c23"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 180,
+            "pull": {
+              "number": 180,
+              "state": "open",
+              "title": "fix(ci): bind frozen desktop releases to protected main history [T-2026-1007-0918]",
+              "body": "The actual native publisher rejected the frozen, integrated release as soon as another independent repair advanced main. Check a fresh exact Git compare instead: the release SHA must equal the protected head or be its verified ancestor, with exact base/head/merge-base identities. Keep the frozen CNB event/workspace, stable tag, signed candidate manifests and every remote installer byte check. A fork, missing/denied/substituted history, moved tag or lost protection stops publication. Existing tags and pinned source are never rewritten; this repair applies to later releases containing it. Native integration and signed production bytes remain necessary.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    178\n  ],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-desktop-release-ancestor",
+                "sha": "e46adba2e883cf1c4453348a6486828d775ea649",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "e46adba2e883cf1c4453348a6486828d775ea649",
+            "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+            "files": [
+              ".cnb.yml",
+              "scripts/ci/cnb-desktop-release.mjs",
+              "scripts/ci/cnb-desktop-release.test.mjs"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                178
+              ],
+              "releases": []
+            },
+            "headTime": 1791399510000,
+            "mergeBase": "d4431bae77c5af2345402949978f95a70c1db5f1",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": ".cnb.yml",
+                "before": {
+                  "ref": "d4431bae77c5af2345402949978f95a70c1db5f1",
+                  "path": ".cnb.yml",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "e46adba2e883cf1c4453348a6486828d775ea649",
+                  "path": ".cnb.yml",
+                  "absent": false
+                },
+                "digest": "513f4475f759dcb10b7143650ba84ba9f2b11a3ed626900f6bfb60f39483292f"
+              },
+              {
+                "id": "CI-002",
+                "file": "scripts/ci/cnb-desktop-release.mjs",
+                "before": {
+                  "ref": "d4431bae77c5af2345402949978f95a70c1db5f1",
+                  "path": "scripts/ci/cnb-desktop-release.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "e46adba2e883cf1c4453348a6486828d775ea649",
+                  "path": "scripts/ci/cnb-desktop-release.mjs",
+                  "absent": false
+                },
+                "digest": "a555aff95e5b522e8ac682f2af25c3736c4f95f3146387370dedcfd629533c9f"
+              },
+              {
+                "id": "CI-003",
+                "file": "scripts/ci/cnb-desktop-release.test.mjs",
+                "before": {
+                  "ref": "d4431bae77c5af2345402949978f95a70c1db5f1",
+                  "path": "scripts/ci/cnb-desktop-release.test.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "e46adba2e883cf1c4453348a6486828d775ea649",
+                  "path": "scripts/ci/cnb-desktop-release.test.mjs",
+                  "absent": false
+                },
+                "digest": "ba5fb4fde97028a8caa821b7e98c2b579f26bd9c0da0d7256564ff48aa9d9430"
+              }
+            ]
+          }
+        }
+      },
+      "previous": "fb7f487a9263e313db402c05a683efd69de3fb132d4470ffec4b36e626da9ed5",
+      "digest": "560765866e0c2b87775efd6a3e9b34c4d724fe103f52cf00c26cc91c9b498a24"
+    },
+    {
+      "sequence": 2850,
+      "at": "2026-10-07T19:01:33.830Z",
+      "kind": "transaction",
+      "data": {
+        "id": "cf5c1d3f-4306-41c9-a3f3-dca80fbda8a2"
+      },
+      "previous": "560765866e0c2b87775efd6a3e9b34c4d724fe103f52cf00c26cc91c9b498a24",
+      "digest": "a8955df47cea662b8d6af345edb29557ddb917795f4808062eb1cd9d2ad5c429"
     }
   ]
 }
