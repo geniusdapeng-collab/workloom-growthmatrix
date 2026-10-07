@@ -18,6 +18,7 @@
 import { createHash } from "node:crypto";
 import { closeSync, existsSync, lstatSync, openSync, readFileSync, readSync, realpathSync, statSync } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
+import { GUIDE_PATH, GUIDE_VERSION } from "./workbench-guide.mjs";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_LINES = 20_000;
@@ -357,6 +358,13 @@ export function productionPlan(input) {
   const command = ["pnpm", ...argv].map(posixQuote).join(" ");
   return {
     previewOnly: true,
+    guide: {
+      capabilityId: "growth.video.workbench.guide",
+      path: GUIDE_PATH,
+      guideVersion: GUIDE_VERSION,
+      execution: { command: "node", args: ["scripts/workloom-agent.mjs", "invoke", "growth.video.workbench.guide"] },
+      requiredBeforeRun: true,
+    },
     title: title || null,
     projectId,
     platform,

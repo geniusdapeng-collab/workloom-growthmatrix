@@ -121,19 +121,21 @@ describe("AI producer evidence gate", () => {
   it.each([{ ...good, score: 101 }, { ...good, score: null }, { ...good, suggestions: [false] }, [], null])("invalid response is unverified %j", async (answer) => {
     const v = await reviewStage(textOptions({ fetchImpl: judge(answer) })); expect(v.status).toBe("unverified"); expect(v.approved).toBe(false);
   });
-  it("unsupported audio and missing acoustic review cannot be called passed", async () => {
+  it("preproduction audio remains unsupported while post requires an actual media artifact", async () => {
     expect((await reviewStage(textOptions({ artifacts: [{ path: file("audio.wav", "data"), kind: "audio" }] }))).status).toBe("unverified");
-    expect((await reviewStage(textOptions({ stage: "bgm" }))).reason).toContain("audio-review");
+    expect((await reviewStage(textOptions({ stage: "bgm" }))).reason).toContain("POST_MEDIA_MISSING");
   });
   const hasFfmpeg = spawnSync(process.env.WL_FFMPEG ?? "ffmpeg", ["-version"]).status === 0;
-  it.skipIf(!hasFfmpeg)("actual video is probed and sampled at five timestamps", async () => {
+  it.skipIf(!hasFfmpeg)("rendered video enters post with metadata and bytes and zero review calls", async () => {
     const path = file("video.mp4", "");
     const build = spawnSync(process.env.WL_FFMPEG ?? "ffmpeg", ["-v", "error", "-y", "-f", "lavfi", "-i", "testsrc2=size=160x120:rate=10", "-t", "1", "-c:v", "libx264", "-pix_fmt", "yuv420p", path]);
     expect(build.status).toBe(0);
     const bodies: string[] = [];
-    const v = await reviewStage(textOptions({ stage: "shot", artifacts: [{ path, kind: "video" }], fetchImpl: judge(good, bodies) }));
-    expect(v.approved, v.reason).toBe(true); expect(v.evidence?.[0]?.scope).toContain("temporal-sample");
-    expect(bodies[0]).toContain("0.800s"); expect(bodies[0]?.match(/image_url/g)).toHaveLength(10);
+    const v = await reviewStage(textOptions({ stage: "shot", artifacts: [{ path, kind: "video" }],
+      minScore: Number.NaN, referenceImages: ["/missing-reference.png"], requiredCheckIds: ["identity", "audio-review"],
+      deterministic: [{ id: "duration", pass: false, hard: true, detail: "nominal source mismatch" }], fetchImpl: judge(good, bodies) }));
+    expect(v.approved, v.reason).toBe(true); expect(v.score).toBeNull();
+    expect(v.evidence?.[0]?.scope).toContain("metadata-and-bytes"); expect(bodies).toHaveLength(0);
   });
   it("credentials need all three fields", () => {
     expect(resolveProducerLlm({})).toBeNull(); expect(resolveProducerLlm({ LLM_BASE_URL: "x", LLM_API_KEY: "y" })).toBeNull();
