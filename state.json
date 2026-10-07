@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2673,
+  "revision": 2676,
   "tasks": {
     "132": {
       "number": 132,
@@ -7763,6 +7763,168 @@
         }
       },
       "updatedAt": 1791392329831
+    },
+    "178": {
+      "number": 178,
+      "status": "waiting_ci",
+      "firstSeen": 1791393095393,
+      "attempts": {},
+      "headSha": "2c156c2b370e17ccb5dca422494ddcf118569571",
+      "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+      "branch": "fix/T-2026-1007-0918-delivery-io-budget",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [
+          172
+        ],
+        "releases": []
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 178,
+        "headSha": "2c156c2b370e17ccb5dca422494ddcf118569571",
+        "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "scripts/delivery/queue-controller.mjs",
+          "scripts/delivery/queue-io-budget.test.mjs"
+        ],
+        "filesHash": "509cb31728f1ce1870135a53fc0c3f0abe06d1e6d44b8915c1c9101416da56ba",
+        "dependsOn": [
+          172
+        ],
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "rationale": "Only dependency planning IO is reduced using hydrated details from this scan; sources with pending dependencies wait before their full snapshot. Ready sources retain exact source/main/config/check identities, unchanged eligibility and immutable candidate merge checks, plus a real fresh prerequisite read immediately before merge. Regression covers source advancement, absent/closed parents, 429, malformed/cyclic intents, draft lanes, dry-run writes and stale review/final dependency denial."
+          },
+          {
+            "id": "CI-002",
+            "rationale": "Added executable regression for bounded pending-source IO and unchanged closed failure/merge boundaries. This adds assertions and does not remove or alter any native pipeline or existing test; the repository wildcard node-test stage includes this file."
+          }
+        ],
+        "ciPolicyChangesHash": "7f6cf35c5520ab3491229f470c504662beec319b91ede30010b604475c227476",
+        "tests": [
+          {
+            "command": "node --test scripts/delivery/queue.test.mjs scripts/delivery/mine-clear.test.mjs scripts/delivery/evidence-controls.test.mjs scripts/delivery/queue-release-contract.test.mjs scripts/delivery/queue-io-budget.test.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T17:10:51.231418+00:00",
+            "result": "The exact committed delivery implementation passes the complete repository delivery fixture suite, including actual Git CAS/race tests and bounded planning IO/final fresh dependency regressions. No native platform writes are issued by fixtures."
+          },
+          {
+            "command": "node --check scripts/delivery/queue-controller.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T17:10:51.377663+00:00",
+            "result": "Current controller parses successfully at the exact committed head."
+          }
+        ],
+        "reviewedAt": "2026-10-07T17:11:30.729430+00:00",
+        "summary": "The current Codex session fully read the complete current controller, platform, cnb-api, model, policy, release and work implementation and the new regression file. Only planning reads change: current scan details replace a redundant open-prerequisite GET and dependency-blocked sources skip the full multi-read source snapshot. Every ready source still enters the existing exact snapshot/eligibility flow and mergeCandidate re-reads real prerequisites immediately before an actual write. No mutable API cache, no platform model, no force merge, no main push and no relaxation of any required pipeline. Source advancement, absent closed prerequisites, 429, cycles, malformed intents, draft lanes, dry run, stale reviews and the final merge boundary were exercised. Full native delivery regression is also required and actually run at this committed head. Native integration/readback remain necessary for deployment.",
+        "passed": true,
+        "id": "d80970128a5fa5d1b6882b1650361a718957584e3cd70ee765602569d0c386c5"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 178,
+        "pull": {
+          "number": 178,
+          "state": "open",
+          "title": "fix(ci): avoid full snapshots of dependency-blocked sources [T-2026-1007-0918]",
+          "body": "Native delivery repeatedly exhausted CNB reads while checking source PRs that could not advance because their explicit prerequisites were still pending. Reuse hydrated open PR details for planning and defer the full source/CI snapshot until prerequisite planning is clear. Keep fresh snapshots, exact source/main/policy review, native CI, immutable candidate protection and the fresh prerequisite re-read immediately before merge. Permission/read failures and DAG cycles remain closed failures. This infrastructure fix is deployed through normal native integration; it does not declare a separate desktop version.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    172\n  ],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/fix/T-2026-1007-0918-delivery-io-budget",
+            "sha": "2c156c2b370e17ccb5dca422494ddcf118569571",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "2c156c2b370e17ccb5dca422494ddcf118569571",
+        "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+        "files": [
+          "scripts/delivery/queue-controller.mjs",
+          "scripts/delivery/queue-io-budget.test.mjs"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [
+            172
+          ],
+          "releases": []
+        },
+        "headTime": 1791392982000,
+        "mergeBase": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "file": "scripts/delivery/queue-controller.mjs",
+            "before": {
+              "ref": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+              "path": "scripts/delivery/queue-controller.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "2c156c2b370e17ccb5dca422494ddcf118569571",
+              "path": "scripts/delivery/queue-controller.mjs",
+              "absent": false
+            },
+            "digest": "22f5cea438abd6b82b42a33c244e9f4b691f28f28f23e9b7d9487c2ab40099b3"
+          },
+          {
+            "id": "CI-002",
+            "file": "scripts/delivery/queue-io-budget.test.mjs",
+            "before": {
+              "ref": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+              "path": "scripts/delivery/queue-io-budget.test.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "2c156c2b370e17ccb5dca422494ddcf118569571",
+              "path": "scripts/delivery/queue-io-budget.test.mjs",
+              "absent": false
+            },
+            "digest": "5e6c99ee12e9226b4a4a4fa522e32046129da71d3f8c2e3a74caadcbea16a4fe"
+          }
+        ]
+      },
+      "updatedAt": 1791393095393
     }
   },
   "leases": {
@@ -68871,6 +69033,197 @@
       },
       "previous": "3927ed448d25982e08e74f4ac0d3c98953e031053fb9c4cb799869bb22f32e49",
       "digest": "c218e37e8542a4df530353e73e744c2b5447a8d1634337c1e64489a67457cdeb"
+    },
+    {
+      "sequence": 2674,
+      "at": "2026-10-07T17:11:35.393Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 178,
+        "id": "d80970128a5fa5d1b6882b1650361a718957584e3cd70ee765602569d0c386c5",
+        "headSha": "2c156c2b370e17ccb5dca422494ddcf118569571",
+        "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17"
+      },
+      "previous": "c218e37e8542a4df530353e73e744c2b5447a8d1634337c1e64489a67457cdeb",
+      "digest": "837965a58027df8c3608a82eb73804441b31da0af7f1f28abdf85389ebc1603d"
+    },
+    {
+      "sequence": 2675,
+      "at": "2026-10-07T17:11:35.393Z",
+      "kind": "task",
+      "data": {
+        "number": 178,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "2c156c2b370e17ccb5dca422494ddcf118569571",
+          "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+          "branch": "fix/T-2026-1007-0918-delivery-io-budget",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              172
+            ],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 178,
+            "headSha": "2c156c2b370e17ccb5dca422494ddcf118569571",
+            "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "scripts/delivery/queue-controller.mjs",
+              "scripts/delivery/queue-io-budget.test.mjs"
+            ],
+            "filesHash": "509cb31728f1ce1870135a53fc0c3f0abe06d1e6d44b8915c1c9101416da56ba",
+            "dependsOn": [
+              172
+            ],
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "rationale": "Only dependency planning IO is reduced using hydrated details from this scan; sources with pending dependencies wait before their full snapshot. Ready sources retain exact source/main/config/check identities, unchanged eligibility and immutable candidate merge checks, plus a real fresh prerequisite read immediately before merge. Regression covers source advancement, absent/closed parents, 429, malformed/cyclic intents, draft lanes, dry-run writes and stale review/final dependency denial."
+              },
+              {
+                "id": "CI-002",
+                "rationale": "Added executable regression for bounded pending-source IO and unchanged closed failure/merge boundaries. This adds assertions and does not remove or alter any native pipeline or existing test; the repository wildcard node-test stage includes this file."
+              }
+            ],
+            "ciPolicyChangesHash": "7f6cf35c5520ab3491229f470c504662beec319b91ede30010b604475c227476",
+            "tests": [
+              {
+                "command": "node --test scripts/delivery/queue.test.mjs scripts/delivery/mine-clear.test.mjs scripts/delivery/evidence-controls.test.mjs scripts/delivery/queue-release-contract.test.mjs scripts/delivery/queue-io-budget.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T17:10:51.231418+00:00",
+                "result": "The exact committed delivery implementation passes the complete repository delivery fixture suite, including actual Git CAS/race tests and bounded planning IO/final fresh dependency regressions. No native platform writes are issued by fixtures."
+              },
+              {
+                "command": "node --check scripts/delivery/queue-controller.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T17:10:51.377663+00:00",
+                "result": "Current controller parses successfully at the exact committed head."
+              }
+            ],
+            "reviewedAt": "2026-10-07T17:11:30.729430+00:00",
+            "summary": "The current Codex session fully read the complete current controller, platform, cnb-api, model, policy, release and work implementation and the new regression file. Only planning reads change: current scan details replace a redundant open-prerequisite GET and dependency-blocked sources skip the full multi-read source snapshot. Every ready source still enters the existing exact snapshot/eligibility flow and mergeCandidate re-reads real prerequisites immediately before an actual write. No mutable API cache, no platform model, no force merge, no main push and no relaxation of any required pipeline. Source advancement, absent closed prerequisites, 429, cycles, malformed intents, draft lanes, dry run, stale reviews and the final merge boundary were exercised. Full native delivery regression is also required and actually run at this committed head. Native integration/readback remain necessary for deployment.",
+            "passed": true,
+            "id": "d80970128a5fa5d1b6882b1650361a718957584e3cd70ee765602569d0c386c5"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 178,
+            "pull": {
+              "number": 178,
+              "state": "open",
+              "title": "fix(ci): avoid full snapshots of dependency-blocked sources [T-2026-1007-0918]",
+              "body": "Native delivery repeatedly exhausted CNB reads while checking source PRs that could not advance because their explicit prerequisites were still pending. Reuse hydrated open PR details for planning and defer the full source/CI snapshot until prerequisite planning is clear. Keep fresh snapshots, exact source/main/policy review, native CI, immutable candidate protection and the fresh prerequisite re-read immediately before merge. Permission/read failures and DAG cycles remain closed failures. This infrastructure fix is deployed through normal native integration; it does not declare a separate desktop version.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    172\n  ],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-delivery-io-budget",
+                "sha": "2c156c2b370e17ccb5dca422494ddcf118569571",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "2c156c2b370e17ccb5dca422494ddcf118569571",
+            "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+            "files": [
+              "scripts/delivery/queue-controller.mjs",
+              "scripts/delivery/queue-io-budget.test.mjs"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                172
+              ],
+              "releases": []
+            },
+            "headTime": 1791392982000,
+            "mergeBase": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": "scripts/delivery/queue-controller.mjs",
+                "before": {
+                  "ref": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+                  "path": "scripts/delivery/queue-controller.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "2c156c2b370e17ccb5dca422494ddcf118569571",
+                  "path": "scripts/delivery/queue-controller.mjs",
+                  "absent": false
+                },
+                "digest": "22f5cea438abd6b82b42a33c244e9f4b691f28f28f23e9b7d9487c2ab40099b3"
+              },
+              {
+                "id": "CI-002",
+                "file": "scripts/delivery/queue-io-budget.test.mjs",
+                "before": {
+                  "ref": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+                  "path": "scripts/delivery/queue-io-budget.test.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "2c156c2b370e17ccb5dca422494ddcf118569571",
+                  "path": "scripts/delivery/queue-io-budget.test.mjs",
+                  "absent": false
+                },
+                "digest": "5e6c99ee12e9226b4a4a4fa522e32046129da71d3f8c2e3a74caadcbea16a4fe"
+              }
+            ]
+          }
+        }
+      },
+      "previous": "837965a58027df8c3608a82eb73804441b31da0af7f1f28abdf85389ebc1603d",
+      "digest": "17654f253cc4fad06b04e83c1b7c30b5d26287ed697db87b87fc6ded1dce8f17"
+    },
+    {
+      "sequence": 2676,
+      "at": "2026-10-07T17:11:32.700Z",
+      "kind": "transaction",
+      "data": {
+        "id": "635a9437-56b4-4747-b6f0-a6061f237f9c"
+      },
+      "previous": "17654f253cc4fad06b04e83c1b7c30b5d26287ed697db87b87fc6ded1dce8f17",
+      "digest": "6e7f13f3c88102cb3e85d8bbf970f6a2ab1cae72d7b85bb751721bfc9e2fb217"
     }
   ]
 }
