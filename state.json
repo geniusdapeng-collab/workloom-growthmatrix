@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1096,
+  "revision": 1098,
   "tasks": {
     "132": {
       "number": 132,
@@ -2152,7 +2152,7 @@
         "owner": "admission/pr-143",
         "generation": {}
       },
-      "updatedAt": 1791364211033,
+      "updatedAt": 1791366610602,
       "headSha": "5ee0686f9f8b4e938b42bd7b47364e31e2c17557",
       "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
       "branch": "fix/T-2026-1007-0918-first-pass-camera",
@@ -26332,6 +26332,44 @@
       },
       "previous": "d47b374ab9d71f5f88fc72264baa20372bd5e29fdea07fc8ed62de8f290f3fc2",
       "digest": "80c032c6591aa883244e9e84c6095f737f8f8e94c5b758e0b7309c0cec4d6b41"
+    },
+    {
+      "sequence": 1097,
+      "at": "2026-10-07T09:50:10.602Z",
+      "kind": "task",
+      "data": {
+        "number": 143,
+        "patch": {
+          "headSha": "5ee0686f9f8b4e938b42bd7b47364e31e2c17557",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-first-pass-camera",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "正式出镜人物分镜前段推近、尾段定住本来不重叠，旧就绪检查把整镜关键词拼成冲突，并把“无推拉摇移/停止移动”当作肯定运镜。现按时间轴与运镜的同一窗口核对静止覆盖，明确否定不计运动；仍拒绝真实重叠、静止缺口、无时段前缀和非法区间。原稿内容保持不变。\n\n当前 Codex 完整读取并逐行复核两个改动文件；准确提交后运行正常、否定、交界、重叠和缺口回归，不调用模型或付费渲染。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/first-pass.test.ts",
+            "packages/video-studio/src/first-pass.ts"
+          ],
+          "status": "parked",
+          "ciSince": 1791351311526
+        }
+      },
+      "previous": "80c032c6591aa883244e9e84c6095f737f8f8e94c5b758e0b7309c0cec4d6b41",
+      "digest": "4b8253167f595be848c732a9c84fe4f58407c15f403e7ef47c989146b5da60e1"
+    },
+    {
+      "sequence": 1098,
+      "at": "2026-10-07T09:50:48.728Z",
+      "kind": "transaction",
+      "data": {
+        "id": "59ce5e0e-43a7-4219-a843-74ddd22b4e0b"
+      },
+      "previous": "4b8253167f595be848c732a9c84fe4f58407c15f403e7ef47c989146b5da60e1",
+      "digest": "ebe87a1ce183ff08d7386f22a0b4ade974f7160be33144d32c73644545033492"
     }
   ]
 }
