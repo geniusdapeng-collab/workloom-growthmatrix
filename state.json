@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1741,
+  "revision": 1743,
   "tasks": {
     "132": {
       "number": 132,
@@ -4160,7 +4160,7 @@
     },
     "151": {
       "number": 151,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791358616212,
       "attempts": {},
       "headSha": "089771568cec09badd63d8d18754b7dcdd9a8750",
@@ -4170,9 +4170,15 @@
         "taskId": "T-2026-1007-0918",
         "ready": true,
         "dependsOn": [
-          148
+          148,
+          153
         ],
-        "releases": []
+        "releases": [
+          {
+            "kind": "desktop",
+            "version": "0.1.12"
+          }
+        ]
       },
       "developerReview": {
         "schemaVersion": 1,
@@ -4278,7 +4284,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791377046984,
+      "updatedAt": 1791378611870,
       "admission": {
         "number": 151,
         "headSha": "089771568cec09badd63d8d18754b7dcdd9a8750",
@@ -4289,7 +4295,7 @@
         "generation": {}
       },
       "dependencies": [
-        148
+        153
       ],
       "error": "Prerequisite #148 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/148 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 0,
@@ -45471,6 +45477,47 @@
       },
       "previous": "061c51d584d04c40d9faf8a204bb6bdf81a210b2795d99f90c7ce8c65efe8c8f",
       "digest": "3b70773e335e45ba23b8c2d0a046ba4263cca0f089a7619f0b08ba0a03fa5266"
+    },
+    {
+      "sequence": 1742,
+      "at": "2026-10-07T13:10:11.870Z",
+      "kind": "task",
+      "data": {
+        "number": 151,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "089771568cec09badd63d8d18754b7dcdd9a8750",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              153
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.12"
+              }
+            ]
+          },
+          "dependencies": [
+            153
+          ]
+        }
+      },
+      "previous": "3b70773e335e45ba23b8c2d0a046ba4263cca0f089a7619f0b08ba0a03fa5266",
+      "digest": "8e6a191b5ce9cff86e5226ecccd15dd62439c7eccb03c3ea4f0338b9b8085a55"
+    },
+    {
+      "sequence": 1743,
+      "at": "2026-10-07T13:11:19.942Z",
+      "kind": "transaction",
+      "data": {
+        "id": "f40b46b9-3fdc-4f5f-8577-5d8c7b851d9f"
+      },
+      "previous": "8e6a191b5ce9cff86e5226ecccd15dd62439c7eccb03c3ea4f0338b9b8085a55",
+      "digest": "012dc5d7dd2bb6bb24498458b83fdfe0ced0e846e8f3358f0aa8de6bafa7e0e0"
     }
   ]
 }
