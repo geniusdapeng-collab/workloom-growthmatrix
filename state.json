@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3164,
+  "revision": 3166,
   "tasks": {
     "132": {
       "number": 132,
@@ -5572,7 +5572,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791401379390,
+      "updatedAt": 1791402317791,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -80267,6 +80267,52 @@
       },
       "previous": "e717ece020d8f3f12f1cddd1429dacf3fbbcd3cfcae5707a48f1119b471dafe7",
       "digest": "9e4bb152c4b9b7e1416de68119ae8bc85e83767846a5f211fc92f8afc7c5c2e4"
+    },
+    {
+      "sequence": 3165,
+      "at": "2026-10-07T19:45:17.791Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "9e4bb152c4b9b7e1416de68119ae8bc85e83767846a5f211fc92f8afc7c5c2e4",
+      "digest": "1793c6c360141119ffc65122589db99546e3f8aa75a8fa69929ac26478e1d3d5"
+    },
+    {
+      "sequence": 3166,
+      "at": "2026-10-07T19:47:44.111Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8ac6c57a-be85-47b1-bd5e-00dc023a1654"
+      },
+      "previous": "1793c6c360141119ffc65122589db99546e3f8aa75a8fa69929ac26478e1d3d5",
+      "digest": "81160affadce8a72932d7d3b962a91fc17c866cc53138b4514996c76c69d9b16"
     }
   ]
 }
