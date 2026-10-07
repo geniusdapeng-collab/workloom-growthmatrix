@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1447,
+  "revision": 1450,
   "tasks": {
     "132": {
       "number": 132,
@@ -4256,11 +4256,11 @@
     },
     "156": {
       "number": 156,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791361029790,
       "attempts": {},
       "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
-      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-derived-portrait-paid-receipts",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -4277,7 +4277,7 @@
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 156,
         "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "packages/video-studio/src/generation-file-store.ts",
@@ -4315,10 +4315,10 @@
             "result": "Both modified portrait CLIs typecheck passed"
           }
         ],
-        "reviewedAt": "2026-10-07T08:17:05.661520+00:00",
-        "summary": "Current Codex fully read and reviewed all seven changed files and direct generation journal, image/video helper, canonical identity, character archive, likeness and installer implementations. Exactly one POST is durable before dispatch, URL/task ACK is durable before GET, unknown acceptance cannot fall through to a second engine, shared roots make independent processes/output directories reuse the same task. Real local HTTP and actual CLI/ffmpeg fixtures test failed download recovery, network ACK loss, HTTP500, concurrency, legacy output refusal and equal-pixel angle installation. Skipped review remains unscored and never claims face identity. Existing customer source duplicate mapping still fails. Script and package types pass; no live paid calls, secret scans pass and no unresolved finding.",
+        "reviewedAt": "2026-10-07T11:24:25.423612+00:00",
+        "summary": "Current Codex fully read and reviewed all seven changed files and direct generation journal, image/video helper, canonical identity, character archive, likeness and installer implementations. Exactly one POST is durable before dispatch, URL/task ACK is durable before GET, unknown acceptance cannot fall through to a second engine, shared roots make independent processes/output directories reuse the same task. Real local HTTP and actual CLI/ffmpeg fixtures test failed download recovery, network ACK loss, HTTP500, concurrency, legacy output refusal and equal-pixel angle installation. Skipped review remains unscored and never claims face identity. Existing customer source duplicate mapping still fails. Script and package types pass; no live paid calls, secret scans pass and no unresolved finding. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
         "passed": true,
-        "id": "f126dc04757262b36a92064b8f05ada2c1fafdbe0d8b11965297ee92cedf9c5c"
+        "id": "9922e61cbd5ef57256231eb7e85a75c61bd154d92d5cf79f0e2bacc5d7d158d1"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -4338,7 +4338,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4367,7 +4367,7 @@
           "statuses": {}
         },
         "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "files": [
           "packages/video-studio/src/generation-file-store.ts",
           "packages/video-studio/src/image-task-receipt.ts",
@@ -4393,7 +4393,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791371100874,
+      "updatedAt": 1791372273477,
       "admission": {
         "number": 156,
         "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
@@ -35589,6 +35589,176 @@
       },
       "previous": "b470391817f4d0a2308eff1b2e9cf44b80c9d4a21a9e8666ecdde6cfa785f223",
       "digest": "b998d49dcf09df28a840691c2d2e488235b32835bd90a0ce0205b86d20d6653a"
+    },
+    {
+      "sequence": 1448,
+      "at": "2026-10-07T11:24:33.475Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 156,
+        "id": "9922e61cbd5ef57256231eb7e85a75c61bd154d92d5cf79f0e2bacc5d7d158d1",
+        "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0"
+      },
+      "previous": "b998d49dcf09df28a840691c2d2e488235b32835bd90a0ce0205b86d20d6653a",
+      "digest": "55668bb8a51a64476ac7e621b87f8689e7478992a6e3301ae2b528dd100b6b4a"
+    },
+    {
+      "sequence": 1449,
+      "at": "2026-10-07T11:24:33.477Z",
+      "kind": "task",
+      "data": {
+        "number": 156,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-derived-portrait-paid-receipts",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              149
+            ],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 156,
+            "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/portrait-derived-cli.test.ts",
+              "packages/video-studio/src/video-task-receipt.test.ts",
+              "packages/video-studio/src/video-task-receipt.ts",
+              "scripts/tools/portrait-set-from-asset.mts",
+              "scripts/tools/portrait-set-install.mts"
+            ],
+            "filesHash": "041eba62620e12dad3fc49bd629b5e2afe5eaad5cc41137b16c55533746c1d85",
+            "dependsOn": [
+              148,
+              149
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/portrait-derived-cli.test.ts packages/video-studio/src/video-task-receipt.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T08:16:26.792779+00:00",
+                "result": "Actual local HTTP, real ffmpeg decoding and independent CLI processes verify single paid submission, cross-output restore, lost ACK/500 no fallback, legacy refusal and equal-pixel generated-angle install; video fault tests pass, no skips"
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T08:16:28.109853+00:00",
+                "result": "Video studio typecheck passed"
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit --skipLibCheck --types node --target ES2022 --module NodeNext --moduleResolution NodeNext --allowImportingTsExtensions scripts/tools/portrait-set-from-asset.mts scripts/tools/portrait-set-install.mts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T08:16:31.462880+00:00",
+                "result": "Both modified portrait CLIs typecheck passed"
+              }
+            ],
+            "reviewedAt": "2026-10-07T11:24:25.423612+00:00",
+            "summary": "Current Codex fully read and reviewed all seven changed files and direct generation journal, image/video helper, canonical identity, character archive, likeness and installer implementations. Exactly one POST is durable before dispatch, URL/task ACK is durable before GET, unknown acceptance cannot fall through to a second engine, shared roots make independent processes/output directories reuse the same task. Real local HTTP and actual CLI/ffmpeg fixtures test failed download recovery, network ACK loss, HTTP500, concurrency, legacy output refusal and equal-pixel angle installation. Skipped review remains unscored and never claims face identity. Existing customer source duplicate mapping still fails. Script and package types pass; no live paid calls, secret scans pass and no unresolved finding. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+            "passed": true,
+            "id": "9922e61cbd5ef57256231eb7e85a75c61bd154d92d5cf79f0e2bacc5d7d158d1"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 156,
+            "pull": {
+              "number": 156,
+              "state": "open",
+              "title": "fix(growth): persist derived portrait paid acceptance [T-2026-1007-0918]",
+              "body": "Derived portrait image generation retried paid POST after network failure, and its auto path could submit a second paid video after an uncertain image ACK. Both image and video paths now use a stable private receipt root independent of output directories, persist complete requests before one POST, and save URL/task acceptance before download or polling. Auto chooses the engine before dispatch; failures never switch paid engines or drop references and resubmit. Legacy output without recoverable acceptance refuses a new charge. Generated images decode before downstream use; similarity/byte-size/duplicate-pixel quality checks do not gate default delivery or trigger regeneration. Skipped likeness has reviewed=false and same=null. Existing customer-export mapping integrity and explicit likeness/distinct-angle requests remain available.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148,\n    149\n  ],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-derived-portrait-paid-receipts",
+                "sha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "files": [
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/portrait-derived-cli.test.ts",
+              "packages/video-studio/src/video-task-receipt.test.ts",
+              "packages/video-studio/src/video-task-receipt.ts",
+              "scripts/tools/portrait-set-from-asset.mts",
+              "scripts/tools/portrait-set-install.mts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                148,
+                149
+              ],
+              "releases": []
+            },
+            "headTime": 1791360956000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "55668bb8a51a64476ac7e621b87f8689e7478992a6e3301ae2b528dd100b6b4a",
+      "digest": "7f447d82aad9b665ccc755097cbe4a6c4ee48164d188d4a23d4bf62b4b915b24"
+    },
+    {
+      "sequence": 1450,
+      "at": "2026-10-07T11:24:29.030Z",
+      "kind": "transaction",
+      "data": {
+        "id": "67422f76-8335-4012-a5cd-fa6e00154abf"
+      },
+      "previous": "7f447d82aad9b665ccc755097cbe4a6c4ee48164d188d4a23d4bf62b4b915b24",
+      "digest": "d42beadde8293d92ce62c092a3ff8d6fa905097dbffbbd457f3a39b041fa52b9"
     }
   ]
 }
