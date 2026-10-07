@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3700,
+  "revision": 3702,
   "tasks": {
     "132": {
       "number": 132,
@@ -6264,7 +6264,7 @@
           }
         ]
       },
-      "updatedAt": 1791410110028,
+      "updatedAt": 1791410425056,
       "admission": {
         "number": 161,
         "headSha": "fd1089d472ec538c5cdd64a32b8d926261d81135",
@@ -6287,7 +6287,7 @@
       "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
-      "blockedUntil": 1791410710028,
+      "blockedUntil": 1791411025056,
       "candidate": null,
       "dependencies": [
         160
@@ -92345,6 +92345,31 @@
       },
       "previous": "ab639ada270a2575adfd305382e45cc99043b0e50da0830bd95678e735550cff",
       "digest": "936c0f17314bebd0a13f204e3b9e0d7f3361d8a3375e132fb29cf5696e5f71e2"
+    },
+    {
+      "sequence": 3701,
+      "at": "2026-10-07T22:00:25.056Z",
+      "kind": "task",
+      "data": {
+        "number": 161,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #160 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/160 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791411025056
+        }
+      },
+      "previous": "936c0f17314bebd0a13f204e3b9e0d7f3361d8a3375e132fb29cf5696e5f71e2",
+      "digest": "c07719e2ce2fb8062c54cb75736b33c93945a7b1c0ef07a499d491e767633b98"
+    },
+    {
+      "sequence": 3702,
+      "at": "2026-10-07T22:02:36.231Z",
+      "kind": "transaction",
+      "data": {
+        "id": "345ec60a-8dc5-4218-b4df-7c4a0d4509b8"
+      },
+      "previous": "c07719e2ce2fb8062c54cb75736b33c93945a7b1c0ef07a499d491e767633b98",
+      "digest": "15ba2758156d309edf31877aea9eaf9eafb48166ac16b58062e037e09a025ce4"
     }
   ]
 }
