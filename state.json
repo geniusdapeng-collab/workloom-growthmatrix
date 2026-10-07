@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2875,
+  "revision": 2877,
   "tasks": {
     "132": {
       "number": 132,
@@ -3181,10 +3181,10 @@
     },
     "144": {
       "number": 144,
-      "status": "aligning",
+      "status": "waiting_ci",
       "firstSeen": 1791352089622,
       "attempts": {},
-      "headSha": "a248bf621d885644e70ce55d0147cbf9449a2bb2",
+      "headSha": "4d86382388c118c1f3a989140dd420742c3f072a",
       "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
       "branch": "fix/T-2026-1007-0918-creative-duration",
       "intent": {
@@ -3295,7 +3295,7 @@
         "packages/video-studio/src/vendor-compat.ts",
         "scripts/tools/duration-projection-e2e.mts"
       ],
-      "ciSince": 1791374342093,
+      "ciSince": 1791399914273,
       "repairRequired": {
         "provider": "codex",
         "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
@@ -3305,16 +3305,12 @@
       },
       "recoveryIntent": null,
       "alignmentCount": 1,
-      "alignmentIntent": {
-        "headSha": "a248bf621d885644e70ce55d0147cbf9449a2bb2",
-        "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
-        "at": 1791399914273
-      },
+      "alignmentIntent": null,
       "alignment": {
-        "sha": "fb92f8745dbaa15fc4d596a39da3584ba516a9c3",
-        "previousHead": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
-        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
-        "verifiedAt": "2026-10-07T12:00:10.553Z"
+        "sha": "4d86382388c118c1f3a989140dd420742c3f072a",
+        "previousHead": "a248bf621d885644e70ce55d0147cbf9449a2bb2",
+        "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+        "verifiedAt": "2026-10-07T19:06:25.794Z"
       },
       "admission": {
         "number": 144,
@@ -74045,6 +74041,38 @@
       },
       "previous": "11dec9639d00d3579c412f953fe2f244eb6c21bd680b8a7cb7aea4f03921d01a",
       "digest": "46be6abc2000a1753f5ea492e516cc09030c0f9cd582c7d17a42cde8f7e48d0f"
+    },
+    {
+      "sequence": 2876,
+      "at": "2026-10-07T19:05:14.273Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "status": "waiting_ci",
+          "alignment": {
+            "sha": "4d86382388c118c1f3a989140dd420742c3f072a",
+            "previousHead": "a248bf621d885644e70ce55d0147cbf9449a2bb2",
+            "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+            "verifiedAt": "2026-10-07T19:06:25.794Z"
+          },
+          "alignmentIntent": null,
+          "headSha": "4d86382388c118c1f3a989140dd420742c3f072a",
+          "ciSince": 1791399914273
+        }
+      },
+      "previous": "46be6abc2000a1753f5ea492e516cc09030c0f9cd582c7d17a42cde8f7e48d0f",
+      "digest": "dc5797332bae896ae0b011f2818b37f5581808f2d1c6ba2262958627ab44dfb8"
+    },
+    {
+      "sequence": 2877,
+      "at": "2026-10-07T19:06:25.858Z",
+      "kind": "transaction",
+      "data": {
+        "id": "1dfd8acb-3be1-499b-bd2d-b4b1b351854d"
+      },
+      "previous": "dc5797332bae896ae0b011f2818b37f5581808f2d1c6ba2262958627ab44dfb8",
+      "digest": "8ce7ebbff0d41f8961d516e990cb3ec2dc24644d0a5b4a906accabfd8d7d152d"
     }
   ]
 }
