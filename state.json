@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3829,
+  "revision": 3832,
   "tasks": {
     "132": {
       "number": 132,
@@ -4721,11 +4721,11 @@
     },
     "152": {
       "number": 152,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791358731486,
       "attempts": {},
-      "headSha": "84bc6375e83c587fb8906261a097a319f48f929f",
-      "mainSha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+      "headSha": "dea8a5a2410be769090292d7450534b85cce75cc",
+      "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
       "branch": "fix/T-2026-1007-0918-marketing-failure-feedback",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -4745,8 +4745,8 @@
         "provider": "codex",
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 152,
-        "headSha": "84bc6375e83c587fb8906261a097a319f48f929f",
-        "mainSha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+        "headSha": "dea8a5a2410be769090292d7450534b85cce75cc",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "apps/server/src/video/marketing-authority.test.ts",
@@ -4762,20 +4762,20 @@
           {
             "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/marketing-authority.test.ts",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T22:02:07.768133+00:00",
+            "finishedAt": "2026-10-07T22:23:25.649405+00:00",
             "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           },
           {
             "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T22:02:08.874638+00:00",
+            "finishedAt": "2026-10-07T22:23:26.765729+00:00",
             "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           }
         ],
-        "reviewedAt": "2026-10-07T22:04:08.427942+00:00",
-        "summary": "Current Codex fully read the two changed files and direct implementation dependencies. Every output receipt binds scope, shot ID, exact complete review bytes and source images. Real model verdicts retain their evidence checks. Deterministic diagnostics are recomputed from the current complete environment contract and only accepted with exact failed reason and unverified zero-score/no-model/no-evidence flags. Original receipts are never rewritten and no facts approval is produced. Genuine rejection remains the returned primary verdict; deterministic-only repair remains explicitly unverified. Exact-source tests and server typecheck passed; no unresolved finding. Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
+        "reviewedAt": "2026-10-07T22:33:34.404218+00:00",
+        "summary": "Current Codex fully read the two changed files and direct implementation dependencies. Every output receipt binds scope, shot ID, exact complete review bytes and source images. Real model verdicts retain their evidence checks. Deterministic diagnostics are recomputed from the current complete environment contract and only accepted with exact failed reason and unverified zero-score/no-model/no-evidence flags. Original receipts are never rewritten and no facts approval is produced. Genuine rejection remains the returned primary verdict; deterministic-only repair remains explicitly unverified. Exact-source tests and server typecheck passed; no unresolved finding. Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main 5e148fc1ae3ad097bce2fcecf5d724fee9075219. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
         "passed": true,
-        "id": "8ce7418696d98fe7a5c8196d13f8d3123e9877ddd04bfd7f7692391a0f4a6d1f"
+        "id": "c83100f45299bdc0504ee7ed7bcf869758c91ea4d4b8015fe211d88ef63393d6"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -4795,7 +4795,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+            "sha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4805,7 +4805,7 @@
           },
           "head": {
             "ref": "refs/heads/fix/T-2026-1007-0918-marketing-failure-feedback",
-            "sha": "84bc6375e83c587fb8906261a097a319f48f929f",
+            "sha": "dea8a5a2410be769090292d7450534b85cce75cc",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4823,8 +4823,8 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "84bc6375e83c587fb8906261a097a319f48f929f",
-        "mainSha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+        "headSha": "dea8a5a2410be769090292d7450534b85cce75cc",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "files": [
           "apps/server/src/video/marketing-authority.test.ts",
           "apps/server/src/video/marketing-authority.ts"
@@ -4842,14 +4842,14 @@
             }
           ]
         },
-        "headTime": 1791410526000,
-        "mergeBase": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+        "headTime": 1791411804000,
+        "mergeBase": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "checkErrors": [],
         "checkSha": null,
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791412433177,
+      "updatedAt": 1791412453799,
       "admission": {
         "number": 152,
         "headSha": "dea8a5a2410be769090292d7450534b85cce75cc",
@@ -95415,6 +95415,167 @@
       },
       "previous": "d404e4d5eb83cdc7a0f0aecd6b1deb5347da4edcd36b1f8a528eb2fa667368eb",
       "digest": "5c302342baeff873f7128d5f7f324ab4906dce50bfae8e680f931cb77b5ff418"
+    },
+    {
+      "sequence": 3830,
+      "at": "2026-10-07T22:34:13.796Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 152,
+        "id": "c83100f45299bdc0504ee7ed7bcf869758c91ea4d4b8015fe211d88ef63393d6",
+        "headSha": "dea8a5a2410be769090292d7450534b85cce75cc",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219"
+      },
+      "previous": "5c302342baeff873f7128d5f7f324ab4906dce50bfae8e680f931cb77b5ff418",
+      "digest": "0db41b64e823a0f69b8c5f135111d56f133717e3bc256fc592969991c028b580"
+    },
+    {
+      "sequence": 3831,
+      "at": "2026-10-07T22:34:13.799Z",
+      "kind": "task",
+      "data": {
+        "number": 152,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "dea8a5a2410be769090292d7450534b85cce75cc",
+          "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+          "branch": "fix/T-2026-1007-0918-marketing-failure-feedback",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              150
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.11"
+              }
+            ]
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 152,
+            "headSha": "dea8a5a2410be769090292d7450534b85cce75cc",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "apps/server/src/video/marketing-authority.test.ts",
+              "apps/server/src/video/marketing-authority.ts"
+            ],
+            "filesHash": "9c065572255aacba96f4051b9cd46ce35cd36532b58e928c1f6b5234e097a97f",
+            "dependsOn": [
+              150
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/marketing-authority.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T22:23:25.649405+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T22:23:26.765729+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              }
+            ],
+            "reviewedAt": "2026-10-07T22:33:34.404218+00:00",
+            "summary": "Current Codex fully read the two changed files and direct implementation dependencies. Every output receipt binds scope, shot ID, exact complete review bytes and source images. Real model verdicts retain their evidence checks. Deterministic diagnostics are recomputed from the current complete environment contract and only accepted with exact failed reason and unverified zero-score/no-model/no-evidence flags. Original receipts are never rewritten and no facts approval is produced. Genuine rejection remains the returned primary verdict; deterministic-only repair remains explicitly unverified. Exact-source tests and server typecheck passed; no unresolved finding. Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main 5e148fc1ae3ad097bce2fcecf5d724fee9075219. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
+            "passed": true,
+            "id": "c83100f45299bdc0504ee7ed7bcf869758c91ea4d4b8015fe211d88ef63393d6"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 152,
+            "pull": {
+              "number": 152,
+              "state": "open",
+              "title": "fix(growth): resume source-bound final fact repair [T-2026-1007-0918]",
+              "body": "Final fact repair could lose a genuine model rejection when a later shot failed deterministic contract compilation. Recovery now rereads each complete source-bound review, verifies real passed/rejected evidence and separately recomputes unverified contract diagnostics. A diagnostic retains its unverified deterministic status and never supplies model approval. Changed scope, content, evidence, error, fallback or forged approval is refused. Each corrected candidate still requires fresh final fact review. The actual six-shot production completed through this path; regression fixtures use no live paid calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    150\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.11\"\n    }\n  ]\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-marketing-failure-feedback",
+                "sha": "dea8a5a2410be769090292d7450534b85cce75cc",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "dea8a5a2410be769090292d7450534b85cce75cc",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "files": [
+              "apps/server/src/video/marketing-authority.test.ts",
+              "apps/server/src/video/marketing-authority.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                150
+              ],
+              "releases": [
+                {
+                  "kind": "desktop",
+                  "version": "0.1.11"
+                }
+              ]
+            },
+            "headTime": 1791411804000,
+            "mergeBase": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "0db41b64e823a0f69b8c5f135111d56f133717e3bc256fc592969991c028b580",
+      "digest": "c9c0fcf7c4aabfa7aaede968c7db76de1cdecdb17a4e4263d76570dbc8819170"
+    },
+    {
+      "sequence": 3832,
+      "at": "2026-10-07T22:33:51.362Z",
+      "kind": "transaction",
+      "data": {
+        "id": "67087aba-16a1-4199-bc5b-ba68418a30ae"
+      },
+      "previous": "c9c0fcf7c4aabfa7aaede968c7db76de1cdecdb17a4e4263d76570dbc8819170",
+      "digest": "9d9cae2bc1eca547150282f151ff66f9ecaae4dfc3f8b182ff8017b07cc8019b"
     }
   ]
 }
