@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1417,
+  "revision": 1420,
   "tasks": {
     "132": {
       "number": 132,
@@ -2362,11 +2362,11 @@
     },
     "144": {
       "number": 144,
-      "status": "parked",
+      "status": "waiting_ci",
       "firstSeen": 1791352089622,
       "attempts": {},
       "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
-      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-creative-duration",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -2380,7 +2380,7 @@
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 144,
         "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "packages/video-studio/src/creative-duration-policy.test.ts",
@@ -2417,10 +2417,10 @@
             "result": "实际node+tsx：3个默认总时长+8个strict编排断言通过，零失败；覆盖原Vitest skip"
           }
         ],
-        "reviewedAt": "2026-10-07T05:48:05.229230+00:00",
-        "summary": "当前Codex逐行复核9个变更文件及直接静态依赖：共享策略默认creative-target，规划保留每镜有效时长并尊重台词与登记能力，strict仅显式规划时守恒；真实渲染观测为advisory且不产生自动retime或paidPOST。校验目录唯一模型、能力完整性、非法数值和整数计划，输入不变。真实ProductionEngine运行时补测覆盖Vitest原CJS加载skip，目标30对28/32/35秒不改时长；原strict端到端继续通过。未改vendor源码，无DB/权限/CI变更，无新依赖或真实模型调用。回滚普通revert本提交；未发现未解决问题。",
+        "reviewedAt": "2026-10-07T11:21:18.108199+00:00",
+        "summary": "当前Codex逐行复核9个变更文件及直接静态依赖：共享策略默认creative-target，规划保留每镜有效时长并尊重台词与登记能力，strict仅显式规划时守恒；真实渲染观测为advisory且不产生自动retime或paidPOST。校验目录唯一模型、能力完整性、非法数值和整数计划，输入不变。真实ProductionEngine运行时补测覆盖Vitest原CJS加载skip，目标30对28/32/35秒不改时长；原strict端到端继续通过。未改vendor源码，无DB/权限/CI变更，无新依赖或真实模型调用。回滚普通revert本提交；未发现未解决问题。 Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
         "passed": true,
-        "id": "843ec280ce17dd5b152b12b7df89c4ae06c30bf4c4141e8e85a75929e754519b"
+        "id": "944cbfb4ace45127c8b79d14cec70fabe2adf6994967d629807c8dcde03f05c6"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -2440,7 +2440,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -2469,7 +2469,7 @@
           "statuses": {}
         },
         "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "files": [
           "packages/video-studio/src/creative-duration-policy.test.ts",
           "packages/video-studio/src/creative-duration-policy.ts",
@@ -2494,7 +2494,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791363909753,
+      "updatedAt": 1791372085858,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 1791364509753,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
@@ -33786,6 +33786,171 @@
       },
       "previous": "038633baa0893673e094ad121664a9fb3bfaa08ba911facd833a4fe7fd237267",
       "digest": "e6d42af7f11c50b1e501b300f08201d8251a1aab94bc5949a16c91ea5d220a69"
+    },
+    {
+      "sequence": 1418,
+      "at": "2026-10-07T11:21:25.857Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 144,
+        "id": "944cbfb4ace45127c8b79d14cec70fabe2adf6994967d629807c8dcde03f05c6",
+        "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0"
+      },
+      "previous": "e6d42af7f11c50b1e501b300f08201d8251a1aab94bc5949a16c91ea5d220a69",
+      "digest": "a3d78caaa1db0618d8a19395cc49bcd30b06c9d85b013f2105e8fd6f9800e044"
+    },
+    {
+      "sequence": 1419,
+      "at": "2026-10-07T11:21:25.858Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-creative-duration",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 144,
+            "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/creative-duration-policy.test.ts",
+              "packages/video-studio/src/creative-duration-policy.ts",
+              "packages/video-studio/src/duration-projection-bridge.test.ts",
+              "packages/video-studio/src/duration-projection.test.ts",
+              "packages/video-studio/src/duration-projection.ts",
+              "packages/video-studio/src/duration-rules.test.ts",
+              "packages/video-studio/src/duration-rules.ts",
+              "packages/video-studio/src/vendor-compat.ts",
+              "scripts/tools/duration-projection-e2e.mts"
+            ],
+            "filesHash": "c3627266757cfe14463fb4cf59f8b1216b7729c89a642bb6cf8082bacee78149",
+            "dependsOn": [],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/creative-duration-policy.test.ts packages/video-studio/src/duration-rules.test.ts packages/video-studio/src/duration-projection.test.ts packages/video-studio/src/duration-projection-bridge.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T05:45:17.173906+00:00",
+                "result": "4files62passed,1existingCJSskip"
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T05:45:36.908856+00:00",
+                "result": "tsc noEmit passed"
+              },
+              {
+                "command": "node --import tsx scripts/tools/duration-projection-e2e.mts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T05:45:37.026160+00:00",
+                "result": "实际node+tsx：3个默认总时长+8个strict编排断言通过，零失败；覆盖原Vitest skip"
+              }
+            ],
+            "reviewedAt": "2026-10-07T11:21:18.108199+00:00",
+            "summary": "当前Codex逐行复核9个变更文件及直接静态依赖：共享策略默认creative-target，规划保留每镜有效时长并尊重台词与登记能力，strict仅显式规划时守恒；真实渲染观测为advisory且不产生自动retime或paidPOST。校验目录唯一模型、能力完整性、非法数值和整数计划，输入不变。真实ProductionEngine运行时补测覆盖Vitest原CJS加载skip，目标30对28/32/35秒不改时长；原strict端到端继续通过。未改vendor源码，无DB/权限/CI变更，无新依赖或真实模型调用。回滚普通revert本提交；未发现未解决问题。 Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+            "passed": true,
+            "id": "944cbfb4ace45127c8b79d14cec70fabe2adf6994967d629807c8dcde03f05c6"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 144,
+            "pull": {
+              "number": 144,
+              "state": "open",
+              "title": "fix(growth): preserve complete films over exact seconds [T-2026-1007-0918]",
+              "body": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-creative-duration",
+                "sha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "files": [
+              "packages/video-studio/src/creative-duration-policy.test.ts",
+              "packages/video-studio/src/creative-duration-policy.ts",
+              "packages/video-studio/src/duration-projection-bridge.test.ts",
+              "packages/video-studio/src/duration-projection.test.ts",
+              "packages/video-studio/src/duration-projection.ts",
+              "packages/video-studio/src/duration-rules.test.ts",
+              "packages/video-studio/src/duration-rules.ts",
+              "packages/video-studio/src/vendor-compat.ts",
+              "scripts/tools/duration-projection-e2e.mts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791351915000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "a3d78caaa1db0618d8a19395cc49bcd30b06c9d85b013f2105e8fd6f9800e044",
+      "digest": "a3088048b832d9e4de6c686e579fb969153b59623bacd3a73ad59630fe3266b3"
+    },
+    {
+      "sequence": 1420,
+      "at": "2026-10-07T11:21:22.692Z",
+      "kind": "transaction",
+      "data": {
+        "id": "e317325b-5d65-485e-9f32-e99389a7f34e"
+      },
+      "previous": "a3088048b832d9e4de6c686e579fb969153b59623bacd3a73ad59630fe3266b3",
+      "digest": "503f30de7c3376f60265bc452ad4eb33aec01440419e39c94bdc9bfcfb7a2fe2"
     }
   ]
 }
