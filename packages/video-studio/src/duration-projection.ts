@@ -21,6 +21,7 @@
 import { createRequire } from "node:module";
 import { dirname, resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
+import { durationPolicy, type DurationPolicy } from "./creative-duration-policy.js";
 
 export interface SpeechRateConfig {
   RATES: { slow: number; normal: number; fast: number; rapid: number };
@@ -67,7 +68,7 @@ export type ProjectionResult =
   | {
       ok: false;
       error: "INFEASIBLE";
-      reason: "voice-floor-exceeds-target" | "capacity-below-target";
+      reason: "voice-floor-exceeds-target" | "capacity-below-target" | "voice-floor-exceeds-capability";
       overloadSeconds: number;
       entries: ProjectionEntry[];
       suggestions: string[];
@@ -75,6 +76,8 @@ export type ProjectionResult =
 
 export interface ProjectionOptions {
   targetSeconds: number;
+  /** Default preserves the feasible plan and speech; exact conservation is an explicit planning contract. */
+  durationPolicy?: DurationPolicy;
   minSeconds?: number;
   maxSeconds?: number;
   /**
@@ -267,10 +270,11 @@ export function projectShotDurations(shots: ProjectionShotInput[], options: Proj
   const min = Number(options.minSeconds ?? 4);
   const max = Number(options.maxSeconds ?? 30);
   const target = Math.round(Number(options.targetSeconds));
+  const policy = durationPolicy(options.durationPolicy);
   if (!Number.isFinite(target) || target <= 0) {
     throw new TypeError(`[duration-projection] targetSeconds 必须为正数，收到 ${options.targetSeconds}`);
   }
-  if (min > max) throw new TypeError(`[duration-projection] min(${min}) > max(${max})`);
+  if (!Number.isFinite(min) || !Number.isFinite(max) || min <= 0 || min > max) throw new TypeError(`[duration-projection] invalid min(${min}) / max(${max})`);
   if (shots.length === 0) {
     return { ok: true, entries: [], totalSeconds: 0, raisedShotIds: [] };
   }
@@ -289,13 +293,23 @@ export function projectShotDurations(shots: ProjectionShotInput[], options: Proj
     return {
       shotId: shot.shotId,
       planSeconds: plan,
-      seconds: lower,
+      seconds: policy === "strict" ? lower : Math.max(lower, Math.min(max, plan)),
       voiceFloorSeconds: floor.seconds,
       floorDriver: floor.driver,
       raised: false,
       lowered: false,
     };
   });
+
+  const impossibleSpeech = options.enforceVoiceFloor !== false ? floors.filter(({ floor }) => floor.seconds > max) : [];
+  if (impossibleSpeech.length) return { ok: false, error: "INFEASIBLE", reason: "voice-floor-exceeds-capability",
+    overloadSeconds: Math.max(...impossibleSpeech.map(({ floor }) => floor.seconds - max)), entries,
+    suggestions: [`${impossibleSpeech.map(({ shot }) => shot.shotId).join("、")}台词下限超过模型单镜${max}s；提交前由模型精简或拆镜，禁止渲染后拉伸` ] };
+  if (policy === "creative-target") {
+    for (const entry of entries) { entry.raised = entry.seconds > entry.planSeconds; entry.lowered = entry.seconds < entry.planSeconds; }
+    return { ok: true, entries, totalSeconds: entries.reduce((sum, entry) => sum + entry.seconds, 0),
+      raisedShotIds: entries.filter(entry => entry.raised).map(entry => entry.shotId) };
+  }
 
   if (lowerSum > target) {
     const overload = lowerSum - target;
