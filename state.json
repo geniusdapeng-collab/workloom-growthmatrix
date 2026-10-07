@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 938,
+  "revision": 940,
   "tasks": {
     "132": {
       "number": 132,
@@ -2438,7 +2438,7 @@
         "owner": "admission/pr-145",
         "generation": {}
       },
-      "updatedAt": 1791362108120,
+      "updatedAt": 1791363309873,
       "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
       "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
       "branch": "fix/T-2026-1007-0918-rendered-acceptance",
@@ -23450,6 +23450,47 @@
       },
       "previous": "8c58baeb32bbd6a9319996d878af7f9657928c9534994cb96b32549aed11fd2b",
       "digest": "4326d70f353aaff55215291cb1c9dc85c6551efb014868ccabe2117b59d1b561"
+    },
+    {
+      "sequence": 939,
+      "at": "2026-10-07T08:55:09.873Z",
+      "kind": "task",
+      "data": {
+        "number": 145,
+        "patch": {
+          "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-rendered-acceptance",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "固定影片子工位原先忽略review-policy=off，仍向服务发送gate.review请求。现在默认off在子工位调用模型/父通道前接收实际生成的关键帧、镜头和后期产物；静止、时长偏差、身份相似度等质量观察不会阻断或驱动重渲染。回执明示未进行模型、身份或语音审核，score=0为未评分。缺文件、空产物和工具实际失败仍按执行失败报告；生成前源稿确定性规则继续有效。\n\n当前Codex完整读取共享策略、worker、producer类型与完整回归；准确提交后65项通过、类型检查通过。通道测试证明off为零gate.review请求，blocking/advisory须显式选择。无新增依赖、权限或CI变更，无模型/新渲染调用。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/film-worker-runtime.test.ts",
+            "packages/video-studio/src/film-worker-runtime.ts",
+            "packages/video-studio/src/producer-gate.ts",
+            "packages/video-studio/src/rendered-output-policy.test.ts",
+            "packages/video-studio/src/rendered-output-policy.ts"
+          ],
+          "status": "parked",
+          "ciSince": 1791352820859
+        }
+      },
+      "previous": "4326d70f353aaff55215291cb1c9dc85c6551efb014868ccabe2117b59d1b561",
+      "digest": "0134674d0def418a325c2f280db29b66cf5694099361dfb305bae4d9b76d2d3a"
+    },
+    {
+      "sequence": 940,
+      "at": "2026-10-07T08:55:57.220Z",
+      "kind": "transaction",
+      "data": {
+        "id": "ea7c5eaf-b21b-4a1c-b6e2-dfabe062a7e6"
+      },
+      "previous": "0134674d0def418a325c2f280db29b66cf5694099361dfb305bae4d9b76d2d3a",
+      "digest": "5cfd5b21f443215461ea894e41118869d9b2cc98cb865cb3a148ca82ec0ad910"
     }
   ]
 }
