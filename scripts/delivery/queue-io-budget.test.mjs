@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { dependencies, mergeCandidate, reconcile } from './queue-controller.mjs';
 import { appendEvent, emptyState, updateTask, validateDeveloperReview, validateState } from './queue-model.mjs';
 import { BASE_POLICY } from './queue-policy.mjs';
+import { Platform } from './queue-platform.mjs';
 
 const repo = 'workloom-ai/io-budget-test';
 const head = 'a'.repeat(40), main = 'b'.repeat(40), now = 10_000_000;
@@ -124,4 +125,53 @@ test('planning reuse never replaces the prerequisite read immediately before a m
   await assert.rejects(mergeCandidate({ platform, store: memoryStore(state), policy, snapshot: candidate,
     dependencies: new Map([[1, { pending: [], error: null }]]), now }), /Unmerged dependencies/);
   assert.equal(prerequisiteReads, 1); assert.equal(writes, 0);
+});
+
+test('the actual platform hydrates 40 PRs with bounded request starts and no mutable result cache', async () => {
+  let time = 0; const starts = [], waits = [];
+  const platform = new Platform(repo, 'fixture-token', async (_repo, path) => {
+    starts.push({ path, at: time });
+    if (path.startsWith('/-/pulls?')) return Array.from({ length: 40 }, (_, index) => ({ number: index + 1, body: '' }));
+    return pull(Number(path.split('/').at(-1)));
+  }, { clock: () => time, wait: async milliseconds => { waits.push(milliseconds); time += milliseconds; } });
+  const rows = await platform.pulls();
+  assert.equal(rows.length, 40); assert.equal(starts.length, 41); assert.equal(waits.length, 40);
+  assert.ok(rows.every(row => row.body === intent()));
+  assert.ok(starts.slice(1).every((entry, index) => entry.at - starts[index].at >= 1250));
+  await platform.pull(1); assert.equal(starts.length, 42);
+  assert.equal(starts.at(-1).path, '/-/pulls/1');
+});
+test('concurrent snapshot reads are serialized and preserve a fresh response for every call', async () => {
+  let time = 0, active = 0, maximum = 0, revision = 0; const starts = [];
+  const platform = new Platform(repo, 'fixture-token', async (_repo, path) => {
+    maximum = Math.max(maximum, ++active); starts.push(time);
+    await Promise.resolve(); active--;
+    return { path, revision: ++revision };
+  }, { minIntervalMs: 1250, clock: () => time, wait: async milliseconds => { time += milliseconds; } });
+  const results = await Promise.all([platform.call('/-/git/branches/main'), platform.call('/-/git/branches/main'), platform.call('/-/pulls/1')]);
+  assert.equal(maximum, 1); assert.deepEqual(starts, [0, 1250, 2500]);
+  assert.deepEqual(results.map(result => result.revision), [1, 2, 3]);
+});
+test('request failures reach their callers and do not poison subsequent paced calls or retry a write', async () => {
+  let time = 0; const requests = []; const failure = Object.assign(new Error('fixture CNB 429'), { status: 429 });
+  const platform = new Platform(repo, 'fixture-token', async (_repo, path, options) => {
+    requests.push({ path, at: time, retries: options.retries });
+    if (path === '/write') throw failure;
+    return { ok: true };
+  }, { clock: () => time, wait: async milliseconds => { time += milliseconds; } });
+  const write = platform.call('/write', { method: 'PUT', body: { force: false } });
+  const nextRead = platform.call('/read');
+  await assert.rejects(write, error => error === failure);
+  assert.deepEqual(await nextRead, { ok: true });
+  assert.deepEqual(requests, [{ path: '/write', at: 0, retries: 0 }, { path: '/read', at: 1250, retries: 2 }]);
+});
+test('elapsed network time counts toward the request interval and invalid pacing fails before IO', async () => {
+  let time = 0; const waits = [];
+  const platform = new Platform(repo, 'fixture-token', async () => { time += 2000; return true; },
+    { clock: () => time, wait: async milliseconds => { waits.push(milliseconds); time += milliseconds; } });
+  assert.equal(await platform.call('/first'), true); assert.equal(await platform.call('/second'), true);
+  assert.deepEqual(waits, []);
+  for (const minIntervalMs of [-1, NaN, Infinity, 30_001]) assert.throws(() => new Platform(repo, 'fixture-token', async () => true, { minIntervalMs }), /pacing/);
+  assert.throws(() => new Platform(repo, 'fixture-token', async () => true, { clock: null }), /pacing/);
+  assert.throws(() => new Platform(repo, 'fixture-token', async () => true, { wait: null }), /pacing/);
 });
