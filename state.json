@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4092,
+  "revision": 4094,
   "tasks": {
     "132": {
       "number": 132,
@@ -6276,7 +6276,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791414813102,
+      "updatedAt": 1791416314852,
       "admission": {
         "number": 160,
         "headSha": "39bce071a4fd7653292591ae29a4bb9bbb19a685",
@@ -6287,7 +6287,6 @@
         "generation": {}
       },
       "dependencies": [
-        149,
         158
       ],
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/160 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
@@ -101281,6 +101280,48 @@
       },
       "previous": "0348e6660b3a5f5dda4a8ee5868e4b574fcb794218268677045fbad2a79d7c7f",
       "digest": "ea7971b2a4e253ba7efd72effe90ec8a7172b6181e8f0281c3975166bb016e66"
+    },
+    {
+      "sequence": 4093,
+      "at": "2026-10-07T23:38:34.852Z",
+      "kind": "task",
+      "data": {
+        "number": 160,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "39bce071a4fd7653292591ae29a4bb9bbb19a685",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              149,
+              158
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.19"
+              }
+            ]
+          },
+          "dependencies": [
+            158
+          ]
+        }
+      },
+      "previous": "ea7971b2a4e253ba7efd72effe90ec8a7172b6181e8f0281c3975166bb016e66",
+      "digest": "cad834039751708912eef057786ede478b29e7a636a583f6b0c408d1577badd7"
+    },
+    {
+      "sequence": 4094,
+      "at": "2026-10-07T23:41:35.636Z",
+      "kind": "transaction",
+      "data": {
+        "id": "76b982bf-a0db-4ce9-90c4-7c1810155353"
+      },
+      "previous": "cad834039751708912eef057786ede478b29e7a636a583f6b0c408d1577badd7",
+      "digest": "0c496fc660552f6085eebc4c4e010a05d780c5e521b3041be928c417150423dd"
     }
   ]
 }
