@@ -125,6 +125,7 @@ describe("frozen full-chain worker adapter", () => {
   });
   it("review excludes process environment and functions and requires a parent contract receipt", async () => {
     const { context, worker, frames, setReply } = fixture();
+    context.options["review-policy"] = "blocking";
     const file = join(context.workDir, "plate.png"); writeFileSync(file, "image");
     setReply(() => ({ stage: "keyframe", approved: true, contractHash: "a".repeat(64) }));
     await worker.review({ stage: "keyframe", projectId: context.projectId, artifacts: [{ path: file, kind: "image" }], deterministic: [{ id: "bytes", pass: true, hard: true, detail: "tested" }], context: { shotId: "S1" }, env: { LLM_API_KEY: "must-not-leak" }, log: () => {} });
@@ -143,12 +144,16 @@ describe("frozen full-chain worker adapter", () => {
     expect(verdict.approved).toBe(true); expect(verdict.score).toBeNull(); expect(verdict.contractHash).toBeUndefined();
     expect(frames).toHaveLength(1); expect(frames[0]!.stepKey).toBe("videos:S1");
     expect((frames[0]!.params as Record<string, unknown>).referenceImages).toBeUndefined();
+    setReply(() => ({ stage: "shot", approved: false, status: "failed", score: null, reason: "POST_INPUT_NOT_OPENABLE" }));
+    expect((await worker.review({ stage: "shot", projectId: context.projectId, artifacts: [{ path: file, kind: "video" }],
+      deterministic: [], context: { shotId: "S1" } })).approved).toBe(false);
     setReply(() => ({ stage: "master", approved: true }));
     await expect(worker.review({ stage: "shot", projectId: context.projectId, artifacts: [{ path: file, kind: "video" }], deterministic: [], context: { shotId: "S1" } })).rejects.toThrow("当前阶段");
     worker.channel.dispose();
   });
   it("material shot review remains in its original stage when both material and video stages are selected", async () => {
     const { context, worker, frames, setReply } = fixture();
+    context.options["review-policy"] = "blocking";
     context.stages.push("material-gen");
     const file = join(context.workDir, "clip.mp4"); writeFileSync(file, "video");
     setReply(() => ({ stage: "shot", approved: true, contractHash: "a".repeat(64) }));
@@ -156,5 +161,16 @@ describe("frozen full-chain worker adapter", () => {
       deterministic: [], context: { shotId: "S1", sourceStage: "material-gen" } });
     expect(frames[0]!.stepKey).toBe("material-gen:S1");
     worker.channel.dispose();
+  });
+  it("default off policy accepts rendered keyframes without a parent quality review", async () => {
+    const { context, worker, frames } = fixture();
+    const file = join(context.workDir, "plate.png"); writeFileSync(file, "actual artifact bytes");
+    const verdict = await worker.review({ stage: "keyframe", projectId: context.projectId, artifacts: [{ path: file, kind: "image" }],
+      deterministic: [{ id: "motion-evidence", pass: false, hard: true, detail: "still output" }] });
+    expect(verdict.approved).toBe(true); expect(verdict.score).toBe(0); expect(verdict.reason).toContain("未进行模型");
+    expect(frames).toHaveLength(0);
+    rmSync(file);
+    expect((await worker.review({ stage: "keyframe", projectId: context.projectId, artifacts: [{ path: file, kind: "image" }], deterministic: [] })).approved).toBe(false);
+    expect(frames).toHaveLength(0); worker.channel.dispose();
   });
 });
