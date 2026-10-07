@@ -10,6 +10,7 @@ import { registerWorkspaceModules } from "./pack-workspace-modules.mjs";
 
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"..");
 const TOP_FILES=new Set(["package.json","pnpm-workspace.yaml","tsconfig.base.json",".env.example","product.manifest.json"]);
+const GUIDE_FILE="docs/ai-video-workbench-guide.md";
 const SCRIPT_FILES=new Set(["migrate.ts","desktop-bootstrap-db.mjs","product-runtime.mjs","vite-product.mjs",
   "skill-bindings.mts","workloom-agent.mjs","workloom-agent-mcp.mjs","agent-capabilities.mjs","agent-capabilities.core.json",
   "runtime-payload-probe.mts","media-runtime.mjs","media-runtime-lock.json","workloom-director.mjs"]);
@@ -26,7 +27,7 @@ export function isRuntimeSource(relativePath,policy) {
   if(/(?:\.test\.|\.spec\.|\/__tests__\/|\/fixtures\/|\/test-fixtures\/|\/tests\/|\/coverage\/)/u.test(ref)) return false;
   if(/\.(?:log|pyc|pyo|bak|sqlite|db|pem|key)$/iu.test(ref)) return false;
   if(ref.startsWith("packages/runtime/dsh-gate/out/") || ref.includes("/dist/") && !ref.startsWith("vendor/dsh/dist/")) return false;
-  if(TOP_FILES.has(ref)||WEB_FILES.has(ref)||SOURCE_PREFIXES.some(prefix=>ref.startsWith(prefix))) return true;
+  if(ref===GUIDE_FILE||TOP_FILES.has(ref)||WEB_FILES.has(ref)||SOURCE_PREFIXES.some(prefix=>ref.startsWith(prefix))) return true;
   if(ref.startsWith("platform-ops/")) return policy.includePlatformOps;
   if(parts[0]==="scripts"&&parts.length===2) return SCRIPT_FILES.has(parts[1])||/^seed[^/]*\.ts$/u.test(parts[1]);
   return false;
@@ -99,6 +100,8 @@ export function copyRuntimeSources(root,destination,{version="v0.0.0"}={}) {
   if(SOURCE_PREFIXES.some(prefix=>inside(path.resolve(root,prefix),destination)))
     throw new Error("载荷目标不得位于源码目录内");
   sourceFile(root,"product.manifest.json");
+  // A newly installed guide capability must never ship without its fixed text.
+  sourceFile(root,GUIDE_FILE);
   sourceFile(root,"packages/industry-contract/tsconfig.json");
   sourceFile(root,"packages/industry-contract/tsconfig.build.json");
   const contractDist=path.join(root,"packages/industry-contract/dist");
