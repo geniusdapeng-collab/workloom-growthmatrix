@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3991,
+  "revision": 3994,
   "tasks": {
     "132": {
       "number": 132,
@@ -3770,7 +3770,7 @@
     },
     "146": {
       "number": 146,
-      "status": "parked",
+      "status": "merging",
       "firstSeen": 1791354743310,
       "attempts": {},
       "admission": {
@@ -3969,7 +3969,90 @@
       },
       "dependencies": [
         145
-      ]
+      ],
+      "mergePhase": "prepared",
+      "mergeSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 187,
+        "pull": {
+          "number": 187,
+          "state": "open",
+          "title": "chore(ci): deliver #146 fix(growth): persist film paid task acceptance [T-2026-1007-0918]",
+          "body": "Immutable delivery candidate for #146. Exact source 4f7b89a7342017b8ee8458d0f7d29d85bc627dce; tested main 5e148fc1ae3ad097bce2fcecf5d724fee9075219.\n\n<!-- delivery-origin:146:4f7b89a7342017b8ee8458d0f7d29d85bc627dce:5e148fc1ae3ad097bce2fcecf5d724fee9075219 -->\n\n<!-- workloom-delivery\n{\"ready\":true,\"depends_on\":[145],\"releases\":[]}\n-->",
+          "author": {
+            "username": "OCI",
+            "nickname": "Cloud Native Build",
+            "is_npc": true
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/delivery/candidate/pr-146-f282d919a056d7b0b674495784285071",
+            "sha": "4f7b89a7342017b8ee8458d0f7d29d85bc627dce",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "unblocked",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "4f7b89a7342017b8ee8458d0f7d29d85bc627dce",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+        "files": [
+          "apps/server/src/video/film-ledger.pg.test.ts",
+          "apps/server/src/video/film-ledger.ts",
+          "apps/server/src/video/film-paid-generation.pg.test.ts",
+          "apps/server/src/video/film-paid-generation.test.ts",
+          "apps/server/src/video/film-paid-generation.ts",
+          "apps/server/src/video/film-worker.ts",
+          "packages/db/migrations/0056_film_paid_receipts.sql"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [
+            145
+          ],
+          "releases": []
+        },
+        "headTime": 1791411312000,
+        "mergeBase": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+        "checkErrors": [],
+        "checkSha": "3fbd4ba2c214772aaaf16c4fdc459dad1bb2ee8e",
+        "hasFailedChecks": false,
+        "ciPolicyChanges": [],
+        "originNumber": 146,
+        "pendingDependencies": []
+      },
+      "integrationLease": {
+        "owner": "integration/pr-146",
+        "scopes": [
+          "migrations"
+        ],
+        "generation": {
+          "migrations": 14
+        }
+      }
     },
     "147": {
       "number": 147,
@@ -9374,10 +9457,10 @@
       "expiresAt": 1791414674509
     },
     "migrations": {
-      "owner": null,
-      "generation": 13,
-      "acquiredAt": 1791414123375,
-      "expiresAt": 1791414123375
+      "owner": "integration/pr-146",
+      "generation": 14,
+      "acquiredAt": 1791414616413,
+      "expiresAt": 1791415516413
     },
     "dependencies": {
       "owner": null,
@@ -99007,6 +99090,128 @@
       },
       "previous": "d6a9d9dd940fcbfdaaaa138566bf92ceb38b9d9b1d5816600dfcbdea4142b556",
       "digest": "edd4225872253bba7db385ed0411f0678576bf977beec781d07b2636f94a6138"
+    },
+    {
+      "sequence": 3992,
+      "at": "2026-10-07T23:10:16.413Z",
+      "kind": "lease_acquire",
+      "data": {
+        "scopes": [
+          "migrations"
+        ],
+        "owner": "integration/pr-146",
+        "generation": {
+          "migrations": 14
+        }
+      },
+      "previous": "edd4225872253bba7db385ed0411f0678576bf977beec781d07b2636f94a6138",
+      "digest": "509aa042ebe84ded5439171ed2a061afab3cc09b1b691dc571730884d0d3409c"
+    },
+    {
+      "sequence": 3993,
+      "at": "2026-10-07T23:10:16.413Z",
+      "kind": "task",
+      "data": {
+        "number": 146,
+        "patch": {
+          "status": "merging",
+          "mergePhase": "prepared",
+          "mergeSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 187,
+            "pull": {
+              "number": 187,
+              "state": "open",
+              "title": "chore(ci): deliver #146 fix(growth): persist film paid task acceptance [T-2026-1007-0918]",
+              "body": "Immutable delivery candidate for #146. Exact source 4f7b89a7342017b8ee8458d0f7d29d85bc627dce; tested main 5e148fc1ae3ad097bce2fcecf5d724fee9075219.\n\n<!-- delivery-origin:146:4f7b89a7342017b8ee8458d0f7d29d85bc627dce:5e148fc1ae3ad097bce2fcecf5d724fee9075219 -->\n\n<!-- workloom-delivery\n{\"ready\":true,\"depends_on\":[145],\"releases\":[]}\n-->",
+              "author": {
+                "username": "OCI",
+                "nickname": "Cloud Native Build",
+                "is_npc": true
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/delivery/candidate/pr-146-f282d919a056d7b0b674495784285071",
+                "sha": "4f7b89a7342017b8ee8458d0f7d29d85bc627dce",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "unblocked",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "4f7b89a7342017b8ee8458d0f7d29d85bc627dce",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "files": [
+              "apps/server/src/video/film-ledger.pg.test.ts",
+              "apps/server/src/video/film-ledger.ts",
+              "apps/server/src/video/film-paid-generation.pg.test.ts",
+              "apps/server/src/video/film-paid-generation.test.ts",
+              "apps/server/src/video/film-paid-generation.ts",
+              "apps/server/src/video/film-worker.ts",
+              "packages/db/migrations/0056_film_paid_receipts.sql"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                145
+              ],
+              "releases": []
+            },
+            "headTime": 1791411312000,
+            "mergeBase": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "checkErrors": [],
+            "checkSha": "3fbd4ba2c214772aaaf16c4fdc459dad1bb2ee8e",
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [],
+            "originNumber": 146,
+            "pendingDependencies": []
+          },
+          "integrationLease": {
+            "owner": "integration/pr-146",
+            "scopes": [
+              "migrations"
+            ],
+            "generation": {
+              "migrations": 14
+            }
+          }
+        }
+      },
+      "previous": "509aa042ebe84ded5439171ed2a061afab3cc09b1b691dc571730884d0d3409c",
+      "digest": "17097d57876279ac83a79fe89bb1c68feb627e6f2459249c3b750f1a4db479ba"
+    },
+    {
+      "sequence": 3994,
+      "at": "2026-10-07T23:12:17.497Z",
+      "kind": "transaction",
+      "data": {
+        "id": "31eb89bc-cce2-42b8-bbc3-0da2c57f78bd"
+      },
+      "previous": "17097d57876279ac83a79fe89bb1c68feb627e6f2459249c3b750f1a4db479ba",
+      "digest": "b6885683a0d343c2f19c756488d871293481b561ac56d81c0d9c1e4e059895ef"
     }
   ]
 }
