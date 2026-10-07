@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 693,
+  "revision": 698,
   "tasks": {
     "132": {
       "number": 132,
@@ -1758,18 +1758,20 @@
       "attempts": {},
       "admission": {
         "number": 140,
-        "headSha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
+        "headSha": "a626d2ab63e8a97fe2aaba8d76a60fbe04834e06",
         "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
-        "filesHash": "6ed0fb4aaa3d7af5de44eb369ba8c6a9a81179f1249716c29a196d2ead9d24cb",
+        "filesHash": "c4e5210e1effca9e44e25fb3129595f44451e5f35c24b2c2c0072d773585a126",
         "scopes": [
+          "dependencies",
           "protocol"
         ],
         "owner": "admission/pr-140",
         "generation": {
-          "protocol": 10
+          "dependencies": 2,
+          "protocol": 14
         }
       },
-      "updatedAt": 1791358810413,
+      "updatedAt": 1791358898433,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/140 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 1791355814589,
       "headSha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
@@ -3449,9 +3451,9 @@
   "leases": {
     "protocol": {
       "owner": null,
-      "generation": 13,
-      "acquiredAt": 1791357267241,
-      "expiresAt": 1791358534898
+      "generation": 14,
+      "acquiredAt": 1791358898433,
+      "expiresAt": 1791358898433
     },
     "migrations": {
       "owner": null,
@@ -3461,9 +3463,9 @@
     },
     "dependencies": {
       "owner": null,
-      "generation": 1,
-      "acquiredAt": 1791356987063,
-      "expiresAt": 1791358534898
+      "generation": 2,
+      "acquiredAt": 1791358898433,
+      "expiresAt": 1791358898433
     }
   },
   "releases": {},
@@ -17920,6 +17922,101 @@
       },
       "previous": "98ab0a0350f3bf10c71cd76d848ea5d43452540dc05e2bee57a2be703b50843c",
       "digest": "07ca040dce2b3349b0951ec030e7fd482f95195393fcf9f660173587f5751216"
+    },
+    {
+      "sequence": 694,
+      "at": "2026-10-07T07:41:38.433Z",
+      "kind": "lease_acquire",
+      "data": {
+        "scopes": [
+          "dependencies",
+          "protocol"
+        ],
+        "owner": "admission/pr-140",
+        "generation": {
+          "dependencies": 2,
+          "protocol": 14
+        }
+      },
+      "previous": "07ca040dce2b3349b0951ec030e7fd482f95195393fcf9f660173587f5751216",
+      "digest": "33ff1d27557c800645e8d425f9d428ab1cf70338bca2100473af5fb58d6d99f7"
+    },
+    {
+      "sequence": 695,
+      "at": "2026-10-07T07:41:38.433Z",
+      "kind": "lease_release",
+      "data": {
+        "scopes": [
+          "dependencies",
+          "protocol"
+        ],
+        "owner": "admission/pr-140",
+        "generation": {
+          "dependencies": 2,
+          "protocol": 14
+        }
+      },
+      "previous": "33ff1d27557c800645e8d425f9d428ab1cf70338bca2100473af5fb58d6d99f7",
+      "digest": "2ce7053b88f7700e0de9a2731f8b4e8915a5bce80657a6a618791de68fe30a7f"
+    },
+    {
+      "sequence": 696,
+      "at": "2026-10-07T07:41:38.433Z",
+      "kind": "source_admitted",
+      "data": {
+        "number": 140,
+        "headSha": "a626d2ab63e8a97fe2aaba8d76a60fbe04834e06",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "filesHash": "c4e5210e1effca9e44e25fb3129595f44451e5f35c24b2c2c0072d773585a126",
+        "scopes": [
+          "dependencies",
+          "protocol"
+        ],
+        "owner": "admission/pr-140",
+        "generation": {
+          "dependencies": 2,
+          "protocol": 14
+        }
+      },
+      "previous": "2ce7053b88f7700e0de9a2731f8b4e8915a5bce80657a6a618791de68fe30a7f",
+      "digest": "bda1477ae1dc7d76ea4a98261feeb73a0a9ccee64aff8084e619dc72351ffb64"
+    },
+    {
+      "sequence": 697,
+      "at": "2026-10-07T07:41:38.433Z",
+      "kind": "task",
+      "data": {
+        "number": 140,
+        "patch": {
+          "admission": {
+            "number": 140,
+            "headSha": "a626d2ab63e8a97fe2aaba8d76a60fbe04834e06",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "filesHash": "c4e5210e1effca9e44e25fb3129595f44451e5f35c24b2c2c0072d773585a126",
+            "scopes": [
+              "dependencies",
+              "protocol"
+            ],
+            "owner": "admission/pr-140",
+            "generation": {
+              "dependencies": 2,
+              "protocol": 14
+            }
+          }
+        }
+      },
+      "previous": "bda1477ae1dc7d76ea4a98261feeb73a0a9ccee64aff8084e619dc72351ffb64",
+      "digest": "dfff871732fc3eff410702fe08df0283446faf9b4563e230bff827c1b83ad779"
+    },
+    {
+      "sequence": 698,
+      "at": "2026-10-07T07:41:37.872Z",
+      "kind": "transaction",
+      "data": {
+        "id": "source-admit:140:a626d2ab63e8a97fe2aaba8d76a60fbe04834e06:6e7bb78749a4ade1955cf03476ed249f630aa3f8"
+      },
+      "previous": "dfff871732fc3eff410702fe08df0283446faf9b4563e230bff827c1b83ad779",
+      "digest": "ccd14272ac7be381a3c4c83943e4fbd869d6a7a5384a67489aa7da490ba2a3e4"
     }
   ]
 }
