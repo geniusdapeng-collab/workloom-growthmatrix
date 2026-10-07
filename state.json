@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 909,
+  "revision": 912,
   "tasks": {
     "132": {
       "number": 132,
@@ -3477,10 +3477,10 @@
     },
     "153": {
       "number": 153,
-      "status": "parked",
+      "status": "waiting_ci",
       "firstSeen": 1791359178476,
       "attempts": {},
-      "headSha": "827457a93b536d51f98533d29d90304896ef835d",
+      "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
       "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
       "branch": "fix/T-2026-1007-0918-cine-kb-preserve-intent",
       "intent": {
@@ -3494,15 +3494,16 @@
         "provider": "codex",
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 153,
-        "headSha": "827457a93b536d51f98533d29d90304896ef835d",
+        "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
         "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
+          "bundles/ai-video/bundle.json",
           "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
           "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
           "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts"
         ],
-        "filesHash": "5c2fef39ecd5b95b18fc150465f3fe76b9f020267530daa24b539b1310f03188",
+        "filesHash": "647ad6a9d29616cc215dda9c7048159341684016919281758100b7ee8082350b",
         "dependsOn": [],
         "ciPolicyChanges": [],
         "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
@@ -3510,14 +3511,20 @@
           {
             "command": "node node_modules/vitest/vitest.mjs run bundles/ai-video/connectors/cine-kb-bridge",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T07:21:34.147336+00:00",
+            "finishedAt": "2026-10-07T08:45:36.239625+00:00",
             "result": "All cine-KB core and audit regressions passed without paid calls"
+          },
+          {
+            "command": "node --import tsx scripts/bundle-governance.mts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T08:45:36.905991+00:00",
+            "result": "Actual bundle integrity matches declared cine-KB core bytes; contract, asset and composition governance passed"
           }
         ],
-        "reviewedAt": "2026-10-07T07:46:13.741158+00:00",
-        "summary": "Current Codex fully read the three changed files and shot-intent implementation. Water reflection now requires an actual water-surface context. Window direction is derived from window clauses only, with ambiguous directions omitted. Authored timed camera contracts bypass generic KB movement insertion. Optional dropped contributions are recorded in omitted rather than applied, while missing required knowledge still stays unverified. Source hash and KB hash binding remain intact. All exact-source cine-KB tests passed; no unresolved finding. No live paid calls or governance edits.",
+        "reviewedAt": "2026-10-07T08:46:31.030668+00:00",
+        "summary": "Current Codex fully read the three changed files and shot-intent implementation. Water reflection now requires an actual water-surface context. Window direction is derived from window clauses only, with ambiguous directions omitted. Authored timed camera contracts bypass generic KB movement insertion. Optional dropped contributions are recorded in omitted rather than applied, while missing required knowledge still stays unverified. Source hash and KB hash binding remain intact. All exact-source cine-KB tests passed; no unresolved finding. No live paid calls or governance edits. The complete bundle manifest and governance canonical digest implementation were read; only the changed cine core hash and its canonical enclosing digest are updated. The actual native bundle governance check passed against committed bytes.",
         "passed": true,
-        "id": "adb4d261c338c1398b16fa327a28de9812c2838281126feec888d2d73d0d9a26"
+        "id": "2b3c607de410b773d32d70f9dae357e56ffe0575b9d3b07cabc332e70540921e"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -3547,7 +3554,7 @@
           },
           "head": {
             "ref": "refs/heads/fix/T-2026-1007-0918-cine-kb-preserve-intent",
-            "sha": "827457a93b536d51f98533d29d90304896ef835d",
+            "sha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -3565,9 +3572,10 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "827457a93b536d51f98533d29d90304896ef835d",
+        "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
         "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
         "files": [
+          "bundles/ai-video/bundle.json",
           "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
           "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
           "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts"
@@ -3578,14 +3586,14 @@
           "dependsOn": [],
           "releases": []
         },
-        "headTime": 1791357679000,
+        "headTime": 1791362731000,
         "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
         "checkErrors": [],
         "checkSha": null,
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791362797362,
+      "updatedAt": 1791362800558,
       "admission": {
         "number": 153,
         "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
@@ -22584,6 +22592,155 @@
       },
       "previous": "cfc39740a36bd0bac45a17e8d53358f9c6287c270fec1f2a6d7126a2aafd2949",
       "digest": "4fead7c463978ec70263a99e4822ad2f50ab6f21c3959828709b2311bd31dbd1"
+    },
+    {
+      "sequence": 910,
+      "at": "2026-10-07T08:46:40.558Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 153,
+        "id": "2b3c607de410b773d32d70f9dae357e56ffe0575b9d3b07cabc332e70540921e",
+        "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8"
+      },
+      "previous": "4fead7c463978ec70263a99e4822ad2f50ab6f21c3959828709b2311bd31dbd1",
+      "digest": "4c4915989fd6b8d56dd40bfa2daa8db74388357ec7491eeb6c895be2f5913b0f"
+    },
+    {
+      "sequence": 911,
+      "at": "2026-10-07T08:46:40.558Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-cine-kb-preserve-intent",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 153,
+            "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "bundles/ai-video/bundle.json",
+              "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
+              "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+              "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts"
+            ],
+            "filesHash": "647ad6a9d29616cc215dda9c7048159341684016919281758100b7ee8082350b",
+            "dependsOn": [],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run bundles/ai-video/connectors/cine-kb-bridge",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T08:45:36.239625+00:00",
+                "result": "All cine-KB core and audit regressions passed without paid calls"
+              },
+              {
+                "command": "node --import tsx scripts/bundle-governance.mts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T08:45:36.905991+00:00",
+                "result": "Actual bundle integrity matches declared cine-KB core bytes; contract, asset and composition governance passed"
+              }
+            ],
+            "reviewedAt": "2026-10-07T08:46:31.030668+00:00",
+            "summary": "Current Codex fully read the three changed files and shot-intent implementation. Water reflection now requires an actual water-surface context. Window direction is derived from window clauses only, with ambiguous directions omitted. Authored timed camera contracts bypass generic KB movement insertion. Optional dropped contributions are recorded in omitted rather than applied, while missing required knowledge still stays unverified. Source hash and KB hash binding remain intact. All exact-source cine-KB tests passed; no unresolved finding. No live paid calls or governance edits. The complete bundle manifest and governance canonical digest implementation were read; only the changed cine core hash and its canonical enclosing digest are updated. The actual native bundle governance check passed against committed bytes.",
+            "passed": true,
+            "id": "2b3c607de410b773d32d70f9dae357e56ffe0575b9d3b07cabc332e70540921e"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 153,
+            "pull": {
+              "number": 153,
+              "state": "open",
+              "title": "fix(growth): preserve authored camera and lighting intent [T-2026-1007-0918]",
+              "body": "Knowledge enrichment could interpret indoor marble reflection as water, replace a left window direction with an unrelated right fill light, and append an unbounded camera movement over an authored timed end hold. Version 3 only applies context-supported instructions, preserves complete timed camera text and omits optional whole sentences that exceed a field budget. Omitted suggestions remain separate from actual written evidence. The source author text is retained.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-cine-kb-preserve-intent",
+                "sha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "files": [
+              "bundles/ai-video/bundle.json",
+              "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
+              "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+              "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791362731000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "4c4915989fd6b8d56dd40bfa2daa8db74388357ec7491eeb6c895be2f5913b0f",
+      "digest": "bcb3031ade822248da7c73568fb04c2f707ef76cdb4a8b04d291a48a6e5022d0"
+    },
+    {
+      "sequence": 912,
+      "at": "2026-10-07T08:46:33.516Z",
+      "kind": "transaction",
+      "data": {
+        "id": "7a5b75ae-0d67-4672-88b3-3dca81987308"
+      },
+      "previous": "bcb3031ade822248da7c73568fb04c2f707ef76cdb4a8b04d291a48a6e5022d0",
+      "digest": "57bf6f315d94660809c032d1f9b8f29ba0bcdde3b268ce38e601781c7741b743"
     }
   ]
 }
