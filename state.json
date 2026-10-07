@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2402,
+  "revision": 2404,
   "tasks": {
     "132": {
       "number": 132,
@@ -2936,7 +2936,7 @@
         "owner": "admission/pr-143",
         "generation": {}
       },
-      "updatedAt": 1791387805658,
+      "updatedAt": 1791388536253,
       "headSha": "67f9b2b1150a3bdeb472789179f81c6dd0acaee7",
       "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
       "branch": "fix/T-2026-1007-0918-first-pass-camera",
@@ -62391,6 +62391,51 @@
       },
       "previous": "0247cae0135318a45e6e782f961267dbbf1b3ac510d2f0ee5984f0d2bdeaecb4",
       "digest": "03304428f17e79df1f87d611d40465a8037e99b7cf20ae2c346576ef78dd4b5e"
+    },
+    {
+      "sequence": 2403,
+      "at": "2026-10-07T15:55:36.253Z",
+      "kind": "task",
+      "data": {
+        "number": 143,
+        "patch": {
+          "headSha": "67f9b2b1150a3bdeb472789179f81c6dd0acaee7",
+          "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
+          "branch": "fix/T-2026-1007-0918-first-pass-camera",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              142
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.5"
+              }
+            ]
+          },
+          "originalBody": "正式出镜人物分镜前段推近、尾段定住本来不重叠，旧就绪检查把整镜关键词拼成冲突，并把“无推拉摇移/停止移动”当作肯定运镜。现按时间轴与运镜的同一窗口核对静止覆盖，明确否定不计运动；仍拒绝真实重叠、静止缺口、无时段前缀和非法区间。原稿内容保持不变。\n\n当前 Codex 完整读取并逐行复核两个改动文件；准确提交后运行正常、否定、交界、重叠和缺口回归，不调用模型或付费渲染。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    142\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.5\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "packages/video-studio/src/first-pass.test.ts",
+            "packages/video-studio/src/first-pass.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791385024507
+        }
+      },
+      "previous": "03304428f17e79df1f87d611d40465a8037e99b7cf20ae2c346576ef78dd4b5e",
+      "digest": "6b458999c0f1f9612e6c874c078dcac85dd0937d3cf923663b32e34be54bb40c"
+    },
+    {
+      "sequence": 2404,
+      "at": "2026-10-07T15:56:44.886Z",
+      "kind": "transaction",
+      "data": {
+        "id": "f7fabcf6-cba2-4188-be42-074ab83a5203"
+      },
+      "previous": "6b458999c0f1f9612e6c874c078dcac85dd0937d3cf923663b32e34be54bb40c",
+      "digest": "264d14ecc21be5aaf6713930fe01cdc4d3fb5121fbda6d00e45aa392e4cf8d8b"
     }
   ]
 }
