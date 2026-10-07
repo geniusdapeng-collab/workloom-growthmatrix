@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1765,
+  "revision": 1767,
   "tasks": {
     "132": {
       "number": 132,
@@ -6424,7 +6424,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791375289156,
+      "updatedAt": 1791378611870,
       "admission": {
         "number": 167,
         "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
@@ -46073,6 +46073,46 @@
       },
       "previous": "1a00fffa608c57f43e61ace609173afb5963b9d8ce113315d83d1f7cd1d9d7fc",
       "digest": "e9284f7e8ae2fbc7e927c746a27973759c2737f4ac99ee42a5a068636b54b83b"
+    },
+    {
+      "sequence": 1766,
+      "at": "2026-10-07T13:10:11.870Z",
+      "kind": "task",
+      "data": {
+        "number": 167,
+        "patch": {
+          "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+          "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+          "branch": "fix/T-2026-1007-0918-post-preserve-source-timeline",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "The post delivery bridge shortened rendered clips by overlapping their heads and tails in xfade and failed packages when measured duration differed from the creative target. Preserve the complete clip timeline: reject xfade before creating output, use hard cuts in the bold-promo recipe, and record target/actual/delta without a duration admission gate. Hard cuts and fades inside each clip retain all frames; actual source duration and output consistency are still checked. Real FFmpeg regression proves all 225 frames of three source clips survive, source hashes remain unchanged, and forbidden transitions cannot call an encoder or create output. No paid generation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "bundles/ai-video/connectors/post-bridge/README.md",
+            "bundles/ai-video/connectors/post-bridge/core.mjs",
+            "bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts",
+            "bundles/ai-video/library/style-variants/bold-promo.json"
+          ],
+          "status": "parked",
+          "ciSince": 1791374342093
+        }
+      },
+      "previous": "e9284f7e8ae2fbc7e927c746a27973759c2737f4ac99ee42a5a068636b54b83b",
+      "digest": "e6616be9f73728943973a13de592905e85699f7a8bab72fe3afe842331a88dcd"
+    },
+    {
+      "sequence": 1767,
+      "at": "2026-10-07T13:11:55.527Z",
+      "kind": "transaction",
+      "data": {
+        "id": "80b271cb-c539-4929-bb18-8f5a747d4e7e"
+      },
+      "previous": "e6616be9f73728943973a13de592905e85699f7a8bab72fe3afe842331a88dcd",
+      "digest": "6c216953aee7d02a203b8668bfe692c58f3ab733c7d6ac58f21ba57a2458dbbb"
     }
   ]
 }
