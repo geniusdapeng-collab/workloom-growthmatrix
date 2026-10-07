@@ -7,7 +7,7 @@ export function integratedDependency(pull, task) {
   return pull.is_merged === true || Boolean(task?.merge && task.merge.sourceSha === pull.head?.sha && ['integrated', 'release_pending', 'delivered'].includes(task.status));
 }
 
-export async function dependencies(platform, pulls, state) {
+export async function dependencies(platform, pulls, state, unreadable = new Map()) {
   const graph = new Map(); const merged = new Set();
   const invalid = new Map();
   // These are hydrated PR details from this scan, not list-only summaries.
@@ -21,8 +21,9 @@ export async function dependencies(platform, pulls, state) {
     } catch (error) { graph.set(Number(pull.number), []); invalid.set(Number(pull.number), error.message); }
   }
   const required = new Set([...graph.values()].flat());
-  const unavailable = new Map();
+  const unavailable = new Map([...unreadable].map(([number, error]) => [number, `Prerequisite #${number} is unreadable: ${error}`]));
   for (const number of required) {
+    if (unavailable.has(number)) continue;
     try {
       const pull = currentPulls.get(number) ?? await platform.pull(number);
       const task = state.tasks[String(number)];
@@ -232,9 +233,19 @@ export async function reconcile({ platform, store, policy, now = Date.now(), dry
     try { await recoverMerges({ platform, store, now }); }
     catch (error) { report.failed.push({ stage: 'recover-merge', error: platform.error(error) }); return report; }
   }
-  const pulls = await platform.pulls();
+  const unreadable = new Map();
+  const pulls = await platform.pulls({ onReadError: ({ number, error }) => {
+    const reason = platform.error(error);
+    unreadable.set(number, reason);
+    report.failed.push({ number, stage: 'pull-detail', error: reason });
+  } });
+  if (!dryRun && unreadable.size) await store.mutate(current => {
+    for (const [number, error] of unreadable) updateTask(current, number, {
+      status: 'parked', error, blockedUntil: now + 10 * 60_000,
+    }, now);
+  });
   let state = await store.read();
-  const dependencyMap = await dependencies(platform, pulls, state);
+  const dependencyMap = await dependencies(platform, pulls, state, unreadable);
   let alignments = 0; let repairs = 0; let createdCandidates = 0;
   const age = pull => state.tasks[String(pull.number)]?.firstSeen ?? (Date.parse(pull.created_at ?? '') || now);
   const queue = [...pulls].sort((a, b) => age(a) - age(b) || Number(a.number) - Number(b.number));
