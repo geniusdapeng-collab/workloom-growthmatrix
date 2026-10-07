@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1042,
+  "revision": 1044,
   "tasks": {
     "132": {
       "number": 132,
@@ -3593,7 +3593,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791363309873,
+      "updatedAt": 1791364211033,
       "admission": {
         "number": 153,
         "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
@@ -25171,6 +25171,46 @@
       },
       "previous": "386b26eb3fec449b063b656727a981afded8af51cdb66fb16cf1356fc59fb86f",
       "digest": "72dcf094cf98896b08bf6b769b58fc29eb172ffa79239903d2352582608fa9a5"
+    },
+    {
+      "sequence": 1043,
+      "at": "2026-10-07T09:10:11.033Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-cine-kb-preserve-intent",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "Knowledge enrichment could interpret indoor marble reflection as water, replace a left window direction with an unrelated right fill light, and append an unbounded camera movement over an authored timed end hold. Version 3 only applies context-supported instructions, preserves complete timed camera text and omits optional whole sentences that exceed a field budget. Omitted suggestions remain separate from actual written evidence. The source author text is retained.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "bundles/ai-video/bundle.json",
+            "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
+            "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+            "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts"
+          ],
+          "status": "parked",
+          "ciSince": 1791359409167
+        }
+      },
+      "previous": "72dcf094cf98896b08bf6b769b58fc29eb172ffa79239903d2352582608fa9a5",
+      "digest": "5e225e4b2bacdd205ae10d761fddcd73bff776061e8e9d045f43aeb03c9c9d0f"
+    },
+    {
+      "sequence": 1044,
+      "at": "2026-10-07T09:11:59.723Z",
+      "kind": "transaction",
+      "data": {
+        "id": "ca7df46c-d0ad-4740-8df2-b469fca2f4bc"
+      },
+      "previous": "5e225e4b2bacdd205ae10d761fddcd73bff776061e8e9d045f43aeb03c9c9d0f",
+      "digest": "bdad772af77f28e8002b77f64f88abf1592014eaf8ed4052cfcc104b90614eaa"
     }
   ]
 }
