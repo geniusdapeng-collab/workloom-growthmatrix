@@ -16,6 +16,7 @@
 import { createRequire } from "node:module";
 import { resolve as resolvePath } from "node:path";
 import { installVendorDurationProjectionBridge } from "../../packages/video-studio/src/index.js";
+import { withDurationRunContext } from "../../packages/video-studio/src/duration-run-context.js";
 
 const REPO_ROOT = resolvePath(import.meta.dirname ?? process.cwd(), "../..");
 const require = createRequire(resolvePath(REPO_ROOT, "package.json"));
@@ -80,7 +81,30 @@ function check(label: string, condition: boolean, detail: string): void {
   if (!condition) failures.push(label);
 }
 
-const uninstall = installVendorDurationProjectionBridge({ log: (line) => console.log(`   ${line}`) });
+// The actual production CJS loader covers the normalization case Vitest cannot load.
+const restoreCreative = installVendorDurationProjectionBridge();
+try {
+  for (const total of [28, 32, 35]) {
+    const input = [10, 10, total - 20].map((duration, index) => ({ shotId: `S${index + 1}`, duration }));
+    const out = (ProductionEngine.prototype._normalizeDurations as (s: unknown, t: unknown) => Array<Record<string, unknown>>).call({}, input, 30);
+    check(`默认创作目标：30秒目标保留${total}秒完整计划`, out.map(shot => Number(shot.duration)).join(",") === `10,10,${total - 20}`,
+      `Σ=${out.reduce((sum, shot) => sum + Number(shot.duration), 0)}s`);
+  }
+  const runEvents = [[], []] as Array<Array<{ totalSeconds?: number }>>;
+  await Promise.all((["creative-target", "strict"] as const).map(async (policy, index) =>
+    withDurationRunContext({ policy, minSingleShotSeconds: 4, maxSingleShotSeconds: 30,
+      onEvent: event => runEvents[index]!.push(event) }, async () => {
+      await new Promise(resolve => setTimeout(resolve, index === 0 ? 6 : 1));
+      const input = [10, 10, 15].map((duration, shot) => ({ shotId: `S${shot + 1}`, duration }));
+      const out = (ProductionEngine.prototype._normalizeDurations as (s: unknown, t: unknown) => Array<Record<string, unknown>>).call({}, input, 30);
+      const actual = out.reduce((sum, shot) => sum + Number(shot.duration), 0);
+      check(`真实CJS并发运行 ${policy} 策略隔离`, actual === (index === 0 ? 35 : 30), `Σ=${actual}s`);
+    })));
+  check("真实CJS并发运行事件隔离", runEvents[0]!.every(event => event.totalSeconds === 35)
+    && runEvents[1]!.every(event => event.totalSeconds === 30) && runEvents.every(events => events.length > 0), "两个运行各自收到自己的时长投影");
+} finally { restoreCreative(); }
+
+const uninstall = installVendorDurationProjectionBridge({ durationPolicy: "strict", log: (line) => console.log(`   ${line}`) });
 try {
   /* ---------- ① 制作引擎归一：最后一镜不再兜底 ---------- */
   const normalizeInput = [

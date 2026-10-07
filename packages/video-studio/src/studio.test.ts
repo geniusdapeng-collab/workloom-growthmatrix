@@ -10,6 +10,8 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readReusedPortraitEvidence } from "./studio.js";
+import { currentDurationRunContext } from "./duration-run-context.js";
+import { FILM_COMPLETENESS_PRINCIPLE } from "./creative-duration-policy.js";
 
 const studioMocks = vi.hoisted(() => ({
   construct: vi.fn(),
@@ -152,6 +154,45 @@ function deferred() {
 }
 
 describe("VideoStudio 确认作用域与装配清理", () => {
+  it("binds the completeness principle and default duration policy without mutating the authored input", async () => {
+    const metadata = { brief: { durationSec: 30, audience: "酒店业主" } };
+    const before = structuredClone(metadata);
+    studioMocks.create.mockImplementation(async (_intent, passedMetadata) => {
+      expect(passedMetadata).toMatchObject({ brief: { durationPolicy: "creative-target", completenessPrinciple: FILM_COMPLETENESS_PRINCIPLE },
+        filmCreativePolicy: { policy: "creative-target", automaticRetime: false, automaticRerender: false } });
+      expect(currentDurationRunContext()).toMatchObject({ policy: "creative-target", minSingleShotSeconds: 4, maxSingleShotSeconds: 30 });
+      return { success: true };
+    });
+    await studio(async () => ({ approved: true })).runPreproduction({ projectId: "P1", intent: "原始需求", metadata });
+    expect(metadata).toEqual(before); expect(currentDurationRunContext()).toBeUndefined();
+  });
+  it("concurrent studio runs keep their authored policy and bounded planning settings after asynchronous interleaving", async () => {
+    const ready = [deferred(), deferred()], release = [deferred(), deferred()];
+    studioMocks.create.mockImplementation(async (intent: string, passedMetadata) => {
+      const index = intent === "creative" ? 0 : 1;
+      ready[index]!.resolve(); await release[index]!.promise;
+      expect(currentDurationRunContext()?.policy).toBe(index === 0 ? "creative-target" : "strict");
+      expect(passedMetadata.brief.durationPolicy).toBe(index === 0 ? "creative-target" : "strict");
+      return { success: true };
+    });
+    const running = [studio(async () => ({ approved: true })).runPreproduction({ projectId: "A", intent: "creative" }),
+      studio(async () => ({ approved: true })).runPreproduction({ projectId: "B", intent: "strict", metadata: { brief: { durationPolicy: "strict" } } })];
+    await Promise.all(ready.map(row => row.promise)); release[1]!.resolve(); await running[1];
+    release[0]!.resolve(); await running[0]; expect(currentDurationRunContext()).toBeUndefined();
+  });
+  it.each(["unknown-policy", "malformed-brief", "model-overflow", "fractional-bounds", "conflicting-policy"])("invalid %s fails before any vendor create or paid operation", async kind => {
+    const cfg: Partial<StudioConfig> = {};
+    const metadata: Record<string, unknown> = { brief: { durationPolicy: "creative-target" } };
+    if (kind === "unknown-policy") metadata.brief = { durationPolicy: "other" };
+    if (kind === "malformed-brief") metadata.brief = [];
+    if (kind === "model-overflow") cfg.durationPolicy = { maxSingleShotSeconds: 31 };
+    if (kind === "fractional-bounds") cfg.durationPolicy = { minSingleShotSeconds: 4.5 };
+    if (kind === "conflicting-policy") cfg.durationPolicy = { policy: "strict" };
+    const sut = new VideoStudio({ llm: new WorkloomLLMEngine({ baseUrl: "https://example.invalid", apiKey: "test-only", model: "test" }),
+      workDir: "/unused/policy-test", onApproval: async () => ({ approved: true }), log: () => undefined, ...cfg });
+    await expect(sut.runPreproduction({ projectId: "p", intent: "intent", metadata })).rejects.toThrow("DURATION_");
+    expect(studioMocks.create).not.toHaveBeenCalled(); expect(studioMocks.construct).not.toHaveBeenCalled();
+  });
   it("两条真实 studio 运行交错确认，项目与事件不串线", async () => {
     const ready = [deferred(), deferred()];
     const release = [deferred(), deferred()];
@@ -364,7 +405,9 @@ describe("既有人验定妆照只读复用", () => {
     studioMocks.create.mockResolvedValue({ success: true, stages: {} });
     const metadata = { _dataDossier: { name: "伪造档案" }, brief: { product: "当前查询商品" } };
     await marketing({ projectId: "P1", rawJson, sha256, productQuery: { name: "本次商品" } }).runPreproduction({ projectId: "P1", intent: "营销", isMarketing: true, metadata });
-    expect(studioMocks.create).toHaveBeenCalledWith("营销", { brief: metadata.brief, dataMining: { name: "本次商品" } }, expect.objectContaining({ dataMiningRaw: JSON.parse(rawJson), dataMiningRefresh: true, skipDataMiningReview: true }));
+    expect(studioMocks.create).toHaveBeenCalledWith("营销", expect.objectContaining({ brief: { ...metadata.brief,
+      durationPolicy: "creative-target", completenessPrinciple: FILM_COMPLETENESS_PRINCIPLE }, dataMining: { name: "本次商品" } }),
+      expect.objectContaining({ dataMiningRaw: JSON.parse(rawJson), dataMiningRefresh: true, skipDataMiningReview: true }));
     expect(metadata._dataDossier.name).toBe("伪造档案");
   });
   function resumeFixture(): Record<string, any> {

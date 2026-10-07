@@ -29,6 +29,8 @@ import {
   resolveRateKey,
 } from "./duration-projection.js";
 import { REQUIRED_ANGLES, type PortraitIndex, type PortraitIndexEntry } from "./portrait-runtime.js";
+import { durationPolicy, type DurationPolicy } from "./creative-duration-policy.js";
+import { currentDurationRunContext } from "./duration-run-context.js";
 import {
   CinematicSkillError, cinematicSkillHash, checkCinematicSkillCompliance, planCinematicSkills,
   type CinematicSkillRouter, type CinematicSkillStatus,
@@ -1376,6 +1378,7 @@ export interface DurationProjectionBridgeOptions {
   onEvent?: (event: DurationProjectionEvent) => void;
   minShotSeconds?: number;
   maxShotSeconds?: number;
+  durationPolicy?: DurationPolicy;
 }
 
 /** 进程级共享桥注册表：第一个安装、最后一个卸载（并发 run 安全） */
@@ -1416,10 +1419,11 @@ export function listSharedBridges(): Array<{ key: string; refs: number }> {
 }
 
 export function installVendorDurationProjectionBridge(options: DurationProjectionBridgeOptions = {}): () => void {
-  const log = options.log ?? (() => undefined);
-  const emit = options.onEvent ?? (() => undefined);
+  const log = (line: string): void => (currentDurationRunContext()?.log ?? options.log)?.(line);
+  const emit = (event: DurationProjectionEvent): void => (currentDurationRunContext()?.onEvent ?? options.onEvent)?.(event);
   const minShot = options.minShotSeconds ?? 4;
   const maxShot = options.maxShotSeconds ?? 30;
+  const policy = durationPolicy(options.durationPolicy);
   const repoRoot = resolvePath(dirname(fileURLToPath(import.meta.url)), "../../..");
   let vendorRequire: NodeJS.Require;
   try {
@@ -1474,12 +1478,14 @@ export function installVendorDurationProjectionBridge(options: DurationProjectio
       mood: record.mood as string | undefined,
       sceneType: (record.sceneType ?? record.scene_type) as string | undefined,
     }));
+    const current = currentDurationRunContext();
     const projectOnce = (enforceVoiceFloor: boolean) =>
       projectShotDurations(inputs, {
         targetSeconds: Number(targetSeconds),
-        minSeconds: minShot,
-        maxSeconds: maxShot,
+        minSeconds: current?.minSingleShotSeconds ?? minShot,
+        maxSeconds: current?.maxSingleShotSeconds ?? maxShot,
         enforceVoiceFloor,
+        durationPolicy: current?.policy ?? policy,
       });
     let result = projectOnce(true);
     if (!result.ok && planningMode) {
@@ -1504,7 +1510,7 @@ export function installVendorDurationProjectionBridge(options: DurationProjectio
         message: `${result.reason}：${result.suggestions.join("；")}`,
       });
       log(`[vendor-compat] 时长投影 INFEASIBLE（${source}）：${result.suggestions.join("；")}`);
-      return false;
+      throw new Error(`DURATION_PLAN_INFEASIBLE: ${result.suggestions.join("；")}`);
     }
     const applied = applyProjectedDurations(
       records.map((record, index) => ({ ...record, shotId: idOf(record, `${kindLabel}-${index + 1}`) })),

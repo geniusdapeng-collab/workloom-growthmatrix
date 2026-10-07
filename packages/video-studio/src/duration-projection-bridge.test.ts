@@ -8,6 +8,7 @@ import {
   listSharedBridges,
   type DurationProjectionEvent,
 } from "./vendor-compat.js";
+import { currentDurationRunContext, withDurationRunContext } from "./duration-run-context.js";
 
 /**
  * T-2026-0925-0001：时长投影桥的**真行为**回归。
@@ -69,9 +70,54 @@ afterEach(() => {
 });
 
 describe("时长投影桥：vendor 侧不再产出越界/失衡时长", () => {
+  it.skipIf(!ScriptGenerator)("shared actual vendor projection reads each asynchronous run's policy and routes only that run's events", async () => {
+    const outside: DurationProjectionEvent[] = [], events = [[], []] as DurationProjectionEvent[][];
+    uninstall = installVendorDurationProjectionBridge({ onEvent: event => outside.push(event) });
+    const execute = async (policy: "creative-target" | "strict", index: number) => withDurationRunContext({ policy,
+      minSingleShotSeconds: 4, maxSingleShotSeconds: 30, onEvent: event => events[index]!.push(event) }, async () => {
+      await new Promise(resolve => setTimeout(resolve, index === 0 ? 8 : 1));
+      const parsed = { structure: { scenes: [scene("S1", 10), scene("S2", 10), scene("S3", 15)] }, meta: {} };
+      (ScriptGenerator!.prototype._enforceTargetDuration as (p: unknown, t: unknown) => void).call({}, parsed, 30);
+      expect(parsed.structure.scenes.reduce((total, row) => total + row.duration, 0)).toBe(index === 0 ? 35 : 30);
+      expect(currentDurationRunContext()?.policy).toBe(policy);
+    });
+    await Promise.all([execute("creative-target", 0), execute("strict", 1)]);
+    expect(events[0]).toContainEqual(expect.objectContaining({ totalSeconds: 35 }));
+    expect(events[1]).toContainEqual(expect.objectContaining({ totalSeconds: 30 }));
+    expect(outside).toHaveLength(0); expect(currentDurationRunContext()).toBeUndefined();
+  });
+  it("rejects malformed run settings without installing a context", () => {
+    for (const pair of [[NaN, 30], [4, Infinity], [4.5, 30], [0, 30], [5, 4]]) {
+      expect(() => withDurationRunContext({ policy: "creative-target", minSingleShotSeconds: pair[0]!, maxSingleShotSeconds: pair[1]! }, () => 1)).toThrow("BOUNDS_INVALID");
+    }
+    expect(() => withDurationRunContext({ policy: "wrong" as any, minSingleShotSeconds: 4, maxSingleShotSeconds: 30 }, () => 1)).toThrow("POLICY_INVALID");
+    expect(currentDurationRunContext()).toBeUndefined();
+  });
+  it.skipIf(!ScriptGenerator).each([28, 32, 35])("默认目标30s保留实际%s秒剧本，不塞尾镜或平均缩短", (total) => {
+    const events: DurationProjectionEvent[] = [];
+    uninstall = installVendorDurationProjectionBridge({ onEvent: (event) => events.push(event) });
+    const parsed = { structure: { scenes: [scene("SC01", 10), scene("SC02", 10), scene("SC03", total - 20)] }, meta: {} };
+    (ScriptGenerator!.prototype._enforceTargetDuration as (p: unknown, t: unknown) => void).call({}, parsed, 30);
+    expect(parsed.structure.scenes.map((shot) => shot.duration)).toEqual([10, 10, total - 20]);
+    expect(parsed.meta).toMatchObject({ total_duration: total });
+    expect(events).toContainEqual(expect.objectContaining({ source: "script-generator", targetSeconds: 30, totalSeconds: total }));
+  });
+
+  it.skipIf(!DurationConstraintManager)("默认运行期保留35秒计划，明确能力越界在付费前修正", () => {
+    uninstall = installVendorDurationProjectionBridge();
+    const manager = new DurationConstraintManager!({ maxSingleShot: 30, minSingleShot: 4 });
+    const scenes = [scene("SC01", 10), scene("SC02", 10), scene("SC03", 15)];
+    (manager.constrain as (s: unknown, o: unknown) => unknown).call(manager, scenes, { targetDuration: 30 });
+    expect(scenes.map((shot) => shot.duration)).toEqual([10, 10, 15]);
+    expect(scenes[2]!.timing.end).toBe(35);
+    const impossible = [scene("SC04", 30, "字".repeat(200))];
+    expect(() => (manager.constrain as (s: unknown, o: unknown) => unknown).call(manager, impossible, { targetDuration: 30 }))
+      .toThrow("DURATION_PLAN_INFEASIBLE");
+  });
+
   it.skipIf(!ScriptGenerator)("剧本总量对齐：60s 巨镜被压回模型上限，且总时长守恒", () => {
     const events: DurationProjectionEvent[] = [];
-    uninstall = installVendorDurationProjectionBridge({ log: () => undefined, onEvent: (e) => events.push(e), maxShotSeconds: 30, minShotSeconds: 4 });
+    uninstall = installVendorDurationProjectionBridge({ durationPolicy: "strict", log: () => undefined, onEvent: (e) => events.push(e), maxShotSeconds: 30, minShotSeconds: 4 });
     const parsed = {
       structure: { scenes: [scene("SC01", 3), scene("SC02", 60, LINE_48), scene("SC03", 3)] },
       meta: {},
@@ -88,7 +134,7 @@ describe("时长投影桥：vendor 侧不再产出越界/失衡时长", () => {
   });
 
   it.skipIf(!ProductionEngine)("制作引擎归一：不再把差额全塞给最后一镜（100s → 60s 无 31s 越界镜）", () => {
-    uninstall = installVendorDurationProjectionBridge({ log: () => undefined });
+    uninstall = installVendorDurationProjectionBridge({ durationPolicy: "strict", log: () => undefined });
     const shots = [
       { shotId: "S1", duration: 6, timing: { start: 0, duration: 6, end: 6 } },
       { shotId: "S2", duration: 12, timing: { start: 6, duration: 12, end: 18 } },
@@ -114,7 +160,7 @@ describe("时长投影桥：vendor 侧不再产出越界/失衡时长", () => {
 
   it.skipIf(!DurationConstraintManager)("运行期约束：权重表重分配停用（不再抹平台词适配），总时长守恒", () => {
     const events: DurationProjectionEvent[] = [];
-    uninstall = installVendorDurationProjectionBridge({ log: () => undefined, onEvent: (e) => events.push(e) });
+    uninstall = installVendorDurationProjectionBridge({ durationPolicy: "strict", log: () => undefined, onEvent: (e) => events.push(e) });
     const manager = new DurationConstraintManager!({ maxSingleShot: 30, minSingleShot: 4 });
     const scenes = [
       scene("SC01", 6),
@@ -133,7 +179,7 @@ describe("时长投影桥：vendor 侧不再产出越界/失衡时长", () => {
   });
 
   it.skipIf(!DialogueTimingCalculator)("台词引擎情绪归一：复合 mood 串与副词都能改变语速", () => {
-    uninstall = installVendorDurationProjectionBridge({ log: () => undefined });
+    uninstall = installVendorDurationProjectionBridge({ durationPolicy: "strict", log: () => undefined });
     const calc = new DialogueTimingCalculator!({ autoAdjust: false }) as Record<string, unknown>;
     const getRate = (emotion?: string): number =>
       (calc._getSpeechRate as (this: unknown, e?: string) => number).call(calc, emotion);
@@ -144,7 +190,7 @@ describe("时长投影桥：vendor 侧不再产出越界/失衡时长", () => {
   });
 
   it.skipIf(!DialogueTimingCalculator)("缩短台词目标自洽：缩短后的可见字数满足占比 ≤80% 规则", () => {
-    uninstall = installVendorDurationProjectionBridge({ log: () => undefined });
+    uninstall = installVendorDurationProjectionBridge({ durationPolicy: "strict", log: () => undefined });
     const calc = new DialogueTimingCalculator!({ autoAdjust: true, adjustStrategy: "smart" }) as Record<string, unknown>;
     const shot = {
       shot_id: "S1",

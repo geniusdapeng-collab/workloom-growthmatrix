@@ -44,6 +44,8 @@ import { installVendorThemeBridge, type ThemeBridgeTarget } from "./theme-bridge
 import { installVendorPromptReviewBridge, type PromptReviewTarget } from "./prompt-review-bridge.js";
 import { loadCharacterEntry } from "./character-archive.js";
 import { assessPortraitDecision } from "./portrait-decision.js";
+import { durationPolicy, FILM_COMPLETENESS_PRINCIPLE, CREATIVE_DURATION_POLICY_VERSION, type DurationPolicy } from "./creative-duration-policy.js";
+import { withDurationRunContext } from "./duration-run-context.js";
 
 /** vendor 引擎暴露的最小结构（HyperrealitySystem 实例方法） */
 interface HyperrealitySystemLike {
@@ -128,7 +130,7 @@ export interface StudioConfig {
    * 镜头时长策略（2026-09-23）：默认从媒体目录读取模型能力（Seedance 2.5 实测 4–30s），
    * 并把 vendor 的三处 15s 口径统一放宽，避免"计划能拍、提交被拒"或节奏被悄悄夹紧。
    */
-  durationPolicy?: { maxSingleShotSeconds?: number; minSingleShotSeconds?: number };
+  durationPolicy?: { maxSingleShotSeconds?: number; minSingleShotSeconds?: number; policy?: DurationPolicy };
   /**
    * 商品情报档案（Stage -2 · 珍妮纺织机）运行参数（2026-09-25 激活）。
    *
@@ -225,6 +227,18 @@ export class VideoStudio {
     const { cfg } = this;
     const metadata = structuredClone(input.metadata ?? {});
     delete metadata._dataDossier;
+    const suppliedBrief = metadata.brief;
+    if (suppliedBrief !== undefined && (!suppliedBrief || typeof suppliedBrief !== "object" || Array.isArray(suppliedBrief))) {
+      throw new Error("DURATION_BRIEF_INVALID: brief must be an object");
+    }
+    const brief = (suppliedBrief ?? {}) as Record<string, unknown>;
+    const planningPolicy = durationPolicy(cfg.durationPolicy?.policy ?? brief.durationPolicy);
+    if (cfg.durationPolicy?.policy && brief.durationPolicy !== undefined && durationPolicy(brief.durationPolicy) !== planningPolicy) {
+      throw new Error("DURATION_POLICY_CONFLICT: host and authored brief disagree");
+    }
+    metadata.brief = { ...brief, durationPolicy: planningPolicy, completenessPrinciple: FILM_COMPLETENESS_PRINCIPLE };
+    metadata.filmCreativePolicy = { version: CREATIVE_DURATION_POLICY_VERSION, policy: planningPolicy,
+      completenessPrinciple: FILM_COMPLETENESS_PRINCIPLE, automaticRetime: false, automaticRerender: false };
     const verified = cfg.dataMining?.verifiedRaw;
     let verifiedRaw: Record<string, unknown> | undefined;
     if (input.isMarketing) {
@@ -362,6 +376,10 @@ export class VideoStudio {
         const durationRules = loadDurationRules();
         const maxSingleShot = cfg.durationPolicy?.maxSingleShotSeconds ?? durationRules.modelMax;
         const minSingleShot = cfg.durationPolicy?.minSingleShotSeconds ?? durationRules.modelMin;
+        if (!Number.isInteger(minSingleShot) || !Number.isInteger(maxSingleShot) || minSingleShot < durationRules.modelMin
+          || maxSingleShot > durationRules.modelMax || maxSingleShot < minSingleShot) {
+          throw new Error("DURATION_RUN_BOUNDS_INVALID: planning bounds must remain inside the current model catalog");
+        }
         /**
          * 桥按"进程级共享 + 引用计数"安装（T-2026-0925-0001）：
          * 预生产 run 允许并发，而桥是进程全局的；若每个 run 各自装卸，
@@ -369,8 +387,8 @@ export class VideoStudio {
          */
         keep(installSharedBridge("vendor-duration-policy", () =>
           installVendorDurationPolicyBridge({
-            maxSingleShotSeconds: maxSingleShot,
-            minSingleShotSeconds: minSingleShot,
+            maxSingleShotSeconds: durationRules.modelMax,
+            minSingleShotSeconds: durationRules.modelMin,
             log
           })
         ));
@@ -381,33 +399,20 @@ export class VideoStudio {
          */
         const projectionEnabled = (process.env.WORKLOOM_DURATION_PROJECTION ?? "on") !== "off";
         let lastProjectedTarget: number | null = null;
+        const onDurationProjection = (event: import("./vendor-compat.js").DurationProjectionEvent): void => {
+          if (typeof event.targetSeconds === "number" && event.targetSeconds > 0) lastProjectedTarget = event.targetSeconds;
+          void emit({ kind: `pipeline.duration.${event.kind}`, projectId: input.projectId, runId,
+            payload: { source: event.source, policy: planningPolicy, targetSeconds: event.targetSeconds,
+              totalSeconds: event.totalSeconds, raised: event.shots.filter(shot => shot.raised).map(shot => shot.shotId),
+              lowered: event.shots.filter(shot => shot.lowered).map(shot => shot.shotId), message: event.message ?? null } });
+          if (event.kind !== "projected") log(`[studio] 时长投影 ${event.kind}（${event.source}）：${event.message ?? ""}`);
+        };
         keep(projectionEnabled
           ? installSharedBridge("vendor-duration-projection", () =>
               installVendorDurationProjectionBridge({
-                minShotSeconds: minSingleShot,
-                maxShotSeconds: maxSingleShot,
+                minShotSeconds: durationRules.modelMin,
+                maxShotSeconds: durationRules.modelMax,
                 log,
-                onEvent: (event) => {
-                  if (typeof event.targetSeconds === "number" && event.targetSeconds > 0) {
-                    lastProjectedTarget = event.targetSeconds;
-                  }
-                  void emit({
-                    kind: `pipeline.duration.${event.kind}`,
-                    projectId: input.projectId,
-                    runId,
-                    payload: {
-                      source: event.source,
-                      targetSeconds: event.targetSeconds,
-                      totalSeconds: event.totalSeconds,
-                      raised: event.shots.filter((shot) => shot.raised).map((shot) => shot.shotId),
-                      lowered: event.shots.filter((shot) => shot.lowered).map((shot) => shot.shotId),
-                      message: event.message ?? null
-                    }
-                  });
-                  if (event.kind !== "projected") {
-                    log(`[studio] 时长投影 ${event.kind}（${event.source}）：${event.message ?? ""}`);
-                  }
-                }
               })
             )
           : () => undefined);
@@ -444,6 +449,8 @@ export class VideoStudio {
           ? createPortraitRuntime({
               ...portraitCfg,
               workDir: cfg.workDir,
+              receiptRoot: portraitCfg.receiptRoot ?? path.join(process.env.WORKLOOM_VIDEO_ARTIFACT_ROOT
+                ?? path.resolve(path.dirname(resolveVendorEntry()), "../../../output"), "paid-generation-receipts", "portraits"),
               projectId: input.projectId,
               log
             })
@@ -552,11 +559,13 @@ export class VideoStudio {
           previous.success = final.approved;
           return previous as PreproductionResult;
         };
+        const executeInPlanningScope = () => withDurationRunContext({ policy: planningPolicy,
+          minSingleShotSeconds: minSingleShot, maxSingleShotSeconds: maxSingleShot, log, onEvent: onDurationProjection }, execute);
         const result = input.isMarketing ? await runWithReviewedMarketingDossier({
           proof: cfg.dataMining!.verifiedDossier!, projectId: input.projectId, rawSha256: verified!.sha256,
           system: system as unknown as MarketingDossierTarget,
           ...(input.resume ? { resumeAssembly: (input.resume.result.stages?.dataMining as Record<string, unknown>).data as Record<string, unknown> } : {}),
-        }, execute) : await execute();
+        }, executeInPlanningScope) : await executeInPlanningScope();
         if ((result.stages?.prdGeneration as { degraded?: boolean } | undefined)?.degraded === true) {
           throw new Error("PRD_REVIEW_REQUIRED：正式PRD生成或重审失败，vendor兜底稿不得交给下游成片");
         }
@@ -610,7 +619,7 @@ export class VideoStudio {
           kind: result.success ? "pipeline.finished" : "pipeline.failed",
           projectId: input.projectId,
           runId,
-          payload: { stages: Object.keys(result.stages ?? {}) }
+          payload: { stages: Object.keys(result.stages ?? {}), filmCreativePolicy: metadata.filmCreativePolicy }
         });
         return result;
       } catch (err) {
