@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3835,
+  "revision": 3840,
   "tasks": {
     "132": {
       "number": 132,
@@ -5038,18 +5038,18 @@
           }
         ]
       },
-      "updatedAt": 1791411188927,
+      "updatedAt": 1791412560799,
       "admission": {
         "number": 153,
-        "headSha": "9a5c9deacc7e2d8b6ab0690d338a496f1d18d73a",
-        "mainSha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+        "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "filesHash": "4008f5258d6cde8f64a10077ccaa9c50a2696235124d7f1ec5f921a6965d0ed8",
         "scopes": [
           "protocol"
         ],
         "owner": "admission/pr-153",
         "generation": {
-          "protocol": 78
+          "protocol": 79
         }
       },
       "originalBody": "Knowledge enrichment could interpret indoor marble reflection as water, replace a left window direction with an unrelated right fill light, and append an unbounded camera movement over an authored timed end hold. Version 3 only applies context-supported instructions, preserves complete timed camera text and omits optional whole sentences that exceed a field budget. Omitted suggestions remain separate from actual written evidence. The source author text is retained.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
@@ -9346,9 +9346,9 @@
   "leases": {
     "protocol": {
       "owner": null,
-      "generation": 78,
-      "acquiredAt": 1791410754961,
-      "expiresAt": 1791410754961
+      "generation": 79,
+      "acquiredAt": 1791412560799,
+      "expiresAt": 1791412560799
     },
     "migrations": {
       "owner": null,
@@ -95616,6 +95616,93 @@
       },
       "previous": "2c5bc7e8e7ac31172585743e742b0a5a3b052c222bcdb23b704eb76559117653",
       "digest": "4bce00bb99193529d924cc47cdaf63271b59d8b88d258b9f25dddf8ba86c8d8f"
+    },
+    {
+      "sequence": 3836,
+      "at": "2026-10-07T22:36:00.799Z",
+      "kind": "lease_acquire",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-153",
+        "generation": {
+          "protocol": 79
+        }
+      },
+      "previous": "4bce00bb99193529d924cc47cdaf63271b59d8b88d258b9f25dddf8ba86c8d8f",
+      "digest": "86b7b8e642bcfd08e0078c71e0cbaf6652c2283194343d29cfe8788627ec0fb9"
+    },
+    {
+      "sequence": 3837,
+      "at": "2026-10-07T22:36:00.799Z",
+      "kind": "lease_release",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-153",
+        "generation": {
+          "protocol": 79
+        }
+      },
+      "previous": "86b7b8e642bcfd08e0078c71e0cbaf6652c2283194343d29cfe8788627ec0fb9",
+      "digest": "cc1910d36b79972b434664d9e7c577dffb7f94fe89460d89e250f7b6219be427"
+    },
+    {
+      "sequence": 3838,
+      "at": "2026-10-07T22:36:00.799Z",
+      "kind": "source_admitted",
+      "data": {
+        "number": 153,
+        "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+        "filesHash": "4008f5258d6cde8f64a10077ccaa9c50a2696235124d7f1ec5f921a6965d0ed8",
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-153",
+        "generation": {
+          "protocol": 79
+        }
+      },
+      "previous": "cc1910d36b79972b434664d9e7c577dffb7f94fe89460d89e250f7b6219be427",
+      "digest": "d970278da970b091fa1331b3897ae22d09559128011f7bbe65d3a7c84d6d9ca1"
+    },
+    {
+      "sequence": 3839,
+      "at": "2026-10-07T22:36:00.799Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "admission": {
+            "number": 153,
+            "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "filesHash": "4008f5258d6cde8f64a10077ccaa9c50a2696235124d7f1ec5f921a6965d0ed8",
+            "scopes": [
+              "protocol"
+            ],
+            "owner": "admission/pr-153",
+            "generation": {
+              "protocol": 79
+            }
+          }
+        }
+      },
+      "previous": "d970278da970b091fa1331b3897ae22d09559128011f7bbe65d3a7c84d6d9ca1",
+      "digest": "732c545f3e90a63ca6e8dbc7475722741777016f2ee1df1d4b45228fbf790b1b"
+    },
+    {
+      "sequence": 3840,
+      "at": "2026-10-07T22:35:50.228Z",
+      "kind": "transaction",
+      "data": {
+        "id": "source-admit:153:9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0:5e148fc1ae3ad097bce2fcecf5d724fee9075219"
+      },
+      "previous": "732c545f3e90a63ca6e8dbc7475722741777016f2ee1df1d4b45228fbf790b1b",
+      "digest": "9c20ed2f43ffcf674600f2521433eb0ee9fa0b5d6f26d9fbdc26cf8ee55fe618"
     }
   ]
 }
