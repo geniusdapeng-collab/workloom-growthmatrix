@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2773,
+  "revision": 2775,
   "tasks": {
     "132": {
       "number": 132,
@@ -8087,7 +8087,7 @@
           }
         ]
       },
-      "updatedAt": 1791396225916,
+      "updatedAt": 1791396312503,
       "admission": {
         "number": 178,
         "headSha": "83b842b042f28174dd07c891ea314fad313c86c8",
@@ -8100,7 +8100,14 @@
         "generation": {
           "protocol": 59
         }
-      }
+      },
+      "originalBody": "Native delivery repeatedly exhausted CNB reads while checking source PRs that could not advance because their explicit prerequisites were still pending. Reuse hydrated open PR details for planning and defer the full source/CI snapshot until prerequisite planning is clear. Keep fresh snapshots, exact source/main/policy review, native CI, immutable candidate protection and the fresh prerequisite re-read immediately before merge. Permission/read failures and DAG cycles remain closed failures. This infrastructure fix is deployed through normal native integration; it does not declare a separate desktop version.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    172\n  ],\n  \"releases\": []\n}\n-->",
+      "files": [
+        "scripts/delivery/queue-controller.mjs",
+        "scripts/delivery/queue-io-budget.test.mjs",
+        "scripts/delivery/queue-platform.mjs"
+      ],
+      "ciSince": 1791396312503
     }
   },
   "leases": {
@@ -71430,6 +71437,47 @@
       },
       "previous": "530f442ef704b4dc4574a0436b93b43952c0408c2f1494cb4d94b55094206cc6",
       "digest": "7aba0d78e2e323531f6c21fe4c0132ef6a654052e9394c213b0ad829a02e098b"
+    },
+    {
+      "sequence": 2774,
+      "at": "2026-10-07T18:05:12.503Z",
+      "kind": "task",
+      "data": {
+        "number": 178,
+        "patch": {
+          "headSha": "83b842b042f28174dd07c891ea314fad313c86c8",
+          "mainSha": "703947eeca100eb2598c9bb25c914d4dad8c9a9b",
+          "branch": "fix/T-2026-1007-0918-delivery-io-budget",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              172
+            ],
+            "releases": []
+          },
+          "originalBody": "Native delivery repeatedly exhausted CNB reads while checking source PRs that could not advance because their explicit prerequisites were still pending. Reuse hydrated open PR details for planning and defer the full source/CI snapshot until prerequisite planning is clear. Keep fresh snapshots, exact source/main/policy review, native CI, immutable candidate protection and the fresh prerequisite re-read immediately before merge. Permission/read failures and DAG cycles remain closed failures. This infrastructure fix is deployed through normal native integration; it does not declare a separate desktop version.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    172\n  ],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "scripts/delivery/queue-controller.mjs",
+            "scripts/delivery/queue-io-budget.test.mjs",
+            "scripts/delivery/queue-platform.mjs"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791396312503
+        }
+      },
+      "previous": "7aba0d78e2e323531f6c21fe4c0132ef6a654052e9394c213b0ad829a02e098b",
+      "digest": "350e39503859d96acff5b69d12715c2786f553f1abc651cab290f92fa82dfca2"
+    },
+    {
+      "sequence": 2775,
+      "at": "2026-10-07T18:05:37.207Z",
+      "kind": "transaction",
+      "data": {
+        "id": "d71978d4-b4c7-4c6f-a0a3-121dd9009296"
+      },
+      "previous": "350e39503859d96acff5b69d12715c2786f553f1abc651cab290f92fa82dfca2",
+      "digest": "0ddd461eece8e1bcf96ca6557842802134f1cbd5a2d8f82ee610d86a54d59239"
     }
   ]
 }
