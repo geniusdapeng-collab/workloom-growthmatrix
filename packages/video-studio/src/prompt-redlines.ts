@@ -29,9 +29,24 @@ export interface RedlineShotLike {
  */
 function positiveOnly(value: string): string {
   return value
-    .split(/[；。，、]/)
-    .filter((clause) => clause.trim().length > 0)
-    .filter((clause) => !/(不出现|不可见|不露|无需|不得|禁止|避免|无[^，。；]*|没有)/.test(clause))
+    .split(/[；。，]/)
+    .flatMap((clause) => {
+      let negatedList = false;
+      return clause.split("、").filter((part) => {
+        if (!part.trim()) return false;
+        if (/(不出现|不可见|不露|无需|不得|禁止|避免|无[^，。；]*|没有)/.test(part)) {
+          // “不出现房卡、单据、证件”中的否定覆盖同一顿号清单；
+          // 机身的“无LOGO”只限定该名词，不把后面的独立肯定画面吞掉。
+          negatedList = /(不出现|不露|无需|不得|禁止|避免|没有|^\s*无|(?:画面|镜头)[中内]?无)/.test(part);
+          return false;
+        }
+        // 同一清单里若明确重新描述可见物件/动作，仍按肯定画面检查。
+        // 逗号/句号/分号已经切开，否定不跨到下一个独立分句或字段。
+        if (negatedList && !/(出现|可见|入镜|展示|呈现|摆放|放置|显示|位于|置于|朝向|面向|手持|捏住|持有)/.test(part)) return false;
+        negatedList = false;
+        return true;
+      });
+    })
     .join("；");
 }
 const text = (value: unknown): string => String(value ?? "");

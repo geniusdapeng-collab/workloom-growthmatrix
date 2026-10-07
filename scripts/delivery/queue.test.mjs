@@ -933,6 +933,7 @@ test('both UI and desktop dispatch pass the explicit frozen SHA to the whole bui
     const state = emptyState(repo); enqueueReleases(state, repo, { number: 1, merge: { sha: mergedSha }, intent: { releases: [{ kind, version: '1.2.3' }] } }, now);
     let request;
     const platform = { repo, error: error => error.message, call: async (path, options) => {
+      if (path === '/-/git/tags/v1.2.3') return { name: 'v1.2.3', commit: { sha: mergedSha } };
       if (path.includes('/build/logs')) return { total: 0, data: [] };
       if (path === '/-/build/start') { request = options.body; return { success: true, sn: `actual-${kind}` }; }
       throw new Error(`Unexpected release dispatch ${path}`);
@@ -941,6 +942,9 @@ test('both UI and desktop dispatch pass the explicit frozen SHA to the whole bui
     assert.equal(request.sha, mergedSha); assert.equal(request.env.RELEASE_EXPECTED_SHA, mergedSha);
     assert.equal(request.event, releaseEventFor(kind)); assert.equal(request.env.CNB_REPO_SLUG, undefined);
     assert.equal(request.env.CNB_BRANCH_SHA, undefined); // Native readonly identities are never overridden.
+    assert.equal(request.env.CNB_REPO, undefined);
+    if (kind === 'desktop') assert.deepEqual({ tag: request.env.RELEASE_TAG, sha: request.env.RELEASE_SHA, signing: request.env.PLATFORM_SIGNING },
+      { tag: 'v1.2.3', sha: mergedSha, signing: 'signed' });
   }
 });
 test('manual UI event and delivery dispatch use the same actual publishing job and native lock; the scheduler only launches and observes', async t => {
@@ -1009,13 +1013,13 @@ test('UI release verifies the real Platform API JSON decoding contract and rejec
 });
 test('release verifies actual tag source, manifest identity and every downloaded digest', async () => {
   const hex = 'a'.repeat(128); const names = ['WorkLoom-mac-arm64.dmg', 'WorkLoom-mac-x64.dmg', 'WorkLoom-win-x64.exe']; const release = { sha: mergedSha, kind: 'desktop', version: 'v1.2.3', build: { sn: 'run' } };
-  const manifest = { schemaVersion: 1, tag: release.version, sourceSha: mergedSha, assets: names.map(name => ({ name, size: 5, sha512: hex })) };
+  const manifest = { schemaVersion: 1, product: repo, tag: release.version, sha: mergedSha, platformSigning: 'signed', assets: names.map(name => ({ name, size: 5, sha512: hex })) };
   const key = releaseKey({ repo, sha: mergedSha, kind: 'desktop', version: release.version });
   const build = { sn: 'run', sha: mergedSha, event: 'api_trigger_desktop_release', title: `WorkLoom release ${key}` };
   const platform = { repo, call: async path => path.includes('/build/logs') ? { total: 1, data: [build] } : path.includes('/releases/') ? { id: 'r', draft: false } : { sha: mergedSha } }; let downloads = 0;
   const download = async (_repo, _tag, name) => { downloads++; return name.endsWith('.json') ? { data: manifest } : { name, size: 5, sha512: hex }; };
   assert.equal((await verifyRelease(platform, release, download)).assets.length, 3); assert.equal(downloads, 4);
-  manifest.sourceSha = head; await assert.rejects(verifyRelease(platform, release, download), /manifest/); manifest.sourceSha = mergedSha;
+  manifest.sha = head; await assert.rejects(verifyRelease(platform, release, download), /manifest/); manifest.sha = mergedSha;
   await assert.rejects(verifyRelease(platform, release, async () => ({ data: manifest, size: 6, sha512: hex })), /byte/);
   build.sha = head; await assert.rejects(verifyRelease(platform, release, download), /build source/);
 });
