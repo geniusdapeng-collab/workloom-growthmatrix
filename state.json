@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1991,
+  "revision": 1994,
   "tasks": {
     "132": {
       "number": 132,
@@ -6764,7 +6764,7 @@
     },
     "170": {
       "number": 170,
-      "status": "waiting_ci",
+      "status": "merging",
       "firstSeen": 1791376490308,
       "attempts": {},
       "headSha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
@@ -6975,6 +6975,129 @@
         "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
         "marker": "delivery-origin:170:dbfd95f2853df7a12530fcf775353b87ef634cc1:3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
         "at": 1791379005941
+      },
+      "mergePhase": "prepared",
+      "mergeSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 171,
+        "pull": {
+          "number": 171,
+          "state": "open",
+          "title": "chore(ci): deliver #170 fix(growth): align delivery with native signed desktop release [T-2026-1007-0918]",
+          "body": "Immutable delivery candidate for #170. Exact source dbfd95f2853df7a12530fcf775353b87ef634cc1; tested main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b.\n\n<!-- delivery-origin:170:dbfd95f2853df7a12530fcf775353b87ef634cc1:3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b -->\n\n<!-- workloom-delivery\n{\"ready\":true,\"depends_on\":[],\"releases\":[]}\n-->",
+          "author": {
+            "username": "OCI",
+            "nickname": "Cloud Native Build",
+            "is_npc": true
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/delivery/candidate/pr-170-9592f97a95e8d106dc6533c8e1cbaf06",
+            "sha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "unblocked",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "files": [
+          "scripts/delivery/queue-release-contract.test.mjs",
+          "scripts/delivery/queue-release.mjs",
+          "scripts/delivery/queue.test.mjs"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [],
+          "releases": []
+        },
+        "headTime": 1791376359000,
+        "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "checkErrors": [],
+        "checkSha": "dbf449e1db50ef3ef49f3ea1d81e48a0a7ba263c",
+        "hasFailedChecks": false,
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "file": "scripts/delivery/queue.test.mjs",
+            "before": {
+              "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+              "path": "scripts/delivery/queue.test.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+              "path": "scripts/delivery/queue.test.mjs",
+              "absent": false
+            },
+            "digest": "84c99e40ea529f0512abd8080cd16c0141968743f8d8dfda4e3ca927189b29a2"
+          },
+          {
+            "id": "CI-002",
+            "file": "scripts/delivery/queue-release.mjs",
+            "before": {
+              "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+              "path": "scripts/delivery/queue-release.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+              "path": "scripts/delivery/queue-release.mjs",
+              "absent": false
+            },
+            "digest": "abc94e4809b590d41c512bb61a407df2dddbbc16613355d7aade5a88ecd0dd53"
+          },
+          {
+            "id": "CI-003",
+            "file": "scripts/delivery/queue-release-contract.test.mjs",
+            "before": {
+              "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+              "path": "scripts/delivery/queue-release-contract.test.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+              "path": "scripts/delivery/queue-release-contract.test.mjs",
+              "absent": false
+            },
+            "digest": "f7edc1c540673a070a02af2a7d2f7b995b0370e3819439cd0a330271582961c8"
+          }
+        ],
+        "originNumber": 170,
+        "pendingDependencies": []
+      },
+      "integrationLease": {
+        "owner": "integration/pr-170",
+        "scopes": [
+          "protocol"
+        ],
+        "generation": {
+          "protocol": 39
+        }
       }
     },
     "171": {
@@ -7000,10 +7123,10 @@
   },
   "leases": {
     "protocol": {
-      "owner": null,
-      "generation": 38,
-      "acquiredAt": 1791379120993,
-      "expiresAt": 1791379120993
+      "owner": "integration/pr-170",
+      "generation": 39,
+      "acquiredAt": 1791380029775,
+      "expiresAt": 1791380929775
     },
     "migrations": {
       "owner": null,
@@ -52650,6 +52773,168 @@
       },
       "previous": "5523b164a9536b37e3b571b4999280539c7e51a6fcadfba55d0fef25ed739b15",
       "digest": "6f4a2417b062650c2c997e010d9b14a1d32f289783704ab04ced3f9b841bed1c"
+    },
+    {
+      "sequence": 1992,
+      "at": "2026-10-07T13:33:49.775Z",
+      "kind": "lease_acquire",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "integration/pr-170",
+        "generation": {
+          "protocol": 39
+        }
+      },
+      "previous": "6f4a2417b062650c2c997e010d9b14a1d32f289783704ab04ced3f9b841bed1c",
+      "digest": "5db06e5048ad1ca03a3056976a0245e74d4f1937f73f5f68cdd560591ce3bf2c"
+    },
+    {
+      "sequence": 1993,
+      "at": "2026-10-07T13:33:49.775Z",
+      "kind": "task",
+      "data": {
+        "number": 170,
+        "patch": {
+          "status": "merging",
+          "mergePhase": "prepared",
+          "mergeSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 171,
+            "pull": {
+              "number": 171,
+              "state": "open",
+              "title": "chore(ci): deliver #170 fix(growth): align delivery with native signed desktop release [T-2026-1007-0918]",
+              "body": "Immutable delivery candidate for #170. Exact source dbfd95f2853df7a12530fcf775353b87ef634cc1; tested main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b.\n\n<!-- delivery-origin:170:dbfd95f2853df7a12530fcf775353b87ef634cc1:3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b -->\n\n<!-- workloom-delivery\n{\"ready\":true,\"depends_on\":[],\"releases\":[]}\n-->",
+              "author": {
+                "username": "OCI",
+                "nickname": "Cloud Native Build",
+                "is_npc": true
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/delivery/candidate/pr-170-9592f97a95e8d106dc6533c8e1cbaf06",
+                "sha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "unblocked",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+            "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "files": [
+              "scripts/delivery/queue-release-contract.test.mjs",
+              "scripts/delivery/queue-release.mjs",
+              "scripts/delivery/queue.test.mjs"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791376359000,
+            "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "checkErrors": [],
+            "checkSha": "dbf449e1db50ef3ef49f3ea1d81e48a0a7ba263c",
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": "scripts/delivery/queue.test.mjs",
+                "before": {
+                  "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+                  "path": "scripts/delivery/queue.test.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+                  "path": "scripts/delivery/queue.test.mjs",
+                  "absent": false
+                },
+                "digest": "84c99e40ea529f0512abd8080cd16c0141968743f8d8dfda4e3ca927189b29a2"
+              },
+              {
+                "id": "CI-002",
+                "file": "scripts/delivery/queue-release.mjs",
+                "before": {
+                  "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+                  "path": "scripts/delivery/queue-release.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+                  "path": "scripts/delivery/queue-release.mjs",
+                  "absent": false
+                },
+                "digest": "abc94e4809b590d41c512bb61a407df2dddbbc16613355d7aade5a88ecd0dd53"
+              },
+              {
+                "id": "CI-003",
+                "file": "scripts/delivery/queue-release-contract.test.mjs",
+                "before": {
+                  "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+                  "path": "scripts/delivery/queue-release-contract.test.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+                  "path": "scripts/delivery/queue-release-contract.test.mjs",
+                  "absent": false
+                },
+                "digest": "f7edc1c540673a070a02af2a7d2f7b995b0370e3819439cd0a330271582961c8"
+              }
+            ],
+            "originNumber": 170,
+            "pendingDependencies": []
+          },
+          "integrationLease": {
+            "owner": "integration/pr-170",
+            "scopes": [
+              "protocol"
+            ],
+            "generation": {
+              "protocol": 39
+            }
+          }
+        }
+      },
+      "previous": "5db06e5048ad1ca03a3056976a0245e74d4f1937f73f5f68cdd560591ce3bf2c",
+      "digest": "7b8ba6399a07d01f4bc34803d1f0eb38d42c10add738e06e7b3f1710beef509f"
+    },
+    {
+      "sequence": 1994,
+      "at": "2026-10-07T13:36:07.159Z",
+      "kind": "transaction",
+      "data": {
+        "id": "83ea9d66-4359-4201-b991-c8b539a903b7"
+      },
+      "previous": "7b8ba6399a07d01f4bc34803d1f0eb38d42c10add738e06e7b3f1710beef509f",
+      "digest": "a528f6a6cb2cd374d876a15a32b09f6978f5cffc529d094adfa9352158410f67"
     }
   ]
 }
