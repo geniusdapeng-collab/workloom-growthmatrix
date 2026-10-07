@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1576,
+  "revision": 1579,
   "tasks": {
     "132": {
       "number": 132,
@@ -1753,7 +1753,7 @@
     },
     "140": {
       "number": 140,
-      "status": "waiting_ci",
+      "status": "merging",
       "firstSeen": 1791334789636,
       "attempts": {},
       "admission": {
@@ -2372,6 +2372,273 @@
         "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "marker": "delivery-origin:140:1c4615e730fcabe4dc7569113fe546b804b3914b:56852023485bdf45912eaddd8347efa5a8aadbf0",
         "at": 1791374342093
+      },
+      "mergePhase": "prepared",
+      "mergeSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 168,
+        "pull": {
+          "number": 168,
+          "state": "open",
+          "title": "chore(ci): deliver #140 fix(video): 成功渲染素材直接进入正式后期 [T-2026-1007-0001]",
+          "body": "Immutable delivery candidate for #140. Exact source 1c4615e730fcabe4dc7569113fe546b804b3914b; tested main 56852023485bdf45912eaddd8347efa5a8aadbf0.\n\n<!-- delivery-origin:140:1c4615e730fcabe4dc7569113fe546b804b3914b:56852023485bdf45912eaddd8347efa5a8aadbf0 -->\n\n<!-- workloom-delivery\n{\"ready\":true,\"depends_on\":[],\"releases\":[]}\n-->",
+          "author": {
+            "username": "OCI",
+            "nickname": "Cloud Native Build",
+            "is_npc": true
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/delivery/candidate/pr-140-6f8bb933e83a6743e85203488e54d21b",
+            "sha": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "unblocked",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "files": [
+          ".workloom-runtime-deps/metadata.json",
+          "AGENTS.repo.md",
+          "README.md",
+          "apps/server/src/video/film-worker.ts",
+          "apps/server/src/video/marketing-authority.ts",
+          "bundles/ai-video/README.md",
+          "bundles/ai-video/bundle.json",
+          "bundles/ai-video/connectors/bgm-bridge/README.md",
+          "bundles/ai-video/connectors/bgm-bridge/audio-stems-mix.test.mjs",
+          "bundles/ai-video/connectors/bgm-bridge/cli.mjs",
+          "bundles/ai-video/connectors/bgm-bridge/core.mjs",
+          "bundles/ai-video/connectors/bgm-bridge/declared-program-mix.test.mjs",
+          "bundles/ai-video/connectors/bgm-bridge/executor.test.ts",
+          "bundles/ai-video/connectors/bgm-bridge/measure.mjs",
+          "bundles/ai-video/connectors/color-bridge/README.md",
+          "bundles/ai-video/connectors/color-bridge/cli.mjs",
+          "bundles/ai-video/connectors/color-bridge/core.mjs",
+          "bundles/ai-video/connectors/color-bridge/core.test.ts",
+          "bundles/ai-video/connectors/post-bridge/README.md",
+          "bundles/ai-video/connectors/post-bridge/cli.mjs",
+          "bundles/ai-video/connectors/post-bridge/core.mjs",
+          "bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts",
+          "bundles/ai-video/connectors/post-bridge/revision-concurrency.test.ts",
+          "bundles/ai-video/connectors/subtitle-bridge/README.md",
+          "bundles/ai-video/connectors/subtitle-bridge/cli.mjs",
+          "bundles/ai-video/connectors/subtitle-bridge/core.mjs",
+          "bundles/ai-video/connectors/subtitle-bridge/executor.test.ts",
+          "bundles/ai-video/connectors/subtitle-bridge/measure.mjs",
+          "bundles/ai-video/connectors/voice-bridge/README.md",
+          "bundles/ai-video/connectors/voice-bridge/core.mjs",
+          "bundles/ai-video/fences/ai-video-bgm.yml",
+          "bundles/ai-video/fences/ai-video-color.yml",
+          "bundles/ai-video/fences/ai-video-delivery.yml",
+          "bundles/ai-video/fences/ai-video-material.yml",
+          "bundles/ai-video/fences/ai-video-subtitle.yml",
+          "bundles/ai-video/fences/ai-video-voice.yml",
+          "bundles/ai-video/library/real-person-assets/asset-20260101000000-demo/profile.json",
+          "bundles/ai-video/pipelines/narrative-film.yml",
+          "bundles/ai-video/presets/bgm-composer.yml",
+          "bundles/ai-video/presets/colorist.yml",
+          "bundles/ai-video/presets/post-editor.yml",
+          "bundles/ai-video/presets/subtitle-stylist.yml",
+          "bundles/ai-video/presets/voice-artist.yml",
+          "bundles/ai-video/schemas/objects.json",
+          "bundles/ai-video/skills/bgm-audio-layering/SKILL.md",
+          "bundles/ai-video/skills/bgm-delivery-spec/SKILL.md",
+          "bundles/ai-video/skills/caption-burnin-ops/SKILL.md",
+          "bundles/ai-video/skills/color-delivery-spec/SKILL.md",
+          "bundles/ai-video/skills/color-grade/SKILL.md",
+          "bundles/ai-video/skills/color-look-design/SKILL.md",
+          "bundles/ai-video/skills/color-shot-matching/SKILL.md",
+          "bundles/ai-video/skills/cover-design/SKILL.md",
+          "bundles/ai-video/skills/delivery-package-ops/SKILL.md",
+          "bundles/ai-video/skills/delivery-revision-ops/SKILL.md",
+          "bundles/ai-video/skills/producer-gate-review/SKILL.md",
+          "bundles/ai-video/skills/render-ops/SKILL.md",
+          "bundles/ai-video/skills/subtitle-delivery-spec/SKILL.md",
+          "bundles/ai-video/skills/subtitle-layout-design/SKILL.md",
+          "bundles/ai-video/skills/voice-delivery-spec/SKILL.md",
+          "bundles/ai-video/skills/voice-dubbing-sync/SKILL.md",
+          "bundles/geo-growthmatrix/agent-capabilities.json",
+          "bundles/geo-growthmatrix/capabilities/video.mjs",
+          "bundles/geo-growthmatrix/capabilities/workbench-guide.mjs",
+          "bundles/geo-growthmatrix/capabilities/workbench-guide.test.mjs",
+          "docs/AGENT-CLIENTS.md",
+          "docs/agent-cli-mcp.md",
+          "docs/ai-video-workbench-guide.md",
+          "docs/capabilities.auto.json",
+          "docs/capabilities.auto.md",
+          "docs/producer-gate-design.md",
+          "docs/real-person-asset.md",
+          "docs/real-person-portrait-set.md",
+          "docs/video-delivery-and-revision.md",
+          "package.json",
+          "packages/base/bundles/bgm-capability.test.ts",
+          "packages/base/bundles/post-av-sync.test.ts",
+          "packages/base/bundles/post-delivery-capability.test.ts",
+          "packages/base/bundles/subtitle-capability.test.ts",
+          "packages/base/bundles/voice-capability.test.ts",
+          "packages/video-studio/src/deliver-revise.test.ts",
+          "packages/video-studio/src/deliver.ts",
+          "packages/video-studio/src/film-contracts.ts",
+          "packages/video-studio/src/film-worker-runtime.test.ts",
+          "packages/video-studio/src/film-worker-runtime.ts",
+          "packages/video-studio/src/index.ts",
+          "packages/video-studio/src/post-render-acceptance.test.ts",
+          "packages/video-studio/src/post-render-acceptance.ts",
+          "packages/video-studio/src/producer-gate.test.ts",
+          "packages/video-studio/src/producer-gate.ts",
+          "packages/video-studio/src/real-person-asset.ts",
+          "packages/video-studio/src/video-surface-repair.test.ts",
+          "packages/video-studio/src/video-surface-repair.ts",
+          "scripts/AGENT-CAPABILITIES.md",
+          "scripts/agent-capabilities.test.mjs",
+          "scripts/product-runtime-assets.mjs",
+          "scripts/product-runtime-assets.test.mjs",
+          "scripts/tools/compose-film.mts",
+          "scripts/tools/full-chain-failure.test.mjs",
+          "scripts/tools/full-chain-film.mts",
+          "scripts/tools/video-request-regression.test.ts"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0001",
+          "ready": true,
+          "dependsOn": [],
+          "releases": []
+        },
+        "headTime": 1791371370000,
+        "mergeBase": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "checkErrors": [],
+        "checkSha": "239db96c51b03621178d8d08ce25784112abf90d",
+        "hasFailedChecks": false,
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "file": "scripts/product-runtime-assets.mjs",
+            "before": {
+              "ref": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+              "path": "scripts/product-runtime-assets.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+              "path": "scripts/product-runtime-assets.mjs",
+              "absent": false
+            },
+            "digest": "0fa93ee0a1d89ead3811ae05ef9c174c140113b007c0fc1e20918e9378fd236f"
+          },
+          {
+            "id": "CI-002",
+            "file": "scripts/tools/full-chain-failure.test.mjs",
+            "before": {
+              "ref": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+              "path": "scripts/tools/full-chain-failure.test.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+              "path": "scripts/tools/full-chain-failure.test.mjs",
+              "absent": false
+            },
+            "digest": "43984c70b9bf4e6da11d5d49020b7dc846771442d730185af0b9ad89d29f946c"
+          },
+          {
+            "id": "CI-003",
+            "file": "scripts/product-runtime-assets.test.mjs",
+            "before": {
+              "ref": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+              "path": "scripts/product-runtime-assets.test.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+              "path": "scripts/product-runtime-assets.test.mjs",
+              "absent": false
+            },
+            "digest": "9fc3696127ef3f566497b7872df3318dfda2e4fd3786daf620b97d5bea7dddd3"
+          },
+          {
+            "id": "CI-004",
+            "file": "scripts/agent-capabilities.test.mjs",
+            "before": {
+              "ref": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+              "path": "scripts/agent-capabilities.test.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+              "path": "scripts/agent-capabilities.test.mjs",
+              "absent": false
+            },
+            "digest": "a719c3f6c4ce5472c7519cbc57eeaa530d23d981fa81f8d9f171ad41d45ea3c8"
+          },
+          {
+            "id": "CI-005",
+            "file": "scripts/tools/video-request-regression.test.ts",
+            "before": {
+              "ref": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+              "path": "scripts/tools/video-request-regression.test.ts",
+              "absent": false
+            },
+            "after": {
+              "ref": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+              "path": "scripts/tools/video-request-regression.test.ts",
+              "absent": false
+            },
+            "digest": "aca108878c0f9580490387d942d9e91d06d1910d68b3381e826f6b7a8c6a5cea"
+          },
+          {
+            "id": "CI-006",
+            "file": "package.json",
+            "before": {
+              "ref": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+              "path": "package.json",
+              "absent": false
+            },
+            "after": {
+              "ref": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+              "path": "package.json",
+              "absent": false
+            },
+            "digest": "cbb7ada95cebc1caeea3a503e94ebe1191ca85b7ac37e4f377ebe10e251c4473"
+          }
+        ],
+        "originNumber": 140,
+        "pendingDependencies": []
+      },
+      "integrationLease": {
+        "owner": "integration/pr-140",
+        "scopes": [
+          "dependencies",
+          "protocol"
+        ],
+        "generation": {
+          "dependencies": 6,
+          "protocol": 31
+        }
       }
     },
     "142": {
@@ -6138,10 +6405,10 @@
   },
   "leases": {
     "protocol": {
-      "owner": null,
-      "generation": 30,
-      "acquiredAt": 1791374431375,
-      "expiresAt": 1791374431375
+      "owner": "integration/pr-140",
+      "generation": 31,
+      "acquiredAt": 1791375222176,
+      "expiresAt": 1791376122176
     },
     "migrations": {
       "owner": null,
@@ -6150,10 +6417,10 @@
       "expiresAt": 1791374454307
     },
     "dependencies": {
-      "owner": null,
-      "generation": 5,
-      "acquiredAt": 1791374384237,
-      "expiresAt": 1791374384237
+      "owner": "integration/pr-140",
+      "generation": 6,
+      "acquiredAt": 1791375222176,
+      "expiresAt": 1791376122176
     }
   },
   "releases": {},
@@ -40211,6 +40478,314 @@
       },
       "previous": "579011909677e3f8dd53eb4a08e51215d07797a5f9d664f3f85fb1ab45125c3e",
       "digest": "e4eb9afcc0d58165471cc553da4e2d946be142c059fa22b52548fb49ce07647a"
+    },
+    {
+      "sequence": 1577,
+      "at": "2026-10-07T12:13:42.176Z",
+      "kind": "lease_acquire",
+      "data": {
+        "scopes": [
+          "dependencies",
+          "protocol"
+        ],
+        "owner": "integration/pr-140",
+        "generation": {
+          "dependencies": 6,
+          "protocol": 31
+        }
+      },
+      "previous": "e4eb9afcc0d58165471cc553da4e2d946be142c059fa22b52548fb49ce07647a",
+      "digest": "805cd8f11667fe8abebc92de898489a70134e3b874a94530f89ae9c4a4e7214c"
+    },
+    {
+      "sequence": 1578,
+      "at": "2026-10-07T12:13:42.176Z",
+      "kind": "task",
+      "data": {
+        "number": 140,
+        "patch": {
+          "status": "merging",
+          "mergePhase": "prepared",
+          "mergeSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 168,
+            "pull": {
+              "number": 168,
+              "state": "open",
+              "title": "chore(ci): deliver #140 fix(video): 成功渲染素材直接进入正式后期 [T-2026-1007-0001]",
+              "body": "Immutable delivery candidate for #140. Exact source 1c4615e730fcabe4dc7569113fe546b804b3914b; tested main 56852023485bdf45912eaddd8347efa5a8aadbf0.\n\n<!-- delivery-origin:140:1c4615e730fcabe4dc7569113fe546b804b3914b:56852023485bdf45912eaddd8347efa5a8aadbf0 -->\n\n<!-- workloom-delivery\n{\"ready\":true,\"depends_on\":[],\"releases\":[]}\n-->",
+              "author": {
+                "username": "OCI",
+                "nickname": "Cloud Native Build",
+                "is_npc": true
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/delivery/candidate/pr-140-6f8bb933e83a6743e85203488e54d21b",
+                "sha": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "unblocked",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "files": [
+              ".workloom-runtime-deps/metadata.json",
+              "AGENTS.repo.md",
+              "README.md",
+              "apps/server/src/video/film-worker.ts",
+              "apps/server/src/video/marketing-authority.ts",
+              "bundles/ai-video/README.md",
+              "bundles/ai-video/bundle.json",
+              "bundles/ai-video/connectors/bgm-bridge/README.md",
+              "bundles/ai-video/connectors/bgm-bridge/audio-stems-mix.test.mjs",
+              "bundles/ai-video/connectors/bgm-bridge/cli.mjs",
+              "bundles/ai-video/connectors/bgm-bridge/core.mjs",
+              "bundles/ai-video/connectors/bgm-bridge/declared-program-mix.test.mjs",
+              "bundles/ai-video/connectors/bgm-bridge/executor.test.ts",
+              "bundles/ai-video/connectors/bgm-bridge/measure.mjs",
+              "bundles/ai-video/connectors/color-bridge/README.md",
+              "bundles/ai-video/connectors/color-bridge/cli.mjs",
+              "bundles/ai-video/connectors/color-bridge/core.mjs",
+              "bundles/ai-video/connectors/color-bridge/core.test.ts",
+              "bundles/ai-video/connectors/post-bridge/README.md",
+              "bundles/ai-video/connectors/post-bridge/cli.mjs",
+              "bundles/ai-video/connectors/post-bridge/core.mjs",
+              "bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts",
+              "bundles/ai-video/connectors/post-bridge/revision-concurrency.test.ts",
+              "bundles/ai-video/connectors/subtitle-bridge/README.md",
+              "bundles/ai-video/connectors/subtitle-bridge/cli.mjs",
+              "bundles/ai-video/connectors/subtitle-bridge/core.mjs",
+              "bundles/ai-video/connectors/subtitle-bridge/executor.test.ts",
+              "bundles/ai-video/connectors/subtitle-bridge/measure.mjs",
+              "bundles/ai-video/connectors/voice-bridge/README.md",
+              "bundles/ai-video/connectors/voice-bridge/core.mjs",
+              "bundles/ai-video/fences/ai-video-bgm.yml",
+              "bundles/ai-video/fences/ai-video-color.yml",
+              "bundles/ai-video/fences/ai-video-delivery.yml",
+              "bundles/ai-video/fences/ai-video-material.yml",
+              "bundles/ai-video/fences/ai-video-subtitle.yml",
+              "bundles/ai-video/fences/ai-video-voice.yml",
+              "bundles/ai-video/library/real-person-assets/asset-20260101000000-demo/profile.json",
+              "bundles/ai-video/pipelines/narrative-film.yml",
+              "bundles/ai-video/presets/bgm-composer.yml",
+              "bundles/ai-video/presets/colorist.yml",
+              "bundles/ai-video/presets/post-editor.yml",
+              "bundles/ai-video/presets/subtitle-stylist.yml",
+              "bundles/ai-video/presets/voice-artist.yml",
+              "bundles/ai-video/schemas/objects.json",
+              "bundles/ai-video/skills/bgm-audio-layering/SKILL.md",
+              "bundles/ai-video/skills/bgm-delivery-spec/SKILL.md",
+              "bundles/ai-video/skills/caption-burnin-ops/SKILL.md",
+              "bundles/ai-video/skills/color-delivery-spec/SKILL.md",
+              "bundles/ai-video/skills/color-grade/SKILL.md",
+              "bundles/ai-video/skills/color-look-design/SKILL.md",
+              "bundles/ai-video/skills/color-shot-matching/SKILL.md",
+              "bundles/ai-video/skills/cover-design/SKILL.md",
+              "bundles/ai-video/skills/delivery-package-ops/SKILL.md",
+              "bundles/ai-video/skills/delivery-revision-ops/SKILL.md",
+              "bundles/ai-video/skills/producer-gate-review/SKILL.md",
+              "bundles/ai-video/skills/render-ops/SKILL.md",
+              "bundles/ai-video/skills/subtitle-delivery-spec/SKILL.md",
+              "bundles/ai-video/skills/subtitle-layout-design/SKILL.md",
+              "bundles/ai-video/skills/voice-delivery-spec/SKILL.md",
+              "bundles/ai-video/skills/voice-dubbing-sync/SKILL.md",
+              "bundles/geo-growthmatrix/agent-capabilities.json",
+              "bundles/geo-growthmatrix/capabilities/video.mjs",
+              "bundles/geo-growthmatrix/capabilities/workbench-guide.mjs",
+              "bundles/geo-growthmatrix/capabilities/workbench-guide.test.mjs",
+              "docs/AGENT-CLIENTS.md",
+              "docs/agent-cli-mcp.md",
+              "docs/ai-video-workbench-guide.md",
+              "docs/capabilities.auto.json",
+              "docs/capabilities.auto.md",
+              "docs/producer-gate-design.md",
+              "docs/real-person-asset.md",
+              "docs/real-person-portrait-set.md",
+              "docs/video-delivery-and-revision.md",
+              "package.json",
+              "packages/base/bundles/bgm-capability.test.ts",
+              "packages/base/bundles/post-av-sync.test.ts",
+              "packages/base/bundles/post-delivery-capability.test.ts",
+              "packages/base/bundles/subtitle-capability.test.ts",
+              "packages/base/bundles/voice-capability.test.ts",
+              "packages/video-studio/src/deliver-revise.test.ts",
+              "packages/video-studio/src/deliver.ts",
+              "packages/video-studio/src/film-contracts.ts",
+              "packages/video-studio/src/film-worker-runtime.test.ts",
+              "packages/video-studio/src/film-worker-runtime.ts",
+              "packages/video-studio/src/index.ts",
+              "packages/video-studio/src/post-render-acceptance.test.ts",
+              "packages/video-studio/src/post-render-acceptance.ts",
+              "packages/video-studio/src/producer-gate.test.ts",
+              "packages/video-studio/src/producer-gate.ts",
+              "packages/video-studio/src/real-person-asset.ts",
+              "packages/video-studio/src/video-surface-repair.test.ts",
+              "packages/video-studio/src/video-surface-repair.ts",
+              "scripts/AGENT-CAPABILITIES.md",
+              "scripts/agent-capabilities.test.mjs",
+              "scripts/product-runtime-assets.mjs",
+              "scripts/product-runtime-assets.test.mjs",
+              "scripts/tools/compose-film.mts",
+              "scripts/tools/full-chain-failure.test.mjs",
+              "scripts/tools/full-chain-film.mts",
+              "scripts/tools/video-request-regression.test.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0001",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791371370000,
+            "mergeBase": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "checkErrors": [],
+            "checkSha": "239db96c51b03621178d8d08ce25784112abf90d",
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": "scripts/product-runtime-assets.mjs",
+                "before": {
+                  "ref": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                  "path": "scripts/product-runtime-assets.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+                  "path": "scripts/product-runtime-assets.mjs",
+                  "absent": false
+                },
+                "digest": "0fa93ee0a1d89ead3811ae05ef9c174c140113b007c0fc1e20918e9378fd236f"
+              },
+              {
+                "id": "CI-002",
+                "file": "scripts/tools/full-chain-failure.test.mjs",
+                "before": {
+                  "ref": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                  "path": "scripts/tools/full-chain-failure.test.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+                  "path": "scripts/tools/full-chain-failure.test.mjs",
+                  "absent": false
+                },
+                "digest": "43984c70b9bf4e6da11d5d49020b7dc846771442d730185af0b9ad89d29f946c"
+              },
+              {
+                "id": "CI-003",
+                "file": "scripts/product-runtime-assets.test.mjs",
+                "before": {
+                  "ref": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                  "path": "scripts/product-runtime-assets.test.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+                  "path": "scripts/product-runtime-assets.test.mjs",
+                  "absent": false
+                },
+                "digest": "9fc3696127ef3f566497b7872df3318dfda2e4fd3786daf620b97d5bea7dddd3"
+              },
+              {
+                "id": "CI-004",
+                "file": "scripts/agent-capabilities.test.mjs",
+                "before": {
+                  "ref": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                  "path": "scripts/agent-capabilities.test.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+                  "path": "scripts/agent-capabilities.test.mjs",
+                  "absent": false
+                },
+                "digest": "a719c3f6c4ce5472c7519cbc57eeaa530d23d981fa81f8d9f171ad41d45ea3c8"
+              },
+              {
+                "id": "CI-005",
+                "file": "scripts/tools/video-request-regression.test.ts",
+                "before": {
+                  "ref": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                  "path": "scripts/tools/video-request-regression.test.ts",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+                  "path": "scripts/tools/video-request-regression.test.ts",
+                  "absent": false
+                },
+                "digest": "aca108878c0f9580490387d942d9e91d06d1910d68b3381e826f6b7a8c6a5cea"
+              },
+              {
+                "id": "CI-006",
+                "file": "package.json",
+                "before": {
+                  "ref": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                  "path": "package.json",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "1c4615e730fcabe4dc7569113fe546b804b3914b",
+                  "path": "package.json",
+                  "absent": false
+                },
+                "digest": "cbb7ada95cebc1caeea3a503e94ebe1191ca85b7ac37e4f377ebe10e251c4473"
+              }
+            ],
+            "originNumber": 140,
+            "pendingDependencies": []
+          },
+          "integrationLease": {
+            "owner": "integration/pr-140",
+            "scopes": [
+              "dependencies",
+              "protocol"
+            ],
+            "generation": {
+              "dependencies": 6,
+              "protocol": 31
+            }
+          }
+        }
+      },
+      "previous": "805cd8f11667fe8abebc92de898489a70134e3b874a94530f89ae9c4a4e7214c",
+      "digest": "dbb1c7b4f44383531aaddaf9bb0be4eb5c7ff77eb93d4447c6d45145d4302347"
+    },
+    {
+      "sequence": 1579,
+      "at": "2026-10-07T12:14:20.898Z",
+      "kind": "transaction",
+      "data": {
+        "id": "a9d4913e-02a8-4838-b712-358656b5853b"
+      },
+      "previous": "dbb1c7b4f44383531aaddaf9bb0be4eb5c7ff77eb93d4447c6d45145d4302347",
+      "digest": "bfdb1e4a154957f3b395158b8c71dd39580192f2d5a433b824847240ffe08bc4"
     }
   ]
 }
