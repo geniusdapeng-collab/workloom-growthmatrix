@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2949,
+  "revision": 2951,
   "tasks": {
     "132": {
       "number": 132,
@@ -5572,7 +5572,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791399914273,
+      "updatedAt": 1791400515635,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -75560,6 +75560,52 @@
       },
       "previous": "b5ba6311513285da913a7049163bd5b13f4f42dfe555a6daada62231de08c4cc",
       "digest": "0c10a0f8b9d53e137bbc5f494352261775ae0133c28a2ad38b859b15ab79e941"
+    },
+    {
+      "sequence": 2950,
+      "at": "2026-10-07T19:15:15.635Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "0c10a0f8b9d53e137bbc5f494352261775ae0133c28a2ad38b859b15ab79e941",
+      "digest": "01956f7275d951b40722323ccf53823ec30f3750bf7c00555526fdba537fa77f"
+    },
+    {
+      "sequence": 2951,
+      "at": "2026-10-07T19:17:40.365Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8c20e529-3ee5-4dfd-a774-f9d8b4afd454"
+      },
+      "previous": "01956f7275d951b40722323ccf53823ec30f3750bf7c00555526fdba537fa77f",
+      "digest": "7c9521b97425662f837e5c593627f9293b8f7a2503bd315593cebfb3abf86746"
     }
   ]
 }
