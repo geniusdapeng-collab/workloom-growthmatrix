@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3443,
+  "revision": 3445,
   "tasks": {
     "132": {
       "number": 132,
@@ -3181,7 +3181,7 @@
     },
     "144": {
       "number": 144,
-      "status": "waiting_ci",
+      "status": "parked",
       "firstSeen": 1791352089622,
       "attempts": {},
       "headSha": "56cf4290bbf323aec76a334ac3e2aedfa297120b",
@@ -3330,8 +3330,8 @@
         "ciPolicyChanges": []
       },
       "updatedAt": 1791405908044,
-      "error": "主干对齐失败：CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791404324050,
+      "error": "候选 #183 的实际 CI 失败；在当前 Codex 会话修复原分支并重新审查实测",
+      "blockedUntil": 1791406508044,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    143\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.6\"\n    }\n  ]\n}\n-->",
       "files": [
         "packages/video-studio/src/creative-duration-policy.test.ts",
@@ -3347,10 +3347,10 @@
       "ciSince": 1791401379390,
       "repairRequired": {
         "provider": "codex",
-        "headSha": "cf9b8a69f5d9a7eb361a0076e502474f894d09a8",
+        "headSha": "56cf4290bbf323aec76a334ac3e2aedfa297120b",
         "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
-        "reason": "主干对齐失败：CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-        "at": 1791403724050
+        "reason": "候选 #183 的实际 CI 失败；在当前 Codex 会话修复原分支并重新审查实测",
+        "at": 1791405908044
       },
       "recoveryIntent": null,
       "alignmentCount": 1,
@@ -86580,6 +86580,39 @@
       },
       "previous": "6f503bcbe8870f9fe2129709a402b9047a02dda3d9f81c519812ac16de959b71",
       "digest": "a91b6634223fd0d99b437b65d2b968a32651bb86f5ab366da77183d297481f98"
+    },
+    {
+      "sequence": 3444,
+      "at": "2026-10-07T20:45:08.044Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "status": "parked",
+          "error": "候选 #183 的实际 CI 失败；在当前 Codex 会话修复原分支并重新审查实测",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "56cf4290bbf323aec76a334ac3e2aedfa297120b",
+            "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+            "reason": "候选 #183 的实际 CI 失败；在当前 Codex 会话修复原分支并重新审查实测",
+            "at": 1791405908044
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791406508044
+        }
+      },
+      "previous": "a91b6634223fd0d99b437b65d2b968a32651bb86f5ab366da77183d297481f98",
+      "digest": "a2fc2f97dd106bb9e7cfb42a1b5ca0f0519fe7d7e78f2c27fad68cc35bf667a0"
+    },
+    {
+      "sequence": 3445,
+      "at": "2026-10-07T20:47:11.122Z",
+      "kind": "transaction",
+      "data": {
+        "id": "b55defdf-3f31-4728-a499-317a90427640"
+      },
+      "previous": "a2fc2f97dd106bb9e7cfb42a1b5ca0f0519fe7d7e78f2c27fad68cc35bf667a0",
+      "digest": "2092bdde4099350e9bbe4563fdaceb390eb5713641f64627d354eee755138b7c"
     }
   ]
 }
