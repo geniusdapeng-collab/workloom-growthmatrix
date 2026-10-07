@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1700,
+  "revision": 1702,
   "tasks": {
     "132": {
       "number": 132,
@@ -6479,22 +6479,22 @@
   },
   "leases": {
     "protocol": {
-      "owner": null,
-      "generation": 34,
-      "acquiredAt": 1791376919233,
-      "expiresAt": 1791376919233
+      "owner": "codex:01a113d7:film-cli-integration",
+      "generation": 35,
+      "acquiredAt": 1791376979567,
+      "expiresAt": 1791377879567
     },
     "migrations": {
-      "owner": null,
-      "generation": 6,
-      "acquiredAt": 1791376941116,
-      "expiresAt": 1791376941116
+      "owner": "codex:01a113d7:film-cli-integration",
+      "generation": 7,
+      "acquiredAt": 1791376979567,
+      "expiresAt": 1791377879567
     },
     "dependencies": {
-      "owner": null,
-      "generation": 7,
-      "acquiredAt": 1791375914213,
-      "expiresAt": 1791376388226
+      "owner": "codex:01a113d7:film-cli-integration",
+      "generation": 8,
+      "acquiredAt": 1791376979567,
+      "expiresAt": 1791377879567
     }
   },
   "releases": {},
@@ -43973,6 +43973,36 @@
       },
       "previous": "53b4b64bf3abbc03412c6afea85b8cce8b0f06adb44003a53d99a10d294f91a2",
       "digest": "730008505d751e77e64a9f3ed62ce02146ceba4620e2f47a126c768741a5322b"
+    },
+    {
+      "sequence": 1701,
+      "at": "2026-10-07T12:42:59.567Z",
+      "kind": "lease_acquire",
+      "data": {
+        "scopes": [
+          "dependencies",
+          "migrations",
+          "protocol"
+        ],
+        "owner": "codex:01a113d7:film-cli-integration",
+        "generation": {
+          "dependencies": 8,
+          "migrations": 7,
+          "protocol": 35
+        }
+      },
+      "previous": "730008505d751e77e64a9f3ed62ce02146ceba4620e2f47a126c768741a5322b",
+      "digest": "4bddf89066e78ce691ffd53a52ce34026aa71fdc92af9d26af24c56e9a2ff823"
+    },
+    {
+      "sequence": 1702,
+      "at": "2026-10-07T12:42:58.121Z",
+      "kind": "transaction",
+      "data": {
+        "id": "c663bdb9-b764-4a1b-a6b1-f80c31442b57"
+      },
+      "previous": "4bddf89066e78ce691ffd53a52ce34026aa71fdc92af9d26af24c56e9a2ff823",
+      "digest": "06b7b5fa4d118f889179df488b84e3128a6661da556840ca1aec8e97f82dc1ae"
     }
   ]
 }
