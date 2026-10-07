@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4022,
+  "revision": 4024,
   "tasks": {
     "132": {
       "number": 132,
@@ -6215,7 +6215,7 @@
     },
     "161": {
       "number": 161,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791368515129,
       "attempts": {},
       "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
@@ -6383,7 +6383,7 @@
           }
         ]
       },
-      "updatedAt": 1791414311674,
+      "updatedAt": 1791414813102,
       "admission": {
         "number": 161,
         "headSha": "fd1089d472ec538c5cdd64a32b8d926261d81135",
@@ -99742,6 +99742,46 @@
       },
       "previous": "ca276d583471308f01bd77b9d596868fdc38511c5c18c828fdf489524d70634f",
       "digest": "911611c6223d5eedb79d693f840ff1545e27b57c42c64e997e5ec3b9610b6716"
+    },
+    {
+      "sequence": 4023,
+      "at": "2026-10-07T23:13:33.102Z",
+      "kind": "task",
+      "data": {
+        "number": 161,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              160
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.20"
+              }
+            ]
+          },
+          "dependencies": [
+            160
+          ]
+        }
+      },
+      "previous": "911611c6223d5eedb79d693f840ff1545e27b57c42c64e997e5ec3b9610b6716",
+      "digest": "dad67940ec06c83ead5c84a5b13fdcca501481913f2f4341e25a267313dd6e0e"
+    },
+    {
+      "sequence": 4024,
+      "at": "2026-10-07T23:16:37.055Z",
+      "kind": "transaction",
+      "data": {
+        "id": "df1353e8-57de-41c0-82fe-a473e64b1706"
+      },
+      "previous": "dad67940ec06c83ead5c84a5b13fdcca501481913f2f4341e25a267313dd6e0e",
+      "digest": "811e38ece94ab4ccb891b98ad6c90111244087e69b5489a5897d5475f33bc205"
     }
   ]
 }
