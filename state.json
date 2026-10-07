@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1933,
+  "revision": 1935,
   "tasks": {
     "132": {
       "number": 132,
@@ -5847,7 +5847,7 @@
     },
     "161": {
       "number": 161,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791368515129,
       "attempts": {},
       "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
@@ -6015,7 +6015,7 @@
           }
         ]
       },
-      "updatedAt": 1791379499782,
+      "updatedAt": 1791379510199,
       "admission": {
         "number": 161,
         "headSha": "fd1089d472ec538c5cdd64a32b8d926261d81135",
@@ -51531,6 +51531,46 @@
       },
       "previous": "b6197a9b5157164f68af72a9ff5ec4b48b334a90ac5c8958506e7f63f9b66a24",
       "digest": "0d56d083f50e9f4dcb23f5b0641bd7379fffaca3ca379ae9065c926dadcc8e08"
+    },
+    {
+      "sequence": 1934,
+      "at": "2026-10-07T13:25:10.199Z",
+      "kind": "task",
+      "data": {
+        "number": 161,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              160
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.20"
+              }
+            ]
+          },
+          "dependencies": [
+            160
+          ]
+        }
+      },
+      "previous": "0d56d083f50e9f4dcb23f5b0641bd7379fffaca3ca379ae9065c926dadcc8e08",
+      "digest": "2c4a41a9f76d68af8a7c458fab2c85505db9cad4f8ef675efd20c01f584afbd2"
+    },
+    {
+      "sequence": 1935,
+      "at": "2026-10-07T13:27:18.896Z",
+      "kind": "transaction",
+      "data": {
+        "id": "d795656b-86e9-46b7-8c07-fc994b833d74"
+      },
+      "previous": "2c4a41a9f76d68af8a7c458fab2c85505db9cad4f8ef675efd20c01f584afbd2",
+      "digest": "3724b394aaf54b7dd7cbe20bf83ba7146f95c803cb90646d749608d15fc5d366"
     }
   ]
 }
