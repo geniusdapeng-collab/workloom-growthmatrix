@@ -4,6 +4,7 @@ import { constants, copyFileSync, existsSync, mkdirSync, readFileSync, realpathS
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { FilmChannelError, FilmWorkerChannel, parseFilmWorkerJobContext, processIpcTransport,
   filmCanonicalJson, type FilmChannelTransport, type FilmWorkerJobContext } from "./film-worker-channel.js";
+import { POST_RENDER_STAGES } from "./post-render-acceptance.js";
 import type { ProducerGateOptions, ProducerVerdict } from "./producer-gate.js";
 import { filmReviewPolicy, reviewWithoutModel } from "./rendered-output-policy.js";
 import { durationPolicy, FILM_COMPLETENESS_PRINCIPLE } from "./creative-duration-policy.js";
@@ -90,7 +91,6 @@ export function normalizeFilmJobRequest(stages: string[], options: Record<string
   if (normalized["post-exclude-shots"] && (normalized["assembly-mode"] !== "post-only" || String(normalized["assembly-reason"] ?? "").trim().length < 8)) throw new FilmChannelError("OPTION_INVALID", "删除镜头必须声明后期模式及理由");
   const effective = [...new Set(stages)];
   if (effective.includes("deliver") && !effective.includes("master")) effective.push("master");
-  if (normalized["assembly-mode"] === "post-only" && !effective.includes("spec")) effective.push("spec");
   return { stages: effective, options: normalized };
 }
 /** Resolve authored policy once, without mutating caller input or leaving options and source in conflict. */
@@ -211,7 +211,9 @@ export class FullChainFilmWorker {
   }
   async review(options: Omit<ProducerGateOptions, "contracts">): Promise<ProducerVerdict> {
     const normalized = normalizeFilmJobRequest(this.context.stages, this.context.options);
-    const local = reviewWithoutModel(options, filmReviewPolicy(normalized.options["review-policy"]));
+    // Postprocessing uses the parent's zero-cost technical receipt, never a quality model.
+    const local = POST_RENDER_STAGES.has(options.stage) ? null
+      : reviewWithoutModel(options, filmReviewPolicy(normalized.options["review-policy"]));
     if (local) return local;
     const aliases: Record<string, string> = { script: "spec", prompt: "spec", keyframe: "plates", shot: "videos" };
     let stage = aliases[options.stage] ?? options.stage;
@@ -221,10 +223,13 @@ export class FullChainFilmWorker {
     }
     const shotId = typeof options.context?.shotId === "string" ? options.context.shotId : null;
     const params = { stage: options.stage, projectId: options.projectId, artifacts: options.artifacts.map((artifact) => ({ ref: this.ref(artifact.path), kind: artifact.kind, note: artifact.note, probe: artifact.probe })),
-      referenceImages: options.referenceImages?.map((file) => this.reference(file)), deterministic: options.deterministic,
+      referenceImages: POST_RENDER_STAGES.has(options.stage) ? undefined : options.referenceImages?.map((file) => this.reference(file)), deterministic: options.deterministic,
       requiredCheckIds: options.requiredCheckIds, minScore: options.minScore, rubric: options.rubric, context: options.context };
     const verdict = await this.call("gate.review", stage, shotId, params) as ProducerVerdict;
-    if (!verdict || verdict.stage !== options.stage || typeof verdict.approved !== "boolean" || !verdict.contractHash) throw new FilmChannelError("REVIEW_UNVERIFIED", "父服务裁决未绑定作者合同");
+    if (!verdict || verdict.stage !== options.stage || typeof verdict.approved !== "boolean"
+      || (!POST_RENDER_STAGES.has(options.stage) && !verdict.contractHash)) {
+      throw new FilmChannelError("REVIEW_UNVERIFIED", "父服务未返回当前阶段的有效裁决；生成前评审须绑定作者合同");
+    }
     return verdict;
   }
   async design(prompt: string): Promise<string> {
