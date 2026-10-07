@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1562,
+  "revision": 1564,
   "tasks": {
     "132": {
       "number": 132,
@@ -5952,7 +5952,7 @@
     },
     "167": {
       "number": 167,
-      "status": "waiting_ci",
+      "status": "parked",
       "firstSeen": 1791373275072,
       "attempts": {},
       "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
@@ -6085,7 +6085,17 @@
         "bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts",
         "bundles/ai-video/library/style-variants/bold-promo.json"
       ],
-      "ciSince": 1791374342093
+      "ciSince": 1791374342093,
+      "error": "检查/评审阻断：Required check db-gate missing/failed/ambiguous; Required check test-gate missing/failed/ambiguous",
+      "repairRequired": {
+        "provider": "codex",
+        "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "reason": "检查/评审阻断：Required check db-gate missing/failed/ambiguous; Required check test-gate missing/failed/ambiguous",
+        "at": 1791374342093
+      },
+      "recoveryIntent": null,
+      "blockedUntil": 1791374942093
     },
     "168": {
       "number": 168,
@@ -39873,6 +39883,39 @@
       },
       "previous": "19d39f5e69c50c3c250fa414e26522abae6450461cac8b2cfe8e4323ebe15ec5",
       "digest": "1248ce13c144ddf8b06c834ddf598cd51ba30068b56fcf3f5f54deea4b8ff012"
+    },
+    {
+      "sequence": 1563,
+      "at": "2026-10-07T11:59:02.093Z",
+      "kind": "task",
+      "data": {
+        "number": 167,
+        "patch": {
+          "status": "parked",
+          "error": "检查/评审阻断：Required check db-gate missing/failed/ambiguous; Required check test-gate missing/failed/ambiguous",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "reason": "检查/评审阻断：Required check db-gate missing/failed/ambiguous; Required check test-gate missing/failed/ambiguous",
+            "at": 1791374342093
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791374942093
+        }
+      },
+      "previous": "1248ce13c144ddf8b06c834ddf598cd51ba30068b56fcf3f5f54deea4b8ff012",
+      "digest": "04153607312ef61559b7280bea58f60a2e3ec7b1095feb53ccd22d7b5e12ad35"
+    },
+    {
+      "sequence": 1564,
+      "at": "2026-10-07T12:01:55.524Z",
+      "kind": "transaction",
+      "data": {
+        "id": "07fb683f-ddc3-4333-a84e-82af4d2c85dd"
+      },
+      "previous": "04153607312ef61559b7280bea58f60a2e3ec7b1095feb53ccd22d7b5e12ad35",
+      "digest": "0fd27103bdf3d5d242d926a0bf8d2739a606652e0de8833f1bfcaaac6d3d892c"
     }
   ]
 }
