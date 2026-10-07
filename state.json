@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4012,
+  "revision": 4014,
   "tasks": {
     "132": {
       "number": 132,
@@ -4986,7 +4986,7 @@
     },
     "153": {
       "number": 153,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791359178476,
       "attempts": {},
       "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -5147,7 +5147,7 @@
           }
         ]
       },
-      "updatedAt": 1791414616413,
+      "updatedAt": 1791414813102,
       "admission": {
         "number": 153,
         "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -99530,6 +99530,46 @@
       },
       "previous": "8a2288faf2a0e5931a01070d33541314939b74f1a8ab11ab23b38b95cdd12431",
       "digest": "8732dc1edb128311e03715fbd8ddc9368c7d363694c7e58ba23b0f5fb5d36751"
+    },
+    {
+      "sequence": 4013,
+      "at": "2026-10-07T23:13:33.102Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              152
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.12"
+              }
+            ]
+          },
+          "dependencies": [
+            152
+          ]
+        }
+      },
+      "previous": "8732dc1edb128311e03715fbd8ddc9368c7d363694c7e58ba23b0f5fb5d36751",
+      "digest": "fa98f773e32bec52aedc4ed7f7f092d8235a899081662fb421d33daf70aa84f1"
+    },
+    {
+      "sequence": 4014,
+      "at": "2026-10-07T23:15:34.267Z",
+      "kind": "transaction",
+      "data": {
+        "id": "db41a3f7-a9a7-4247-bc20-e7f536098cf6"
+      },
+      "previous": "fa98f773e32bec52aedc4ed7f7f092d8235a899081662fb421d33daf70aa84f1",
+      "digest": "917ead54b1c1d45ed3160c70ae957723e3e15fc9efee64cb9c957f92bb0c4568"
     }
   ]
 }
