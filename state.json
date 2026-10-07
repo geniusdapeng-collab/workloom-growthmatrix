@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 661,
+  "revision": 664,
   "tasks": {
     "132": {
       "number": 132,
@@ -3154,6 +3154,132 @@
         142,
         144
       ]
+    },
+    "151": {
+      "number": 151,
+      "status": "waiting_ci",
+      "firstSeen": 1791358616212,
+      "attempts": {},
+      "headSha": "18c1efdb434069de4ac7323c1e88f331439d5db5",
+      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "branch": "fix/T-2026-1007-0918-portrait-agent-paid-once",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [
+          148
+        ],
+        "releases": []
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 151,
+        "headSha": "18c1efdb434069de4ac7323c1e88f331439d5db5",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "packages/video-studio/src/generation-file-store.ts",
+          "packages/video-studio/src/image-task-receipt.ts",
+          "packages/video-studio/src/portrait-agent.test.ts",
+          "packages/video-studio/src/portrait-agent.ts"
+        ],
+        "filesHash": "f7a5651f3871da9164f7fbad969a94ae954d603964ed1462b89ceabc17e1b1b9",
+        "dependsOn": [
+          148
+        ],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/portrait-agent.test.ts packages/video-studio/src/character-archive.test.ts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T07:27:31.819604+00:00",
+            "result": "Portrait execution and archive safety tests passed with no paid calls"
+          },
+          {
+            "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T07:27:32.194259+00:00",
+            "result": "video-studio typecheck passed"
+          }
+        ],
+        "reviewedAt": "2026-10-07T07:36:52.025180+00:00",
+        "summary": "Current Codex fully read all four changed files and archive, shot-spec, intent and canonicalization dependencies. No automatic alternative prompt, sensitive-error retry or background-triggered regeneration remains. Default backgroundRequired=false records absence of quality review without fake passed metrics. Explicit review can fail the candidate but preserves the existing charged URL. Journal scope includes character, angle, provider, endpoint and full frozen body, independent of candidate version. Accepted URL is saved before downloading, and legacy matching angle proof without journal fails closed. Existing immutable versions, path checks, current artifact hashes, anchor-byte checks, partial activation discipline and archive mutex are retained. Exact-source tests and typecheck passed; no unresolved finding or paid test call.",
+        "passed": true,
+        "id": "5dcb0222c1bcfd70038f90049f44f1633e04154cf0f8300294300e8463394eb7"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 151,
+        "pull": {
+          "number": 151,
+          "state": "open",
+          "title": "fix(growth): stop automatic portrait regeneration [T-2026-1007-0918]",
+          "body": "The registered portrait agent automatically hardened prompts and generated another paid image after background checks failed. It also lost the provider URL when downloads failed. The default now accepts produced portraits without background review. Explicit checks preserve their result and never submit a replacement automatically. A stable per-character/angle journal records the exact request before POST and accepted URL before download; candidate changes, corrupt artifacts and restarts restore that URL. Unknown acceptance and matching legacy generation without its acceptance log refuse another POST. Partial candidates preserve the prior active version. PR148 supplies the identical durable image journal helpers.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148\n  ],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/fix/T-2026-1007-0918-portrait-agent-paid-once",
+            "sha": "18c1efdb434069de4ac7323c1e88f331439d5db5",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "18c1efdb434069de4ac7323c1e88f331439d5db5",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "files": [
+          "packages/video-studio/src/generation-file-store.ts",
+          "packages/video-studio/src/image-task-receipt.ts",
+          "packages/video-studio/src/portrait-agent.test.ts",
+          "packages/video-studio/src/portrait-agent.ts"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [
+            148
+          ],
+          "releases": []
+        },
+        "headTime": 1791358040000,
+        "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": []
+      },
+      "updatedAt": 1791358616212
     }
   },
   "leases": {
@@ -16885,6 +17011,161 @@
       },
       "previous": "030cfb07b3d6ae1a8c26315dc7f9cd003618acb037d843ddc81e4102b917d05b",
       "digest": "1fb9f0229a345f21206b4364e40dcb50e09c6775d73e4646c778601c49260873"
+    },
+    {
+      "sequence": 662,
+      "at": "2026-10-07T07:36:56.211Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 151,
+        "id": "5dcb0222c1bcfd70038f90049f44f1633e04154cf0f8300294300e8463394eb7",
+        "headSha": "18c1efdb434069de4ac7323c1e88f331439d5db5",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8"
+      },
+      "previous": "1fb9f0229a345f21206b4364e40dcb50e09c6775d73e4646c778601c49260873",
+      "digest": "cced3678bce946576028ecdd614f7e72ab082d06ddf506816f16ec431ab4113b"
+    },
+    {
+      "sequence": 663,
+      "at": "2026-10-07T07:36:56.212Z",
+      "kind": "task",
+      "data": {
+        "number": 151,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "18c1efdb434069de4ac7323c1e88f331439d5db5",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-portrait-agent-paid-once",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148
+            ],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 151,
+            "headSha": "18c1efdb434069de4ac7323c1e88f331439d5db5",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/portrait-agent.test.ts",
+              "packages/video-studio/src/portrait-agent.ts"
+            ],
+            "filesHash": "f7a5651f3871da9164f7fbad969a94ae954d603964ed1462b89ceabc17e1b1b9",
+            "dependsOn": [
+              148
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/portrait-agent.test.ts packages/video-studio/src/character-archive.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T07:27:31.819604+00:00",
+                "result": "Portrait execution and archive safety tests passed with no paid calls"
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T07:27:32.194259+00:00",
+                "result": "video-studio typecheck passed"
+              }
+            ],
+            "reviewedAt": "2026-10-07T07:36:52.025180+00:00",
+            "summary": "Current Codex fully read all four changed files and archive, shot-spec, intent and canonicalization dependencies. No automatic alternative prompt, sensitive-error retry or background-triggered regeneration remains. Default backgroundRequired=false records absence of quality review without fake passed metrics. Explicit review can fail the candidate but preserves the existing charged URL. Journal scope includes character, angle, provider, endpoint and full frozen body, independent of candidate version. Accepted URL is saved before downloading, and legacy matching angle proof without journal fails closed. Existing immutable versions, path checks, current artifact hashes, anchor-byte checks, partial activation discipline and archive mutex are retained. Exact-source tests and typecheck passed; no unresolved finding or paid test call.",
+            "passed": true,
+            "id": "5dcb0222c1bcfd70038f90049f44f1633e04154cf0f8300294300e8463394eb7"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 151,
+            "pull": {
+              "number": 151,
+              "state": "open",
+              "title": "fix(growth): stop automatic portrait regeneration [T-2026-1007-0918]",
+              "body": "The registered portrait agent automatically hardened prompts and generated another paid image after background checks failed. It also lost the provider URL when downloads failed. The default now accepts produced portraits without background review. Explicit checks preserve their result and never submit a replacement automatically. A stable per-character/angle journal records the exact request before POST and accepted URL before download; candidate changes, corrupt artifacts and restarts restore that URL. Unknown acceptance and matching legacy generation without its acceptance log refuse another POST. Partial candidates preserve the prior active version. PR148 supplies the identical durable image journal helpers.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148\n  ],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-portrait-agent-paid-once",
+                "sha": "18c1efdb434069de4ac7323c1e88f331439d5db5",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "18c1efdb434069de4ac7323c1e88f331439d5db5",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "files": [
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/portrait-agent.test.ts",
+              "packages/video-studio/src/portrait-agent.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                148
+              ],
+              "releases": []
+            },
+            "headTime": 1791358040000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "cced3678bce946576028ecdd614f7e72ab082d06ddf506816f16ec431ab4113b",
+      "digest": "b449c2fdc8b7e9fb6822f34810401ea949506e4a2e7f56c94e08a2fe84456dfb"
+    },
+    {
+      "sequence": 664,
+      "at": "2026-10-07T07:36:54.241Z",
+      "kind": "transaction",
+      "data": {
+        "id": "13429e59-44fb-4a2f-bd89-6303099b752f"
+      },
+      "previous": "b449c2fdc8b7e9fb6822f34810401ea949506e4a2e7f56c94e08a2fe84456dfb",
+      "digest": "e9e1b2bbd5bf5652008527e44ef1c596074c24f9d8eb60d816258ac32d92f781"
     }
   ]
 }
