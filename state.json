@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2493,
+  "revision": 2498,
   "tasks": {
     "132": {
       "number": 132,
@@ -3329,7 +3329,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791388536253,
+      "updatedAt": 1791390064078,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 0,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
@@ -3363,15 +3363,15 @@
       },
       "admission": {
         "number": 144,
-        "headSha": "0b2f473e327eb68de59b017b72178ca2052f9864",
-        "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
+        "headSha": "a248bf621d885644e70ce55d0147cbf9449a2bb2",
+        "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
         "filesHash": "c3627266757cfe14463fb4cf59f8b1216b7729c89a642bb6cf8082bacee78149",
         "scopes": [
           "protocol"
         ],
         "owner": "admission/pr-144",
         "generation": {
-          "protocol": 47
+          "protocol": 49
         }
       },
       "recoveryCount": 0,
@@ -7553,9 +7553,9 @@
   "leases": {
     "protocol": {
       "owner": null,
-      "generation": 48,
-      "acquiredAt": 1791388805282,
-      "expiresAt": 1791388805282
+      "generation": 49,
+      "acquiredAt": 1791390064078,
+      "expiresAt": 1791390064078
     },
     "migrations": {
       "owner": null,
@@ -64769,6 +64769,93 @@
       },
       "previous": "8970b11fbaeda79c810bb225ede92ebf565cb3e8dd4349b5ee5a25a5b9a95de2",
       "digest": "32d32cf4987678e2994c3396d86510fb510a5816aacff25d61f5955bc491b68a"
+    },
+    {
+      "sequence": 2494,
+      "at": "2026-10-07T16:21:04.078Z",
+      "kind": "lease_acquire",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-144",
+        "generation": {
+          "protocol": 49
+        }
+      },
+      "previous": "32d32cf4987678e2994c3396d86510fb510a5816aacff25d61f5955bc491b68a",
+      "digest": "d3f91c9c15532ee0bd2c139a9e1801cb4fafb38e44ec82def74adac94cd6cb51"
+    },
+    {
+      "sequence": 2495,
+      "at": "2026-10-07T16:21:04.078Z",
+      "kind": "lease_release",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-144",
+        "generation": {
+          "protocol": 49
+        }
+      },
+      "previous": "d3f91c9c15532ee0bd2c139a9e1801cb4fafb38e44ec82def74adac94cd6cb51",
+      "digest": "00df55d1e44398b551ef184ed1b4d34301b500e605994583b408ece85960d92c"
+    },
+    {
+      "sequence": 2496,
+      "at": "2026-10-07T16:21:04.078Z",
+      "kind": "source_admitted",
+      "data": {
+        "number": 144,
+        "headSha": "a248bf621d885644e70ce55d0147cbf9449a2bb2",
+        "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+        "filesHash": "c3627266757cfe14463fb4cf59f8b1216b7729c89a642bb6cf8082bacee78149",
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-144",
+        "generation": {
+          "protocol": 49
+        }
+      },
+      "previous": "00df55d1e44398b551ef184ed1b4d34301b500e605994583b408ece85960d92c",
+      "digest": "70fba97a5467197b09ec3cc36ff040a7d3946753f97de87b01d0ae6f86a324b6"
+    },
+    {
+      "sequence": 2497,
+      "at": "2026-10-07T16:21:04.078Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "admission": {
+            "number": 144,
+            "headSha": "a248bf621d885644e70ce55d0147cbf9449a2bb2",
+            "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+            "filesHash": "c3627266757cfe14463fb4cf59f8b1216b7729c89a642bb6cf8082bacee78149",
+            "scopes": [
+              "protocol"
+            ],
+            "owner": "admission/pr-144",
+            "generation": {
+              "protocol": 49
+            }
+          }
+        }
+      },
+      "previous": "70fba97a5467197b09ec3cc36ff040a7d3946753f97de87b01d0ae6f86a324b6",
+      "digest": "7504b5f3a604376a6cb8790ce05ef48e761439f255c4c4af897f42ad8a5ac3b0"
+    },
+    {
+      "sequence": 2498,
+      "at": "2026-10-07T16:21:00.279Z",
+      "kind": "transaction",
+      "data": {
+        "id": "source-admit:144:a248bf621d885644e70ce55d0147cbf9449a2bb2:97d3d26cd046d74d94a24386be4b41fa8c059c17"
+      },
+      "previous": "7504b5f3a604376a6cb8790ce05ef48e761439f255c4c4af897f42ad8a5ac3b0",
+      "digest": "794498c9c1869fb8ef736164030057e3069637d701c9c929c88067e0a05e4992"
     }
   ]
 }
