@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1263,
+  "revision": 1265,
   "tasks": {
     "132": {
       "number": 132,
@@ -2781,7 +2781,7 @@
     },
     "148": {
       "number": 148,
-      "status": "waiting_ci",
+      "status": "parked",
       "firstSeen": 1791356183843,
       "attempts": {},
       "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
@@ -2922,7 +2922,7 @@
       ],
       "ciSince": 1791356412845,
       "error": "CNB 409 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/159/merge :: {\"errcode\":2009014,\"errmsg\":\"the pull can not merge yet\"}\n",
-      "blockedUntil": 1791368415170,
+      "blockedUntil": 1791369613609,
       "candidate": {
         "number": 159,
         "branch": "delivery/candidate/pr-148-8ff6f127b0b6f69437c4485d70b80df3",
@@ -30033,6 +30033,31 @@
       },
       "previous": "c3517f651f43e29d503be86862586df23b07f5cfdef1e72f971feb39d0b63d88",
       "digest": "aea01bef375532797db90c4c32671e9ddfdfa468d21f3f4104df2002c45669b0"
+    },
+    {
+      "sequence": 1264,
+      "at": "2026-10-07T10:30:13.609Z",
+      "kind": "task",
+      "data": {
+        "number": 148,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 409 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/159/merge :: {\"errcode\":2009014,\"errmsg\":\"the pull can not merge yet\"}\n",
+          "blockedUntil": 1791369613609
+        }
+      },
+      "previous": "aea01bef375532797db90c4c32671e9ddfdfa468d21f3f4104df2002c45669b0",
+      "digest": "d330923d63aa7fb45bd8921ead2d670f69572de4ccdf2c96c185620ce0345069"
+    },
+    {
+      "sequence": 1265,
+      "at": "2026-10-07T10:31:44.783Z",
+      "kind": "transaction",
+      "data": {
+        "id": "4e824f8e-3af4-4fcf-bf5d-ec7c3cdff656"
+      },
+      "previous": "d330923d63aa7fb45bd8921ead2d670f69572de4ccdf2c96c185620ce0345069",
+      "digest": "59463e0bf7a0e80c3bc5e5f0c1992714f167229b107b1ce788d2ca8e6d976d54"
     }
   ]
 }
