@@ -77,11 +77,22 @@ export async function verifyRelease(platform, release, download = downloadReleas
     assets = [asset];
   } else {
     const manifest = await download(platform.repo, tag, 'WorkLoom-release-manifest.json', { token: platform.token, maximum: 1024 * 1024, json: true });
-    const expected = ['WorkLoom-mac-arm64.dmg', 'WorkLoom-mac-x64.dmg', 'WorkLoom-win-x64.exe'];
-    if (manifest.data.schemaVersion !== 1 || manifest.data.tag !== tag || manifest.data.sourceSha !== release.sha || !Array.isArray(manifest.data.assets) || manifest.data.assets.length !== expected.length) throw new Error('Desktop release manifest/source is incomplete');
+    const data = manifest.data;
+    if (!data || data.schemaVersion !== 1 || data.product !== platform.repo || data.tag !== tag
+      || data.sha !== release.sha || data.platformSigning !== 'signed'
+      || !Array.isArray(data.assets) || data.assets.length !== 3) throw new Error('Desktop release manifest/source/signing is incomplete');
+    const names = data.assets.map(asset => asset?.name);
+    if (names.some(name => typeof name !== 'string' || !name || name === '.' || name === '..' || /[/\\\r\n\0]/.test(name))
+      || new Set(names).size !== names.length) throw new Error('Desktop manifest asset names are unsafe/duplicated');
+    // Match the native finalizer's actual product/version prefixes and platform suffixes.
+    const expected = [/-mac-arm64\.dmg$/, /-mac-x64\.dmg$/, /-win-x64\.exe$/].map(pattern => {
+      const matching = names.filter(name => pattern.test(name));
+      if (matching.length !== 1) throw new Error('Desktop manifest platform asset is missing/ambiguous');
+      return matching[0];
+    });
     assets = [];
     for (const name of expected) {
-      const record = manifest.data.assets.filter(asset => asset.name === name);
+      const record = data.assets.filter(asset => asset.name === name);
       if (record.length !== 1 || !Number.isSafeInteger(record[0].size) || record[0].size <= 0 || !/^[a-f0-9]{128}$/.test(record[0].sha512 ?? '')) throw new Error('Desktop manifest digest/size is invalid');
       const actual = await download(platform.repo, tag, name, { token: platform.token });
       if (actual.size !== record[0].size || actual.sha512 !== record[0].sha512) throw new Error(`Desktop byte receipt mismatch: ${name}`);
@@ -89,6 +100,36 @@ export async function verifyRelease(platform, release, download = downloadReleas
     }
   }
   return { releaseId: metadata.id, tag, sha: source.sha, build: release.build?.sn ?? null, assets, verifiedAt: new Date().toISOString() };
+}
+
+/** Stable tag creation is idempotent by name and exact source; never move an existing tag. */
+export async function ensureDesktopReleaseTag(platform, release) {
+  if (!/^v\d+\.\d+\.\d+$/.test(release.version ?? '') || !/^[a-f0-9]{40}$/.test(release.sha ?? '')) {
+    throw new Error('Desktop release requires a stable version and exact Git SHA');
+  }
+  const path = `/-/git/tags/${encodeURIComponent(release.version)}`;
+  const read = () => platform.call(path);
+  const verify = tag => {
+    const sha = tag?.commit?.sha ?? (tag?.target_type === 'commit' ? tag.target : null);
+    if (![release.version, `refs/tags/${release.version}`].includes(tag?.name) || sha !== release.sha) {
+      throw new Error('Desktop release tag points to a different source; refusing replacement');
+    }
+    return { name: release.version, sha };
+  };
+  try { return verify(await read()); }
+  catch (error) { if (error.status !== 404) throw error; }
+  let writeError;
+  try {
+    await platform.call('/-/git/tags', { method: 'POST', body: {
+      name: release.version, target: release.sha, message: `WorkLoom release ${release.key}`,
+    } });
+  } catch (error) { writeError = error; }
+  // A lost create acknowledgement can be accepted only by a genuine tag readback.
+  try { return verify(await read()); }
+  catch (error) {
+    if (writeError && error.status === 404) throw writeError;
+    throw error;
+  }
 }
 
 async function releaseBuilds(platform, release) {
@@ -145,6 +186,15 @@ export async function reconcileReleases({ platform, store, now = Date.now(), ver
       }
       if (release.status !== 'pending' || (release.retryAfter ?? 0) > now) continue;
       if (!SHA_RE.test(release.sha)) throw new Error('Invalid frozen release source');
+      if (kind === 'desktop') {
+        await store.mutate(current => appendEvent(current, 'release_tag_intent',
+          { key: item.key, version: release.version, sha: release.sha }, now));
+        const tag = await ensureDesktopReleaseTag(platform, release);
+        await store.mutate(current => {
+          current.releases[item.key] = { ...current.releases[item.key], tag };
+          appendEvent(current, 'release_tag_verified', { key: item.key, tag }, now);
+        });
+      }
       const knownBuilds = (await releaseBuilds(platform, release)).map(build => build.sn);
       await store.mutate(current => {
         current.releases[item.key] = { ...current.releases[item.key], status: 'launching', knownBuilds, attempts: release.attempts + 1, launchIntentAt: now };
@@ -152,7 +202,9 @@ export async function reconcileReleases({ platform, store, now = Date.now(), ver
       });
       const build = await platform.call('/-/build/start', { method: 'POST', body: {
         branch: 'main', sha: release.sha, event: releaseEventFor(kind), sync: 'false', title: `WorkLoom release ${item.key}`,
-        env: { DELIVERY_RELEASE_ID: item.key, RELEASE_EXPECTED_SHA: release.sha, CNB_REPO: platform.repo, ...(kind === 'ui' ? { UI_VERSION: release.version } : { DESKTOP_RELEASE_VERSION: release.version }) },
+        env: { DELIVERY_RELEASE_ID: item.key, RELEASE_EXPECTED_SHA: release.sha,
+          ...(kind === 'ui' ? { UI_VERSION: release.version }
+            : { RELEASE_TAG: release.version, RELEASE_SHA: release.sha, PLATFORM_SIGNING: 'signed' }) },
       } });
       if (!build?.success || !build.sn) throw new Error('Release start has no real build acknowledgement');
       await store.mutate(current => {
