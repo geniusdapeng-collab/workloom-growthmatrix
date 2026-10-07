@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 330,
+  "revision": 332,
   "tasks": {
     "132": {
       "number": 132,
@@ -1770,8 +1770,8 @@
         }
       },
       "updatedAt": 1791342913169,
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/140 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791342910186,
+      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls?state=all&base_ref=main&page_size=100&page=2 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791343513169,
       "headSha": "4ae528d2963ac327bd2faec2012a91095b157d7a",
       "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
       "branch": "task/T-2026-1007-0001",
@@ -9596,6 +9596,31 @@
       },
       "previous": "dbc2285f7ba8b1fed30be334d1d4da8a71a86bab66765a7e135c0e26e9732ad4",
       "digest": "78d9d677744a30baa2ef5dcfafcae5b2a42dfa0485f00380448580d4a7d2514a"
+    },
+    {
+      "sequence": 331,
+      "at": "2026-10-07T03:15:13.169Z",
+      "kind": "task",
+      "data": {
+        "number": 140,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls?state=all&base_ref=main&page_size=100&page=2 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791343513169
+        }
+      },
+      "previous": "78d9d677744a30baa2ef5dcfafcae5b2a42dfa0485f00380448580d4a7d2514a",
+      "digest": "a46bffeb56e327ead9cb5e127af08f9b855fd3c0bc1a28f984cab874a986b702"
+    },
+    {
+      "sequence": 332,
+      "at": "2026-10-07T03:15:25.716Z",
+      "kind": "transaction",
+      "data": {
+        "id": "82c09393-4999-4e66-b759-10814c57d7ec"
+      },
+      "previous": "a46bffeb56e327ead9cb5e127af08f9b855fd3c0bc1a28f984cab874a986b702",
+      "digest": "675db846056a1fd08d8b92daff323f9800c1ee68ff2ac63d941fde8ca2268a39"
     }
   ]
 }
