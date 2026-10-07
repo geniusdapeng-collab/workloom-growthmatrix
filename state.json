@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2014,
+  "revision": 2016,
   "tasks": {
     "132": {
       "number": 132,
@@ -2667,7 +2667,7 @@
     },
     "142": {
       "number": 142,
-      "status": "aligning",
+      "status": "waiting_ci",
       "firstSeen": 1791350268258,
       "attempts": {},
       "admission": {
@@ -2680,7 +2680,7 @@
         "generation": {}
       },
       "updatedAt": 1791380198087,
-      "headSha": "b32a0b879bbd483bb859561296d24eef4cdf4392",
+      "headSha": "bbc1e45a38a23615380fa157296dc0699f0e2c77",
       "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
       "branch": "fix/T-2026-1007-0918-prompt-redlines",
       "intent": {
@@ -2774,7 +2774,7 @@
         "packages/video-studio/src/prompt-redlines.test.ts",
         "packages/video-studio/src/prompt-redlines.ts"
       ],
-      "ciSince": 1791375289156,
+      "ciSince": 1791380198087,
       "error": "CNB 409 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/162/merge :: {\"errcode\":2009014,\"errmsg\":\"the pull can not merge yet\"}\n",
       "blockedUntil": 0,
       "candidate": null,
@@ -2854,16 +2854,12 @@
       "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
-      "alignmentIntent": {
-        "headSha": "b32a0b879bbd483bb859561296d24eef4cdf4392",
-        "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
-        "at": 1791380198087
-      },
+      "alignmentIntent": null,
       "alignment": {
-        "sha": "b32a0b879bbd483bb859561296d24eef4cdf4392",
-        "previousHead": "27e458eb9f44c446e61cbb9973b5b58c8dfa7fec",
-        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
-        "verifiedAt": "2026-10-07T12:15:37.799Z"
+        "sha": "bbc1e45a38a23615380fa157296dc0699f0e2c77",
+        "previousHead": "b32a0b879bbd483bb859561296d24eef4cdf4392",
+        "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+        "verifiedAt": "2026-10-07T13:37:15.639Z"
       },
       "dependencies": [
         170
@@ -53285,6 +53281,38 @@
       },
       "previous": "2ab97b3de2bf8ecb77fb67efb21614c2f05311cda10976ab64afb885b2ef89c3",
       "digest": "d2bece2d4cf112221114829165abe2659509970eae3ff7e9a92c6977ccdac10f"
+    },
+    {
+      "sequence": 2015,
+      "at": "2026-10-07T13:36:38.087Z",
+      "kind": "task",
+      "data": {
+        "number": 142,
+        "patch": {
+          "status": "waiting_ci",
+          "alignment": {
+            "sha": "bbc1e45a38a23615380fa157296dc0699f0e2c77",
+            "previousHead": "b32a0b879bbd483bb859561296d24eef4cdf4392",
+            "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+            "verifiedAt": "2026-10-07T13:37:15.639Z"
+          },
+          "alignmentIntent": null,
+          "headSha": "bbc1e45a38a23615380fa157296dc0699f0e2c77",
+          "ciSince": 1791380198087
+        }
+      },
+      "previous": "d2bece2d4cf112221114829165abe2659509970eae3ff7e9a92c6977ccdac10f",
+      "digest": "27ba5ea77fb6c8b0dcbe0b8d529a9ef0941052722c99f31550edab1f372bd3fb"
+    },
+    {
+      "sequence": 2016,
+      "at": "2026-10-07T13:37:15.701Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8bd5c83c-6b7b-43a6-9e3f-a754e43cc038"
+      },
+      "previous": "27ba5ea77fb6c8b0dcbe0b8d529a9ef0941052722c99f31550edab1f372bd3fb",
+      "digest": "6bdd75771fca396464e5797ee523caa07ba505aec9165774c382563d85ca2f61"
     }
   ]
 }
