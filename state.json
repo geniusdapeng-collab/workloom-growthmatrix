@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3491,
+  "revision": 3493,
   "tasks": {
     "132": {
       "number": 132,
@@ -680,7 +680,7 @@
         "scripts/tools/full-chain-film.mts"
       ],
       "ciSince": 1791310212615,
-      "updatedAt": 1791405908044,
+      "updatedAt": 1791407404617,
       "alignmentCount": 3,
       "alignmentIntent": {
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -688,8 +688,8 @@
         "at": 1791405908044
       },
       "developerReview": null,
-      "error": "主干对齐失败：Command failed: git merge --no-ff --no-edit cf3615e67aedadf4094aaf5b0d6d738a5fc61e98\n",
-      "blockedUntil": 1791406508044,
+      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/134/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791408004617,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -87691,6 +87691,31 @@
       },
       "previous": "82366b5d288a1e1a95e660bf911fe189634b37dd93b1be6fef3d382dcae6ec28",
       "digest": "ec49264c1c45326f4c274985bf64db4f2c8adebfe4f824e62e73fa8ec402146f"
+    },
+    {
+      "sequence": 3492,
+      "at": "2026-10-07T21:10:04.617Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/134/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791408004617
+        }
+      },
+      "previous": "ec49264c1c45326f4c274985bf64db4f2c8adebfe4f824e62e73fa8ec402146f",
+      "digest": "b3debd5a04f653989f2fb8500640eefd67b0ec603f4da94e6a7ba3b46c60d2d4"
+    },
+    {
+      "sequence": 3493,
+      "at": "2026-10-07T21:10:23.273Z",
+      "kind": "transaction",
+      "data": {
+        "id": "a55a5161-642b-4da7-9ab3-38574356d980"
+      },
+      "previous": "b3debd5a04f653989f2fb8500640eefd67b0ec603f4da94e6a7ba3b46c60d2d4",
+      "digest": "0554fe25e739b84e329788773593eac249f2347f6b714791512854a7099b65c9"
     }
   ]
 }
