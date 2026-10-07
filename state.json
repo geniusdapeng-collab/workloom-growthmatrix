@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3253,
+  "revision": 3255,
   "tasks": {
     "132": {
       "number": 132,
@@ -5572,7 +5572,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791402909225,
+      "updatedAt": 1791403215350,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -82124,6 +82124,52 @@
       },
       "previous": "971cb93c9dee51c3e788748a4ac2429921676bc4bf76ff4ee498f2537235d2e5",
       "digest": "8ce490757023eed6db3e5e524cb9bf2d9520128eed395413cb93b9fde11aa12b"
+    },
+    {
+      "sequence": 3254,
+      "at": "2026-10-07T20:00:15.350Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "8ce490757023eed6db3e5e524cb9bf2d9520128eed395413cb93b9fde11aa12b",
+      "digest": "c9a4befbb98d46b3d5edcb822b7b212b23befefa0b8ac8d657d60a06e942af67"
+    },
+    {
+      "sequence": 3255,
+      "at": "2026-10-07T20:02:13.712Z",
+      "kind": "transaction",
+      "data": {
+        "id": "d3595237-344a-427e-b6fc-4bc3354bc0b9"
+      },
+      "previous": "c9a4befbb98d46b3d5edcb822b7b212b23befefa0b8ac8d657d60a06e942af67",
+      "digest": "2b4c2bcdebe7f632304c3373674d0f3201106ba23c70e9c0dd09adaeebec1bd5"
     }
   ]
 }
