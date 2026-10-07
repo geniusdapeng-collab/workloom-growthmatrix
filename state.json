@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1939,
+  "revision": 1941,
   "tasks": {
     "132": {
       "number": 132,
@@ -6591,7 +6591,7 @@
     },
     "167": {
       "number": 167,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791373275072,
       "attempts": {},
       "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
@@ -6600,8 +6600,15 @@
       "intent": {
         "taskId": "T-2026-1007-0918",
         "ready": true,
-        "dependsOn": [],
-        "releases": []
+        "dependsOn": [
+          165
+        ],
+        "releases": [
+          {
+            "kind": "desktop",
+            "version": "0.1.23"
+          }
+        ]
       },
       "developerReview": null,
       "reviewSnapshot": {
@@ -6671,7 +6678,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791378611870,
+      "updatedAt": 1791379510199,
       "admission": {
         "number": 167,
         "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
@@ -6707,7 +6714,10 @@
         "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
         "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
         "at": 1791378611870
-      }
+      },
+      "dependencies": [
+        165
+      ]
     },
     "168": {
       "number": 168,
@@ -51621,6 +51631,46 @@
       },
       "previous": "8dfd956fca0b12451b4e2f332f79398dd80af3b578ea6449e0e36c94de142fba",
       "digest": "0424cb3275f5f10433bf8c75e4c410f188e568d836e4258ae6fb1b6c967c90b0"
+    },
+    {
+      "sequence": 1940,
+      "at": "2026-10-07T13:25:10.199Z",
+      "kind": "task",
+      "data": {
+        "number": 167,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              165
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.23"
+              }
+            ]
+          },
+          "dependencies": [
+            165
+          ]
+        }
+      },
+      "previous": "0424cb3275f5f10433bf8c75e4c410f188e568d836e4258ae6fb1b6c967c90b0",
+      "digest": "26fcb43a032098380bf842b476f18a6786f77cd7910948646e35db9a92b32788"
+    },
+    {
+      "sequence": 1941,
+      "at": "2026-10-07T13:27:35.446Z",
+      "kind": "transaction",
+      "data": {
+        "id": "c485c729-3b71-4ef4-b735-2de1f347ee38"
+      },
+      "previous": "26fcb43a032098380bf842b476f18a6786f77cd7910948646e35db9a92b32788",
+      "digest": "e3e1f01a2518732c85133e03c9f1fa273a72fa58d07c9fe3a823c044c689af29"
     }
   ]
 }
