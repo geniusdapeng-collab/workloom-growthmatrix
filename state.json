@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2433,
+  "revision": 2435,
   "tasks": {
     "132": {
       "number": 132,
@@ -5528,7 +5528,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791386715475,
+      "updatedAt": 1791388536253,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -63034,6 +63034,52 @@
       },
       "previous": "e0c8af4ea71164c025e5db2132af7fee36970f617af403bd87bca37fa2365f71",
       "digest": "7a7f5c8fd85219b43d2d16c053c0ad7026a7677eb30ae5e42d1c6fce0579ae7b"
+    },
+    {
+      "sequence": 2434,
+      "at": "2026-10-07T15:55:36.253Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "7a7f5c8fd85219b43d2d16c053c0ad7026a7677eb30ae5e42d1c6fce0579ae7b",
+      "digest": "00ee2c42ad886c796b07781940c3bf054b00a51636654121eeb5e2edbd46e737"
+    },
+    {
+      "sequence": 2435,
+      "at": "2026-10-07T15:57:41.102Z",
+      "kind": "transaction",
+      "data": {
+        "id": "a66af32e-7198-4da1-88b4-6e954a851047"
+      },
+      "previous": "00ee2c42ad886c796b07781940c3bf054b00a51636654121eeb5e2edbd46e737",
+      "digest": "20e22528fd07dbba6065fa0f79fd619b66c07ef928dcec8e5451497cdd129d85"
     }
   ]
 }
