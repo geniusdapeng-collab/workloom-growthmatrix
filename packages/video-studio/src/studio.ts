@@ -444,6 +444,8 @@ export class VideoStudio {
           ? createPortraitRuntime({
               ...portraitCfg,
               workDir: cfg.workDir,
+              receiptRoot: portraitCfg.receiptRoot ?? path.join(process.env.WORKLOOM_VIDEO_ARTIFACT_ROOT
+                ?? path.resolve(path.dirname(resolveVendorEntry()), "../../../output"), "paid-generation-receipts", "portraits"),
               projectId: input.projectId,
               log
             })

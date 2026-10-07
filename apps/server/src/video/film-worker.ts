@@ -19,6 +19,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAppPool, getGatewayPool } from "@workloom/db";
 import {
+  acceptPostStage,
+  POST_RENDER_STAGES,
   FILM_CHANNEL_METHOD_COMPONENT,
   FILM_CHANNEL_METHODS,
   decodeFilmChannelFrame,
@@ -629,13 +631,14 @@ function abortable<T>(signal: AbortSignal, work: () => Promise<T>): Promise<T> {
   });
 }
 
-function reserveFor(frame: FilmChannelRequestFrame): number {
+export function reserveFor(frame: FilmChannelRequestFrame): number {
   if (frame.method === "image.generate") return IMAGE_RESERVE_CNY;
   if (frame.method === "video.generate") {
     const params = record(frame.params);
     const seconds = Number(params.seconds ?? 5);
     return Math.max(0.5, seconds * VIDEO_RESERVE_CNY_PER_SECOND);
   }
+  if (frame.method === "gate.review" && POST_RENDER_STAGES.has(String(record(frame.params).stage))) return 0;
   if (frame.method === "llm.chat" || frame.method === "gate.review") return LLM_RESERVE_CNY;
   return 0;
 }
@@ -898,14 +901,23 @@ async function runGateReview(ctx: RunContext, frame: FilmChannelRequestFrame, co
       detail: typeof check.detail === "string" ? check.detail.slice(0, 800) : "",
     };
   });
+  const context = params.context === undefined ? {} : record(params.context);
+  if ((context.shotId ?? null) !== frame.shotId) fail("REVIEW_SCOPE_INVALID", "评审镜号必须与请求作用域一致");
+  if (POST_RENDER_STAGES.has(stage)) {
+    const verdict = acceptPostStage({ stage: stage as ProducerGateOptions["stage"], projectId: ctx.job.project_id,
+      artifacts: resolvedArtifacts, deterministic: deterministic as ProducerGateOptions["deterministic"] });
+    await ctx.ledger.recordDispatch(componentId, ctx.ownerToken, "workloom.direct-post", stage);
+    await ctx.ledger.recordComponentAccepted(componentId, ctx.ownerToken, { provider: "workloom.direct-post", providerModel: stage,
+      actualCny: 0, evidence: { artifactSha256: sha256Bytes(canonicalRenderJson(verdict)), policy: "provider-success-direct-post",
+        approved: verdict.approved, status: verdict.status, score: null, qualityReviewed: false, artifactEvidence: verdict.evidence } });
+    return verdict;
+  }
   const requiredCheckIds = Array.isArray(params.requiredCheckIds)
     ? params.requiredCheckIds.slice(0, 40).map((id) => text(id, "requiredCheckIds 非法", 120))
     : undefined;
   const rubric = Array.isArray(params.rubric) ? params.rubric.slice(0, 24).map((line) => text(line, "rubric 非法", 800)) : undefined;
   const minScore = params.minScore === undefined ? undefined : Number(params.minScore);
   if (minScore !== undefined && (!Number.isFinite(minScore) || minScore < 0 || minScore > 100)) fail("REQUEST_INVALID", "minScore 非法");
-  const context = params.context === undefined ? {} : record(params.context);
-  if ((context.shotId ?? null) !== frame.shotId) fail("REVIEW_SCOPE_INVALID", "评审镜号必须与请求作用域一致");
   const referenceImages = [];
   for (const ref of Array.isArray(params.referenceImages) ? params.referenceImages.slice(0, 4) : []) {
     const file = await resolveWithin(ctx.workDir, text(ref, "评审参考图引用非法", 1_000));
@@ -975,29 +987,13 @@ async function voiceCli(ctx: RunContext, args: string[], timeoutMs: number): Pro
 async function runVoiceVerify(ctx: RunContext, frame: FilmChannelRequestFrame, componentId: string): Promise<unknown> {
   const params = record(frame.params);
   const inputRef = text(params.inputRef, "voice.verify 需要 inputRef", 1_000);
-  const expectText = text(params.expectText, "voice.verify 需要 expectText", 20_000);
   const file = await resolveWithin(ctx.workDir, inputRef);
-  const info = await stat(file).catch(() => null);
-  if (!info?.isFile() || info.size === 0) fail("ARTIFACT_MISSING", "待核验媒体不存在");
-  await ctx.ledger.recordDispatch(componentId, ctx.ownerToken, "voice-bridge", "verify");
-  const result = await voiceCli(ctx, ["verify", "--in", file, "--expect-text", expectText, "--min-match", "0", "--no-strict"], 300_000);
-  if (!result.ok) {
-    fail("VOICE_VERIFY_FAILED", `配音工位调用失败：${result.out.slice(-200)}`);
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(result.out);
-  } catch {
-    fail("VOICE_VERIFY_UNVERIFIED", "配音工位输出不是 JSON，按未核实处理");
-  }
-  const checked = (parsed as { result?: { checked?: unknown } }).result?.checked ?? null;
-  const evidence = {
-    artifactSha256: sha256Bytes(canonicalRenderJson({ checked })),
-    checked,
-  };
-  await ctx.ledger.recordComponentAccepted(componentId, ctx.ownerToken, {
-    provider: "voice-bridge", providerModel: "verify", actualCny: 0, evidence,
-  });
+  const verdict = acceptPostStage({ stage: "shot", projectId: ctx.job.project_id, artifacts: [{ path: file, kind: "video" }], deterministic: [] });
+  if (!verdict.approved) fail("POST_INPUT_NOT_OPENABLE", verdict.reason);
+  await ctx.ledger.recordDispatch(componentId, ctx.ownerToken, "workloom.direct-post", "source-audio-preserved");
+  const checked = { qualityReviewed: false, asrInvoked: false, sourceAudioPreserved: true, evidence: verdict.evidence };
+  await ctx.ledger.recordComponentAccepted(componentId, ctx.ownerToken, { provider: "workloom.direct-post", providerModel: "source-audio-preserved",
+    actualCny: 0, evidence: { artifactSha256: sha256Bytes(canonicalRenderJson(checked)), checked } });
   return { checked };
 }
 

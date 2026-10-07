@@ -2,11 +2,14 @@
  * 平台侧音画对齐（post-bridge/av-sync.mjs）回归：
  *  · 纯逻辑（互相关求时延 + 漂移判定）与基座 TS 版**逐值等价**——两侧口径漂移是这类机制最容易出的静默故障；
  *  · 拼接方案必须是"画面 copy + 声音样点级 concat 滤镜"（真机事故：`-c copy` 直拼导致逐镜漂移）；
- *  · 源码级守卫：硬切/淡入淡出分支不许再出现"整条 demuxer copy"的写法。
- * 本组测试不触 DB、不依赖 ffmpeg。
+ *  · 正式拼接以真实 FFmpeg 验证成功与失败：当前字节回执、无 PCM 品质闸、失败不写成功回执。
+ * 本组测试不触 DB；纯计算测试不依赖 ffmpeg，实际拼接用本地合成输入。
  */
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -23,10 +26,17 @@ import {
   crossCorrelationLag as baseLag,
   evaluateAvSync as baseEvaluate,
 } from "../../../packages/video-studio/src/av-sync.js";
+import { assembleTimeline, resolveBinaries } from "../../../bundles/ai-video/connectors/post-bridge/core.mjs";
 import { bundlesRoot } from "./assembly.js";
 
 const SR = 16000;
 const BRIDGE_DIR = join(bundlesRoot(), "ai-video/connectors/post-bridge");
+const bins = resolveBinaries();
+const hasMediaTools = (() => {
+  try { execFileSync(bins.ffmpeg, ["-version"], { stdio: "ignore" }); execFileSync(bins.ffprobe, ["-version"], { stdio: "ignore" }); return true; }
+  catch { return false; }
+})();
+const digest = (file: string) => createHash("sha256").update(readFileSync(file)).digest("hex");
 
 /** 合成"有声信号"：低频脉冲 + 噪声（与基座单测同构，便于互证）。 */
 function signal(seconds: number, seed = 7): Float32Array {
@@ -123,12 +133,6 @@ describe("平台侧拼接方案（样点级对齐）", () => {
 describe("源码守卫：拼接分支不许再整条 demuxer copy", () => {
   const source = readFileSync(join(BRIDGE_DIR, "core.mjs"), "utf8");
 
-  it("assembleTimeline 走 assembleSampleAccurate（样点级）", () => {
-    expect(source).toContain("assembleSampleAccurate(");
-    expect(source).toContain("buildSampleAccurateConcatPlan");
-    expect(source).toContain("verifyAssembledAvSync");
-  });
-
   it("不再出现「concat demuxer + 双流 -c copy」的历史写法", () => {
     /** 历史写法：`-f concat ... -c copy -movflags +faststart`（画面与声音一起直拷 → 逐镜漂移） */
     expect(source).not.toMatch(/"-f",\s*"concat",[\s\S]{0,200}?"-c",\s*"copy",\s*"-movflags"/);
@@ -176,11 +180,45 @@ describe("实测不可执行的降级路径（三态口径：达标 / 偏移 / �
     expect(String(degraded.reason)).toMatch(/解码母版失败/);
   });
 
-  it("源码守卫：平台侧拼接会写 <output>.av-sync.json 并显式区分降级开关", () => {
-    const core = readFileSync(join(BRIDGE_DIR, "core.mjs"), "utf8");
-    expect(core).toContain("writeAvSyncReport");
-    expect(core).toContain(".av-sync.json");
-    expect(core).toContain("allowUnverifiedAvSync");
-    expect(core).toContain("av_sync_unverifiable");
-  });
+});
+
+describe.skipIf(!hasMediaTools)("正式拼接：实际转换回执与技术失败（不做源片 PCM 二次放行）", () => {
+  it("硬切/淡入淡出实际保留静黑静音源，写当前 SHA 回执且不生成强制音画品质报告", async () => {
+    const root = realpathSync(mkdtempSync(join(os.tmpdir(), "post-av-current-")));
+    try {
+      const clips = [1, 2].map(index => {
+        const file = join(root, `source-${index}.mp4`);
+        execFileSync(bins.ffmpeg, ["-v", "error", "-y", "-f", "lavfi", "-i", "color=c=black:s=160x90:r=30:d=0.5",
+          "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-t", "0.5", "-map", "0:v", "-map", "1:a",
+          "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", file], { timeout: 30_000, stdio: "pipe" });
+        return { shotId: `silent-${index}`, path: file, duration: 0.5, sha256: digest(file) };
+      });
+      for (const mode of ["hard", "fade"]) {
+        const output = join(root, mode, "assembled.mp4");
+        const result = await assembleTimeline({ clips, transitions: { mode, fadeSec: 0.1 }, output, resolution: [160, 90], fps: 30, bins });
+        expect(result.avSync).toBeNull();
+        expect(result.composeReceipt).toMatchObject({ qualityReviewed: false, output: { path: output, sha256: digest(output) } });
+        expect(result.composeReceipt.sources).toHaveLength(2);
+        const saved = JSON.parse(readFileSync(`${output}.compose-receipt.json`, "utf8"));
+        expect(saved).toEqual(result.composeReceipt);
+        for (const source of saved.sources) expect(source.sha256).toBe(digest(source.path));
+        expect(existsSync(`${output}.av-sync.json`)).toBe(false);
+      }
+      for (const clip of clips) expect(digest(clip.path)).toBe(clip.sha256);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 60_000);
+
+  it("真实 FFmpeg 无法解码明确输入时拒绝，不留下成功拼接或品质通过回执", async () => {
+    const root = realpathSync(mkdtempSync(join(os.tmpdir(), "post-av-failure-")));
+    try {
+      const input = join(root, "not-a-video.mp4"), output = join(root, "failed", "assembled.mp4");
+      writeFileSync(input, "explicit invalid media bytes");
+      await expect(assembleTimeline({ clips: [{ shotId: "invalid", path: input, duration: 0.5 }],
+        transitions: { mode: "hard" }, output, resolution: [160, 90], fps: 30, bins })).rejects.toMatchObject({ code: "ffmpeg_failed" });
+      expect(existsSync(output)).toBe(false);
+      expect(existsSync(`${output}.compose-receipt.json`)).toBe(false);
+      expect(existsSync(`${output}.av-sync.json`)).toBe(false);
+      expect(readFileSync(input, "utf8")).toBe("explicit invalid media bytes");
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }, 30_000);
 });

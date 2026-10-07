@@ -174,13 +174,15 @@ export async function probeMedia(input, { bins = resolveBinaries() } = {}) {
   if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
     throw new MeasureError("视频轨缺少可用的分辨率", "bad_media", false);
   }
-  const durationRaw = Number(doc.format?.duration ?? video.duration);
+  const formatDuration = Number(doc.format?.duration);
+  const streamDuration = Number(video.duration);
+  const durationRaw = Number.isFinite(formatDuration) && formatDuration > 0 ? formatDuration : streamDuration;
   const fps = parseFps(video.avg_frame_rate) ?? parseFps(video.r_frame_rate);
   const framesRaw = Number(video.nb_frames);
   const videoDurationRaw = Number(video.duration);
   const videoDuration = Number.isFinite(videoDurationRaw) && videoDurationRaw > 0
     ? videoDurationRaw
-    : (Number.isInteger(framesRaw) && framesRaw > 0 && fps > 0 ? framesRaw / fps : null);
+    : (Number.isInteger(framesRaw) && framesRaw > 0 && fps > 0 ? framesRaw / fps : (Number.isFinite(durationRaw) && durationRaw > 0 ? durationRaw : null));
   return {
     path: input,
     duration: Number.isFinite(durationRaw) ? round(durationRaw, 3) : null,
