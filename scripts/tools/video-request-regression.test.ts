@@ -126,13 +126,19 @@ describe("全链路镜头增强真实消费", () => {
     expect(run.rows().some((row: Card) => row.stage === "micromotion")).toBe(false);
   }, 40_000);
 
-  it("KB部分字段超预算不能用其余成功写入掩盖", () => {
+  it("KB可选建议超预算时整句省略，保留完整作者字段且继续下游", () => {
     const run = runChain([{ ...windowShot, lighting: `右侧窗光；${"原始灯光说明".repeat(80)}` }]);
-    expect(run.result.status, run.diagnostic).not.toBe(0);
+    expect(run.result.status, run.diagnostic).toBe(0);
     const row = run.rows().find((entry: Card) => entry.stage === "cine-kb" && entry.shotId === windowShot.shotId);
-    expect(row).toMatchObject({ ok: false, evidence: { status: "unverified" } });
+    expect(row).toMatchObject({ ok: true, evidence: { status: "passed" } });
     expect(row.evidence.injectedFields).not.toContain("lighting");
-    expect(run.read("shotlist-enriched-regression.json").shots[0].lighting).toBe(`右侧窗光；${"原始灯光说明".repeat(80)}`);
+    const trace = JSON.parse(readFileSync(row.artifact, "utf8"));
+    expect(trace.omitted).toEqual(expect.arrayContaining([expect.objectContaining({ field: "lighting", dropped: true, writtenChars: 0 })]));
+    expect(trace.applied.some((entry: Card) => entry.field === "lighting")).toBe(false);
+    const authoredLighting = `右侧窗光；${"原始灯光说明".repeat(80)}`;
+    expect(run.read("shotlist-enriched-regression.json").shots[0].lighting).toBe(authoredLighting);
+    expect(run.read("shotlist-current-regression.json").shots[0].lighting).toBe(authoredLighting);
+    expect(run.rows().findLast((entry: Card) => entry.stage === "micromotion")).toMatchObject({ ok: true });
   }, 40_000);
 
   it("请求的KB目录缺失会记录未验证并停止，而非跳过后继续微动作", () => {
