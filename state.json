@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1822,
+  "revision": 1824,
   "tasks": {
     "132": {
       "number": 132,
@@ -4373,7 +4373,7 @@
         "releases": [
           {
             "kind": "desktop",
-            "version": "0.1.10"
+            "version": "0.1.11"
           }
         ]
       },
@@ -4477,7 +4477,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791378611870,
+      "updatedAt": 1791379005941,
       "admission": {
         "number": 152,
         "headSha": "0671a7047756644ed83b85e647a1be3261be133f",
@@ -47222,6 +47222,46 @@
       },
       "previous": "2d4354aa0eeeba591afe1b38e6c4d60f5e20b2255ad179624606e539fddbcb98",
       "digest": "528f72c63a9d38be621142dd0a57172d4bac6d022e2f77afdcfadf395648142e"
+    },
+    {
+      "sequence": 1823,
+      "at": "2026-10-07T13:16:45.941Z",
+      "kind": "task",
+      "data": {
+        "number": 152,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "0671a7047756644ed83b85e647a1be3261be133f",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              150
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.11"
+              }
+            ]
+          },
+          "dependencies": [
+            150
+          ]
+        }
+      },
+      "previous": "528f72c63a9d38be621142dd0a57172d4bac6d022e2f77afdcfadf395648142e",
+      "digest": "950679b6aed2fd4247a3c13456ca390984bffebfaef7b7c1223d5499ceed83b5"
+    },
+    {
+      "sequence": 1824,
+      "at": "2026-10-07T13:17:41.237Z",
+      "kind": "transaction",
+      "data": {
+        "id": "22bfd300-017d-4f27-8e01-01e75a8d4246"
+      },
+      "previous": "950679b6aed2fd4247a3c13456ca390984bffebfaef7b7c1223d5499ceed83b5",
+      "digest": "b0f9ad699f235b0d36cadf02eb3f4f3b4995ada52076da30f2f4cecb93dd1ce6"
     }
   ]
 }
