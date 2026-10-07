@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2555,
+  "revision": 2557,
   "tasks": {
     "132": {
       "number": 132,
@@ -7489,7 +7489,7 @@
           }
         ]
       },
-      "updatedAt": 1791390701278,
+      "updatedAt": 1791390911806,
       "admission": {
         "number": 172,
         "headSha": "3b21163ad2529d41d6aef29e24f6eb5487ec980b",
@@ -66265,6 +66265,46 @@
       },
       "previous": "252644a06a0852df6ea6e546e595ca51a270f655d62d545aaeb40182a3a2f7a0",
       "digest": "c696dbb1766e975bd01ea1651c0318a376b337248d2a3525cba2619ba6c1cbe7"
+    },
+    {
+      "sequence": 2556,
+      "at": "2026-10-07T16:35:11.806Z",
+      "kind": "task",
+      "data": {
+        "number": 172,
+        "patch": {
+          "headSha": "3b21163ad2529d41d6aef29e24f6eb5487ec980b",
+          "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+          "branch": "fix/T-2026-1007-0918-desktop-build-history",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              170
+            ],
+            "releases": []
+          },
+          "originalBody": "The real v0.1.3 release stopped before build dispatch because CNB serializes the build-history total as a canonical decimal string. Accept documented integer and actual string counts, then require a complete bounded history with unique build IDs before any launch. Recover only the recorded never-dispatched history-format park after strict readback; attempts, ACKs, launch intents, foreign parks and concurrent recovery cannot authorize another POST. The native main scheduler runs this delivery infrastructure after integration. The already declared frozen desktop versions retain their separate production intents.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    170\n  ],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "scripts/delivery/queue-release-history.test.mjs",
+            "scripts/delivery/queue-release.mjs"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791385024507
+        }
+      },
+      "previous": "c696dbb1766e975bd01ea1651c0318a376b337248d2a3525cba2619ba6c1cbe7",
+      "digest": "1e07dad03f367e219242931e0863234e351aaba4cc6aff2a24eec136dd0f4af2"
+    },
+    {
+      "sequence": 2557,
+      "at": "2026-10-07T16:37:55.965Z",
+      "kind": "transaction",
+      "data": {
+        "id": "6bfdd915-fe6e-48b0-bb01-a3154998cc46"
+      },
+      "previous": "1e07dad03f367e219242931e0863234e351aaba4cc6aff2a24eec136dd0f4af2",
+      "digest": "643e3ffe060ea75fc775ad177ecf19d7da54c548f90cc2a2f1d3a971bcc2e227"
     }
   ]
 }
