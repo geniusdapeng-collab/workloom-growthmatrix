@@ -80,7 +80,18 @@ function check(label: string, condition: boolean, detail: string): void {
   if (!condition) failures.push(label);
 }
 
-const uninstall = installVendorDurationProjectionBridge({ log: (line) => console.log(`   ${line}`) });
+// The actual production CJS loader covers the normalization case Vitest cannot load.
+const restoreCreative = installVendorDurationProjectionBridge();
+try {
+  for (const total of [28, 32, 35]) {
+    const input = [10, 10, total - 20].map((duration, index) => ({ shotId: `S${index + 1}`, duration }));
+    const out = (ProductionEngine.prototype._normalizeDurations as (s: unknown, t: unknown) => Array<Record<string, unknown>>).call({}, input, 30);
+    check(`默认创作目标：30秒目标保留${total}秒完整计划`, out.map(shot => Number(shot.duration)).join(",") === `10,10,${total - 20}`,
+      `Σ=${out.reduce((sum, shot) => sum + Number(shot.duration), 0)}s`);
+  }
+} finally { restoreCreative(); }
+
+const uninstall = installVendorDurationProjectionBridge({ durationPolicy: "strict", log: (line) => console.log(`   ${line}`) });
 try {
   /* ---------- ① 制作引擎归一：最后一镜不再兜底 ---------- */
   const normalizeInput = [

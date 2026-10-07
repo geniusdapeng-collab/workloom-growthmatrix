@@ -15,6 +15,31 @@ import {
  * 关键断言不是"改了某一行"，而是「没有任何**在用**口径还把模型上限夹回去」。
  */
 describe("镜头时长规则（真机实测 4–30s）", () => {
+  it("实际提供方模型标识解析同一登记范围；未登记能力不使用猜测值", () => {
+    expect(loadModelDurationLimits("doubao-seedance-2-5-260628")).toEqual(loadModelDurationLimits("doubao-seedance-2-5"));
+    expect(() => loadModelDurationLimits("mu-seedance-2-5")).toThrow("CAPABILITY_INVALID");
+  });
+
+  it.each([NaN, Infinity, 4.5, 0, -1])("非法单镜计划%s不能被校验误报通过", duration => {
+    expect(validateShotDurations([{ shotId: "S1", duration }]).pass).toBe(false);
+  });
+
+  it("目标30秒默认保留28/32/35秒完整规划；严格秒数属于显式规划", () => {
+    for (const seconds of [28, 32, 35]) {
+      const shots = [{ shotId: "S1", duration: 12 }, { shotId: "S2", duration: seconds - 12 }];
+      const result = allocateShotDurations(shots, { totalSeconds: 30 });
+      expect(result.entries.reduce((sum, entry) => sum + entry.seconds, 0)).toBe(seconds);
+      const validation = validateShotDurations(shots, { targetTotalSeconds: 30 });
+      expect(validation.pass).toBe(true); expect(validation.warnings.join()).toContain("完整表达优先");
+      expect(shots.map(shot => shot.duration)).toEqual([12, seconds - 12]);
+    }
+  });
+
+  it("坏策略或越出登记范围的规划选项不会静默放行", () => {
+    expect(() => validateShotDurations([{ shotId: "S1", duration: 5 }], { durationPolicy: "unknown" as any })).toThrow("POLICY_INVALID");
+    expect(() => allocateShotDurations([{ shotId: "S1", duration: Infinity }], { totalSeconds: 30 })).toThrow("SOURCE_INVALID");
+    expect(() => allocateShotDurations([{ shotId: "S1", duration: 5 }], { totalSeconds: 30, maxSeconds: 31 })).toThrow("OPTIONS_INVALID");
+  });
   it("媒体目录口径：Seedance 2.5 单镜 4–30s", () => {
     const limits = loadModelDurationLimits("doubao-seedance-2-5");
     expect(limits.min).toBe(4);
@@ -81,7 +106,7 @@ describe("镜头时长规则（真机实测 4–30s）", () => {
 
     const three = allocateShotDurations(
       [{ shotId: "S1", duration: 10 }, { shotId: "S2", duration: 10 }, { shotId: "S3", duration: 10 }],
-      { totalSeconds: 60 }
+      { totalSeconds: 60, durationPolicy: "strict" }
     );
     expect([...three.map.values()].reduce((a, b) => a + b, 0)).toBe(60);
     for (const value of three.map.values()) expect(value).toBeLessThanOrEqual(30);
@@ -110,7 +135,7 @@ describe("镜头时长规则（真机实测 4–30s）", () => {
   it("校验：总时长与目标偏差会被显式报出（±1s 容差）", () => {
     const drift = validateShotDurations(
       [{ shotId: "S1", duration: 10 }, { shotId: "S2", duration: 10 }],
-      { targetTotalSeconds: 30 }
+      { targetTotalSeconds: 30, durationPolicy: "strict" }
     );
     expect(drift.pass).toBe(false);
     expect(drift.issues.join()).toContain("总时长");
