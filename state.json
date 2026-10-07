@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1297,
+  "revision": 1300,
   "tasks": {
     "132": {
       "number": 132,
@@ -5063,6 +5063,336 @@
         "owner": "admission/pr-164",
         "generation": {}
       }
+    },
+    "165": {
+      "number": 165,
+      "status": "waiting_ci",
+      "firstSeen": 1791370361439,
+      "attempts": {},
+      "headSha": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "branch": "fix/T-2026-1007-0918-film-cli-complete-postproduction",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [
+          143,
+          144,
+          145,
+          149,
+          150,
+          153,
+          158,
+          160,
+          164
+        ],
+        "releases": []
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 165,
+        "headSha": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "bundles/ai-video/bundle.json",
+          "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+          "packages/video-studio/src/creative-duration-policy.test.ts",
+          "packages/video-studio/src/creative-duration-policy.ts",
+          "packages/video-studio/src/duration-rules.ts",
+          "packages/video-studio/src/film-generation-receipts.test.ts",
+          "packages/video-studio/src/film-generation-receipts.ts",
+          "packages/video-studio/src/film-post-options.test.ts",
+          "packages/video-studio/src/film-post-options.ts",
+          "packages/video-studio/src/film-presentation.test.ts",
+          "packages/video-studio/src/film-presentation.ts",
+          "packages/video-studio/src/generation-file-store.test.ts",
+          "packages/video-studio/src/generation-file-store.ts",
+          "packages/video-studio/src/image-task-receipt.test.ts",
+          "packages/video-studio/src/image-task-receipt.ts",
+          "packages/video-studio/src/producer-gate.ts",
+          "packages/video-studio/src/rendered-output-policy.test.ts",
+          "packages/video-studio/src/rendered-output-policy.ts",
+          "packages/video-studio/src/video-surface-repair.test.ts",
+          "packages/video-studio/src/video-surface-repair.ts",
+          "packages/video-studio/src/video-task-receipt.test.ts",
+          "packages/video-studio/src/video-task-receipt.ts",
+          "scripts/tools/compose-film.mts",
+          "scripts/tools/film-cli-paid-recovery.test.ts",
+          "scripts/tools/film-cover-intro.test.ts",
+          "scripts/tools/film-cover-intro.ts",
+          "scripts/tools/film-voice-artifact.test.mjs",
+          "scripts/tools/film-voice-artifact.ts",
+          "scripts/tools/full-chain-film.mts",
+          "scripts/tools/video-request-regression.test.ts"
+        ],
+        "filesHash": "10cdff7bf1045fa31a356b6211470faff0f68da8dc5b50f644719b0908d9f04e",
+        "dependsOn": [
+          143,
+          144,
+          145,
+          149,
+          150,
+          153,
+          158,
+          160,
+          164
+        ],
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "rationale": "New actual-process CLI regression. Intercept fetch before CLI import and reject every unknown host/method; strip live credential variables and use only fixture.invalid. Inject image/video ACK loss and download loss, restart in a fresh directory, inspect submitting/accepted/succeeded receipts before the corresponding call, assert exactly one POST and real decoded source bytes. Exercise legacy artifacts without ACK and off-mode small images/video. No live paid calls or fake CI state; additive validation with task temp cleanup."
+          },
+          {
+            "id": "CI-002",
+            "rationale": "New local postproduction helper fully read with FFmpeg and subtitle offset dependencies. Add a separate decoded cover segment at the same video dimensions/fps, preserve the body performance speed, offset subtitle timestamps once, and record exact source/cover bytes and duration. No paid generation, fabricated media or temporal retime. Actual local FFmpeg fixtures and complete decode pass."
+          },
+          {
+            "id": "CI-003",
+            "rationale": "Read complete additive local media/subtitle tests. Assert actual cover frames, body duration and audio-stream presence, exact one-time SRT/ASS/VTT offsets, refusal for conflicting identity and preserved original files. No network/paid calls and no required check removed."
+          },
+          {
+            "id": "CI-004",
+            "rationale": "Read full old/new voice provenance helper and rendered acceptance dependency. Bind actual raw bytes, dialogue, project and voice profile; explicit off acceptance is distinguishable from speech verification and never overrides execution failure. Candidate promotion uses exact hashes and refuses changed files. Default quality re-review cannot force another generation. Corresponding actual file tests pass; rollback helper and caller together."
+          },
+          {
+            "id": "CI-005",
+            "rationale": "Read exact old/new full regression file and actual CLI/composer consumers. Preserve source/permission/missing-KB failures and real media assertions; replace the obsolete overlap-transition success expectation with refusal before output for trim, retime, freeze and overlap. Verify actual hard cuts, original SHA values and complete video time. Optional KB overflow retains the already reviewed PR153 whole-omission assertion. No tests removed or skipped. Revert composer/options and the corresponding contract tests together."
+          },
+          {
+            "id": "CI-006",
+            "rationale": "Read all original and added tests. Retain wrong-project/dialogue/hash/missing-file rejection and successful verified receipts; add off-mode accepted provenance and executed-but-unverified dub promotion cases using actual filesystem bytes. Existing execution failures remain failures, no skip or assertion weakening."
+          }
+        ],
+        "ciPolicyChangesHash": "e7d26ccd8141728f293ce5fb855ff9cc352fcb4580b027ce468ad451b257138f",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run scripts/tools/video-request-regression.test.ts scripts/tools/film-cover-intro.test.ts scripts/tools/film-cli-paid-recovery.test.ts packages/video-studio/src/film-post-options.test.ts packages/video-studio/src/film-presentation.test.ts packages/video-studio/src/creative-duration-policy.test.ts packages/video-studio/src/rendered-output-policy.test.ts packages/video-studio/src/film-generation-receipts.test.ts packages/video-studio/src/image-task-receipt.test.ts packages/video-studio/src/video-task-receipt.test.ts packages/video-studio/src/video-surface-repair.test.ts packages/video-studio/src/generation-file-store.test.ts --maxWorkers=1",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T10:51:20.149682+00:00",
+            "result": "Exact committed actual CLI, paid response/download fault recovery, independent-process receipts, source timing, cover media, subtitle offsets and default off acceptance tests pass; no live paid calls."
+          },
+          {
+            "command": "node --import tsx --test scripts/tools/film-voice-artifact.test.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T10:51:20.378161+00:00",
+            "result": "Actual voice provenance/filesystem and off acceptance regressions pass."
+          },
+          {
+            "command": "node node_modules/typescript/bin/tsc --noEmit --skipLibCheck --target ES2022 --module NodeNext --moduleResolution NodeNext --allowImportingTsExtensions scripts/tools/full-chain-film.mts scripts/tools/compose-film.mts scripts/tools/film-cli-paid-recovery.test.ts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T10:51:20.831875+00:00",
+            "result": "Actual CLI, composer and injected-provider regression typecheck pass."
+          },
+          {
+            "command": "node --import tsx scripts/bundle-governance.mts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T10:51:21.383623+00:00",
+            "result": "Exact bundle canonical digest and cine-KB core dependency bytes pass native integrity validation."
+          }
+        ],
+        "reviewedAt": "2026-10-07T10:52:36.728842+00:00",
+        "summary": "Current Codex read the complete original main/composer and all changed helpers/tests plus direct dependencies, then reviewed the full resulting diff. All automatic source trimming, retime and tail freeze paths are removed; actual source bytes and timestamps feed hard-cut composition with only frame encoding quantization. New post options reject invalid/nonfinite/conflicting timing before output. Independent end cards and cover segments carry their own duration. Default off policy records unscored policy acceptance and keeps file/decode/provenance errors actionable. Image URL and video ACK journals are stable across work folders and saved before GET; unknown/legacy proof does not authorize another paid POST. Real child-process CLI tests first exposed missing keyframe prompt input, which is repaired by archiving the actual submitted complete prompt. All exact committed tests, voice file tests, typecheck and bundle integrity passed. No paid call and no unresolved review finding. Included prerequisite helpers and cine-KB digest match their separately reviewed sources. Each exact executable CI implementation change has a full migration rationale. The initial independent run exposed a partial-owner publication race. PR164 fixes it with a private fsynced owner atomically linked to the lock name. The same child-process test fails on the original and passes on this source; all journal and real media tests run without file-worker oversubscription.",
+        "passed": true,
+        "id": "945c5a5fff43e7f0a4ef19736a58b09cfe7ebd3bbf53ae063d6d46346770b269"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 165,
+        "pull": {
+          "number": 165,
+          "state": "open",
+          "title": "fix(growth): preserve film performances and resume paid CLI tasks [T-2026-1007-0918]",
+          "body": "The CLI could shorten model-generated performances to match an approximate total duration, freeze source tails, and detach paid receipts when a run folder changed. Preserve each source clip at its actual speed and duration, reject automatic retime/freeze/overlap before writing output, and use separate authored end cards and embedded covers. Wire stable image/video acknowledgements and known legacy task recovery before download; unknown acknowledgements and unreceipted historical artifacts refuse another paid POST. Record the actual plate prompt instead of a possibly missing spec file. Default rendered acceptance runs no quality model or identity/ASR re-review; real execution and provenance errors remain failures. Covers, presentation assets, BGM loudness and separate variant typography/music are frozen in the post plan. Reviewed prerequisite helper and cine-KB copies are included to make this source independently compile and pass the same native regression; they match their separate fixes. The common journal lock uses the separately published PR164 atomic owner publication; its deterministic race test is included unchanged.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    143,\n    144,\n    145,\n    149,\n    150,\n    153,\n    158,\n    160,\n    164\n  ],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/fix/T-2026-1007-0918-film-cli-complete-postproduction",
+            "sha": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "files": [
+          "bundles/ai-video/bundle.json",
+          "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+          "packages/video-studio/src/creative-duration-policy.test.ts",
+          "packages/video-studio/src/creative-duration-policy.ts",
+          "packages/video-studio/src/duration-rules.ts",
+          "packages/video-studio/src/film-generation-receipts.test.ts",
+          "packages/video-studio/src/film-generation-receipts.ts",
+          "packages/video-studio/src/film-post-options.test.ts",
+          "packages/video-studio/src/film-post-options.ts",
+          "packages/video-studio/src/film-presentation.test.ts",
+          "packages/video-studio/src/film-presentation.ts",
+          "packages/video-studio/src/generation-file-store.test.ts",
+          "packages/video-studio/src/generation-file-store.ts",
+          "packages/video-studio/src/image-task-receipt.test.ts",
+          "packages/video-studio/src/image-task-receipt.ts",
+          "packages/video-studio/src/producer-gate.ts",
+          "packages/video-studio/src/rendered-output-policy.test.ts",
+          "packages/video-studio/src/rendered-output-policy.ts",
+          "packages/video-studio/src/video-surface-repair.test.ts",
+          "packages/video-studio/src/video-surface-repair.ts",
+          "packages/video-studio/src/video-task-receipt.test.ts",
+          "packages/video-studio/src/video-task-receipt.ts",
+          "scripts/tools/compose-film.mts",
+          "scripts/tools/film-cli-paid-recovery.test.ts",
+          "scripts/tools/film-cover-intro.test.ts",
+          "scripts/tools/film-cover-intro.ts",
+          "scripts/tools/film-voice-artifact.test.mjs",
+          "scripts/tools/film-voice-artifact.ts",
+          "scripts/tools/full-chain-film.mts",
+          "scripts/tools/video-request-regression.test.ts"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [
+            143,
+            144,
+            145,
+            149,
+            150,
+            153,
+            158,
+            160,
+            164
+          ],
+          "releases": []
+        },
+        "headTime": 1791370235000,
+        "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "file": "scripts/tools/film-cli-paid-recovery.test.ts",
+            "before": {
+              "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+              "path": "scripts/tools/film-cli-paid-recovery.test.ts",
+              "absent": true
+            },
+            "after": {
+              "ref": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+              "path": "scripts/tools/film-cli-paid-recovery.test.ts",
+              "absent": false
+            },
+            "digest": "3cd5bfdd98c711b09e4cf338a333f98c1e52f9ad0acf3208e0d1363bb25ae6de"
+          },
+          {
+            "id": "CI-002",
+            "file": "scripts/tools/film-cover-intro.ts",
+            "before": {
+              "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+              "path": "scripts/tools/film-cover-intro.ts",
+              "absent": true
+            },
+            "after": {
+              "ref": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+              "path": "scripts/tools/film-cover-intro.ts",
+              "absent": false
+            },
+            "digest": "4c5912ca9490e5fe3269783a622b2c943a5a2024e49af7e2892020a021dc741d"
+          },
+          {
+            "id": "CI-003",
+            "file": "scripts/tools/film-cover-intro.test.ts",
+            "before": {
+              "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+              "path": "scripts/tools/film-cover-intro.test.ts",
+              "absent": true
+            },
+            "after": {
+              "ref": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+              "path": "scripts/tools/film-cover-intro.test.ts",
+              "absent": false
+            },
+            "digest": "5f95786ffb903b6652dd8dd4d7d2f45cf9ef96af587b71f1fde5b81673700dc3"
+          },
+          {
+            "id": "CI-004",
+            "file": "scripts/tools/film-voice-artifact.ts",
+            "before": {
+              "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+              "path": "scripts/tools/film-voice-artifact.ts",
+              "absent": false
+            },
+            "after": {
+              "ref": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+              "path": "scripts/tools/film-voice-artifact.ts",
+              "absent": false
+            },
+            "digest": "dd4a42288c058f37685efa401acb5b60fdf8ef034b5b3c6bec34e1df55acce69"
+          },
+          {
+            "id": "CI-005",
+            "file": "scripts/tools/video-request-regression.test.ts",
+            "before": {
+              "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+              "path": "scripts/tools/video-request-regression.test.ts",
+              "absent": false
+            },
+            "after": {
+              "ref": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+              "path": "scripts/tools/video-request-regression.test.ts",
+              "absent": false
+            },
+            "digest": "f1ca3eab169b850ed53ccf1280fde20f889c8fdf6006b47d2da8d8601fac71a6"
+          },
+          {
+            "id": "CI-006",
+            "file": "scripts/tools/film-voice-artifact.test.mjs",
+            "before": {
+              "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+              "path": "scripts/tools/film-voice-artifact.test.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+              "path": "scripts/tools/film-voice-artifact.test.mjs",
+              "absent": false
+            },
+            "digest": "f8d8a8ea39255f5e4584d95652a11f7578fb705ef9eefe6ba4cd27519c385460"
+          }
+        ]
+      },
+      "updatedAt": 1791370361439
     }
   },
   "leases": {
@@ -30742,6 +31072,365 @@
       },
       "previous": "7f1bd66c09dc0b789099187c817e40e267cf303007247c5bf6ceac26ac3d8e70",
       "digest": "d27c4d660202ac7dcf3101f0277d35e7db6e7d30af73a9e88692c461e29be1b6"
+    },
+    {
+      "sequence": 1298,
+      "at": "2026-10-07T10:52:41.439Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 165,
+        "id": "945c5a5fff43e7f0a4ef19736a58b09cfe7ebd3bbf53ae063d6d46346770b269",
+        "headSha": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8"
+      },
+      "previous": "d27c4d660202ac7dcf3101f0277d35e7db6e7d30af73a9e88692c461e29be1b6",
+      "digest": "7a18d4357906c083f0f44b246727ede8b339f918881a8da3d08594716c55a655"
+    },
+    {
+      "sequence": 1299,
+      "at": "2026-10-07T10:52:41.439Z",
+      "kind": "task",
+      "data": {
+        "number": 165,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-film-cli-complete-postproduction",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              143,
+              144,
+              145,
+              149,
+              150,
+              153,
+              158,
+              160,
+              164
+            ],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 165,
+            "headSha": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "bundles/ai-video/bundle.json",
+              "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+              "packages/video-studio/src/creative-duration-policy.test.ts",
+              "packages/video-studio/src/creative-duration-policy.ts",
+              "packages/video-studio/src/duration-rules.ts",
+              "packages/video-studio/src/film-generation-receipts.test.ts",
+              "packages/video-studio/src/film-generation-receipts.ts",
+              "packages/video-studio/src/film-post-options.test.ts",
+              "packages/video-studio/src/film-post-options.ts",
+              "packages/video-studio/src/film-presentation.test.ts",
+              "packages/video-studio/src/film-presentation.ts",
+              "packages/video-studio/src/generation-file-store.test.ts",
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.test.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/producer-gate.ts",
+              "packages/video-studio/src/rendered-output-policy.test.ts",
+              "packages/video-studio/src/rendered-output-policy.ts",
+              "packages/video-studio/src/video-surface-repair.test.ts",
+              "packages/video-studio/src/video-surface-repair.ts",
+              "packages/video-studio/src/video-task-receipt.test.ts",
+              "packages/video-studio/src/video-task-receipt.ts",
+              "scripts/tools/compose-film.mts",
+              "scripts/tools/film-cli-paid-recovery.test.ts",
+              "scripts/tools/film-cover-intro.test.ts",
+              "scripts/tools/film-cover-intro.ts",
+              "scripts/tools/film-voice-artifact.test.mjs",
+              "scripts/tools/film-voice-artifact.ts",
+              "scripts/tools/full-chain-film.mts",
+              "scripts/tools/video-request-regression.test.ts"
+            ],
+            "filesHash": "10cdff7bf1045fa31a356b6211470faff0f68da8dc5b50f644719b0908d9f04e",
+            "dependsOn": [
+              143,
+              144,
+              145,
+              149,
+              150,
+              153,
+              158,
+              160,
+              164
+            ],
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "rationale": "New actual-process CLI regression. Intercept fetch before CLI import and reject every unknown host/method; strip live credential variables and use only fixture.invalid. Inject image/video ACK loss and download loss, restart in a fresh directory, inspect submitting/accepted/succeeded receipts before the corresponding call, assert exactly one POST and real decoded source bytes. Exercise legacy artifacts without ACK and off-mode small images/video. No live paid calls or fake CI state; additive validation with task temp cleanup."
+              },
+              {
+                "id": "CI-002",
+                "rationale": "New local postproduction helper fully read with FFmpeg and subtitle offset dependencies. Add a separate decoded cover segment at the same video dimensions/fps, preserve the body performance speed, offset subtitle timestamps once, and record exact source/cover bytes and duration. No paid generation, fabricated media or temporal retime. Actual local FFmpeg fixtures and complete decode pass."
+              },
+              {
+                "id": "CI-003",
+                "rationale": "Read complete additive local media/subtitle tests. Assert actual cover frames, body duration and audio-stream presence, exact one-time SRT/ASS/VTT offsets, refusal for conflicting identity and preserved original files. No network/paid calls and no required check removed."
+              },
+              {
+                "id": "CI-004",
+                "rationale": "Read full old/new voice provenance helper and rendered acceptance dependency. Bind actual raw bytes, dialogue, project and voice profile; explicit off acceptance is distinguishable from speech verification and never overrides execution failure. Candidate promotion uses exact hashes and refuses changed files. Default quality re-review cannot force another generation. Corresponding actual file tests pass; rollback helper and caller together."
+              },
+              {
+                "id": "CI-005",
+                "rationale": "Read exact old/new full regression file and actual CLI/composer consumers. Preserve source/permission/missing-KB failures and real media assertions; replace the obsolete overlap-transition success expectation with refusal before output for trim, retime, freeze and overlap. Verify actual hard cuts, original SHA values and complete video time. Optional KB overflow retains the already reviewed PR153 whole-omission assertion. No tests removed or skipped. Revert composer/options and the corresponding contract tests together."
+              },
+              {
+                "id": "CI-006",
+                "rationale": "Read all original and added tests. Retain wrong-project/dialogue/hash/missing-file rejection and successful verified receipts; add off-mode accepted provenance and executed-but-unverified dub promotion cases using actual filesystem bytes. Existing execution failures remain failures, no skip or assertion weakening."
+              }
+            ],
+            "ciPolicyChangesHash": "e7d26ccd8141728f293ce5fb855ff9cc352fcb4580b027ce468ad451b257138f",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run scripts/tools/video-request-regression.test.ts scripts/tools/film-cover-intro.test.ts scripts/tools/film-cli-paid-recovery.test.ts packages/video-studio/src/film-post-options.test.ts packages/video-studio/src/film-presentation.test.ts packages/video-studio/src/creative-duration-policy.test.ts packages/video-studio/src/rendered-output-policy.test.ts packages/video-studio/src/film-generation-receipts.test.ts packages/video-studio/src/image-task-receipt.test.ts packages/video-studio/src/video-task-receipt.test.ts packages/video-studio/src/video-surface-repair.test.ts packages/video-studio/src/generation-file-store.test.ts --maxWorkers=1",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T10:51:20.149682+00:00",
+                "result": "Exact committed actual CLI, paid response/download fault recovery, independent-process receipts, source timing, cover media, subtitle offsets and default off acceptance tests pass; no live paid calls."
+              },
+              {
+                "command": "node --import tsx --test scripts/tools/film-voice-artifact.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T10:51:20.378161+00:00",
+                "result": "Actual voice provenance/filesystem and off acceptance regressions pass."
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit --skipLibCheck --target ES2022 --module NodeNext --moduleResolution NodeNext --allowImportingTsExtensions scripts/tools/full-chain-film.mts scripts/tools/compose-film.mts scripts/tools/film-cli-paid-recovery.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T10:51:20.831875+00:00",
+                "result": "Actual CLI, composer and injected-provider regression typecheck pass."
+              },
+              {
+                "command": "node --import tsx scripts/bundle-governance.mts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T10:51:21.383623+00:00",
+                "result": "Exact bundle canonical digest and cine-KB core dependency bytes pass native integrity validation."
+              }
+            ],
+            "reviewedAt": "2026-10-07T10:52:36.728842+00:00",
+            "summary": "Current Codex read the complete original main/composer and all changed helpers/tests plus direct dependencies, then reviewed the full resulting diff. All automatic source trimming, retime and tail freeze paths are removed; actual source bytes and timestamps feed hard-cut composition with only frame encoding quantization. New post options reject invalid/nonfinite/conflicting timing before output. Independent end cards and cover segments carry their own duration. Default off policy records unscored policy acceptance and keeps file/decode/provenance errors actionable. Image URL and video ACK journals are stable across work folders and saved before GET; unknown/legacy proof does not authorize another paid POST. Real child-process CLI tests first exposed missing keyframe prompt input, which is repaired by archiving the actual submitted complete prompt. All exact committed tests, voice file tests, typecheck and bundle integrity passed. No paid call and no unresolved review finding. Included prerequisite helpers and cine-KB digest match their separately reviewed sources. Each exact executable CI implementation change has a full migration rationale. The initial independent run exposed a partial-owner publication race. PR164 fixes it with a private fsynced owner atomically linked to the lock name. The same child-process test fails on the original and passes on this source; all journal and real media tests run without file-worker oversubscription.",
+            "passed": true,
+            "id": "945c5a5fff43e7f0a4ef19736a58b09cfe7ebd3bbf53ae063d6d46346770b269"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 165,
+            "pull": {
+              "number": 165,
+              "state": "open",
+              "title": "fix(growth): preserve film performances and resume paid CLI tasks [T-2026-1007-0918]",
+              "body": "The CLI could shorten model-generated performances to match an approximate total duration, freeze source tails, and detach paid receipts when a run folder changed. Preserve each source clip at its actual speed and duration, reject automatic retime/freeze/overlap before writing output, and use separate authored end cards and embedded covers. Wire stable image/video acknowledgements and known legacy task recovery before download; unknown acknowledgements and unreceipted historical artifacts refuse another paid POST. Record the actual plate prompt instead of a possibly missing spec file. Default rendered acceptance runs no quality model or identity/ASR re-review; real execution and provenance errors remain failures. Covers, presentation assets, BGM loudness and separate variant typography/music are frozen in the post plan. Reviewed prerequisite helper and cine-KB copies are included to make this source independently compile and pass the same native regression; they match their separate fixes. The common journal lock uses the separately published PR164 atomic owner publication; its deterministic race test is included unchanged.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    143,\n    144,\n    145,\n    149,\n    150,\n    153,\n    158,\n    160,\n    164\n  ],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-film-cli-complete-postproduction",
+                "sha": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "files": [
+              "bundles/ai-video/bundle.json",
+              "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+              "packages/video-studio/src/creative-duration-policy.test.ts",
+              "packages/video-studio/src/creative-duration-policy.ts",
+              "packages/video-studio/src/duration-rules.ts",
+              "packages/video-studio/src/film-generation-receipts.test.ts",
+              "packages/video-studio/src/film-generation-receipts.ts",
+              "packages/video-studio/src/film-post-options.test.ts",
+              "packages/video-studio/src/film-post-options.ts",
+              "packages/video-studio/src/film-presentation.test.ts",
+              "packages/video-studio/src/film-presentation.ts",
+              "packages/video-studio/src/generation-file-store.test.ts",
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.test.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/producer-gate.ts",
+              "packages/video-studio/src/rendered-output-policy.test.ts",
+              "packages/video-studio/src/rendered-output-policy.ts",
+              "packages/video-studio/src/video-surface-repair.test.ts",
+              "packages/video-studio/src/video-surface-repair.ts",
+              "packages/video-studio/src/video-task-receipt.test.ts",
+              "packages/video-studio/src/video-task-receipt.ts",
+              "scripts/tools/compose-film.mts",
+              "scripts/tools/film-cli-paid-recovery.test.ts",
+              "scripts/tools/film-cover-intro.test.ts",
+              "scripts/tools/film-cover-intro.ts",
+              "scripts/tools/film-voice-artifact.test.mjs",
+              "scripts/tools/film-voice-artifact.ts",
+              "scripts/tools/full-chain-film.mts",
+              "scripts/tools/video-request-regression.test.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                143,
+                144,
+                145,
+                149,
+                150,
+                153,
+                158,
+                160,
+                164
+              ],
+              "releases": []
+            },
+            "headTime": 1791370235000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": "scripts/tools/film-cli-paid-recovery.test.ts",
+                "before": {
+                  "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                  "path": "scripts/tools/film-cli-paid-recovery.test.ts",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+                  "path": "scripts/tools/film-cli-paid-recovery.test.ts",
+                  "absent": false
+                },
+                "digest": "3cd5bfdd98c711b09e4cf338a333f98c1e52f9ad0acf3208e0d1363bb25ae6de"
+              },
+              {
+                "id": "CI-002",
+                "file": "scripts/tools/film-cover-intro.ts",
+                "before": {
+                  "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                  "path": "scripts/tools/film-cover-intro.ts",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+                  "path": "scripts/tools/film-cover-intro.ts",
+                  "absent": false
+                },
+                "digest": "4c5912ca9490e5fe3269783a622b2c943a5a2024e49af7e2892020a021dc741d"
+              },
+              {
+                "id": "CI-003",
+                "file": "scripts/tools/film-cover-intro.test.ts",
+                "before": {
+                  "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                  "path": "scripts/tools/film-cover-intro.test.ts",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+                  "path": "scripts/tools/film-cover-intro.test.ts",
+                  "absent": false
+                },
+                "digest": "5f95786ffb903b6652dd8dd4d7d2f45cf9ef96af587b71f1fde5b81673700dc3"
+              },
+              {
+                "id": "CI-004",
+                "file": "scripts/tools/film-voice-artifact.ts",
+                "before": {
+                  "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                  "path": "scripts/tools/film-voice-artifact.ts",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+                  "path": "scripts/tools/film-voice-artifact.ts",
+                  "absent": false
+                },
+                "digest": "dd4a42288c058f37685efa401acb5b60fdf8ef034b5b3c6bec34e1df55acce69"
+              },
+              {
+                "id": "CI-005",
+                "file": "scripts/tools/video-request-regression.test.ts",
+                "before": {
+                  "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                  "path": "scripts/tools/video-request-regression.test.ts",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+                  "path": "scripts/tools/video-request-regression.test.ts",
+                  "absent": false
+                },
+                "digest": "f1ca3eab169b850ed53ccf1280fde20f889c8fdf6006b47d2da8d8601fac71a6"
+              },
+              {
+                "id": "CI-006",
+                "file": "scripts/tools/film-voice-artifact.test.mjs",
+                "before": {
+                  "ref": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                  "path": "scripts/tools/film-voice-artifact.test.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "57caae6e73d2fcdd7788127de52010dc3b88100e",
+                  "path": "scripts/tools/film-voice-artifact.test.mjs",
+                  "absent": false
+                },
+                "digest": "f8d8a8ea39255f5e4584d95652a11f7578fb705ef9eefe6ba4cd27519c385460"
+              }
+            ]
+          }
+        }
+      },
+      "previous": "7a18d4357906c083f0f44b246727ede8b339f918881a8da3d08594716c55a655",
+      "digest": "90ab67d5d4b43cd656c524870d0c9d9fdc85c0b21bdb669b5852868e63958945"
+    },
+    {
+      "sequence": 1300,
+      "at": "2026-10-07T10:52:39.042Z",
+      "kind": "transaction",
+      "data": {
+        "id": "4f8f1fd1-042a-4212-a5e9-04b434d7b0b0"
+      },
+      "previous": "90ab67d5d4b43cd656c524870d0c9d9fdc85c0b21bdb669b5852868e63958945",
+      "digest": "c4beb84043de1af53ab5dbd554a3cb52b0dc44efcc947d742ac98e748165e3d7"
     }
   ]
 }
