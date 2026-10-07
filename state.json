@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1377,
+  "revision": 1379,
   "tasks": {
     "132": {
       "number": 132,
@@ -2477,9 +2477,9 @@
         "owner": "admission/pr-145",
         "generation": {}
       },
-      "updatedAt": 1791371003713,
+      "updatedAt": 1791371100874,
       "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
-      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-rendered-acceptance",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -2487,44 +2487,7 @@
         "dependsOn": [],
         "releases": []
       },
-      "developerReview": {
-        "schemaVersion": 1,
-        "provider": "codex",
-        "repo": "workloom-ai/workloom-growthmatrix",
-        "number": 145,
-        "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
-        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
-        "reviewedFiles": [
-          "packages/video-studio/src/film-worker-runtime.test.ts",
-          "packages/video-studio/src/film-worker-runtime.ts",
-          "packages/video-studio/src/producer-gate.ts",
-          "packages/video-studio/src/rendered-output-policy.test.ts",
-          "packages/video-studio/src/rendered-output-policy.ts"
-        ],
-        "filesHash": "2374662fadb9dd81f6685a285f5d833ff2fde0951120750e002472c5123aaa87",
-        "dependsOn": [],
-        "ciPolicyChanges": [],
-        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-        "tests": [
-          {
-            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/rendered-output-policy.test.ts packages/video-studio/src/film-worker-runtime.test.ts packages/video-studio/src/producer-gate.test.ts",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T05:48:22.878292+00:00",
-            "result": "3files65passed,0skip"
-          },
-          {
-            "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T05:49:10.231171+00:00",
-            "result": "tsc noEmit passed"
-          }
-        ],
-        "reviewedAt": "2026-10-07T05:54:14.859716+00:00",
-        "summary": "当前Codex完整读取5个改动文件及直接静态依赖。工位review调用前按明确off策略返回实际产物接收，关键帧/镜头/后期质量测量保持信息性，score0表示未评分，不声明模型/身份/语音通过；缺文件或实际工具失败保持执行失败。原提交前规则不放松，显式blocking/advisory仍发父通道。SFX类型与已有CLI真实阶段一致。准确提交后的65个策略/工位/producer测试、类型检查通过，零新模型调用或付费生成；无DB/权限/CI变化。回滚普通revert本提交。未发现未解决问题。",
-        "passed": true,
-        "id": "c7dc6a134eb0180241b1bfec5a0fad4e020b4bad6e49995dde39ae3addfb65d8"
-      },
+      "developerReview": null,
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 145,
@@ -2603,15 +2566,8 @@
       ],
       "ciSince": 1791352820859,
       "error": "CNB 409 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/163/merge :: {\"errcode\":2009014,\"errmsg\":\"the pull can not merge yet\"}\n",
-      "blockedUntil": 1791371603713,
-      "candidate": {
-        "number": 163,
-        "branch": "delivery/candidate/pr-145-68a5dff7fef7c418b75a33445cf99af8",
-        "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
-        "marker": "delivery-origin:145:e7faf62651693d0e733c62d0df278150ec6b8ee0:6e7bb78749a4ade1955cf03476ed249f630aa3f8",
-        "at": 1791369013609
-      },
+      "blockedUntil": 0,
+      "candidate": null,
       "mergePhase": null,
       "mergeSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -2687,7 +2643,10 @@
         "scopes": [],
         "generation": {}
       },
-      "mergeRequestedAt": 1791371003713
+      "mergeRequestedAt": 1791371003713,
+      "alignmentCount": 0,
+      "recoveryCount": 0,
+      "reviewFailures": null
     },
     "146": {
       "number": 146,
@@ -33015,6 +32974,53 @@
       },
       "previous": "ac2a64a85cd9e9db79ea917c130ab9949cdc69eb32af0d8aa38de46671bca37c",
       "digest": "73e1b5e69b0770aa7718d0c74a937d2267c4c142233b9bb6694c031e57bd847e"
+    },
+    {
+      "sequence": 1378,
+      "at": "2026-10-07T11:05:00.874Z",
+      "kind": "task",
+      "data": {
+        "number": 145,
+        "patch": {
+          "alignmentCount": 0,
+          "recoveryCount": 0,
+          "reviewFailures": null,
+          "blockedUntil": 0,
+          "developerReview": null,
+          "candidate": null,
+          "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-rendered-acceptance",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "固定影片子工位原先忽略review-policy=off，仍向服务发送gate.review请求。现在默认off在子工位调用模型/父通道前接收实际生成的关键帧、镜头和后期产物；静止、时长偏差、身份相似度等质量观察不会阻断或驱动重渲染。回执明示未进行模型、身份或语音审核，score=0为未评分。缺文件、空产物和工具实际失败仍按执行失败报告；生成前源稿确定性规则继续有效。\n\n当前Codex完整读取共享策略、worker、producer类型与完整回归；准确提交后65项通过、类型检查通过。通道测试证明off为零gate.review请求，blocking/advisory须显式选择。无新增依赖、权限或CI变更，无模型/新渲染调用。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/film-worker-runtime.test.ts",
+            "packages/video-studio/src/film-worker-runtime.ts",
+            "packages/video-studio/src/producer-gate.ts",
+            "packages/video-studio/src/rendered-output-policy.test.ts",
+            "packages/video-studio/src/rendered-output-policy.ts"
+          ],
+          "status": "parked",
+          "ciSince": 1791352820859
+        }
+      },
+      "previous": "73e1b5e69b0770aa7718d0c74a937d2267c4c142233b9bb6694c031e57bd847e",
+      "digest": "085940c6f85d76124d9add2a97d0f2bf3de76dff25d997b334824ab4d2ed325e"
+    },
+    {
+      "sequence": 1379,
+      "at": "2026-10-07T11:06:02.000Z",
+      "kind": "transaction",
+      "data": {
+        "id": "595223ec-b8af-46f1-966b-ce2259be98bb"
+      },
+      "previous": "085940c6f85d76124d9add2a97d0f2bf3de76dff25d997b334824ab4d2ed325e",
+      "digest": "ff502d8896e973af1df45f21dbaf82819a185a69003fda00e3aa9d9f67cf6459"
     }
   ]
 }
