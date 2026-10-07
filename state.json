@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 814,
+  "revision": 819,
   "tasks": {
     "132": {
       "number": 132,
@@ -4034,15 +4034,28 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791361029790
+      "updatedAt": 1791361032558,
+      "admission": {
+        "number": 156,
+        "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "filesHash": "041eba62620e12dad3fc49bd629b5e2afe5eaad5cc41137b16c55533746c1d85",
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-156",
+        "generation": {
+          "protocol": 16
+        }
+      }
     }
   },
   "leases": {
     "protocol": {
       "owner": null,
-      "generation": 15,
-      "acquiredAt": 1791359413003,
-      "expiresAt": 1791361022569
+      "generation": 16,
+      "acquiredAt": 1791361032558,
+      "expiresAt": 1791361032558
     },
     "migrations": {
       "owner": null,
@@ -20982,6 +20995,93 @@
       },
       "previous": "45a037d8c1f2c2a2c400a9bf68dd06ce340e4465718bf2c518f49dfd8843683d",
       "digest": "f68c540ff6ea9f7eca6384c0f150080f1ddba1724ea8a510a1998c500a4c270f"
+    },
+    {
+      "sequence": 815,
+      "at": "2026-10-07T08:17:12.558Z",
+      "kind": "lease_acquire",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-156",
+        "generation": {
+          "protocol": 16
+        }
+      },
+      "previous": "f68c540ff6ea9f7eca6384c0f150080f1ddba1724ea8a510a1998c500a4c270f",
+      "digest": "451439cfe00e5f4a4efdf7822963ea4e03a32833d7775950c8b6d91bf2133205"
+    },
+    {
+      "sequence": 816,
+      "at": "2026-10-07T08:17:12.558Z",
+      "kind": "lease_release",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-156",
+        "generation": {
+          "protocol": 16
+        }
+      },
+      "previous": "451439cfe00e5f4a4efdf7822963ea4e03a32833d7775950c8b6d91bf2133205",
+      "digest": "ebc2ff43966062cc3202d0b9f83630f70d04698d0094a0ded6d44aeb3f105fd7"
+    },
+    {
+      "sequence": 817,
+      "at": "2026-10-07T08:17:12.558Z",
+      "kind": "source_admitted",
+      "data": {
+        "number": 156,
+        "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "filesHash": "041eba62620e12dad3fc49bd629b5e2afe5eaad5cc41137b16c55533746c1d85",
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-156",
+        "generation": {
+          "protocol": 16
+        }
+      },
+      "previous": "ebc2ff43966062cc3202d0b9f83630f70d04698d0094a0ded6d44aeb3f105fd7",
+      "digest": "bc2a6ce62ce8b29eb42109d5dc705a3580d566fef096d9d07c74c24f49da94d7"
+    },
+    {
+      "sequence": 818,
+      "at": "2026-10-07T08:17:12.558Z",
+      "kind": "task",
+      "data": {
+        "number": 156,
+        "patch": {
+          "admission": {
+            "number": 156,
+            "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "filesHash": "041eba62620e12dad3fc49bd629b5e2afe5eaad5cc41137b16c55533746c1d85",
+            "scopes": [
+              "protocol"
+            ],
+            "owner": "admission/pr-156",
+            "generation": {
+              "protocol": 16
+            }
+          }
+        }
+      },
+      "previous": "bc2a6ce62ce8b29eb42109d5dc705a3580d566fef096d9d07c74c24f49da94d7",
+      "digest": "b0e14608d857fedd5e312e80c3b89a98b892c32baac19226770fe52af6d59739"
+    },
+    {
+      "sequence": 819,
+      "at": "2026-10-07T08:17:11.663Z",
+      "kind": "transaction",
+      "data": {
+        "id": "source-admit:156:7fe4c2475f16713e2ada0ec8154d77b21ab88100:6e7bb78749a4ade1955cf03476ed249f630aa3f8"
+      },
+      "previous": "b0e14608d857fedd5e312e80c3b89a98b892c32baac19226770fe52af6d59739",
+      "digest": "c7c5232fa55dc63d6cdd4f7595a572c712819855bb0c2d575c5ebe71f181617b"
     }
   ]
 }
