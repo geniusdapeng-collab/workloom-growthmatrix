@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3771,
+  "revision": 3773,
   "tasks": {
     "132": {
       "number": 132,
@@ -3770,7 +3770,7 @@
     },
     "146": {
       "number": 146,
-      "status": "aligning",
+      "status": "waiting_ci",
       "firstSeen": 1791354743310,
       "attempts": {},
       "admission": {
@@ -3793,7 +3793,7 @@
       "blockedUntil": 0,
       "developerReview": null,
       "candidate": null,
-      "headSha": "c085e0327aa052c1d5c9c890572f5122eec731ca",
+      "headSha": "4f7b89a7342017b8ee8458d0f7d29d85bc627dce",
       "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
       "branch": "fix/T-2026-1007-0918-film-paid-receipts",
       "intent": {
@@ -3819,7 +3819,7 @@
         "apps/server/src/video/film-worker.ts",
         "packages/db/migrations/0056_film_paid_receipts.sql"
       ],
-      "ciSince": 1791374342093,
+      "ciSince": 1791411188927,
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 146,
@@ -3906,16 +3906,12 @@
         "at": 1791371003713
       },
       "recoveryIntent": null,
-      "alignmentIntent": {
-        "headSha": "c085e0327aa052c1d5c9c890572f5122eec731ca",
-        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
-        "at": 1791411188927
-      },
+      "alignmentIntent": null,
       "alignment": {
-        "sha": "4b9260e1184f8aac42e1f10e2f229ca3bac8db20",
-        "previousHead": "6d22a76063381d4a512b6bcec8c7627726a27d46",
-        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
-        "verifiedAt": "2026-10-07T12:00:41.511Z"
+        "sha": "4f7b89a7342017b8ee8458d0f7d29d85bc627dce",
+        "previousHead": "c085e0327aa052c1d5c9c890572f5122eec731ca",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+        "verifiedAt": "2026-10-07T22:15:14.290Z"
       },
       "dependencies": [
         145
@@ -93938,6 +93934,38 @@
       },
       "previous": "1bbc35d8336244b26b148951106e22c9c25c90a4d116e5818a7c7a51f5109ace",
       "digest": "358061cf1f6ec979f3da2e2aba037791e47d35532c17e72fd51e9707207c2236"
+    },
+    {
+      "sequence": 3772,
+      "at": "2026-10-07T22:13:08.927Z",
+      "kind": "task",
+      "data": {
+        "number": 146,
+        "patch": {
+          "status": "waiting_ci",
+          "alignment": {
+            "sha": "4f7b89a7342017b8ee8458d0f7d29d85bc627dce",
+            "previousHead": "c085e0327aa052c1d5c9c890572f5122eec731ca",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "verifiedAt": "2026-10-07T22:15:14.290Z"
+          },
+          "alignmentIntent": null,
+          "headSha": "4f7b89a7342017b8ee8458d0f7d29d85bc627dce",
+          "ciSince": 1791411188927
+        }
+      },
+      "previous": "358061cf1f6ec979f3da2e2aba037791e47d35532c17e72fd51e9707207c2236",
+      "digest": "6e171d838e2f61c8bfb8a5d8ba350c7a9e8a0f35a5e06dead7da00659d06546a"
+    },
+    {
+      "sequence": 3773,
+      "at": "2026-10-07T22:15:15.744Z",
+      "kind": "transaction",
+      "data": {
+        "id": "4eb00400-f3c6-4e3e-97c1-133959d69ab5"
+      },
+      "previous": "6e171d838e2f61c8bfb8a5d8ba350c7a9e8a0f35a5e06dead7da00659d06546a",
+      "digest": "a6027f69bb326ddeb77aef187a6435c6442e360eb88db1e21849ed0af6584f1a"
     }
   ]
 }
