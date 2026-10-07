@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1393,
+  "revision": 1395,
   "tasks": {
     "132": {
       "number": 132,
@@ -4007,7 +4007,7 @@
     },
     "156": {
       "number": 156,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791361029790,
       "attempts": {},
       "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
@@ -4144,7 +4144,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791369013609,
+      "updatedAt": 1791371100874,
       "admission": {
         "number": 156,
         "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
@@ -4159,7 +4159,6 @@
         }
       },
       "dependencies": [
-        148,
         149
       ],
       "error": "Prerequisite #148 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/148 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
@@ -33174,6 +33173,42 @@
       },
       "previous": "9300975bfd1e29dfcc0521648fce1cbfdbf387cd470b36f5f715a3eaa6f26edf",
       "digest": "ccb088b00e2d63d9c960975141fe1bfd8fd653f123e62173393a4cd0fd22b69e"
+    },
+    {
+      "sequence": 1394,
+      "at": "2026-10-07T11:05:00.874Z",
+      "kind": "task",
+      "data": {
+        "number": 156,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              149
+            ],
+            "releases": []
+          },
+          "dependencies": [
+            149
+          ]
+        }
+      },
+      "previous": "ccb088b00e2d63d9c960975141fe1bfd8fd653f123e62173393a4cd0fd22b69e",
+      "digest": "837cb754a421f6309f7faac940b9f7e54f8426c55a49ef57aa3b92e74605a4d7"
+    },
+    {
+      "sequence": 1395,
+      "at": "2026-10-07T11:06:32.193Z",
+      "kind": "transaction",
+      "data": {
+        "id": "18b647ea-44c4-45f3-8439-30b5db66762c"
+      },
+      "previous": "837cb754a421f6309f7faac940b9f7e54f8426c55a49ef57aa3b92e74605a4d7",
+      "digest": "a8b754b870e0b8971de9fc38fb81c6c743e1f0a1a1252321ace4501aee0b7582"
     }
   ]
 }
