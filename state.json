@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4016,
+  "revision": 4018,
   "tasks": {
     "132": {
       "number": 132,
@@ -5675,7 +5675,7 @@
       "status": "waiting_dependency",
       "firstSeen": 1791362963095,
       "attempts": {},
-      "headSha": "64433c75494cd92722220483b55b7de463d0ce33",
+      "headSha": "f529cff789367fc50cc35f2e377f0b6d58941793",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-studio-duration-run-context",
       "intent": {
@@ -5831,7 +5831,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791414674509,
+      "updatedAt": 1791414813102,
       "admission": {
         "number": 157,
         "headSha": "f529cff789367fc50cc35f2e377f0b6d58941793",
@@ -99613,6 +99613,50 @@
       },
       "previous": "8ed6034aed25573cb9f12535f9ee5bdf7c5776c8bad1785a64a24428fbf22062",
       "digest": "fc265031ea83926c8c34f80d1743ee9f4d7a74af5a0f6bedb8114e60f8c54d5e"
+    },
+    {
+      "sequence": 4017,
+      "at": "2026-10-07T23:13:33.102Z",
+      "kind": "task",
+      "data": {
+        "number": 157,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "f529cff789367fc50cc35f2e377f0b6d58941793",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              148,
+              150,
+              156
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.17"
+              }
+            ]
+          },
+          "dependencies": [
+            150,
+            156
+          ]
+        }
+      },
+      "previous": "fc265031ea83926c8c34f80d1743ee9f4d7a74af5a0f6bedb8114e60f8c54d5e",
+      "digest": "53a598b8db6b7accf9a43afb4bb655441b3a603e764c795446fdd278679e9886"
+    },
+    {
+      "sequence": 4018,
+      "at": "2026-10-07T23:15:58.941Z",
+      "kind": "transaction",
+      "data": {
+        "id": "d413a7fa-6423-4b55-9321-d95dccc272a2"
+      },
+      "previous": "53a598b8db6b7accf9a43afb4bb655441b3a603e764c795446fdd278679e9886",
+      "digest": "b087589553b14abaa17a8b9276d5588a968f896270d6d770a1e4f3bbcb96173c"
     }
   ]
 }
