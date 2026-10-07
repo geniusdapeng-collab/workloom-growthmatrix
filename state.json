@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4073,
+  "revision": 4076,
   "tasks": {
     "132": {
       "number": 132,
@@ -4343,7 +4343,7 @@
     },
     "149": {
       "number": 149,
-      "status": "merging",
+      "status": "release_pending",
       "firstSeen": 1791356934499,
       "attempts": {},
       "headSha": "e23036b57b872777c3d0d9ff3f57ab5d40701613",
@@ -4491,7 +4491,7 @@
       "dependencies": [
         146
       ],
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/149/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "error": null,
       "blockedUntil": 1791415413102,
       "alignmentCount": 0,
       "recoveryCount": 0,
@@ -4512,7 +4512,7 @@
         "packages/video-studio/src/video-task-receipt.ts"
       ],
       "ciSince": 1791371100874,
-      "mergePhase": "merge_verified",
+      "mergePhase": null,
       "mergeSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 188,
@@ -4597,7 +4597,17 @@
         "checkSha": "9dc8dd9feec998a027eabc760a519f8163dcfff0",
         "mergedBy": "cnb.dYiF05kxAGA",
         "verifiedAt": "2026-10-07T23:37:53.031Z"
-      }
+      },
+      "integrationHistory": [
+        {
+          "sha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+          "sourceSha": "e23036b57b872777c3d0d9ff3f57ab5d40701613",
+          "mainSha": "6213c885ba4d5dd77981228d3ba0890092c297f9",
+          "checkSha": "9dc8dd9feec998a027eabc760a519f8163dcfff0",
+          "mergedBy": "cnb.dYiF05kxAGA",
+          "verifiedAt": "2026-10-07T23:37:53.031Z"
+        }
+      ]
     },
     "150": {
       "number": 150,
@@ -9699,6 +9709,18 @@
       "status": "pending",
       "attempts": 0,
       "createdAt": 1791414616413,
+      "builds": []
+    },
+    "2ceb298e270687d09d91f8354002b43235a118b6c53b5d3a9aa4976c74beeb82": {
+      "key": "2ceb298e270687d09d91f8354002b43235a118b6c53b5d3a9aa4976c74beeb82",
+      "repo": "workloom-ai/workloom-growthmatrix",
+      "sha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+      "kind": "desktop",
+      "version": "v0.1.9",
+      "number": 149,
+      "status": "pending",
+      "attempts": 0,
+      "createdAt": 1791416115235,
       "builds": []
     }
   },
@@ -100929,6 +100951,62 @@
       },
       "previous": "d25e95800bb531699c4eddcdfe050d3521e798a6e6eb4c5b00c686308a098988",
       "digest": "29b90eff5eae930c08423600d28c3e2cecbb156f596e03cb30bd7e1fadfef3a9"
+    },
+    {
+      "sequence": 4074,
+      "at": "2026-10-07T23:35:15.235Z",
+      "kind": "task",
+      "data": {
+        "number": 149,
+        "patch": {
+          "status": "release_pending",
+          "merge": {
+            "sha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+            "sourceSha": "e23036b57b872777c3d0d9ff3f57ab5d40701613",
+            "mainSha": "6213c885ba4d5dd77981228d3ba0890092c297f9",
+            "checkSha": "9dc8dd9feec998a027eabc760a519f8163dcfff0",
+            "mergedBy": "cnb.dYiF05kxAGA",
+            "verifiedAt": "2026-10-07T23:37:53.031Z"
+          },
+          "mergePhase": null,
+          "error": null,
+          "integrationHistory": [
+            {
+              "sha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+              "sourceSha": "e23036b57b872777c3d0d9ff3f57ab5d40701613",
+              "mainSha": "6213c885ba4d5dd77981228d3ba0890092c297f9",
+              "checkSha": "9dc8dd9feec998a027eabc760a519f8163dcfff0",
+              "mergedBy": "cnb.dYiF05kxAGA",
+              "verifiedAt": "2026-10-07T23:37:53.031Z"
+            }
+          ]
+        }
+      },
+      "previous": "29b90eff5eae930c08423600d28c3e2cecbb156f596e03cb30bd7e1fadfef3a9",
+      "digest": "4be90169274d367f7a7bc160aeb8c998ff7962d8d1fefcb56002f193cece8fe2"
+    },
+    {
+      "sequence": 4075,
+      "at": "2026-10-07T23:35:15.235Z",
+      "kind": "release_enqueued",
+      "data": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "sha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+        "kind": "desktop",
+        "version": "v0.1.9"
+      },
+      "previous": "4be90169274d367f7a7bc160aeb8c998ff7962d8d1fefcb56002f193cece8fe2",
+      "digest": "3f64c72b67fc7139086130e9ec42536ab45d817b8df7090e61e9936cfa21b96d"
+    },
+    {
+      "sequence": 4076,
+      "at": "2026-10-07T23:38:07.544Z",
+      "kind": "transaction",
+      "data": {
+        "id": "130e7b52-9527-4973-afc8-008b2af911a8"
+      },
+      "previous": "3f64c72b67fc7139086130e9ec42536ab45d817b8df7090e61e9936cfa21b96d",
+      "digest": "36b1d1c21f1ce17381bf959df336b52b09034fbb914ab28566c18c8d4a3d22ad"
     }
   ]
 }
