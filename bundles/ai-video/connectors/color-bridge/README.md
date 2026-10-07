@@ -1,7 +1,12 @@
 # 成片调色 bridge 连接器（ai-video）
 
 把 `colorread.* / colorwrite.*` 工具接到 Mac 调色工位（ffmpeg 内核），供「调色师」数字员工在
-后期环节对成片母版做**诊断 → 校正 → 风格化 → 匹配 → 复检**。
+后期环节按请求对成片母版做一次本地调色或参考匹配。
+
+**2026-10-07 当前默认**：成功渲染源片直接后期，不抽帧评审曝光、肤色、画面品质或调色可见性，
+不因 `verify=false` / `skip_verify=true` 退回。`auto` 使用固定调色配方，`grade` 按参数实际加工一次；
+回执记录源/产物 SHA-256、请求参数、滤镜与实际规格，`qualityReviewed=false`，品质指标为 `null`。
+`colorread.analyze` / `colorread.scope` 是显式诊断工具，不被默认出片链路调用。
 
 ## 部署形态
 
@@ -11,7 +16,7 @@ WorkLoom（大脑：岗位/技能/围栏/事件账本）        Mac 调色工位
                                             └─ ffmpeg / ffprobe（kit 受控安装）
                                                 ├─ 素材区（原片只读）
                                                 ├─ 产物区（新文件 + 版本链）
-                                                └─ 回执：sha256 / 指标 / scope / 前后对比帧
+                                                └─ 回执：源/产物 sha256 / 实际参数 / 实际规格
 ```
 
 **大文件不出工位**：服务器只传路径与参数，工位本地读写素材，只回元数据、小图（scope/对比帧）与哈希。
@@ -41,10 +46,10 @@ const toolExecutor = createColorBridgeExecutor({
 |---|---|---|
 | `colorread.health` | 读 | 工位与 ffmpeg 健康探针（含可用 profile / 白名单根目录） |
 | `colorread.probe` | 读 | 素材规格：分辨率/帧率/时长/编码/色彩空间/是否 log |
-| `colorread.analyze` | 读 | 抽帧量化诊断：曝光/裁切/偏色/饱和/肤色 + 修复建议（`auto` 校正量由它推导） |
+| `colorread.analyze` | 读 | 显式抽帧诊断：曝光/裁切/偏色/饱和/肤色 + 建议；不作为默认出片前置条件 |
 | `colorread.scope` | 读 | 波形/矢量/直方图 + 前后对比帧 |
-| `colorwrite.grade` | 写 | 应用 look/LUT 与滤镜链产出新成片（`auto` 先校正后创作；强度 0..1） |
-| `colorwrite.match` | 写 | 以参考镜为基准匹配其余镜头，回报残差 |
+| `colorwrite.grade` | 写 | 应用请求的 look/LUT 与滤镜链产出新成片（`auto` 固定配方；强度 0..1） |
+| `colorwrite.match` | 写 | 明确请求参考匹配时按参考数据执行，不以残差品质分数放行 |
 
 ## 安装与自检（工位一次性）
 
@@ -99,6 +104,5 @@ node_modules/.bin/tsx bundles/ai-video/connectors/color-bridge/runtime-smoke.mts
 | 先校正后创作、LUT 最后 | `core.mjs` 的 `buildChain` 顺序 + 技能 `color-grade` |
 | 强度默认不满档（0.6–0.8） | `grade.intensity` 默认 0.8；技能给出选型表 |
 | 原片只读 | `assertOutputWritable` + 围栏 G-COL2 |
-| 无回执不算完成 | 指标复检 + sha256 回执 + 围栏 G-COL3；outage 场景负例 |
+| 实际加工可对账 | 源/产物 sha256、实际参数与规格回执；源字节变化或缺产物由 G-COL3 阻断 |
 | 只调母版一次 | 技能「硬红线」+ 管线 `color` 步骤置于 `post` 之后 |
-

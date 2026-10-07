@@ -7,6 +7,11 @@ CLI 和 MCP 不直接写数据库，也不能绕过服务端的成员/住客范�
 
 ## 本机使用
 
+本仓视频工作台的首读入口是 `growth.video.workbench.guide`（MCP 工具
+`workloom_growth_video_workbench_guide`，空输入 `{}`）。完整 [指南](../docs/ai-video-workbench-guide.md)
+随运行载荷提供，返回固定路径、产品、版本、正文和 SHA-256；读取不调模型或媒体。
+Matrix 的严格 native standard-post 能力缺口及 Studio 的 30 秒意图限制在指南中明确记录。
+
 要求 Node.js 24（与仓库 `package.json#engines` 一致）。从仓库根执行：
 
 ```sh
