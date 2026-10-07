@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 842,
+  "revision": 844,
   "tasks": {
     "132": {
       "number": 132,
@@ -2401,7 +2401,7 @@
       },
       "updatedAt": 1791362108120,
       "error": "检查/评审阻断：Required check static-gate missing/failed/ambiguous",
-      "blockedUntil": 1791359410413,
+      "blockedUntil": 1791362708120,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
       "files": [
         "packages/video-studio/src/creative-duration-policy.test.ts",
@@ -2420,7 +2420,7 @@
         "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
         "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
         "reason": "检查/评审阻断：Required check static-gate missing/failed/ambiguous",
-        "at": 1791358810413
+        "at": 1791362108120
       },
       "recoveryIntent": null
     },
@@ -21476,6 +21476,39 @@
       },
       "previous": "09996818d81260dcf0765a1efdd0be30a05a955aed848eaa8a84dbc8cd96cfac",
       "digest": "1fd73b535f7aacd1a92ff2913903384f1aceaafd22209088df76690ce4f07130"
+    },
+    {
+      "sequence": 843,
+      "at": "2026-10-07T08:35:08.120Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "status": "parked",
+          "error": "检查/评审阻断：Required check static-gate missing/failed/ambiguous",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "reason": "检查/评审阻断：Required check static-gate missing/failed/ambiguous",
+            "at": 1791362108120
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791362708120
+        }
+      },
+      "previous": "1fd73b535f7aacd1a92ff2913903384f1aceaafd22209088df76690ce4f07130",
+      "digest": "e431cd9fc337ea983f73b6dd950a2fa267dffb3b9fef4197838a7e2e63074c75"
+    },
+    {
+      "sequence": 844,
+      "at": "2026-10-07T08:35:48.103Z",
+      "kind": "transaction",
+      "data": {
+        "id": "9ae4df01-462d-44ab-967d-e53dfd35176f"
+      },
+      "previous": "e431cd9fc337ea983f73b6dd950a2fa267dffb3b9fef4197838a7e2e63074c75",
+      "digest": "0c464867bfcad8d9a42c2dc71aa297325fc3faa9ba0e7f739bb7d562fe8b82bf"
     }
   ]
 }
