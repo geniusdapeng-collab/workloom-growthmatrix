@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3124,
+  "revision": 3127,
   "tasks": {
     "132": {
       "number": 132,
@@ -6140,20 +6140,18 @@
     },
     "164": {
       "number": 164,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791370002564,
       "attempts": {},
-      "headSha": "fd4ef420a5411e6e45c0afd792c53d460abf2f4c",
-      "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+      "headSha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
+      "mainSha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
       "branch": "fix/T-2026-1007-0918-generation-atomic-lock",
       "intent": {
         "taskId": "T-2026-1007-0918",
         "ready": true,
         "dependsOn": [
           148,
-          149,
-          160,
-          161
+          180
         ],
         "releases": [
           {
@@ -6167,8 +6165,8 @@
         "provider": "codex",
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 164,
-        "headSha": "fd4ef420a5411e6e45c0afd792c53d460abf2f4c",
-        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headSha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
+        "mainSha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "packages/video-studio/src/generation-file-store.test.ts",
@@ -6177,9 +6175,7 @@
         "filesHash": "173f2725658dccbf3e61a44d58571f7af2a27e1b8f338f520a1ab1f2d88e099b",
         "dependsOn": [
           148,
-          149,
-          160,
-          161
+          180
         ],
         "ciPolicyChanges": [],
         "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
@@ -6187,20 +6183,20 @@
           {
             "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/generation-file-store.test.ts --maxWorkers=1",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T12:52:49.137220+00:00",
-            "result": "Actual corresponding recorded checks rerun at this source head; see exact output and counts."
+            "finishedAt": "2026-10-07T19:30:33.981069+00:00",
+            "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           },
           {
             "command": "node node_modules/typescript/bin/tsc --noEmit --skipLibCheck --target ES2022 --module NodeNext --moduleResolution NodeNext --allowImportingTsExtensions packages/video-studio/src/generation-file-store.ts packages/video-studio/src/generation-file-store.test.ts",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T12:52:49.274600+00:00",
-            "result": "Actual corresponding recorded checks rerun at this source head; see exact output and counts."
+            "finishedAt": "2026-10-07T19:30:34.186917+00:00",
+            "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           }
         ],
-        "reviewedAt": "2026-10-07T13:21:44.289200+00:00",
-        "summary": "Read the complete store, image/video request helpers and their filesystem recovery tests. Atomic same-directory hard-link creation publishes fully written owner bytes without replacing an existing lock. Failed creation removes only its private temporary owner file. Unknown/corrupt/dead-unacknowledged owners never authorize another submission. New deterministic real-process test injects a half-written owner and waits for a second independent process before release; original implementation fails and repaired implementation passes. All existing image/video multi-process recovery tests pass locally. Exact source tests and typecheck pass without network or paid generation. This is a current Codex review of the normal semantic source merge at the exact head shown. No owned file changes were introduced by this main merge. The atomic journal-owner publication and deterministic competing-process regression retain the complete previous Codex review. Main provider-success acceptance and source-audio behavior are preserved; every previously required targeted test and type check was rerun at this exact merged head. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either.",
+        "reviewedAt": "2026-10-07T19:32:44.790036+00:00",
+        "summary": "Read the complete store, image/video request helpers and their filesystem recovery tests. Atomic same-directory hard-link creation publishes fully written owner bytes without replacing an existing lock. Failed creation removes only its private temporary owner file. Unknown/corrupt/dead-unacknowledged owners never authorize another submission. New deterministic real-process test injects a half-written owner and waits for a second independent process before release; original implementation fails and repaired implementation passes. All existing image/video multi-process recovery tests pass locally. Exact source tests and typecheck pass without network or paid generation. This is a current Codex review of the normal semantic source merge at the exact head shown. No owned file changes were introduced by this main merge. The atomic journal-owner publication and deterministic competing-process regression retain the complete previous Codex review. Main provider-success acceptance and source-audio behavior are preserved; every previously required targeted test and type check was rerun at this exact merged head. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either. The native source alignment is an ordinary fast-forward or merge with current main c25132f245ca9158fb6b372e36b9cdbcae1572dd. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. Explicit dependency repair: The actual source-07 multi-process recovery test failed because the old store exposed partial lock-owner JSON. Complete rereading of both atomic-store files shows only node built-ins and unchanged public store API, so this fix needs the already integrated journal source #148 and publisher #180, not later video recovery, stable-root or utility callers. Current exact atomic process regression and typecheck are required before native handoff. Remove the synthetic version-order waits on #149/#160/#161 so the blocking concurrency fix integrates first; retain the unique existing unfrozen 0.1.21 declaration and all actual source/candidate CI, merge and production-byte checks.",
         "passed": true,
-        "id": "7cf4d209a97294b149ba8835629ccec287022aafcc3e3e0b326b51120947b28d"
+        "id": "3c468327a1358820897da2f48d28fd101a7622203382276216dec0abf7cf2f0b"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -6209,7 +6205,7 @@
           "number": 164,
           "state": "open",
           "title": "fix(growth): atomically publish complete paid generation lock owners [T-2026-1007-0918]",
-          "body": "A competing process could open a generation lock between O_EXCL creation and writing its owner JSON, producing a false corruption error while safely refusing a duplicate paid request. Fsync a private owner file and atomically link it to the final lock name without replacing any existing owner. Apply the same publication to recovery fences. A deterministic child-process test pauses the owner halfway through writing and proves the competing process still completes exactly one journaled operation. Genuine corrupt, unknown, alive and unacknowledged owners remain protected. No paid provider call.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148,\n    149,\n    160,\n    161\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.21\"\n    }\n  ]\n}\n-->",
+          "body": "A competing process could open a generation lock between O_EXCL creation and writing its owner JSON, producing a false corruption error while safely refusing a duplicate paid request. Fsync a private owner file and atomically link it to the final lock name without replacing any existing owner. Apply the same publication to recovery fences. A deterministic child-process test pauses the owner halfway through writing and proves the competing process still completes exactly one journaled operation. Genuine corrupt, unknown, alive and unacknowledged owners remain protected. No paid provider call.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148,\n    180\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.21\"\n    }\n  ]\n}\n-->",
           "author": {
             "username": "cnb.dYiF05kxAGA",
             "nickname": "Genius",
@@ -6220,7 +6216,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "sha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -6230,7 +6226,7 @@
           },
           "head": {
             "ref": "refs/heads/fix/T-2026-1007-0918-generation-atomic-lock",
-            "sha": "fd4ef420a5411e6e45c0afd792c53d460abf2f4c",
+            "sha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -6248,8 +6244,8 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "fd4ef420a5411e6e45c0afd792c53d460abf2f4c",
-        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headSha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
+        "mainSha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
         "files": [
           "packages/video-studio/src/generation-file-store.test.ts",
           "packages/video-studio/src/generation-file-store.ts"
@@ -6259,9 +6255,7 @@
           "ready": true,
           "dependsOn": [
             148,
-            149,
-            160,
-            161
+            180
           ],
           "releases": [
             {
@@ -6270,14 +6264,14 @@
             }
           ]
         },
-        "headTime": 1791377499000,
-        "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headTime": 1791401433000,
+        "mergeBase": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
         "checkErrors": [],
         "checkSha": null,
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791401379390,
+      "updatedAt": 1791401601387,
       "admission": {
         "number": 164,
         "headSha": "fd4ef420a5411e6e45c0afd792c53d460abf2f4c",
@@ -79390,6 +79384,170 @@
       },
       "previous": "6441ec6a6ffa951a25b825d6167db867a17f3f4d4a1ece0f37d6bd46f15773e8",
       "digest": "1d0d25cab59dc388499c2b331bc856f7c85b6d54fa521c9ab73f7c2b238316da"
+    },
+    {
+      "sequence": 3125,
+      "at": "2026-10-07T19:33:21.375Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 164,
+        "id": "3c468327a1358820897da2f48d28fd101a7622203382276216dec0abf7cf2f0b",
+        "headSha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
+        "mainSha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd"
+      },
+      "previous": "1d0d25cab59dc388499c2b331bc856f7c85b6d54fa521c9ab73f7c2b238316da",
+      "digest": "a652aa17a19ebacb4482d66f6d6300085f9e7c32cd790c3840180b0a6799308d"
+    },
+    {
+      "sequence": 3126,
+      "at": "2026-10-07T19:33:21.387Z",
+      "kind": "task",
+      "data": {
+        "number": 164,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
+          "mainSha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
+          "branch": "fix/T-2026-1007-0918-generation-atomic-lock",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              180
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.21"
+              }
+            ]
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 164,
+            "headSha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
+            "mainSha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/generation-file-store.test.ts",
+              "packages/video-studio/src/generation-file-store.ts"
+            ],
+            "filesHash": "173f2725658dccbf3e61a44d58571f7af2a27e1b8f338f520a1ab1f2d88e099b",
+            "dependsOn": [
+              148,
+              180
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/generation-file-store.test.ts --maxWorkers=1",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T19:30:33.981069+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit --skipLibCheck --target ES2022 --module NodeNext --moduleResolution NodeNext --allowImportingTsExtensions packages/video-studio/src/generation-file-store.ts packages/video-studio/src/generation-file-store.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T19:30:34.186917+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              }
+            ],
+            "reviewedAt": "2026-10-07T19:32:44.790036+00:00",
+            "summary": "Read the complete store, image/video request helpers and their filesystem recovery tests. Atomic same-directory hard-link creation publishes fully written owner bytes without replacing an existing lock. Failed creation removes only its private temporary owner file. Unknown/corrupt/dead-unacknowledged owners never authorize another submission. New deterministic real-process test injects a half-written owner and waits for a second independent process before release; original implementation fails and repaired implementation passes. All existing image/video multi-process recovery tests pass locally. Exact source tests and typecheck pass without network or paid generation. This is a current Codex review of the normal semantic source merge at the exact head shown. No owned file changes were introduced by this main merge. The atomic journal-owner publication and deterministic competing-process regression retain the complete previous Codex review. Main provider-success acceptance and source-audio behavior are preserved; every previously required targeted test and type check was rerun at this exact merged head. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either. The native source alignment is an ordinary fast-forward or merge with current main c25132f245ca9158fb6b372e36b9cdbcae1572dd. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. Explicit dependency repair: The actual source-07 multi-process recovery test failed because the old store exposed partial lock-owner JSON. Complete rereading of both atomic-store files shows only node built-ins and unchanged public store API, so this fix needs the already integrated journal source #148 and publisher #180, not later video recovery, stable-root or utility callers. Current exact atomic process regression and typecheck are required before native handoff. Remove the synthetic version-order waits on #149/#160/#161 so the blocking concurrency fix integrates first; retain the unique existing unfrozen 0.1.21 declaration and all actual source/candidate CI, merge and production-byte checks.",
+            "passed": true,
+            "id": "3c468327a1358820897da2f48d28fd101a7622203382276216dec0abf7cf2f0b"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 164,
+            "pull": {
+              "number": 164,
+              "state": "open",
+              "title": "fix(growth): atomically publish complete paid generation lock owners [T-2026-1007-0918]",
+              "body": "A competing process could open a generation lock between O_EXCL creation and writing its owner JSON, producing a false corruption error while safely refusing a duplicate paid request. Fsync a private owner file and atomically link it to the final lock name without replacing any existing owner. Apply the same publication to recovery fences. A deterministic child-process test pauses the owner halfway through writing and proves the competing process still completes exactly one journaled operation. Genuine corrupt, unknown, alive and unacknowledged owners remain protected. No paid provider call.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148,\n    180\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.21\"\n    }\n  ]\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-generation-atomic-lock",
+                "sha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
+            "mainSha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
+            "files": [
+              "packages/video-studio/src/generation-file-store.test.ts",
+              "packages/video-studio/src/generation-file-store.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                148,
+                180
+              ],
+              "releases": [
+                {
+                  "kind": "desktop",
+                  "version": "0.1.21"
+                }
+              ]
+            },
+            "headTime": 1791401433000,
+            "mergeBase": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "a652aa17a19ebacb4482d66f6d6300085f9e7c32cd790c3840180b0a6799308d",
+      "digest": "e379899f06e788f8a27c9848d30d7ef578ffe90639694cfffb3daac5cee9e7d7"
+    },
+    {
+      "sequence": 3127,
+      "at": "2026-10-07T19:33:02.513Z",
+      "kind": "transaction",
+      "data": {
+        "id": "bf43b6c2-110e-4e70-bdaa-b055acb123f1"
+      },
+      "previous": "e379899f06e788f8a27c9848d30d7ef578ffe90639694cfffb3daac5cee9e7d7",
+      "digest": "ca0bbaf0103af99bb16b8de7c9bbecf36c6500ad363010a11e7c78b138f38d12"
     }
   ]
 }
