@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1977,
+  "revision": 1979,
   "tasks": {
     "132": {
       "number": 132,
@@ -5495,7 +5495,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791379510199,
+      "updatedAt": 1791380029775,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -52346,6 +52346,52 @@
       },
       "previous": "34c544b07118e5348d10cfbe91d9d1afd61d53c492c639c34d2ee5a79e8d3eda",
       "digest": "0ad077e5f4749a564dc44f16e122100f95630d2261ae98ef205b990dbafc48a8"
+    },
+    {
+      "sequence": 1978,
+      "at": "2026-10-07T13:33:49.775Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "0ad077e5f4749a564dc44f16e122100f95630d2261ae98ef205b990dbafc48a8",
+      "digest": "24a0cdde0c47ea957776a82dcdbc1a46bf159a2f2a24906cd2701ac48765192d"
+    },
+    {
+      "sequence": 1979,
+      "at": "2026-10-07T13:35:30.179Z",
+      "kind": "transaction",
+      "data": {
+        "id": "0b05caa0-4451-4384-8f0a-6c123222bf12"
+      },
+      "previous": "24a0cdde0c47ea957776a82dcdbc1a46bf159a2f2a24906cd2701ac48765192d",
+      "digest": "e32199096574707d5956dc2579dc51781530da729c47e1ddd403f75fea7b427e"
     }
   ]
 }
