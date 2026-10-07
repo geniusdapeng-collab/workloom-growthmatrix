@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2109,
+  "revision": 2112,
   "tasks": {
     "132": {
       "number": 132,
@@ -7109,6 +7109,168 @@
         }
       },
       "updatedAt": 1791379120993
+    },
+    "172": {
+      "number": 172,
+      "status": "waiting_ci",
+      "firstSeen": 1791381463175,
+      "attempts": {},
+      "headSha": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+      "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+      "branch": "fix/T-2026-1007-0918-desktop-build-history",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [
+          170
+        ],
+        "releases": []
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 172,
+        "headSha": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+        "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "scripts/delivery/queue-release-history.test.mjs",
+          "scripts/delivery/queue-release.mjs"
+        ],
+        "filesHash": "35f00b7cd9259aa2c118c42c6bca9dcf098e9165e7adcd1d6945271431db35e5",
+        "dependsOn": [
+          170
+        ],
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "rationale": "Fully read the complete old and new release executor and its direct model/platform/API dependencies. Accept the actual canonical decimal total while preserving a safe integer bound, complete result count and unique build identity. The narrow prelaunch recovery requires zero attempts, no ACK, no launch intent, exact existing tag and the observed format failure; it verifies history before any POST and leaves concurrent or unknown launches intact. Source, signing, tag and final byte verification remain mandatory. Rollback by normal revert preserves durable release receipts."
+          },
+          {
+            "id": "CI-002",
+            "rationale": "Fully read and execute the complete new suite. It uses the observed official CNB history shape with zero count plus documented integer counts, and exercises invalid/incomplete/unbounded/duplicate history, unknown ACK recovery, safe prelaunch recovery and a concurrent ACK. All API calls are in-memory fixtures and every POST is counted. It adds meaningful failure and concurrency coverage without removing, skipping or replacing required native checks."
+          }
+        ],
+        "ciPolicyChangesHash": "2c36d17c08e43ab30ef0b71b6040a35de9fec3421f44bdbd1170134c4537f4e6",
+        "tests": [
+          {
+            "command": "node --test scripts/delivery/queue-release-history.test.mjs scripts/delivery/queue-release-contract.test.mjs scripts/delivery/queue.test.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T13:55:46.540704+00:00",
+            "result": "Actual native history ABI, no-duplicate recovery, existing delivery and finalizer byte-contract fixtures passed; no live build deployment claimed."
+          },
+          {
+            "command": "node --test scripts/desktop-release-finalizer.test.mjs scripts/ci/cnb-desktop-release.test.mjs scripts/unsigned-desktop-release.test.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T13:55:47.147238+00:00",
+            "result": "Existing native signing, tag/source and local finalizer byte contracts passed."
+          }
+        ],
+        "reviewedAt": "2026-10-07T13:57:37.863655+00:00",
+        "summary": "Current Codex read the complete changed release module, complete new regression and direct queue-model/platform/API code, and the unchanged previously reviewed native finalizer/deployment contracts. The official OpenAPI documents integer totals, while the live official CNB web response saved in this task has total=\"0\" and an empty data array. The current protected release ledger shows tag verified, zero attempts and the precise prelaunch-format failure. Full event and ACK guards preserve unknown-write recovery, and a concurrent acknowledged release is not overwritten. Tests exercise both real response shapes plus invalid values, missing rows, oversized history, duplicate IDs, unknown ACK recovery, old parked records and concurrency. Existing queue and native byte/signing tests are rerun below. Fixture results do not assert installers or a production release.",
+        "passed": true,
+        "id": "d6ea7118e5865376e5f09406922493a968da67e2efee87503265acbf1923d91a"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 172,
+        "pull": {
+          "number": 172,
+          "state": "open",
+          "title": "fix(growth): read native release history without duplicate launches [T-2026-1007-0918]",
+          "body": "The real v0.1.3 release stopped before build dispatch because CNB serializes the build-history total as a canonical decimal string. Accept documented integer and actual string counts, then require a complete bounded history with unique build IDs before any launch. Recover only the recorded never-dispatched history-format park after strict readback; attempts, ACKs, launch intents, foreign parks and concurrent recovery cannot authorize another POST. The native main scheduler runs this delivery infrastructure after integration. The already declared frozen desktop versions retain their separate production intents.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    170\n  ],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/fix/T-2026-1007-0918-desktop-build-history",
+            "sha": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+        "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+        "files": [
+          "scripts/delivery/queue-release-history.test.mjs",
+          "scripts/delivery/queue-release.mjs"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [
+            170
+          ],
+          "releases": []
+        },
+        "headTime": 1791381323000,
+        "mergeBase": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": [
+          {
+            "id": "CI-001",
+            "file": "scripts/delivery/queue-release.mjs",
+            "before": {
+              "ref": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+              "path": "scripts/delivery/queue-release.mjs",
+              "absent": false
+            },
+            "after": {
+              "ref": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+              "path": "scripts/delivery/queue-release.mjs",
+              "absent": false
+            },
+            "digest": "20a3e73ff7e43b13409687f108212df1105101f84d68c5ca1c0255626e051da2"
+          },
+          {
+            "id": "CI-002",
+            "file": "scripts/delivery/queue-release-history.test.mjs",
+            "before": {
+              "ref": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+              "path": "scripts/delivery/queue-release-history.test.mjs",
+              "absent": true
+            },
+            "after": {
+              "ref": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+              "path": "scripts/delivery/queue-release-history.test.mjs",
+              "absent": false
+            },
+            "digest": "60715c74f91b375db8c006e253e6af224c8a89798d0510af3eb9ddfc012e43fb"
+          }
+        ]
+      },
+      "updatedAt": 1791381463175
     }
   },
   "leases": {
@@ -55174,6 +55336,197 @@
       },
       "previous": "32bbe4c09f5b5ccd0c89b749f44098bdbcbc8ba7df14f74f3b8777aa5e87a8ab",
       "digest": "acefc69d11179a3930dffc84fb333dc66a84d8b57fd1d93bd6e9abf0f064c671"
+    },
+    {
+      "sequence": 2110,
+      "at": "2026-10-07T13:57:43.169Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 172,
+        "id": "d6ea7118e5865376e5f09406922493a968da67e2efee87503265acbf1923d91a",
+        "headSha": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+        "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf"
+      },
+      "previous": "acefc69d11179a3930dffc84fb333dc66a84d8b57fd1d93bd6e9abf0f064c671",
+      "digest": "f4015c33843adde789dac642c67af8e6e935207450e380db132e4048423011d1"
+    },
+    {
+      "sequence": 2111,
+      "at": "2026-10-07T13:57:43.175Z",
+      "kind": "task",
+      "data": {
+        "number": 172,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+          "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+          "branch": "fix/T-2026-1007-0918-desktop-build-history",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              170
+            ],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 172,
+            "headSha": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+            "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "scripts/delivery/queue-release-history.test.mjs",
+              "scripts/delivery/queue-release.mjs"
+            ],
+            "filesHash": "35f00b7cd9259aa2c118c42c6bca9dcf098e9165e7adcd1d6945271431db35e5",
+            "dependsOn": [
+              170
+            ],
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "rationale": "Fully read the complete old and new release executor and its direct model/platform/API dependencies. Accept the actual canonical decimal total while preserving a safe integer bound, complete result count and unique build identity. The narrow prelaunch recovery requires zero attempts, no ACK, no launch intent, exact existing tag and the observed format failure; it verifies history before any POST and leaves concurrent or unknown launches intact. Source, signing, tag and final byte verification remain mandatory. Rollback by normal revert preserves durable release receipts."
+              },
+              {
+                "id": "CI-002",
+                "rationale": "Fully read and execute the complete new suite. It uses the observed official CNB history shape with zero count plus documented integer counts, and exercises invalid/incomplete/unbounded/duplicate history, unknown ACK recovery, safe prelaunch recovery and a concurrent ACK. All API calls are in-memory fixtures and every POST is counted. It adds meaningful failure and concurrency coverage without removing, skipping or replacing required native checks."
+              }
+            ],
+            "ciPolicyChangesHash": "2c36d17c08e43ab30ef0b71b6040a35de9fec3421f44bdbd1170134c4537f4e6",
+            "tests": [
+              {
+                "command": "node --test scripts/delivery/queue-release-history.test.mjs scripts/delivery/queue-release-contract.test.mjs scripts/delivery/queue.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T13:55:46.540704+00:00",
+                "result": "Actual native history ABI, no-duplicate recovery, existing delivery and finalizer byte-contract fixtures passed; no live build deployment claimed."
+              },
+              {
+                "command": "node --test scripts/desktop-release-finalizer.test.mjs scripts/ci/cnb-desktop-release.test.mjs scripts/unsigned-desktop-release.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T13:55:47.147238+00:00",
+                "result": "Existing native signing, tag/source and local finalizer byte contracts passed."
+              }
+            ],
+            "reviewedAt": "2026-10-07T13:57:37.863655+00:00",
+            "summary": "Current Codex read the complete changed release module, complete new regression and direct queue-model/platform/API code, and the unchanged previously reviewed native finalizer/deployment contracts. The official OpenAPI documents integer totals, while the live official CNB web response saved in this task has total=\"0\" and an empty data array. The current protected release ledger shows tag verified, zero attempts and the precise prelaunch-format failure. Full event and ACK guards preserve unknown-write recovery, and a concurrent acknowledged release is not overwritten. Tests exercise both real response shapes plus invalid values, missing rows, oversized history, duplicate IDs, unknown ACK recovery, old parked records and concurrency. Existing queue and native byte/signing tests are rerun below. Fixture results do not assert installers or a production release.",
+            "passed": true,
+            "id": "d6ea7118e5865376e5f09406922493a968da67e2efee87503265acbf1923d91a"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 172,
+            "pull": {
+              "number": 172,
+              "state": "open",
+              "title": "fix(growth): read native release history without duplicate launches [T-2026-1007-0918]",
+              "body": "The real v0.1.3 release stopped before build dispatch because CNB serializes the build-history total as a canonical decimal string. Accept documented integer and actual string counts, then require a complete bounded history with unique build IDs before any launch. Recover only the recorded never-dispatched history-format park after strict readback; attempts, ACKs, launch intents, foreign parks and concurrent recovery cannot authorize another POST. The native main scheduler runs this delivery infrastructure after integration. The already declared frozen desktop versions retain their separate production intents.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    170\n  ],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-desktop-build-history",
+                "sha": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+            "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+            "files": [
+              "scripts/delivery/queue-release-history.test.mjs",
+              "scripts/delivery/queue-release.mjs"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                170
+              ],
+              "releases": []
+            },
+            "headTime": 1791381323000,
+            "mergeBase": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": "scripts/delivery/queue-release.mjs",
+                "before": {
+                  "ref": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+                  "path": "scripts/delivery/queue-release.mjs",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+                  "path": "scripts/delivery/queue-release.mjs",
+                  "absent": false
+                },
+                "digest": "20a3e73ff7e43b13409687f108212df1105101f84d68c5ca1c0255626e051da2"
+              },
+              {
+                "id": "CI-002",
+                "file": "scripts/delivery/queue-release-history.test.mjs",
+                "before": {
+                  "ref": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+                  "path": "scripts/delivery/queue-release-history.test.mjs",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "c3f529320ca19732709d9c8ffc57a9ee896e0249",
+                  "path": "scripts/delivery/queue-release-history.test.mjs",
+                  "absent": false
+                },
+                "digest": "60715c74f91b375db8c006e253e6af224c8a89798d0510af3eb9ddfc012e43fb"
+              }
+            ]
+          }
+        }
+      },
+      "previous": "f4015c33843adde789dac642c67af8e6e935207450e380db132e4048423011d1",
+      "digest": "4e03936f5793c71bab5c03ff0fbe260c374ea25e3c2caa71e60116453d62f4b9"
+    },
+    {
+      "sequence": 2112,
+      "at": "2026-10-07T13:57:40.136Z",
+      "kind": "transaction",
+      "data": {
+        "id": "577a30a6-018a-4a35-b8b1-faa8c66be249"
+      },
+      "previous": "4e03936f5793c71bab5c03ff0fbe260c374ea25e3c2caa71e60116453d62f4b9",
+      "digest": "0415fd82614e954113bb65bbd357032f49aa5273801ff6b2b56ba77a06e232a1"
     }
   ]
 }
