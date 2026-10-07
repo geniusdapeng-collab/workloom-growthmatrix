@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3046,
+  "revision": 3048,
   "tasks": {
     "132": {
       "number": 132,
@@ -5572,7 +5572,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791400812518,
+      "updatedAt": 1791401116024,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -77565,6 +77565,52 @@
       },
       "previous": "f7e0ca5294fdcfe97c362014e02f98acb257233a20117714cdc021c065173f6a",
       "digest": "294b382b6f1294f4da47456379ee767be25006e29482b9cdc4fe8cc29cf08e9a"
+    },
+    {
+      "sequence": 3047,
+      "at": "2026-10-07T19:25:16.024Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "294b382b6f1294f4da47456379ee767be25006e29482b9cdc4fe8cc29cf08e9a",
+      "digest": "d6182cad5101de4a5610270b4bc83bde827fc67276c91976ebc83b4cc9a0ce57"
+    },
+    {
+      "sequence": 3048,
+      "at": "2026-10-07T19:27:39.296Z",
+      "kind": "transaction",
+      "data": {
+        "id": "47866ea6-5326-404b-b4cd-c4512b1b20d7"
+      },
+      "previous": "d6182cad5101de4a5610270b4bc83bde827fc67276c91976ebc83b4cc9a0ce57",
+      "digest": "3ad7737e5eae0c0305537b4bdb06b3dff56182e29ccc95128ecc60fac33cf635"
     }
   ]
 }
