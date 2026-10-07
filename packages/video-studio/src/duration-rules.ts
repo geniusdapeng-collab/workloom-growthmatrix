@@ -19,6 +19,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, relative, resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
+import { durationPolicy, type DurationPolicy } from "./creative-duration-policy.js";
 
 export type DurationSourceKind =
   /** 供应商能力（媒体目录 = 唯一真源） */
@@ -101,15 +102,21 @@ export function loadModelDurationLimits(modelId: string): { min: number; max: nu
   const path = process.env.WORKLOOM_MEDIA_CATALOG?.trim()
     || resolvePath(repoRoot(), "bundles/ai-video/library/media-catalog/media-catalog.json");
   const doc = JSON.parse(readFileSync(path, "utf8")) as {
-    models: Array<{ id: string; limits?: { durationSec?: { min?: number; max?: number; default?: number } } }>;
+    models: Array<{ id: string; providerModel?: string; limits?: { durationSec?: { min?: number; max?: number; default?: number } } }>;
   };
-  const model = doc.models.find((m) => m.id === modelId);
-  if (!model) throw new Error(`媒体目录里没有模型 ${modelId}（${path}）：请先登记供应商能力`);
+  const matches = doc.models.filter((m) => m.id === modelId || m.providerModel === modelId);
+  if (matches.length !== 1) throw new Error(`媒体目录里没有唯一模型 ${modelId}（${path}）：请先登记供应商能力`);
+  const model = matches[0]!;
   const limits = model.limits?.durationSec ?? {};
+  if (!Number.isInteger(limits.min) || !Number.isInteger(limits.max) || !(limits.min! > 0) || limits.max! < limits.min!) {
+    throw new Error(`RENDER_DURATION_CAPABILITY_INVALID: ${modelId} 缺少可信的单镜时长范围，禁止使用猜测默认值提交`);
+  }
+  const defaultSeconds = limits.default ?? limits.min!;
+  if (!Number.isInteger(defaultSeconds) || defaultSeconds < limits.min! || defaultSeconds > limits.max!) {
+    throw new Error(`RENDER_DURATION_CAPABILITY_INVALID: ${modelId} 默认时长不在模型能力范围内`);
+  }
   return {
-    min: limits.min ?? 4,
-    max: limits.max ?? 15,
-    default: limits.default ?? 5
+    min: limits.min!, max: limits.max!, default: defaultSeconds
   };
 }
 
@@ -554,17 +561,29 @@ export function loadDurationRules(modelId = "doubao-seedance-2-5"): DurationRule
 /* ============================ ④ 分配与校验 ============================ */
 
 /**
- * 按目标总时长分配逐镜时长（等比缩放 + 夹紧到模型能力区间 + 余量补给最长镜）。
- * 与 `render-project.mts` 此前实现语义一致，但上限改为**从媒体目录读取**。
+ * 渲染前规划：默认保留每镜计划，按已登记模型范围调整并明确留痕。
+ * 只有明确 strict 的规划才等比守恒；不能用于修改已渲染的素材。
  */
 export function allocateShotDurations(
   shots: Array<{ shotId: string; duration?: number }>,
-  options: { totalSeconds: number; modelId?: string; minSeconds?: number; maxSeconds?: number }
+  options: { totalSeconds: number; modelId?: string; minSeconds?: number; maxSeconds?: number; durationPolicy?: DurationPolicy }
 ): { entries: DurationPlanEntry[]; map: Map<string, number> } {
   const limits = loadModelDurationLimits(options.modelId ?? "doubao-seedance-2-5");
   const min = options.minSeconds ?? limits.min;
   const max = options.maxSeconds ?? limits.max;
+  if (!Number.isInteger(min) || !Number.isInteger(max) || min < limits.min || max > limits.max || min > max
+    || !Number.isFinite(options.totalSeconds) || options.totalSeconds <= 0) throw new Error("DURATION_PLAN_OPTIONS_INVALID");
+  if (shots.some(shot => shot.duration !== undefined && (!Number.isFinite(shot.duration) || shot.duration <= 0))) {
+    throw new Error("DURATION_PLAN_SOURCE_INVALID");
+  }
   const raw = shots.map((s) => Math.max(1, Number(s.duration) || min));
+  if (durationPolicy(options.durationPolicy) === "creative-target") {
+    const entries = shots.map((shot, i) => {
+      const seconds = Math.min(max, Math.max(min, Math.round(raw[i]!)));
+      return { shotId: shot.shotId, seconds, source: raw[i]!, clamped: seconds !== raw[i] };
+    });
+    return { entries, map: new Map(entries.map((entry) => [entry.shotId, entry.seconds])) };
+  }
   const sum = raw.reduce((a, b) => a + b, 0) || 1;
   const scaled = raw.map((d) => Math.min(max, Math.max(min, Math.round((d * options.totalSeconds) / sum))));
   let drift = options.totalSeconds - scaled.reduce((a, b) => a + b, 0);
@@ -592,16 +611,20 @@ export function allocateShotDurations(
 /** 统一校验：逐镜区间 + 总时长 + 与规则口径的一致性（blockers 为空才算对齐） */
 export function validateShotDurations(
   shots: Array<{ shotId: string; duration?: number; sceneType?: string }>,
-  options: { targetTotalSeconds?: number | null; modelId?: string; toleranceSeconds?: number } = {}
+  options: { targetTotalSeconds?: number | null; modelId?: string; toleranceSeconds?: number; durationPolicy?: DurationPolicy } = {}
 ): DurationValidation {
   const rules = loadDurationRules(options.modelId ?? "doubao-seedance-2-5");
   const issues: string[] = [];
   const warnings: string[] = [];
   const entries: DurationPlanEntry[] = [];
   const tolerance = options.toleranceSeconds ?? 1;
+  const policy = durationPolicy(options.durationPolicy);
+  if (!Number.isFinite(tolerance) || tolerance < 0 || (options.targetTotalSeconds != null
+    && (!Number.isFinite(options.targetTotalSeconds) || options.targetTotalSeconds <= 0))) throw new Error("DURATION_VALIDATION_OPTIONS_INVALID");
 
   for (const shot of shots) {
     const source = Number(shot.duration ?? 0);
+    if (!Number.isInteger(source) || source <= 0) issues.push(`${shot.shotId}: 时长 ${source}s 不是合法正整数，提交前修正计划`);
     let seconds = source;
     let clamped = false;
     if (seconds < rules.modelMin) {
@@ -620,7 +643,9 @@ export function validateShotDurations(
   const actual = entries.reduce((sum, e) => sum + e.seconds, 0);
   const target = options.targetTotalSeconds ?? null;
   if (target !== null && Math.abs(actual - target) > tolerance) {
-    issues.push(`总时长 ${actual}s 与目标 ${target}s 偏差超过 ±${tolerance}s`);
+    const detail = `总时长 ${actual}s 与目标 ${target}s 偏差超过 ±${tolerance}s；完整表达优先，不驱动生成后变速或重交`;
+    if (policy === "strict") issues.push(detail);
+    else warnings.push(detail);
   }
   if (actual > 300) {
     warnings.push(`总时长 ${actual}s 超过 vendor 单作品上限 300s`);
