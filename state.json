@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1210,
+  "revision": 1212,
   "tasks": {
     "132": {
       "number": 132,
@@ -4365,7 +4365,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791366610602,
+      "updatedAt": 1791367815170,
       "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
       "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -28615,6 +28615,45 @@
       },
       "previous": "e806c947ff42f2f7a864e0bb3d869b795a87dab7c09dfe7bad0b0dc65be39c7a",
       "digest": "9c8e39e16adaa262ca890a5f4a0a791b9be933ca4bfa5aeb08cd4ccd511cf779"
+    },
+    {
+      "sequence": 1211,
+      "at": "2026-10-07T10:10:15.170Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146
+            ],
+            "releases": []
+          },
+          "dependencies": [
+            144,
+            145,
+            146
+          ]
+        }
+      },
+      "previous": "9c8e39e16adaa262ca890a5f4a0a791b9be933ca4bfa5aeb08cd4ccd511cf779",
+      "digest": "9a5ac392ad85158c0d14e856172000b84ed958bec7d6fc280a2bab4dc43b4976"
+    },
+    {
+      "sequence": 1212,
+      "at": "2026-10-07T10:12:28.511Z",
+      "kind": "transaction",
+      "data": {
+        "id": "092f427a-cbdb-41af-92ec-76c72c3ec5e7"
+      },
+      "previous": "9a5ac392ad85158c0d14e856172000b84ed958bec7d6fc280a2bab4dc43b4976",
+      "digest": "e8c453d923cffee5974c164acbfa750aaeb00b1204719b6a91253a094b346e4d"
     }
   ]
 }
