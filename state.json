@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1831,
+  "revision": 1833,
   "tasks": {
     "132": {
       "number": 132,
@@ -4820,7 +4820,7 @@
       "status": "waiting_dependency",
       "firstSeen": 1791360181033,
       "attempts": {},
-      "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
+      "headSha": "71eb49c142a0952db14e7ef83d857e876e22999c",
       "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-explainer-rendered-acceptance",
       "intent": {
@@ -4957,7 +4957,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791378827766,
+      "updatedAt": 1791379005941,
       "admission": {
         "number": 155,
         "headSha": "71eb49c142a0952db14e7ef83d857e876e22999c",
@@ -47509,6 +47509,48 @@
       },
       "previous": "919d7553f7e84c7f84564fc81b729016cc56072bfd2942e406890d3a76a614db",
       "digest": "e0f935a3dbb35af830cfae4d551ba9e7a27bc086ae3778b76f9c24b65a1a7659"
+    },
+    {
+      "sequence": 1832,
+      "at": "2026-10-07T13:16:45.941Z",
+      "kind": "task",
+      "data": {
+        "number": 155,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "71eb49c142a0952db14e7ef83d857e876e22999c",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              145,
+              154
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.14"
+              }
+            ]
+          },
+          "dependencies": [
+            145,
+            154
+          ]
+        }
+      },
+      "previous": "e0f935a3dbb35af830cfae4d551ba9e7a27bc086ae3778b76f9c24b65a1a7659",
+      "digest": "beabc7b386352160b1f622da8ac677f6de620387fa7792bc5c350306f5b0ac5d"
+    },
+    {
+      "sequence": 1833,
+      "at": "2026-10-07T13:17:55.017Z",
+      "kind": "transaction",
+      "data": {
+        "id": "b9331442-9362-4ef6-9794-3226f3932fa4"
+      },
+      "previous": "beabc7b386352160b1f622da8ac677f6de620387fa7792bc5c350306f5b0ac5d",
+      "digest": "abe9060236c28e3b66ce1db9d1604e9e4bc09fe6c1243ba7b3d7bf221d4d5d6a"
     }
   ]
 }
