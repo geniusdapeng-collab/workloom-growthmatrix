@@ -133,7 +133,7 @@ describe("全链路镜头增强真实消费", () => {
     expect(row).toMatchObject({ ok: true, evidence: { status: "passed" } });
     expect(row.evidence.injectedFields).not.toContain("lighting");
     const trace = JSON.parse(readFileSync(row.artifact, "utf8"));
-    expect(trace.omitted).toEqual(expect.arrayContaining([expect.objectContaining({ field: "lighting", dropped: true, writtenChars: 0 })]));
+    expect(trace.omitted).toEqual(expect.arrayContaining([expect.objectContaining({ field: "lighting", dropped: "field-over-budget", written: "", writtenChars: 0 })]));
     expect(trace.applied.some((entry: Card) => entry.field === "lighting")).toBe(false);
     const authoredLighting = `右侧窗光；${"原始灯光说明".repeat(80)}`;
     expect(run.read("shotlist-enriched-regression.json").shots[0].lighting).toBe(authoredLighting);
