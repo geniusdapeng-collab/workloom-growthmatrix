@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 430,
+  "revision": 432,
   "tasks": {
     "132": {
       "number": 132,
@@ -2150,7 +2150,7 @@
         "owner": "admission/pr-143",
         "generation": {}
       },
-      "updatedAt": 1791351215778,
+      "updatedAt": 1791351311526,
       "headSha": "5ee0686f9f8b4e938b42bd7b47364e31e2c17557",
       "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
       "branch": "fix/T-2026-1007-0918-first-pass-camera",
@@ -2253,7 +2253,13 @@
         "checkSha": null,
         "hasFailedChecks": false,
         "ciPolicyChanges": []
-      }
+      },
+      "originalBody": "正式出镜人物分镜前段推近、尾段定住本来不重叠，旧就绪检查把整镜关键词拼成冲突，并把“无推拉摇移/停止移动”当作肯定运镜。现按时间轴与运镜的同一窗口核对静止覆盖，明确否定不计运动；仍拒绝真实重叠、静止缺口、无时段前缀和非法区间。原稿内容保持不变。\n\n当前 Codex 完整读取并逐行复核两个改动文件；准确提交后运行正常、否定、交界、重叠和缺口回归，不调用模型或付费渲染。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+      "files": [
+        "packages/video-studio/src/first-pass.test.ts",
+        "packages/video-studio/src/first-pass.ts"
+      ],
+      "ciSince": 1791351311526
     }
   },
   "leases": {
@@ -11751,6 +11757,44 @@
       },
       "previous": "e1b630a8ae05b633d312acb682c39e3d0e017f8ff8e903659c4c44f9b2938a24",
       "digest": "cc507688178e2c951543ee5b21f8522333a557630f3f0540022ab4f4e7256721"
+    },
+    {
+      "sequence": 431,
+      "at": "2026-10-07T05:35:11.526Z",
+      "kind": "task",
+      "data": {
+        "number": 143,
+        "patch": {
+          "headSha": "5ee0686f9f8b4e938b42bd7b47364e31e2c17557",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-first-pass-camera",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "正式出镜人物分镜前段推近、尾段定住本来不重叠，旧就绪检查把整镜关键词拼成冲突，并把“无推拉摇移/停止移动”当作肯定运镜。现按时间轴与运镜的同一窗口核对静止覆盖，明确否定不计运动；仍拒绝真实重叠、静止缺口、无时段前缀和非法区间。原稿内容保持不变。\n\n当前 Codex 完整读取并逐行复核两个改动文件；准确提交后运行正常、否定、交界、重叠和缺口回归，不调用模型或付费渲染。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/first-pass.test.ts",
+            "packages/video-studio/src/first-pass.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791351311526
+        }
+      },
+      "previous": "cc507688178e2c951543ee5b21f8522333a557630f3f0540022ab4f4e7256721",
+      "digest": "d95870b942a226248732698948d401105837e4d6ddd5fc80c1347d3c9a3dedd8"
+    },
+    {
+      "sequence": 432,
+      "at": "2026-10-07T05:35:34.938Z",
+      "kind": "transaction",
+      "data": {
+        "id": "ad0d175f-25fb-40d8-a48a-f857cf539eb1"
+      },
+      "previous": "d95870b942a226248732698948d401105837e4d6ddd5fc80c1347d3c9a3dedd8",
+      "digest": "5578e08c128536524830c2162f1ddc4ea65677dd890861df41e42498dffb99f2"
     }
   ]
 }
