@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3707,
+  "revision": 3709,
   "tasks": {
     "132": {
       "number": 132,
@@ -3510,7 +3510,7 @@
         "owner": "admission/pr-145",
         "generation": {}
       },
-      "updatedAt": 1791410425056,
+      "updatedAt": 1791410581428,
       "headSha": "a694ef21c7504592c4b537a7f953ddf8a2c92a31",
       "mainSha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
       "branch": "fix/T-2026-1007-0918-rendered-acceptance",
@@ -92458,6 +92458,53 @@
       },
       "previous": "404ee45abf5a25bbd98d6c1f5af89cce720fc3c3721f136d81b6eb804ac20f6f",
       "digest": "13b208bfe349373b17fec7c0ecf4ad97bbe1c125b7e62d10e09915c664538efa"
+    },
+    {
+      "sequence": 3708,
+      "at": "2026-10-07T22:03:01.428Z",
+      "kind": "task",
+      "data": {
+        "number": 145,
+        "patch": {
+          "headSha": "a694ef21c7504592c4b537a7f953ddf8a2c92a31",
+          "mainSha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+          "branch": "fix/T-2026-1007-0918-rendered-acceptance",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.7"
+              }
+            ]
+          },
+          "originalBody": "固定影片子工位原先忽略review-policy=off，仍向服务发送gate.review请求。现在默认off在子工位调用模型/父通道前接收实际生成的关键帧、镜头和后期产物；静止、时长偏差、身份相似度等质量观察不会阻断或驱动重渲染。回执明示未进行模型、身份或语音审核，score=0为未评分。缺文件、空产物和工具实际失败仍按执行失败报告；生成前源稿确定性规则继续有效。\n\n当前Codex完整读取共享策略、worker、producer类型与完整回归；准确提交后65项通过、类型检查通过。通道测试证明off为零gate.review请求，blocking/advisory须显式选择。无新增依赖、权限或CI变更，无模型/新渲染调用。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    144\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.7\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "packages/video-studio/src/film-worker-runtime.test.ts",
+            "packages/video-studio/src/film-worker-runtime.ts",
+            "packages/video-studio/src/rendered-output-policy.test.ts",
+            "packages/video-studio/src/rendered-output-policy.ts"
+          ],
+          "status": "parked",
+          "ciSince": 1791352820859
+        }
+      },
+      "previous": "13b208bfe349373b17fec7c0ecf4ad97bbe1c125b7e62d10e09915c664538efa",
+      "digest": "b66648d6628c4c0badc7735e5fabab8487cbf764ea2b3f035fde7b2148c41209"
+    },
+    {
+      "sequence": 3709,
+      "at": "2026-10-07T22:03:57.774Z",
+      "kind": "transaction",
+      "data": {
+        "id": "6c215fbf-d841-4a88-abe7-1bf5aa24e9d2"
+      },
+      "previous": "b66648d6628c4c0badc7735e5fabab8487cbf764ea2b3f035fde7b2148c41209",
+      "digest": "1f661b6c1c466648039fa085107da18881fcd63202c6de4eefd066ed0aed67cf"
     }
   ]
 }
