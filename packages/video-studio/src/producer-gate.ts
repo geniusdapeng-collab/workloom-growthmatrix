@@ -1,19 +1,19 @@
 /**
- * producer-gate —— AI 监制（制片人）门：把"人工确认"换成"机器评审 + 打回重跑"
+ * producer-gate —— 预生产监制与正式后期技术记录。
  *
  * 背景（T-2026-0924-0001）：
  *   视频链路上原有 G1–G7 七个确认门。早先实现是两道极端：要么挂人工审批卡等人点（停线），
  *   要么用 `HR_AUTO_GATES` 一律 `approved:true`（等于没有质量门，坏产物直接往下流）。
- *   产品口径是**全自动预生产 + 人类只在花钱/对外时介入**，所以中间门需要的是"AI 监制"：
- *   看产物、按纪律打分、不合格就打回重跑，并把裁决写进日志与事件。
+ *   预生产仍按授权、需求与素材合同执行。供应商成功渲染的片段默认接受，直接进入正式后期；
+ *   后期不进行画面、身份、服装、运动、对白或口型评审，不因质量触发模型或付费重渲。
  *
  * 本模块提供三件事：
  *   1. `PRODUCER_RUBRICS` —— 逐环节评审要点（与 bundles/ai-video/skills 的纪律同源）；
- *   2. 确定性硬闸（调用方传入 ffprobe/文件校验结果）—— 硬失败直接打回，不消耗模型额度；
- *   3. 可选的 LLM 评审（含图像）—— 打分 + 问题清单 + 修改建议；模型不可用时**如实降级**并标注。
+ *   2. 后期文件、普通媒体元数据、字节血缘和明确导出目标的技术记录；
+ *   3. 预生产 LLM 评审（含图像）—— 打分 + 问题清单 + 修改建议；模型不可用时如实标注。
  *
- * 纪律：默认 fail-closed —— 硬闸失败必打回；LLM 不可用且无硬闸结论时**不放行**（返回 rerun），
- * 模型/证据不可用时保持 unverified；旧 allowFallbackApprove 参数不再授予正式通过资格。
+ * 预生产模型/证据不可用时保持 unverified；旧 allowFallbackApprove 不授予正式通过资格。
+ * 后期只记录实际加工、来源字节和交付失败；默认原片接受不记为质量评分或模型通过。
  */
 
 export type ProducerStage =
@@ -29,6 +29,7 @@ export type ProducerStage =
   | "mux"
   | "danmaku"
   | "bgm"
+  | "sfx"
   | "cover"
   | "master";
 
@@ -38,6 +39,7 @@ import { join } from "node:path";
 import { randomUUID, createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 
+import { acceptPostStage, POST_RENDER_STAGES } from "./post-render-acceptance.js";
 import type { QualityStatus } from "./quality-evidence.js";
 import { normalizeShotIntent, shotIntentHash, type ShotIntentStatus } from "./shot-intent.js";
 import { devicePolicyPromptLines } from "./device-policy.js";
@@ -69,8 +71,8 @@ export interface ProducerVerdict {
   evidence?: Array<{ path: string; sha256: string; scope: string }>;
   stage: ProducerStage;
   approved: boolean;
-  /** 0–100；硬闸失败为 0 */
-  score: number;
+  /** 0–100 for actual reviews; null for direct postproduction without quality scoring. */
+  score: number | null;
   hardFailures: string[];
   issues: string[];
   suggestions: string[];
@@ -119,25 +121,19 @@ export const PRODUCER_RUBRICS: Record<ProducerStage, string[]> = {
     "设备外观与具体型号、冻结故事日期和显式devicePolicy一致；未提供的年代或型号保持未验证",
     "写实效果与交付风格相符，无未要求的文字或水印；可见皮肤和肢体自然"
   ],
-  shot: [
-    "人物动作、静止或克制表情按当前合同执行，重心和接触自然；不要求每镜微笑或表情丰富",
-    "有可见说话人时核对口型证据；无对白或背影不冒称口型已验证，抽帧不能替代连续视听检查",
-    "同一镜头的结构、材质、光源与设备外观保持时序一致；明确动作导致的朝向变化允许",
-    "屏幕朝向服从操作/展示/共享合同，位移由动作衔接，无道具跳变、穿模或身份漂移"
-  ],
-  compose: ["拼接与转场符合剪辑合同，无花屏、丢帧或未经授权的音画变化", "时长、画幅、帧率与像素格式符合明确交付规格"],
-  color: ["光源色温和创作色彩按本片合同保留；肤色、暗部和高光的变化须有照明依据", "镜间影调与叙事相符；调色方案和原片分别评审，不能用失败调色证明原片通过"],
-  subtitle: ["字幕位于安全区，字体、字号与对比度在实际画面可读", "逐条对照原台词和时间轴核对内容、断句、同步与遮挡；无对白按明确字幕策略处理"],
-  mux: ["软字幕版可播放且字幕轨可开关，视频和音频与审核母版保持一致", "旁挂字幕及语言清单齐备，软轨内容与旁挂文件一致，时长符合合同"],
-  danmaku: ["按本片明确启用的弹幕规格检查内容、密度、分层和遮挡", "未启用或不适用时不为了凑后期能力添加弹幕"],
-  bgm: ["响度、真峰值及音乐与人声的关系符合明确音频交付合同", "曲风、节拍、唱词适用性与本片brief一致；实际听音证据独立提供，图像模型不冒充听音"],
-  cover: ["文案与成片一致并在平台安全区内可读，避免遮挡本片关键主体", "封面风格和色彩符合成片与平台规格；主体不必是人脸"],
+  shot: ["供应商成功片段默认接受，普通元数据和来源字节仅用于正式后期读取", "不复评源片身份、服装、运动、时长、画幅、音质、对白或口型"],
+  compose: ["实际拼接与转场工具已产生文件并保留加工记录", "最终时长、画幅与帧率按明确导出目标处理"],
+  color: ["明确请求的调色变换已实际完成并留下文件", "不以源片或调色质量分数决定后期去向"],
+  subtitle: ["明确请求的字幕文件或烧录版已实际产生", "字幕文本和时间轴按本次导出合同保留"],
+  mux: ["实际封装工具已产生软字幕输出", "旁挂字幕与本次请求的语言文件真实存在"],
+  danmaku: ["明确启用的弹幕加工已实际完成", "未启用或不适用时保留明确记录"],
+  bgm: ["明确请求的配乐加工已实际产生音视频文件", "不复评源片音质或通过图像模型冒称听音"],
+  sfx: ["明确音效请求的正式加工已产生文件；不复评源片声音质量。"],
+  cover: ["明确请求的封面已实际产生并符合导出尺寸", "文案按本次请求生成，不进行源片质量打回"],
   master: [
-    "整片播放、时长、画幅、帧率、字幕和音轨符合交付合同，无黑帧或编码事故",
-    "已要求的后期能力逐项有真实产物和证据；不适用项必须有明确依据，不强制五项全部启用",
-    "按sceneId、角色身份、道具和转场合同核对跨镜一致性，允许明确换装、多空间与闪回",
-    "环境状态、道具朝向和设备年代按逐镜合同复核，不套全磨损、全屏幕朝内或全Apple模板",
-    "听音、连续时序、来源与最终交付检查由对应证据支持，抽帧通过不替代缺失证据"
+    "最终文件、时长、画幅和本次明确导出规格真实满足；实际加工失败如实停止",
+    "已请求的后期能力逐项有文件和加工记录；不适用项有明确依据，不强制固定后期数量",
+    "不复评源片画面、声音、身份、服装、动作、对白或口型，不以旧质量裁决否定供应商成功片段"
   ]
 };
 
@@ -401,6 +397,7 @@ async function repairJudgeShape(
  * 评审一个环节。返回裁决；调用方按 `approved` 决定放行或重跑。
  */
 export async function reviewStage(options: ProducerGateOptions): Promise<ProducerVerdict> {
+  if (POST_RENDER_STAGES.has(options.stage)) return acceptPostStage(options);
   const started = Date.now();
   const log = options.log ?? (() => undefined);
   const stage = options.stage;
