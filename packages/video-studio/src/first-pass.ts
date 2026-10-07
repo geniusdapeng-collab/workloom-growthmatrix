@@ -13,7 +13,7 @@
  *   ⑥ 渲染顺序按镜号 → 最险的镜头没先渲，前面的钱白花
  * 本模块只做**确定性文本判定**（零 token、可复算、可考试），产出高/中/低风险项与"改卡建议"。
  */
-export const FIRST_PASS_POLICY_VERSION = "workloom.first-pass-readiness/v1" as const;
+export const FIRST_PASS_POLICY_VERSION = "workloom.first-pass-readiness/v2" as const;
 
 export type RiskLevel = "high" | "medium" | "low";
 export interface FirstPassFinding {
@@ -44,6 +44,55 @@ const joined = (shot: FirstPassShot, keys: string[]): string => keys.map((key) =
 /** 只保留肯定描述（剥掉"不出现/不可见/无…"的否定语境，与仓库其它审计同纪律） */
 const positive = (value: string): string => value.split(/[；。，、]/).filter((c) => c.trim() && !/(不出现|不可见|不露|不得|禁止|避免|没有|无[^，。；]*)/.test(c)).join("；");
 
+const STOPPED = /定住|稳住|定格/;
+/** 否定只作用于运镜动词；“无抖动并继续推近”仍是实际运动。 */
+function activeCameraMotion(value: string): boolean {
+  const movement = "(?:推拉摇移|推拉|横移|平移|移动|摇移|环绕|升降|推近|推进|后拉|推|拉|摇|移)";
+  const withoutNegative = value
+    .replace(new RegExp(`(?:不|无|禁止|避免|不要|不得|没有)(?:做|进行)?(?:任何)?${movement}(?:[、/及和]*${movement})*`, "g"), "")
+    .replace(new RegExp(`停止${movement}`, "g"), "");
+  return /推|拉|移|摇|环绕|升降/.test(withoutNegative);
+}
+interface TimedCameraClause { start: number; end: number; body: string }
+function timedCameraClauses(value: string): TimedCameraClause[] | null {
+  const matches = [...value.matchAll(/T?(\d{1,2}):(\d{2}(?:\.\d+)?)\s*[-–—~～]\s*T?(\d{1,2}):(\d{2}(?:\.\d+)?)/g)];
+  if (!matches.length) return null;
+  const clauses: TimedCameraClause[] = [];
+  for (const [index, match] of matches.entries()) {
+    const start = Number(match[1]) * 60 + Number(match[2]), end = Number(match[3]) * 60 + Number(match[4]);
+    if (Number(match[2]) >= 60 || Number(match[4]) >= 60 || end <= start) return null;
+    clauses.push({ start, end, body: value.slice(match.index! + match[0].length, matches[index + 1]?.index ?? value.length) });
+  }
+  // 未标时段的前缀不可被后面的合法片段遮盖。
+  const prefix = value.slice(0, matches[0]!.index);
+  if (STOPPED.test(prefix) || activeCameraMotion(prefix)) return null;
+  return clauses;
+}
+/** 只有同一时间轴窗口被实际静止运镜覆盖、且没有运动重叠才消除冲突。 */
+function timingMotionConflict(timeline: string, camera: string): boolean {
+  if (!STOPPED.test(timeline) || !activeCameraMotion(camera)) return false;
+  const timing = timedCameraClauses(timeline), movement = timedCameraClauses(camera);
+  if (!timing || !movement) return true;
+  const locks = timing.filter(clause => STOPPED.test(clause.body));
+  if (!locks.length) return true;
+  const epsilon = 1e-6;
+  const moving = movement.filter(clause => activeCameraMotion(clause.body));
+  const stationary = movement.filter(clause => !activeCameraMotion(clause.body)
+    && /定住|稳住|定格|固定机位|(?:镜头|机位|构图)(?:保持|继续|全程)?(?:稳定|静止|固定)|停止移动/.test(clause.body))
+    .sort((a, b) => a.start - b.start);
+  return locks.some(lock => {
+    if (moving.some(clause => Math.min(clause.end, lock.end) - Math.max(clause.start, lock.start) > epsilon)) return true;
+    let coveredUntil = lock.start;
+    for (const clause of stationary) {
+      if (clause.end <= coveredUntil) continue;
+      if (clause.start > coveredUntil + epsilon) break;
+      coveredUntil = Math.max(coveredUntil, clause.end);
+      if (coveredUntil >= lock.end - epsilon) return false;
+    }
+    return true;
+  });
+}
+
 export function assessShotFirstPass(shot: FirstPassShot, options: { fps?: number } = {}): FirstPassReadiness {
   const visual = positive(joined(shot, ["scene", "sceneDescription", "composition", "action", "props"]));
   const full = joined(shot, ["scene", "sceneDescription", "composition", "action", "props", "timeline", "camera_movement", "costume", "character"]);
@@ -71,10 +120,10 @@ export function assessShotFirstPass(shot: FirstPassShot, options: { fps?: number
     }
   }
   // ② 秒级时点锁定 vs 运动冲突
-  if (/定住|稳住|定格/.test(timeline) && /推|拉|移|摇|环绕|升降/.test(camera)) {
+  if (timingMotionConflict(timeline, camera)) {
     add("timing-lock-vs-motion", "high",
-      `时间轴锁了"定住"时点，运镜又是推/拉/移 → 模型几乎必然落幅漂移`,
-      `二选一：改成"固定机位（全程不推不拉）"，或删掉秒级时点锁定`);
+      `时间轴要求定住的窗口与实际运镜运动重叠，或缺少可核对的同窗口静止声明`,
+      `改成固定机位，或明确前段运镜与后段定住各自的起止时段，并在运镜与时间轴保持一致`);
   }
   if (/定住|稳住/.test(timeline) && /固定机位/.test(camera) && !/呼吸|微动/.test(camera)) {
     add("static-motion-floor", "medium",
