@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2533,
+  "revision": 2535,
   "tasks": {
     "132": {
       "number": 132,
@@ -4741,7 +4741,7 @@
     },
     "153": {
       "number": 153,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791359178476,
       "attempts": {},
       "headSha": "5e2b00ccdd38dec8703c826f1b471da39d4c0f73",
@@ -4902,7 +4902,7 @@
           }
         ]
       },
-      "updatedAt": 1791388805282,
+      "updatedAt": 1791390911806,
       "admission": {
         "number": 153,
         "headSha": "5e2b00ccdd38dec8703c826f1b471da39d4c0f73",
@@ -65784,6 +65784,46 @@
       },
       "previous": "9b5f531315121681f12e78ec5dd4b02b45558ea0df607429e60c6e7bcc936d5a",
       "digest": "67dfcd357ce958eacf40d129c2a8ae141f22b71b9985a557d1840ce37a424a3e"
+    },
+    {
+      "sequence": 2534,
+      "at": "2026-10-07T16:35:11.806Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "5e2b00ccdd38dec8703c826f1b471da39d4c0f73",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              152
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.12"
+              }
+            ]
+          },
+          "dependencies": [
+            152
+          ]
+        }
+      },
+      "previous": "67dfcd357ce958eacf40d129c2a8ae141f22b71b9985a557d1840ce37a424a3e",
+      "digest": "9cca367c141a6393482b39874370909407a913a90e483da276dce804702c05ae"
+    },
+    {
+      "sequence": 2535,
+      "at": "2026-10-07T16:36:56.782Z",
+      "kind": "transaction",
+      "data": {
+        "id": "6c0afdeb-a904-4809-8370-478516440365"
+      },
+      "previous": "9cca367c141a6393482b39874370909407a913a90e483da276dce804702c05ae",
+      "digest": "6fcfc9392498f73f19570999a6ba11c5474687cbf40793e69662d456c47ffe65"
     }
   ]
 }
