@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1610,
+  "revision": 1612,
   "tasks": {
     "132": {
       "number": 132,
@@ -2850,7 +2850,7 @@
     },
     "143": {
       "number": 143,
-      "status": "aligning",
+      "status": "waiting_ci",
       "firstSeen": 1791351161492,
       "attempts": {},
       "admission": {
@@ -2863,7 +2863,7 @@
         "generation": {}
       },
       "updatedAt": 1791375289156,
-      "headSha": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
+      "headSha": "49140ddd6e6283998fb1522397c9b28abe55d347",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-first-pass-camera",
       "intent": {
@@ -2943,23 +2943,19 @@
         "packages/video-studio/src/first-pass.test.ts",
         "packages/video-studio/src/first-pass.ts"
       ],
-      "ciSince": 1791371100874,
+      "ciSince": 1791375289156,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/143 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 0,
       "candidate": null,
       "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
-      "alignmentIntent": {
-        "headSha": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
-        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
-        "at": 1791375289156
-      },
+      "alignmentIntent": null,
       "alignment": {
-        "sha": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
-        "previousHead": "5ee0686f9f8b4e938b42bd7b47364e31e2c17557",
-        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
-        "verifiedAt": "2026-10-07T11:05:57.666Z"
+        "sha": "49140ddd6e6283998fb1522397c9b28abe55d347",
+        "previousHead": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
+        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "verifiedAt": "2026-10-07T12:15:57.698Z"
       }
     },
     "144": {
@@ -41270,6 +41266,38 @@
       },
       "previous": "cd91ce9f6906ad23ffdef765bed70342276d81c21c54b0cc816a9170962cf548",
       "digest": "8c6b475e884574bcbbaf0080643323073a4385a50aa93ad7103ac28f7a5bbf8a"
+    },
+    {
+      "sequence": 1611,
+      "at": "2026-10-07T12:14:49.156Z",
+      "kind": "task",
+      "data": {
+        "number": 143,
+        "patch": {
+          "status": "waiting_ci",
+          "alignment": {
+            "sha": "49140ddd6e6283998fb1522397c9b28abe55d347",
+            "previousHead": "0be8009c301f3fe9a2c6ef9fc26e1196d217e4ba",
+            "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "verifiedAt": "2026-10-07T12:15:57.698Z"
+          },
+          "alignmentIntent": null,
+          "headSha": "49140ddd6e6283998fb1522397c9b28abe55d347",
+          "ciSince": 1791375289156
+        }
+      },
+      "previous": "8c6b475e884574bcbbaf0080643323073a4385a50aa93ad7103ac28f7a5bbf8a",
+      "digest": "dc8ee0d0e645c89ca7f8293730ac2701c72dd0e7675b53bcefebc3f835099ea8"
+    },
+    {
+      "sequence": 1612,
+      "at": "2026-10-07T12:15:57.774Z",
+      "kind": "transaction",
+      "data": {
+        "id": "6f0908c6-3b4a-4581-84f1-86c2be0c548f"
+      },
+      "previous": "dc8ee0d0e645c89ca7f8293730ac2701c72dd0e7675b53bcefebc3f835099ea8",
+      "digest": "16807876beb1cebda3c70131c907b8c265d0002f39ea0d780cf082ef033ff5b8"
     }
   ]
 }
