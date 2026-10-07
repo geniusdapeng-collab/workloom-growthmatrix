@@ -307,17 +307,17 @@ describe("完整请求与产物绑定的定妆照缓存", () => {
   it("参考图symlink同字节改指向后重新核验；缺少显式参考图不静默丢弃", async () => {
     const root = workDir(); const a = writeRef(root, "a.png"); const b = writeRef(root, "b.png"); const link = join(root, "anchor.png"); symlinkSync(a, link);
     const next = configured(root, { characterAnchorImages: [link] }); await next.runtime.apiRender(task);
-    unlinkSync(link); symlinkSync(b, link); await next.runtime.apiRender(task); expect(next.calls).toHaveLength(2);
-    unlinkSync(link); await expect(next.runtime.apiRender(task)).rejects.toThrow(); expect(next.calls).toHaveLength(2);
+    unlinkSync(link); symlinkSync(b, link); await next.runtime.apiRender(task); expect(next.calls).toHaveLength(1);
+    unlinkSync(link); await expect(next.runtime.apiRender(task)).rejects.toThrow(); expect(next.calls).toHaveLength(1);
   });
   it("输出被改字节/删除/替成symlink均不复用；旧无收据索引不能伪过", async () => {
     const next = configured(); let file = await next.runtime.apiRender(task);
-    writeFileSync(file, Buffer.alloc(4096, 8)); await next.runtime.apiRender(task); expect(next.calls).toHaveLength(2);
-    unlinkSync(file); await next.runtime.apiRender(task); expect(next.calls).toHaveLength(3);
+    writeFileSync(file, Buffer.alloc(4096, 8)); await next.runtime.apiRender(task); expect(next.calls).toHaveLength(1); expect(readFileSync(file)).toEqual(Buffer.alloc(4096, 7));
+    unlinkSync(file); await next.runtime.apiRender(task); expect(next.calls).toHaveLength(1);
     const external = writeRef(next.root, "outside.png"); unlinkSync(file); symlinkSync(external, file);
-    await next.runtime.apiRender(task); expect(next.calls).toHaveLength(4); expect(readFileSync(external)).toEqual(Buffer.alloc(2048, 3));
+    await next.runtime.apiRender(task); expect(next.calls).toHaveLength(1); expect(readFileSync(external)).toEqual(Buffer.alloc(2048, 3));
     const index = JSON.parse(readFileSync(next.runtime.indexPath(), "utf8")); delete index.characters["演员甲"].receipts; writeFileSync(next.runtime.indexPath(), JSON.stringify(index));
-    const restarted = configured(next.root); file = await restarted.runtime.apiRender(task); expect(restarted.calls).toHaveLength(1); expect(existsSync(file)).toBe(true);
+    const restarted = configured(next.root); file = await restarted.runtime.apiRender(task); expect(restarted.calls).toHaveLength(0); expect(existsSync(file)).toBe(true);
   });
   it("20个相同请求和多个runtime只发送一次，异常后不遗留inflight或锁", async () => {
     const first = configured(); const second = configured(first.root, { fetchImpl: first.fetchImpl });
@@ -326,7 +326,7 @@ describe("完整请求与产物绑定的定妆照缓存", () => {
     const failing = fakeArk({ failStatus: 400 }); const broken = configured(workDir(), { fetchImpl: failing.fetchImpl, retries: 2 });
     await expect(Promise.all([broken.runtime.apiRender(task), broken.runtime.apiRender(task)])).rejects.toThrow(/HTTP 400/); expect(failing.calls).toHaveLength(1);
     expect(existsSync(join(broken.root, "characters/PROJECT/.portrait-cache.lock"))).toBe(false);
-    const retry = configured(broken.root); expect(await retry.runtime.apiRender(task)).toContain("front.png"); expect(retry.calls).toHaveLength(1);
+    const retry = configured(broken.root); await expect(retry.runtime.apiRender(task)).rejects.toThrow("SUBMISSION_UNKNOWN"); expect(retry.calls).toHaveLength(0);
   });
   it("不同请求并发不会丢索引或覆盖返回给另一个调用者的文件", async () => {
     const next = configured();
@@ -390,13 +390,55 @@ describe("完整请求与产物绑定的定妆照缓存", () => {
   it("收据请求或输出hash被改后不命中；特殊JS键仍按独立角色持久化", async () => {
     const next = configured(); await next.runtime.apiRender(task);
     const index = JSON.parse(readFileSync(next.runtime.indexPath(), "utf8")); index.characters["演员甲"].receipts.front.requestHash = "0".repeat(64); writeFileSync(next.runtime.indexPath(), JSON.stringify(index));
-    await next.runtime.apiRender(task); expect(next.calls).toHaveLength(2);
+    await next.runtime.apiRender(task); expect(next.calls).toHaveLength(1);
     const file = await next.runtime.apiRender({ ...task, characterId: "__proto__" }); const entries = Object.values(next.runtime.snapshot().characters);
-    expect(entries.find(entry => entry.id === "__proto__")?.files.front).toBe(file); expect(await next.runtime.apiRender({ ...task, characterId: "__proto__" })).toBe(file); expect(next.calls).toHaveLength(3);
+    expect(entries.find(entry => entry.id === "__proto__")?.files.front).toBe(file); expect(await next.runtime.apiRender({ ...task, characterId: "__proto__" })).toBe(file); expect(next.calls).toHaveLength(2);
   });
   it("原始任务在外调中被修改时拒绝记成功", async () => {
     const changing = { ...task }; const fake = fakeArk();
     const next = configured(workDir(), { fetchImpl: (async (url, init) => { const response = await fake.fetchImpl(url, init); if (String(url).includes("/images/generations")) changing.prompt = "调用期间更改"; return response; }) as typeof fetch });
     await expect(next.runtime.apiRender(changing)).rejects.toThrow("PORTRAIT_INPUT_CHANGED"); expect(Object.keys(next.runtime.snapshot().characters)).toHaveLength(0);
+  });
+  it("URL受理先于下载留痕；首次下载失败后新实例只GET恢复", async () => {
+    const fake = fakeArk(); const root = workDir(); let failDownload = true;
+    const fetchImpl = (async (url, init) => {
+      if (String(url).includes("/images/generations")) return fake.fetchImpl(url, init);
+      const journals = require("node:fs").readdirSync(join(root, "image-task-receipts")) as string[];
+      const journal = journals.find(file => file.endsWith(".json"))!;
+      expect(JSON.parse(readFileSync(join(root, "image-task-receipts", journal), "utf8"))).toMatchObject({ state: "accepted", result: { url: String(url) } });
+      if (failDownload) return new Response("download failed", { status: 500 });
+      return fake.fetchImpl(url, init);
+    }) as typeof fetch;
+    const first = configured(root, { fetchImpl, retries: 0 }); await expect(first.runtime.apiRender(task)).rejects.toThrow("下载失败");
+    failDownload = false;
+    const second = configured(root, { fetchImpl }); expect(existsSync(await second.runtime.apiRender(task))).toBe(true);
+    expect(fake.calls).toHaveLength(1);
+  });
+  it.each([429, 500])("HTTP%s即使设多次重试也只POST一次，跨实例拒绝自动重发", async status => {
+    const fake = fakeArk({ failStatus: status }); const next = configured(workDir(), { fetchImpl: fake.fetchImpl, retries: 5 });
+    await expect(next.runtime.apiRender(task)).rejects.toThrow(`HTTP ${status}`);
+    const restart = configured(next.root, { fetchImpl: fake.fetchImpl, retries: 5 });
+    await expect(restart.runtime.apiRender(task)).rejects.toThrow("SUBMISSION_UNKNOWN"); expect(fake.calls).toHaveLength(1);
+  });
+  it("稳定receiptRoot跨工作目录复用相同付费正文，独立索引和路径不产生第二次POST", async () => {
+    const shared = workDir(), fake = fakeArk();
+    const first = configured(workDir(), { receiptRoot: shared, fetchImpl: fake.fetchImpl });
+    const second = configured(workDir(), { receiptRoot: shared, fetchImpl: fake.fetchImpl });
+    const a = await first.runtime.apiRender(task), b = await second.runtime.apiRender(task);
+    expect(a).not.toBe(b); expect(readFileSync(a)).toEqual(readFileSync(b)); expect(fake.calls).toHaveLength(1);
+  });
+  it("旧输出证明曾生成但受理journal缺失时不补交收费请求", async () => {
+    const next = configured(); const file = await next.runtime.apiRender(task); unlinkSync(file);
+    rmSync(join(next.root, "image-task-receipts"), { recursive: true });
+    const restart = configured(next.root);
+    await expect(restart.runtime.apiRender(task)).rejects.toThrow("LEGACY_RECEIPT_REQUIRED"); expect(restart.calls).toHaveLength(0);
+  });
+  it("死进程缓存锁只有当前请求已有受理时才恢复，恢复不重新POST", async () => {
+    const next = configured(); const file = await next.runtime.apiRender(task); unlinkSync(file);
+    const lock = join(next.root, "characters/PROJECT/.portrait-cache.lock");
+    writeFileSync(lock, JSON.stringify({ pid: 2147483647, token: "test-only-dead-owner" }));
+    expect(await next.runtime.apiRender(task)).toBe(file); expect(next.calls).toHaveLength(1);
+    writeFileSync(lock, JSON.stringify({ pid: 2147483647, token: "test-only-unknown-owner" }));
+    await expect(next.runtime.apiRender({ ...task, prompt: "new actual body" })).rejects.toThrow("LOCK_STALE"); expect(next.calls).toHaveLength(1);
   });
 });
