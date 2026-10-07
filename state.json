@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3467,
+  "revision": 3469,
   "tasks": {
     "132": {
       "number": 132,
@@ -5632,7 +5632,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791404714744,
+      "updatedAt": 1791405908044,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -87071,6 +87071,52 @@
       },
       "previous": "69a4cdd1aea791dd29578c8be76e0d7479c7aa87953930c52e0bf81438023507",
       "digest": "9fa2b9962f1e57a6bc9977afa0c23ce2fb744496fcd639124f8457e12fa29be2"
+    },
+    {
+      "sequence": 3468,
+      "at": "2026-10-07T20:45:08.044Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "9fa2b9962f1e57a6bc9977afa0c23ce2fb744496fcd639124f8457e12fa29be2",
+      "digest": "ab7c9824cb668771403e65bc10236df7e39fe217d0bb0aa179acdb789ed316c7"
+    },
+    {
+      "sequence": 3469,
+      "at": "2026-10-07T20:48:29.335Z",
+      "kind": "transaction",
+      "data": {
+        "id": "24d79252-9839-47bc-9dd5-f03210723f6d"
+      },
+      "previous": "ab7c9824cb668771403e65bc10236df7e39fe217d0bb0aa179acdb789ed316c7",
+      "digest": "151cd0df3fa5e9a16f30ad5b19bc1fce47a971a63dfad43e60e7c6ac63ed4686"
     }
   ]
 }
