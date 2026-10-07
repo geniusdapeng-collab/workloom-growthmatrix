@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3783,
+  "revision": 3785,
   "tasks": {
     "132": {
       "number": 132,
@@ -5714,7 +5714,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791409532141,
+      "updatedAt": 1791411188927,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -5882,7 +5882,6 @@
       "error": "Prerequisite #144 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 1791369613609,
       "dependencies": [
-        145,
         146,
         157
       ]
@@ -94172,6 +94171,50 @@
       },
       "previous": "e4ee8b50dfe14e80c51503547d92576260f7acf264e1e445b9cebd228b0dbf58",
       "digest": "46c7735cfbc95446ca9a80b75501795667e876e7496f2b690b85e6913dc85031"
+    },
+    {
+      "sequence": 3784,
+      "at": "2026-10-07T22:13:08.927Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "46c7735cfbc95446ca9a80b75501795667e876e7496f2b690b85e6913dc85031",
+      "digest": "fd33ed8aa238b79b195f93d8bc01d4f8760a4d410e1143fd1b86ecc31eebfc29"
+    },
+    {
+      "sequence": 3785,
+      "at": "2026-10-07T22:16:19.298Z",
+      "kind": "transaction",
+      "data": {
+        "id": "69ae1356-b139-47a8-bb26-acc180cb1549"
+      },
+      "previous": "fd33ed8aa238b79b195f93d8bc01d4f8760a4d410e1143fd1b86ecc31eebfc29",
+      "digest": "a76a23a3226d7959cbd2f1ca858a0ed1cdca153d4fa316aea2eb80e495b1a007"
     }
   ]
 }
