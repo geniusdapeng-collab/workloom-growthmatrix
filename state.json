@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1032,
+  "revision": 1034,
   "tasks": {
     "132": {
       "number": 132,
@@ -3052,7 +3052,7 @@
     },
     "150": {
       "number": 150,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791357138520,
       "attempts": {},
       "headSha": "2f99484bc9b540986783a8cb77f61fc504825128",
@@ -3185,7 +3185,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791363309873,
+      "updatedAt": 1791364211033,
       "admission": {
         "number": 150,
         "headSha": "2f99484bc9b540986783a8cb77f61fc504825128",
@@ -25008,6 +25008,43 @@
       },
       "previous": "f9d3af23626da4e9f830b0e6e58d3fbfb15e972f237bb9f1037b9e62298c5848",
       "digest": "3b5063323fa4877b1e2e9ef480b4c975a233b2d866637402cd9571bdb9b96a34"
+    },
+    {
+      "sequence": 1033,
+      "at": "2026-10-07T09:10:11.033Z",
+      "kind": "task",
+      "data": {
+        "number": 150,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "2f99484bc9b540986783a8cb77f61fc504825128",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              142,
+              144
+            ],
+            "releases": []
+          },
+          "dependencies": [
+            142,
+            144
+          ]
+        }
+      },
+      "previous": "3b5063323fa4877b1e2e9ef480b4c975a233b2d866637402cd9571bdb9b96a34",
+      "digest": "69b81c1cff543b5dfd4c4ee8a6a4abe7dc4f02fe635ae3c12030020f65771fc4"
+    },
+    {
+      "sequence": 1034,
+      "at": "2026-10-07T09:11:42.341Z",
+      "kind": "transaction",
+      "data": {
+        "id": "a11d5acc-eeda-4a6f-bb15-21b346909c01"
+      },
+      "previous": "69b81c1cff543b5dfd4c4ee8a6a4abe7dc4f02fe635ae3c12030020f65771fc4",
+      "digest": "993a001d82d8fff864b056cb64e3df08a80b6fab56e6b46b1482b1edfd7ab40e"
     }
   ]
 }
