@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1052,
+  "revision": 1055,
   "tasks": {
     "132": {
       "number": 132,
@@ -4260,6 +4260,22 @@
       },
       "error": "Prerequisite #150 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/150 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 1791364811033
+    },
+    "158": {
+      "number": 158,
+      "status": "developing",
+      "firstSeen": 1791364616335,
+      "attempts": {},
+      "admission": {
+        "number": 158,
+        "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "filesHash": "054094cdf55fee7144aebdb88ba80a0f667d80de0a5776f61cb3298f46bbb272",
+        "scopes": [],
+        "owner": "admission/pr-158",
+        "generation": {}
+      },
+      "updatedAt": 1791364616335
     }
   },
   "leases": {
@@ -25343,6 +25359,53 @@
       },
       "previous": "084b4d6495a02e955289aa8f7622ccf59f9c40388db00cf888940f8d194ece00",
       "digest": "410cd3100cde201edbb4010abdb17dd3319d35480529b458be6fb7a97b52dc2b"
+    },
+    {
+      "sequence": 1053,
+      "at": "2026-10-07T09:16:56.335Z",
+      "kind": "source_admitted",
+      "data": {
+        "number": 158,
+        "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "filesHash": "054094cdf55fee7144aebdb88ba80a0f667d80de0a5776f61cb3298f46bbb272",
+        "scopes": [],
+        "owner": "admission/pr-158",
+        "generation": {}
+      },
+      "previous": "410cd3100cde201edbb4010abdb17dd3319d35480529b458be6fb7a97b52dc2b",
+      "digest": "716aed3afb8df35f8aca6cec79ae2ada96437c471b4ab5a44cc70233636c99f4"
+    },
+    {
+      "sequence": 1054,
+      "at": "2026-10-07T09:16:56.335Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "admission": {
+            "number": 158,
+            "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "filesHash": "054094cdf55fee7144aebdb88ba80a0f667d80de0a5776f61cb3298f46bbb272",
+            "scopes": [],
+            "owner": "admission/pr-158",
+            "generation": {}
+          }
+        }
+      },
+      "previous": "716aed3afb8df35f8aca6cec79ae2ada96437c471b4ab5a44cc70233636c99f4",
+      "digest": "f93e0c448e9ff4c17846bb56c930daf9079c67541a9942a5ebe230f3c4f4e102"
+    },
+    {
+      "sequence": 1055,
+      "at": "2026-10-07T09:16:55.810Z",
+      "kind": "transaction",
+      "data": {
+        "id": "source-admit:158:c805a5b2b5fc10c33ad93370c08c1cd33805f979:6e7bb78749a4ade1955cf03476ed249f630aa3f8"
+      },
+      "previous": "f93e0c448e9ff4c17846bb56c930daf9079c67541a9942a5ebe230f3c4f4e102",
+      "digest": "5cb7af384d8e016d6ca85a14708e53f28227a99c8ef2468ba88a1a9d20073a03"
     }
   ]
 }
