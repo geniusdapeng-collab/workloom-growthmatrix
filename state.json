@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3852,
+  "revision": 3855,
   "tasks": {
     "132": {
       "number": 132,
@@ -4560,11 +4560,11 @@
     },
     "151": {
       "number": 151,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791358616212,
       "attempts": {},
-      "headSha": "b444cfcf1500c99dd631ea21f491e6fac316144c",
-      "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+      "headSha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
+      "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
       "branch": "fix/T-2026-1007-0918-portrait-agent-paid-once",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -4585,8 +4585,8 @@
         "provider": "codex",
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 151,
-        "headSha": "089771568cec09badd63d8d18754b7dcdd9a8750",
-        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headSha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "packages/video-studio/src/portrait-agent.test.ts",
@@ -4603,20 +4603,20 @@
           {
             "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/portrait-agent.test.ts packages/video-studio/src/character-archive.test.ts",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T12:39:26.864077+00:00",
-            "result": "Portrait execution and archive safety tests passed with no paid calls"
+            "finishedAt": "2026-10-07T22:23:48.484574+00:00",
+            "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           },
           {
             "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T12:39:27.182345+00:00",
-            "result": "video-studio typecheck passed"
+            "finishedAt": "2026-10-07T22:23:48.811115+00:00",
+            "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           }
         ],
-        "reviewedAt": "2026-10-07T13:24:15.667575+00:00",
-        "summary": "Current Codex fully read all four changed files and archive, shot-spec, intent and canonicalization dependencies. No automatic alternative prompt, sensitive-error retry or background-triggered regeneration remains. Default backgroundRequired=false records absence of quality review without fake passed metrics. Explicit review can fail the candidate but preserves the existing charged URL. Journal scope includes character, angle, provider, endpoint and full frozen body, independent of candidate version. Accepted URL is saved before downloading, and legacy matching angle proof without journal fails closed. Existing immutable versions, path checks, current artifact hashes, anchor-byte checks, partial activation discipline and archive mutex are retained. Exact-source tests and typecheck passed; no unresolved finding or paid test call. Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release.",
+        "reviewedAt": "2026-10-07T22:37:54.447047+00:00",
+        "summary": "Current Codex fully read all four changed files and archive, shot-spec, intent and canonicalization dependencies. No automatic alternative prompt, sensitive-error retry or background-triggered regeneration remains. Default backgroundRequired=false records absence of quality review without fake passed metrics. Explicit review can fail the candidate but preserves the existing charged URL. Journal scope includes character, angle, provider, endpoint and full frozen body, independent of candidate version. Accepted URL is saved before downloading, and legacy matching angle proof without journal fails closed. Existing immutable versions, path checks, current artifact hashes, anchor-byte checks, partial activation discipline and archive mutex are retained. Exact-source tests and typecheck passed; no unresolved finding or paid test call. Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main 5e148fc1ae3ad097bce2fcecf5d724fee9075219. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
         "passed": true,
-        "id": "fb0ebec43cc7c221801c9cc71579c7bac7bae570ac735a6dcfadcdf7ef1a062e"
+        "id": "02b93b83a9b7907d4de274713ebc019a4573bbc1c7d3d2473aa0d3e23b0ea7ff"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -4636,7 +4636,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "sha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4646,7 +4646,7 @@
           },
           "head": {
             "ref": "refs/heads/fix/T-2026-1007-0918-portrait-agent-paid-once",
-            "sha": "089771568cec09badd63d8d18754b7dcdd9a8750",
+            "sha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4654,7 +4654,7 @@
               "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
             }
           },
-          "blocked_on": "unblocked",
+          "blocked_on": "status_check",
           "merged_by": {
             "is_npc": false
           },
@@ -4664,8 +4664,8 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "089771568cec09badd63d8d18754b7dcdd9a8750",
-        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headSha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "files": [
           "packages/video-studio/src/portrait-agent.test.ts",
           "packages/video-studio/src/portrait-agent.ts"
@@ -4684,14 +4684,14 @@
             }
           ]
         },
-        "headTime": 1791376366000,
-        "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headTime": 1791411825000,
+        "mergeBase": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "checkErrors": [],
         "checkSha": null,
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791412691547,
+      "updatedAt": 1791412713067,
       "admission": {
         "number": 151,
         "headSha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
@@ -96051,6 +96051,170 @@
       },
       "previous": "183fc713c639704907d01db6707604bb968140a04b4bf93f3420a45b0f09aec9",
       "digest": "348256f5a1fc0069f1502652094b153c029f82657080ff7541d91d6bff97dd22"
+    },
+    {
+      "sequence": 3853,
+      "at": "2026-10-07T22:38:33.067Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 151,
+        "id": "02b93b83a9b7907d4de274713ebc019a4573bbc1c7d3d2473aa0d3e23b0ea7ff",
+        "headSha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219"
+      },
+      "previous": "348256f5a1fc0069f1502652094b153c029f82657080ff7541d91d6bff97dd22",
+      "digest": "fe806984a5b6a367ffb009b5b3c9a641878701c5664a27a09af7d4197155d720"
+    },
+    {
+      "sequence": 3854,
+      "at": "2026-10-07T22:38:33.067Z",
+      "kind": "task",
+      "data": {
+        "number": 151,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
+          "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+          "branch": "fix/T-2026-1007-0918-portrait-agent-paid-once",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              153
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.13"
+              }
+            ]
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 151,
+            "headSha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/portrait-agent.test.ts",
+              "packages/video-studio/src/portrait-agent.ts"
+            ],
+            "filesHash": "8a12fe0135985709ccaf27e476b690d0432fc9752996bdb118cc17fb0c7408f5",
+            "dependsOn": [
+              148,
+              153
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/portrait-agent.test.ts packages/video-studio/src/character-archive.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T22:23:48.484574+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T22:23:48.811115+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              }
+            ],
+            "reviewedAt": "2026-10-07T22:37:54.447047+00:00",
+            "summary": "Current Codex fully read all four changed files and archive, shot-spec, intent and canonicalization dependencies. No automatic alternative prompt, sensitive-error retry or background-triggered regeneration remains. Default backgroundRequired=false records absence of quality review without fake passed metrics. Explicit review can fail the candidate but preserves the existing charged URL. Journal scope includes character, angle, provider, endpoint and full frozen body, independent of candidate version. Accepted URL is saved before downloading, and legacy matching angle proof without journal fails closed. Existing immutable versions, path checks, current artifact hashes, anchor-byte checks, partial activation discipline and archive mutex are retained. Exact-source tests and typecheck passed; no unresolved finding or paid test call. Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main 5e148fc1ae3ad097bce2fcecf5d724fee9075219. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
+            "passed": true,
+            "id": "02b93b83a9b7907d4de274713ebc019a4573bbc1c7d3d2473aa0d3e23b0ea7ff"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 151,
+            "pull": {
+              "number": 151,
+              "state": "open",
+              "title": "fix(growth): stop automatic portrait regeneration [T-2026-1007-0918]",
+              "body": "The registered portrait agent automatically hardened prompts and generated another paid image after background checks failed. It also lost the provider URL when downloads failed. The default now accepts produced portraits without background review. Explicit checks preserve their result and never submit a replacement automatically. A stable per-character/angle journal records the exact request before POST and accepted URL before download; candidate changes, corrupt artifacts and restarts restore that URL. Unknown acceptance and matching legacy generation without its acceptance log refuse another POST. Partial candidates preserve the prior active version. PR148 supplies the identical durable image journal helpers.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148,\n    153\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.13\"\n    }\n  ]\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-portrait-agent-paid-once",
+                "sha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "files": [
+              "packages/video-studio/src/portrait-agent.test.ts",
+              "packages/video-studio/src/portrait-agent.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                148,
+                153
+              ],
+              "releases": [
+                {
+                  "kind": "desktop",
+                  "version": "0.1.13"
+                }
+              ]
+            },
+            "headTime": 1791411825000,
+            "mergeBase": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "fe806984a5b6a367ffb009b5b3c9a641878701c5664a27a09af7d4197155d720",
+      "digest": "8f984348567eacb3ec7a0404b8b9944800ac1706eaa67148887cbaa0b8a73739"
+    },
+    {
+      "sequence": 3855,
+      "at": "2026-10-07T22:38:10.884Z",
+      "kind": "transaction",
+      "data": {
+        "id": "4a4596be-422f-45a2-b4e9-5af0b5419a94"
+      },
+      "previous": "8f984348567eacb3ec7a0404b8b9944800ac1706eaa67148887cbaa0b8a73739",
+      "digest": "6d5c10381b54f6e508ee221b85cf2bc0515e56b8737c5fa55db5be5830605cbf"
     }
   ]
 }
