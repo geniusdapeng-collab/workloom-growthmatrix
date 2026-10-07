@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3532,
+  "revision": 3534,
   "tasks": {
     "132": {
       "number": 132,
@@ -8912,7 +8912,7 @@
     },
     "184": {
       "number": 184,
-      "status": "waiting_ci",
+      "status": "parked",
       "firstSeen": 1791405544313,
       "attempts": {},
       "admission": {
@@ -8928,7 +8928,7 @@
           "protocol": 74
         }
       },
-      "updatedAt": 1791407919386,
+      "updatedAt": 1791408014922,
       "headSha": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
       "mainSha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
       "branch": "fix/T-2026-1007-0918-isolate-pr-read-failures",
@@ -9114,7 +9114,7 @@
       "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
-      "blockedUntil": 0,
+      "blockedUntil": 1791408614922,
       "candidate": null,
       "originalBody": "Actual native reconcile builds repeatedly ended before processing the queue because one known open PR detail returned CNB 429. Make per-PR isolation an explicit optional Platform.pulls handler, preserving the strict default and fatal incomplete/ambiguous global pagination. The native controller records each failed known PR, excludes its unreadable identity from delivery, blocks its dependents without retrying it during planning, and continues full fresh checks for unrelated sources. No summary or stale integration proof substitutes for a current read. All native source/check/config, immutable candidate, protection and immediate merge prerequisite checks remain required. This native infrastructure repair declares no desktop version; actual integration/readback is still necessary.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    178\n  ],\n  \"releases\": []\n}\n-->",
       "files": [
@@ -9129,7 +9129,8 @@
         "previousHead": "c23805fdae439a94d8e2bd373aa3cbf65e281350",
         "mainSha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
         "verifiedAt": "2026-10-07T21:13:17.922Z"
-      }
+      },
+      "error": "Prerequisite #178 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/178 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n"
     }
   },
   "leases": {
@@ -88758,6 +88759,31 @@
       },
       "previous": "abe472f2d1debf9c00a4584d3b48cbc95cf882c9a5e172ef1f73bbdc7f5377ff",
       "digest": "2abdfc42237d5220e04487def7b0c1becd9269cd5ad6899819e65b259af025a8"
+    },
+    {
+      "sequence": 3533,
+      "at": "2026-10-07T21:20:14.922Z",
+      "kind": "task",
+      "data": {
+        "number": 184,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #178 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/178 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791408614922
+        }
+      },
+      "previous": "2abdfc42237d5220e04487def7b0c1becd9269cd5ad6899819e65b259af025a8",
+      "digest": "d791751a292c0067de45a57e70b8d9774820234002dff7f9ff432b30312c28e7"
+    },
+    {
+      "sequence": 3534,
+      "at": "2026-10-07T21:20:28.850Z",
+      "kind": "transaction",
+      "data": {
+        "id": "a8c2779a-bd10-4453-921b-6616b7221541"
+      },
+      "previous": "d791751a292c0067de45a57e70b8d9774820234002dff7f9ff432b30312c28e7",
+      "digest": "31a3c1157d406202dfd57792d37456dc597bc38a7b5713815049f5ea1e40e583"
     }
   ]
 }
