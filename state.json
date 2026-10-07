@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1550,
+  "revision": 1552,
   "tasks": {
     "132": {
       "number": 132,
@@ -4901,7 +4901,7 @@
     },
     "158": {
       "number": 158,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791364616335,
       "attempts": {},
       "admission": {
@@ -4913,7 +4913,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791372293316,
+      "updatedAt": 1791374342093,
       "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
       "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -39602,6 +39602,45 @@
       },
       "previous": "23714efd1a19edd28683f0e56922ef37d4201e19ceb7b95fc4461a19d6b91238",
       "digest": "780f14d85ee58190fecf100bd0b73e62298b1c6ba7251d79647724b34acb973f"
+    },
+    {
+      "sequence": 1551,
+      "at": "2026-10-07T11:59:02.093Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146
+            ],
+            "releases": []
+          },
+          "dependencies": [
+            144,
+            145,
+            146
+          ]
+        }
+      },
+      "previous": "780f14d85ee58190fecf100bd0b73e62298b1c6ba7251d79647724b34acb973f",
+      "digest": "4255263ab0561fd00215951350c51500164c4aa79826f9c599fb2d4857c4e867"
+    },
+    {
+      "sequence": 1552,
+      "at": "2026-10-07T12:01:29.405Z",
+      "kind": "transaction",
+      "data": {
+        "id": "7c7e36ab-1b35-4076-ad87-4abd33ae19ff"
+      },
+      "previous": "4255263ab0561fd00215951350c51500164c4aa79826f9c599fb2d4857c4e867",
+      "digest": "122f9152ad18acc4a173f55dea7b1ff0c960a3e2585b2bde7fd984f36df5df1e"
     }
   ]
 }
