@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2509,
+  "revision": 2511,
   "tasks": {
     "132": {
       "number": 132,
@@ -663,7 +663,7 @@
       "firstSeen": 1791310212615,
       "attempts": {},
       "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
-      "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
+      "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
       "branch": "task/T-2026-1006-0850",
       "intent": {
         "taskId": "T-2026-1006-0850",
@@ -680,8 +680,8 @@
         "scripts/tools/full-chain-film.mts"
       ],
       "ciSince": 1791310212615,
-      "updatedAt": 1791389415850,
-      "alignmentCount": 3,
+      "updatedAt": 1791390911806,
+      "alignmentCount": 0,
       "alignmentIntent": {
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
         "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
@@ -689,7 +689,7 @@
       },
       "developerReview": null,
       "error": "主干对齐失败：Command failed: git merge --no-ff --no-edit e58d356e51c8c4f26851141972d54a4081da563c\n",
-      "blockedUntil": 1791390015850,
+      "blockedUntil": 0,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -65315,6 +65315,53 @@
       },
       "previous": "aaddac338e1673b9206036e9a480018dc2d1f6c999c1bf5cc87d7f396912deff",
       "digest": "cae918f841910952f9c9716ab32b954ef45b08012d885d095518ef25dc523f2b"
+    },
+    {
+      "sequence": 2510,
+      "at": "2026-10-07T16:35:11.806Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "alignmentCount": 0,
+          "recoveryCount": 0,
+          "reviewFailures": null,
+          "blockedUntil": 0,
+          "developerReview": null,
+          "candidate": null,
+          "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
+          "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+          "branch": "task/T-2026-1006-0850",
+          "intent": {
+            "taskId": "T-2026-1006-0850",
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "正式 v0.1.2 签名发行误拒 CNB 返回的受保护 main 完整引用，真实成功视频任务又因下载超时中断；S3屏幕UI事实拒绝后的正式局部后期在黑边与人物黑衣连通时找不到唯一候选。\n\n精确兼容 main/refs/heads/main 并保持原保护/SHA/tag/Release/签名校验；媒体组件只重试已成功任务的GET。补充局部定位候选路径，仍以完整逐帧像素、真实定位/修复结果/完整合同身份审核决定能否接入后期，不重复生成，不把局部修复等同完整合格。保留原片、原请求摘要及所有拒绝。\n\n已有产品所有者修复合入发布授权，影响发布信任项显式review；正常平台三门禁与精确合并树通过后合入，普通Revert回滚。本隔离仓不回流公共基座。原生Mac/Windows Runner及签名配置仍缺，不能把代码/tag或只读预检称为签名安装包已发布。\n\n声明路径：\n- `scripts/ci/cnb-desktop-release.mjs`\n- `scripts/ci/cnb-desktop-release.test.mjs`\n- `packages/video-studio/src/media-download.ts`\n- `packages/video-studio/src/media-download.test.ts`\n- `packages/video-studio/src/video-surface-repair.ts`\n- `packages/video-studio/src/video-surface-repair.test.ts`\n- `scripts/tools/full-chain-film.mts`\n- `docs/tasks/T-2026-1006-0850.md`\n\n当前已通过发行/finalizer21项、媒体/成功回执/正式CLI51项和视频TSC，实际CNB main+v0.1.2只读绑定通过；局部定位追加验收完成后补最终真实回执。测试替身不冒充实际签名发行。\n\nCloses #133",
+          "files": [
+            "docs/tasks/T-2026-1006-0850.md",
+            "packages/video-studio/src/media-download.test.ts",
+            "packages/video-studio/src/media-download.ts",
+            "scripts/ci/cnb-desktop-release.mjs",
+            "scripts/ci/cnb-desktop-release.test.mjs",
+            "scripts/tools/full-chain-film.mts"
+          ],
+          "status": "parked",
+          "ciSince": 1791310212615
+        }
+      },
+      "previous": "cae918f841910952f9c9716ab32b954ef45b08012d885d095518ef25dc523f2b",
+      "digest": "8f3e044771893156f111e91a6f13e34f59039dc45043be4c1a29fe33353b9010"
+    },
+    {
+      "sequence": 2511,
+      "at": "2026-10-07T16:35:48.588Z",
+      "kind": "transaction",
+      "data": {
+        "id": "0425db6c-00b8-465f-a56c-ab9e21fdb8e0"
+      },
+      "previous": "8f3e044771893156f111e91a6f13e34f59039dc45043be4c1a29fe33353b9010",
+      "digest": "fc37cd8c5ad2aed659bfcf7e8cae7c28172eddc56ae0451a9784e93b20774c49"
     }
   ]
 }
