@@ -15,6 +15,8 @@ import type { AppPool, Scope } from "./gen/db.js";
 import { SubmissionError } from "./gen/submission-ledger.js";
 import { gatewayAppendOnClient } from "@workloom/base/workdata";
 import { lockAgentInvocation, linkAgentInvocation, type AgentInvocationRef } from "../agent/invocations.js";
+import { validateFilmPaidIdentity, type FilmPaidRequestIdentity } from "./film-paid-generation.js";
+import { submissionRequestHash } from "./gen/submission-ledger.js";
 
 export type FilmComponentKind = "llm" | "image" | "video" | "media" | "voice" | "review";
 export type FilmComponentState = "reserved" | "dispatched" | "accepted" | "failed" | "unknown";
@@ -401,6 +403,15 @@ export class FilmLedger {
         }
         return { row, deduped: true };
       }
+      // Caller keys are transport identities, not permission to pay for the same generation again.
+      if (input.component === "image" || input.component === "video") {
+        const same = await client.query<FilmComponentRow>(
+          `SELECT * FROM film_component_requests WHERE job_id=$1 AND component=$2 AND step_key=$3
+            AND shot_id IS NOT DISTINCT FROM $4 AND request_hash=$5 AND payload_hash=$6 ORDER BY seq LIMIT 1`,
+          [input.jobId, input.component, input.stepKey, input.shotId, input.requestHash, input.payloadHash],
+        );
+        if (same.rows[0]) return { row: same.rows[0], deduped: true };
+      }
       const totals = await client.query<{ reserved: string }>(
         `SELECT COALESCE(SUM(reserved_cny),0)::text AS reserved FROM film_component_requests WHERE job_id=$1`,
         [input.jobId],
@@ -445,6 +456,13 @@ export class FilmLedger {
 
   async recordDispatch(id: string, ownerToken: string, provider: string, providerModel: string): Promise<void> {
     await this.transaction(async (client) => {
+      const current = await client.query<FilmComponentRow>(
+        `SELECT * FROM film_component_requests WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 FOR UPDATE`,
+        [this.scope.tenantId, this.scope.workspaceId, id],
+      );
+      if (["image", "video"].includes(current.rows[0]?.component ?? "")) {
+        fail("PAID_DISPATCH_IDENTITY_REQUIRED", "付费生成必须先绑定完整供应商请求，不能使用普通组件调度");
+      }
       const result = await client.query(
         `UPDATE film_component_requests
             SET provider=$5, provider_model=$6, dispatch_count=dispatch_count+1, updated_at=now()
@@ -452,6 +470,80 @@ export class FilmLedger {
         [this.scope.tenantId, this.scope.workspaceId, id, ownerToken, provider, providerModel],
       );
       this.requireChanged(result.rowCount);
+    });
+  }
+
+  /** Serialize paid intent across job restarts using the complete provider request digest. */
+  async beginPaidDispatch(id: string, ownerToken: string, identity: FilmPaidRequestIdentity): Promise<
+    { mode: "submit" } | { mode: "reuse"; taskId: string; sourceComponentId: string }
+  > {
+    validateFilmPaidIdentity(identity);
+    return this.transaction(async (client) => {
+      const current = await client.query<FilmComponentRow & { input_sha256: string; job_status: string }>(
+        `SELECT c.*,j.input_sha256,j.status AS job_status FROM film_component_requests c JOIN film_jobs j ON j.id=c.job_id
+          WHERE c.tenant_id=$1 AND c.workspace_id=$2 AND c.id=$3 FOR UPDATE OF c FOR SHARE OF j`,
+        [this.scope.tenantId, this.scope.workspaceId, id],
+      );
+      const row = current.rows[0];
+      if (!row || !["image", "video"].includes(row.component) || row.owner_token !== ownerToken
+        || row.state !== "dispatched" || row.job_status !== "running") fail("FILM_COMPONENT_STATE_CONFLICT", "付费组件或执行者状态已改变");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [JSON.stringify([
+        "film-paid-intent", this.scope.tenantId, this.scope.workspaceId, row.project_id, row.component, row.step_key, row.shot_id,
+      ])]);
+      const previous = await client.query<FilmComponentRow & { input_sha256: string }>(
+        `SELECT c.*,j.input_sha256 FROM film_component_requests c JOIN film_jobs j ON j.id=c.job_id
+          WHERE c.tenant_id=$1 AND c.workspace_id=$2 AND c.project_id=$3 AND c.component=$4 AND c.step_key=$5
+            AND c.shot_id IS NOT DISTINCT FROM $6 AND c.dispatch_count>0 ORDER BY c.created_at,c.id`,
+        [this.scope.tenantId, this.scope.workspaceId, row.project_id, row.component, row.step_key, row.shot_id],
+      );
+      const equal = (prior: FilmComponentRow) => prior.evidence.paidRequest !== undefined
+        && submissionRequestHash(prior.evidence.paidRequest) === submissionRequestHash(identity);
+      const known = previous.rows.find(prior => equal(prior) && typeof prior.evidence.providerTaskId === "string" && prior.evidence.providerTaskId.trim());
+      if (known) {
+        const taskId = known.evidence.providerTaskId as string;
+        const sourceComponentId = typeof known.evidence.paidSourceComponentId === "string" ? known.evidence.paidSourceComponentId : known.id;
+        const changed = await client.query(
+          `UPDATE film_component_requests SET provider=$5,provider_model=$6,
+            reserved_cny=CASE WHEN id=$7 THEN reserved_cny ELSE 0 END,
+            evidence=evidence || $8::jsonb,updated_at=now()
+            WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 AND owner_token=$4 AND state='dispatched' RETURNING id`,
+          [this.scope.tenantId, this.scope.workspaceId, id, ownerToken, identity.provider, identity.providerModel, sourceComponentId,
+            JSON.stringify({ paidRequest: identity, providerTaskId: taskId, paidSourceComponentId: sourceComponentId, paidRecovery: true })],
+        );
+        this.requireChanged(changed.rowCount);
+        return { mode: "reuse", taskId, sourceComponentId };
+      }
+      if (previous.rows.some(prior => equal(prior) || prior.input_sha256 === row.input_sha256)) {
+        fail("PAID_RECONCILIATION_REQUIRED", "本镜已有付费提交或同原稿请求发生漂移，受理状态未核实；禁止换调用键/作业重复提交");
+      }
+      const changed = await client.query(
+        `UPDATE film_component_requests SET provider=$5,provider_model=$6,dispatch_count=1,
+          evidence=evidence || $7::jsonb,updated_at=now()
+          WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 AND owner_token=$4 AND state='dispatched' AND dispatch_count=0 RETURNING id`,
+        [this.scope.tenantId, this.scope.workspaceId, id, ownerToken, identity.provider, identity.providerModel,
+          JSON.stringify({ paidRequest: identity, paidSourceComponentId: id, paidDispatchStartedAt: new Date().toISOString() })],
+      );
+      this.requireChanged(changed.rowCount);
+      return { mode: "submit" };
+    });
+  }
+
+  /** Save the provider ACK before any poll/download; a late ACK must not rewrite a terminal state. */
+  async recordProviderTaskAccepted(id: string, ownerToken: string, identity: FilmPaidRequestIdentity, taskId: string): Promise<void> {
+    validateFilmPaidIdentity(identity);
+    if (typeof taskId !== "string" || !taskId.trim() || taskId.length > 65_536) fail("FILM_COMPONENT_RECEIPT_INVALID", "供应商任务号非法");
+    await this.transaction(async (client) => {
+      const changed = await client.query(
+        `UPDATE film_component_requests SET evidence=evidence || jsonb_build_object('providerTaskId',$7::text,
+            'paidAcceptedAt',COALESCE(evidence->>'paidAcceptedAt',$8::text)),updated_at=now()
+          WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 AND owner_token=$4 AND state IN ('dispatched','unknown')
+            AND evidence->'paidRequest'=$5::jsonb AND dispatch_count=1
+            AND (NOT (evidence ? 'providerTaskId') OR evidence->>'providerTaskId'=$7)
+            AND provider=$6 AND provider_model=$9 RETURNING id`,
+        [this.scope.tenantId, this.scope.workspaceId, id, ownerToken, JSON.stringify(identity), identity.provider,
+          taskId, new Date().toISOString(), identity.providerModel],
+      );
+      this.requireChanged(changed.rowCount);
     });
   }
 
@@ -465,9 +557,10 @@ export class FilmLedger {
       fail("FILM_COMPONENT_RECEIPT_INVALID", "接受回执必须带产物摘要证据");
     }
     await this.transaction(async (client) => {
+      await this.assertPaidReceipt(client, id, receipt.evidence, receipt);
       const result = await client.query(
         `UPDATE film_component_requests
-            SET state='accepted', provider=$5, provider_model=$6, actual_cny=$7, evidence=$8::jsonb, updated_at=now()
+            SET state='accepted', provider=$5, provider_model=$6, actual_cny=$7, evidence=evidence || $8::jsonb, updated_at=now()
           WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 AND owner_token=$4 AND state='dispatched' RETURNING id`,
         [this.scope.tenantId, this.scope.workspaceId, id, ownerToken,
           receipt.provider, receipt.providerModel,
@@ -486,9 +579,10 @@ export class FilmLedger {
   }): Promise<void> {
     if (!receipt.failureClass.trim()) fail("FILM_COMPONENT_RECEIPT_INVALID", "失败回执必须带分类");
     await this.transaction(async (client) => {
+      await this.assertPaidReceipt(client, id, receipt.evidence ?? {});
       const result = await client.query(
         `UPDATE film_component_requests
-            SET state=$5, actual_cny=$6, evidence=$7::jsonb || jsonb_build_object('failureClass',$8::text), updated_at=now()
+            SET state=$5, actual_cny=$6, evidence=evidence || $7::jsonb || jsonb_build_object('failureClass',$8::text), updated_at=now()
           WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 AND owner_token=$4 AND state IN ('dispatched','reserved') RETURNING id`,
         [this.scope.tenantId, this.scope.workspaceId, id, ownerToken, receipt.state,
           receipt.actualCny === null || receipt.actualCny === undefined ? null : receipt.actualCny,
@@ -562,5 +656,24 @@ export class FilmLedger {
 
   private requireChanged(count: number | null): void {
     if (count !== 1) fail("FILM_COMPONENT_STATE_CONFLICT", "组件状态或执行者已改变，拒绝继续外部动作");
+  }
+
+  private async assertPaidReceipt(client: pg.PoolClient, id: string, evidence: Record<string, unknown>, provider?: {
+    provider: string; providerModel: string;
+  }): Promise<void> {
+    const rows = await client.query<FilmComponentRow>(
+      `SELECT * FROM film_component_requests WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 FOR UPDATE`,
+      [this.scope.tenantId, this.scope.workspaceId, id],
+    );
+    const row = rows.rows[0];
+    if (!row) fail("FILM_COMPONENT_STATE_CONFLICT", "组件不存在于当前作用域");
+    const bound = ["paidRequest", "providerTaskId", "paidSourceComponentId", "paidDispatchStartedAt", "paidAcceptedAt", "paidRecovery"];
+    for (const key of bound) if (key in evidence && key in row.evidence
+      && submissionRequestHash(evidence[key]) !== submissionRequestHash(row.evidence[key])) {
+      fail("FILM_COMPONENT_RECEIPT_INVALID", `已绑定付费受理字段不可覆盖：${key}`);
+    }
+    if (row.evidence.paidRequest && provider && (provider.provider !== row.provider || provider.providerModel !== row.provider_model)) {
+      fail("FILM_COMPONENT_RECEIPT_INVALID", "产物回执不能换绑已受理的供应商/模型");
+    }
   }
 }
