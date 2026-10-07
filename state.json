@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1281,
+  "revision": 1283,
   "tasks": {
     "132": {
       "number": 132,
@@ -4398,7 +4398,7 @@
     },
     "158": {
       "number": 158,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791364616335,
       "attempts": {},
       "admission": {
@@ -4410,7 +4410,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791367815170,
+      "updatedAt": 1791369013609,
       "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
       "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -4564,8 +4564,8 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "error": "Prerequisite #146 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/146 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791365410266,
+      "error": "Prerequisite #144 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791369613609,
       "dependencies": [
         144,
         145,
@@ -30271,6 +30271,31 @@
       },
       "previous": "90cfe8f1e23c2f822c400788906888bb035d2be7e5713247dfd302468ff6f94c",
       "digest": "cf3aba764b6f62e93ad7ed61aa7146b6097d262098b3c5cf9cb2f8f2b60d2bcc"
+    },
+    {
+      "sequence": 1282,
+      "at": "2026-10-07T10:30:13.609Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #144 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791369613609
+        }
+      },
+      "previous": "cf3aba764b6f62e93ad7ed61aa7146b6097d262098b3c5cf9cb2f8f2b60d2bcc",
+      "digest": "43be1de8d3f4bbc87308a5ef6694bd93b3e6ee4e496d4861b94221708b061997"
+    },
+    {
+      "sequence": 1283,
+      "at": "2026-10-07T10:32:13.234Z",
+      "kind": "transaction",
+      "data": {
+        "id": "63a8e735-e17f-4dcc-9d4d-f40b5700913a"
+      },
+      "previous": "43be1de8d3f4bbc87308a5ef6694bd93b3e6ee4e496d4861b94221708b061997",
+      "digest": "20c02b67cb0adff97bcfbbe13e4dedb246156c5922fd65a6585d122222765878"
     }
   ]
 }
