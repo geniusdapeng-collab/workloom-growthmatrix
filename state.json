@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1629,
+  "revision": 1631,
   "tasks": {
     "132": {
       "number": 132,
@@ -4170,7 +4170,7 @@
       "firstSeen": 1791359178476,
       "attempts": {},
       "headSha": "9173ca0fbbd8ebecbcf12444753c66caffb22ad7",
-      "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+      "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-cine-kb-preserve-intent",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -4178,55 +4178,7 @@
         "dependsOn": [],
         "releases": []
       },
-      "developerReview": {
-        "schemaVersion": 1,
-        "provider": "codex",
-        "repo": "workloom-ai/workloom-growthmatrix",
-        "number": 153,
-        "headSha": "9173ca0fbbd8ebecbcf12444753c66caffb22ad7",
-        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
-        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
-        "reviewedFiles": [
-          "bundles/ai-video/bundle.json",
-          "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
-          "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
-          "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts",
-          "scripts/tools/video-request-regression.test.ts"
-        ],
-        "filesHash": "4008f5258d6cde8f64a10077ccaa9c50a2696235124d7f1ec5f921a6965d0ed8",
-        "dependsOn": [],
-        "ciPolicyChanges": [
-          {
-            "id": "CI-001",
-            "rationale": "Read the exact main and source test blobs and KB/shot-intent/CLI consumer dependencies. Replace the obsolete rejection assertion for optional over-budget lighting suggestions with stronger positive assertions: source and downstream retain the complete authored lighting, omitted records contain the whole dropped suggestion with zero written characters, applied/injected fields never falsely claim lighting, and the actual CLI completes downstream micromotion. Unknown subjects, missing KB data, corrupt traces and actual unwritten required contributions still fail existing tests. No test removed, skipped or timeout relaxed. Real media and exact CLI regressions passed. Rollback reverts the connector and its contract assertion together, keeping existing source artifacts."
-          }
-        ],
-        "ciPolicyChangesHash": "aefa6b97d8a1d85edcb68cdb45df5398088a621268b9fd0d83f6e4d0236cc1cb",
-        "tests": [
-          {
-            "command": "node node_modules/vitest/vitest.mjs run bundles/ai-video/connectors/cine-kb-bridge",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T10:03:51.627821+00:00",
-            "result": "All cine-KB core and audit regressions passed without paid calls"
-          },
-          {
-            "command": "node --import tsx scripts/bundle-governance.mts",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T10:03:52.258092+00:00",
-            "result": "Actual bundle integrity matches declared cine-KB core bytes; contract, asset and composition governance passed"
-          },
-          {
-            "command": "node node_modules/vitest/vitest.mjs run scripts/tools/video-request-regression.test.ts",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T10:04:25.071130+00:00",
-            "result": "Actual CLI and media regression passed; optional over-budget KB suggestions are omitted whole, exact authored lighting and downstream processing remain verified."
-          }
-        ],
-        "reviewedAt": "2026-10-07T11:23:41.539867+00:00",
-        "summary": "Current Codex fully read the three changed files and shot-intent implementation. Water reflection now requires an actual water-surface context. Window direction is derived from window clauses only, with ambiguous directions omitted. Authored timed camera contracts bypass generic KB movement insertion. Optional dropped contributions are recorded in omitted rather than applied, while missing required knowledge still stays unverified. Source hash and KB hash binding remain intact. All exact-source cine-KB tests passed; no unresolved finding. No live paid calls or governance edits. The complete bundle manifest and governance canonical digest implementation were read; only the changed cine core hash and its canonical enclosing digest are updated. The actual native bundle governance check passed against committed bytes. The current native test-gate failure was reproduced from its obsolete assertion. The complete CLI regression file and direct dependencies were read. The exact CI migration rationale preserves error/unknown/missing-knowledge checks and adds positive proof of complete authored fields, honest omissions and actual downstream continuation. No test or required gate is removed. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
-        "passed": true,
-        "id": "20dd38eacc92baa1e1d3297a3c7d04cf51c16209f25be69ed892ae5d24f919e7"
-      },
+      "developerReview": null,
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 153,
@@ -4311,7 +4263,7 @@
           }
         ]
       },
-      "updatedAt": 1791374342093,
+      "updatedAt": 1791375289156,
       "admission": {
         "number": 153,
         "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
@@ -4339,7 +4291,11 @@
         "at": 1791366610602
       },
       "recoveryIntent": null,
-      "blockedUntil": 1791367210602
+      "blockedUntil": 0,
+      "alignmentCount": 0,
+      "recoveryCount": 0,
+      "reviewFailures": null,
+      "candidate": null
     },
     "154": {
       "number": 154,
@@ -41525,6 +41481,53 @@
       },
       "previous": "0bee507a2ddce6a83e2bc0ac66a7e03e4e20e5050574417597bf3ce4603dceb5",
       "digest": "5b752bf39dd9b9fab82da964914987724907cc5d0c84ba4b5d717de36c707670"
+    },
+    {
+      "sequence": 1630,
+      "at": "2026-10-07T12:14:49.156Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "alignmentCount": 0,
+          "recoveryCount": 0,
+          "reviewFailures": null,
+          "blockedUntil": 0,
+          "developerReview": null,
+          "candidate": null,
+          "headSha": "9173ca0fbbd8ebecbcf12444753c66caffb22ad7",
+          "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+          "branch": "fix/T-2026-1007-0918-cine-kb-preserve-intent",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "Knowledge enrichment could interpret indoor marble reflection as water, replace a left window direction with an unrelated right fill light, and append an unbounded camera movement over an authored timed end hold. Version 3 only applies context-supported instructions, preserves complete timed camera text and omits optional whole sentences that exceed a field budget. Omitted suggestions remain separate from actual written evidence. The source author text is retained.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "bundles/ai-video/bundle.json",
+            "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
+            "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+            "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts",
+            "scripts/tools/video-request-regression.test.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791359409167
+        }
+      },
+      "previous": "5b752bf39dd9b9fab82da964914987724907cc5d0c84ba4b5d717de36c707670",
+      "digest": "f027977a2b3f55b29a5d8fd9d04c9064e8cdcd2c29df6fd850c75354884ec173"
+    },
+    {
+      "sequence": 1631,
+      "at": "2026-10-07T12:16:51.090Z",
+      "kind": "transaction",
+      "data": {
+        "id": "0d3cea81-d0f9-4f39-aa73-88a397890d86"
+      },
+      "previous": "f027977a2b3f55b29a5d8fd9d04c9064e8cdcd2c29df6fd850c75354884ec173",
+      "digest": "ba7774b75a5dd5668b9fae7a3d43a6bd54984434f72b00b39992273587720b9d"
     }
   ]
 }
