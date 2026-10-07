@@ -23,16 +23,18 @@
  *   1. **不伪造来源**：产物一律标注 `source=asset-derived`（派生定妆照，非权威原图）；
  *   2. **账户欠费即停**（403 AccountOverdueError）——不许"少几张也装"；
  *   3. 逐角度隔离：任一角度失败即整体失败（不装半套）；
- *   4. 同一张图被两个角度命中（模型偷懒）→ 拒绝；
+ *   4. 受理回执先落盘，再下载；网络失败不重发，角度相似度默认只留证；
  *   5. 装档与写后复核交给 `portrait-set-install.mts`（同一套校验与证据口径）。
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assessLikenessBatch } from "../../packages/video-studio/src/likeness-policy.js";
+import { resumeOrSubmitImageTask } from "../../packages/video-studio/src/image-task-receipt.js";
+import { resumeOrSubmitVideoTask } from "../../packages/video-studio/src/video-task-receipt.js";
 
 function arg(name: string, fallback = ""): string {
   const index = process.argv.indexOf(name);
@@ -166,6 +168,11 @@ for (const angle of angles) {
   }
 }
 const outDir = resolve(arg("--out-dir", join(characterDir, "portraits", "_derived-src")));
+const receiptRoot = resolve(arg("--receipt-root", process.env.WORKLOOM_GENERATION_RECEIPT_ROOT
+  ?? join(process.env.WORKLOOM_VIDEO_ARTIFACT_ROOT ?? join(REPO_ROOT, "var/media"), "generation-receipts")));
+const paidProject = `portrait:${characterId}:${assetId}`;
+const legacyAngleExists = (angle: string): boolean => existsSync(join(outDir, `${characterId}-${angle}.png`))
+  || existsSync(join(outDir, `_master-${angle}.png`));
 const dryRun = flag("--dry-run");
 const doInstall = flag("--install");
 const activate = flag("--activate");
@@ -249,8 +256,8 @@ if (verifyAnchorDataUrl && !judgeKey) {
   console.error("要做自动像不像校验，需要 DEEPSEEK_API_KEY（读 keys-file 或环境变量）");
   process.exit(2);
 }
-async function likenessCheck(png: Buffer, angle: string): Promise<{ ok: boolean; same: boolean; score: number | null; reason: string }> {
-  if (!verifyAnchorDataUrl) return { ok: true, same: true, score: null, reason: "未启用自动校验（--verify-against 未提供）" };
+async function likenessCheck(png: Buffer, angle: string): Promise<{ reviewed: boolean; ok: boolean; same: boolean | null; score: number | null; reason: string }> {
+  if (!verifyAnchorDataUrl) return { reviewed: false, ok: true, same: null, score: null, reason: "未启用自动校验；按生成产物接收，身份未审核" };
   const imageDataUrl = `data:image/png;base64,${png.toString("base64")}`;
   const response = await fetch(`${judgeBase}/chat/completions`, {
     method: "POST",
@@ -272,24 +279,24 @@ async function likenessCheck(png: Buffer, angle: string): Promise<{ ok: boolean;
     signal: AbortSignal.timeout(180_000),
   });
   const text = await response.text();
-  if (!response.ok) return { ok: false, same: false, score: null, reason: `校验模型调用失败 HTTP ${response.status}：${text.slice(0, 160)}` };
+  if (!response.ok) return { reviewed: true, ok: false, same: false, score: null, reason: `校验模型调用失败 HTTP ${response.status}：${text.slice(0, 160)}` };
   try {
     const raw = (JSON.parse(text) as { choices?: Array<{ message?: { content?: string } }> }).choices?.[0]?.message?.content ?? "";
     const parsed = JSON.parse(raw.replace(/^```(?:json)?/m, "").replace(/```\s*$/m, "").trim()) as { same?: boolean; score?: number; reason?: string };
     const score = Number.isFinite(Number(parsed.score)) ? Number(parsed.score) : null;
     const same = parsed.same === true && (score === null || score >= (Number.isFinite(minLikeness) ? minLikeness : 88));
-    return { ok: same, same: parsed.same === true, score, reason: String(parsed.reason ?? "").slice(0, 200) };
+    return { reviewed: true, ok: same, same: parsed.same === true, score, reason: String(parsed.reason ?? "").slice(0, 200) };
   } catch {
-    return { ok: false, same: false, score: null, reason: `校验结论结构非法：${text.slice(0, 160)}` };
+    return { reviewed: true, ok: false, same: false, score: null, reason: `校验结论结构非法：${text.slice(0, 160)}` };
   }
 }
-const perAngle: Array<{ angle: string; file: string; sha256: string; bytes: number; refs: string[]; likeness: { ok: boolean; same: boolean; score: number | null; reason: string } }> = [];
+const perAngle: Array<{ angle: string; file: string; sha256: string; bytes: number; refs: string[]; likeness: { reviewed: boolean; ok: boolean; same: boolean | null; score: number | null; reason: string } }> = [];
 /**
  * 两条引擎（`--engine auto|image|video`）：
  *   · image：`/images/generations` + `image: asset://…`（若平台在该端点支持 asset 参考，最快最省）；
  *   · video：`/contents/generations/tasks` + `image_url.url=asset://… & role=reference_image`（**已实测可用**，
  *     当初那张"像本人"的关键帧就是这条路的产物）→ 取视频首帧当定妆照。
- *   · auto（默认）：先 image，遇到"该端点不支持 asset 参考"这类 4xx 再退 video；**欠费(403)立刻整体失败**。
+ *   · auto：提交前按是否有本地锚图选择 image 或 video；提交后不自动切换引擎。
  */
 const engineArg = arg("--engine", "two-stage").trim();
 /**
@@ -319,99 +326,64 @@ if (!["two-stage", "auto", "image", "video"].includes(engineArg)) {
   console.error(`--engine 只支持 two-stage（默认：视频出身份母版 + 图生图出其余角度）/ auto / image / video，收到：${engineArg}`);
   process.exit(2);
 }
-const isOverdue = (text: string): boolean => /AccountOverdueError|overdue balance/i.test(text);
 
-async function generateViaImage(prompt: string, referenceImages: string[] = []): Promise<Buffer> {
-  /**
-   * 图端点接受**本地图 / data URL**（也接受多张，见 `portrait-agent` 的 anchors 用法）；不接受 `asset://`。
-   * `referenceImages` 为多图参考（身份母版）——多图比单图稳，但张数过多会稀释，2 张左右最佳。
-   */
-  const images = referenceImages.length > 0 ? referenceImages : (anchorDataUrl ? [anchorDataUrl] : [assetRef]);
-  const requestBody = JSON.stringify({
-    model, prompt, image: images.length === 1 ? images[0] : images,
-    size: arg("--size", "2K"), response_format: "url", watermark: false,
-  });
-  /** 网络抖动（真机 `fetch failed` / ECONNRESET）重试 3 次（5s/15s 退避）；4xx/5xx 语义错误不重试 */
-  let response: Response;
-  let text: string;
-  let lastError: unknown = null;
-  response = undefined as unknown as Response;
-  text = "";
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    try {
-      response = await fetch(`${baseUrl}/images/generations`, {
-        method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-        body: requestBody,
-        signal: AbortSignal.timeout(300_000),
-      });
-      text = await response.text();
-      break;
-    } catch (error) {
-      lastError = error;
-      console.log(`  ↻ 图片端点第 ${attempt}/3 次网络失败（${error instanceof Error ? error.message.slice(0, 60) : String(error)}）`);
-      if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt === 1 ? 5_000 : 15_000));
-    }
-  }
-  if (!response) throw lastError;
-  if (!response.ok) throw Object.assign(new Error(`HTTP ${response.status} ${text.slice(0, 160)}`), { status: response.status, body: text });
-  const body = JSON.parse(text) as { data?: Array<{ url?: string }> };
-  const url = body.data?.[0]?.url ?? null;
-  if (!url) throw new Error(`响应里没有图片 URL：${text.slice(0, 160)}`);
-  return Buffer.from(await (await fetch(url, { signal: AbortSignal.timeout(120_000) })).arrayBuffer());
+async function downloadGenerated(url: string): Promise<Buffer> {
+  const response = await fetch(url, { signal: AbortSignal.timeout(180_000) });
+  if (!response.ok) throw new Error(`生成产物下载失败 HTTP ${response.status}；保留原受理回执，恢复仅下载`);
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (bytes.byteLength === 0) throw new Error("生成产物为空；保留原受理回执，不重新付费");
+  return bytes;
 }
 
-/**
- * 视频路：**多参考图**提交 → 轮询 → 取首帧（frames:v 1）。
- *
- * **失效参考自动剔除**（2026-09-30 真机）：主档里的"同组 11 张"清单可能已经过期——
- * 实测 `asset-20260929120055-d6xr` 被平台判 `not found`。这里从 400 错误里解析出失效 assetId、
- * 把它从参考集里去掉后重试（失败提交不计费），并把被剔除的 ID 记进报告，供主档校正。
- */
-async function generateViaVideo(prompt: string, refs: string[]): Promise<Buffer> {
-  let activeRefs = [...refs];
-  let submit: Response | null = null;
-  let submitText = "";
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    submit = await fetch(`${baseUrl}/contents/generations/tasks`, {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: process.env.SEEDANCE_MODEL || env.SEEDANCE_MODEL,
-        content: [{ type: "text", text: `${prompt}（人物保持静止的定妆姿态，镜头固定不动）` },
-          ...activeRefs.map((ref) => ({ type: "image_url", image_url: { url: ref }, role: "reference_image" }))],
-        duration: Number(arg("--video-seconds", "4")), resolution: arg("--video-resolution", "1080p"),
-        generate_audio: false, watermark: false, return_last_frame: false,
-      }),
-      signal: AbortSignal.timeout(120_000),
-    });
-    submitText = await submit.text();
-    if (submit.ok) break;
-    const missing = /specified asset (asset-[A-Za-z0-9._-]+) is not found/.exec(submitText)?.[1];
-    if (!missing || activeRefs.length <= 1) {
-      throw Object.assign(new Error(`HTTP ${submit.status} ${submitText.slice(0, 200)}`), { status: submit.status, body: submitText });
-    }
-    invalidAssetRefs.add(missing);
-    activeRefs = activeRefs.filter((ref) => !ref.includes(missing));
-    console.log(`  ↻ 参考素材失效（${missing}）→ 剔除后重试（剩余 ${activeRefs.length} 张参考）`);
-  }
-  if (!submit?.ok) throw Object.assign(new Error(`HTTP ${submit?.status ?? "?"} ${submitText.slice(0, 200)}`), { status: submit?.status ?? 0, body: submitText });
-  const taskId = (JSON.parse(submitText) as { id?: string }).id;
-  if (!taskId) throw new Error(`提交响应里没有任务 ID：${submitText.slice(0, 160)}`);
-  for (let i = 0; i < 36; i += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 10_000));
-    const poll = await fetch(`${baseUrl}/contents/generations/tasks/${taskId}`, { headers: { authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(60_000) });
-    const pollText = await poll.text();
-    const body = JSON.parse(pollText) as { status?: string; content?: { video_url?: string }; error?: unknown };
-    if (body.status === "failed" || body.status === "cancelled") throw new Error(`视频任务失败：${pollText.slice(0, 200)}`);
-    if (body.status !== "succeeded" || !body.content?.video_url) continue;
-    const video = join(outDir, `.tmp-${taskId}.mp4`);
-    writeFileSync(video, Buffer.from(await (await fetch(body.content.video_url, { signal: AbortSignal.timeout(180_000) })).arrayBuffer()));
-    const frame = join(outDir, `.tmp-${taskId}.png`);
-    execFileSync(process.env.WL_FFMPEG ?? "ffmpeg", ["-v", "error", "-y", "-ss", "0.4", "-i", video, "-frames:v", "1", frame]);
-    return readFileSync(frame);
-  }
-  throw new Error("视频任务轮询超时（6 分钟）");
+async function generateViaImage(prompt: string, referenceImages: string[], angle: string): Promise<Buffer> {
+  const images = referenceImages.length > 0 ? referenceImages : (anchorDataUrl ? [anchorDataUrl] : [assetRef]);
+  const body = { model, prompt, image: images.length === 1 ? images[0] : images,
+    size: arg("--size", "2K"), response_format: "url", watermark: false };
+  const endpoint = `${baseUrl}/images/generations`;
+  const accepted = await resumeOrSubmitImageTask({ root: join(receiptRoot, "images"), projectId: paidProject,
+    slotId: angle, provider: "ark", endpoint, body, requireExisting: legacyAngleExists(angle),
+    submit: async frozenBody => {
+      const response = await fetch(endpoint, { method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify(frozenBody), signal: AbortSignal.timeout(300_000) });
+      const text = await response.text();
+      if (!response.ok) throw new Error(`出图失败 HTTP ${response.status}；原提交留证，禁止自动重交：${text.slice(0, 160)}`);
+      const result = JSON.parse(text) as { data?: Array<{ url?: string }> };
+      if (!result.data?.[0]?.url) throw new Error("出图受理状态未知：未收到 URL；禁止自动重交");
+      return { url: result.data[0].url };
+    } });
+  return downloadGenerated(accepted.url);
+}
+
+async function generateViaVideo(prompt: string, refs: string[], angle: string): Promise<Buffer> {
+  const endpoint = `${baseUrl}/contents/generations/tasks`;
+  const videoModel = process.env.SEEDANCE_MODEL || env.SEEDANCE_MODEL;
+  if (!videoModel) throw new Error("缺少 SEEDANCE_MODEL；未向视频端点提交");
+  const body = { model: videoModel,
+    content: [{ type: "text", text: `${prompt}（人物保持静止的定妆姿态，镜头固定不动）` },
+      ...refs.map(ref => ({ type: "image_url", image_url: { url: ref }, role: "reference_image" }))],
+    duration: Number(arg("--video-seconds", "4")), resolution: arg("--video-resolution", "1080p"),
+    generate_audio: false, watermark: false, return_last_frame: false };
+  const accepted = await resumeOrSubmitVideoTask({ root: join(receiptRoot, "videos"), projectId: paidProject,
+    shotId: angle, provider: "ark", endpoint, body, requireExisting: legacyAngleExists(angle), timeoutMs: 360_000,
+    transport: {
+      submit: async frozenBody => {
+        const response = await fetch(endpoint, { method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify(frozenBody), signal: AbortSignal.timeout(120_000) });
+        return { ok: response.ok, status: response.status, text: await response.text() };
+      },
+      poll: async taskId => {
+        const response = await fetch(`${endpoint}/${encodeURIComponent(taskId)}`, {
+          headers: { authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(60_000) });
+        return { ok: response.ok, status: response.status, text: await response.text() };
+      },
+    } });
+  const video = join(outDir, `.tmp-${accepted.taskId}.mp4`);
+  writeFileSync(video, await downloadGenerated(accepted.url));
+  const frame = join(outDir, `.tmp-${accepted.taskId}.png`);
+  execFileSync(process.env.WL_FFMPEG ?? "ffmpeg", ["-v", "error", "-y", "-ss", "0.4", "-i", video, "-frames:v", "1", frame]);
+  return readFileSync(frame);
 }
 
 /** 把一张图压成"可发包"的 data URL（图端点单次请求体过大就 fetch failed，实测过） */
@@ -455,7 +427,7 @@ if (engineArg === "two-stage") {
     }
     const liveRefs = entry.refs.filter((ref) => !invalidAssetRefs.has(ref.replace(/^asset:\/\//, "")));
     console.log(`  ★ 身份母版 ${angle}：视频路 + ${liveRefs.length} 张 asset 参考（多参考=同一人多视角）`);
-    const master = await generateViaVideo(entry.prompt, liveRefs);
+    const master = await generateViaVideo(entry.prompt, liveRefs, entry.angle);
     stageAMasters.set(angle, master);
     writeFileSync(masterFile, master);
     console.log(`    母版已存：${masterFile}（${(master.byteLength / 1024).toFixed(0)}KB）`);
@@ -501,34 +473,23 @@ for (const entry of plan.angles) {
   if (stageAMasters.has(entry.angle)) {
     image = stageAMasters.get(entry.angle)!;
   } else if (engineArg === "two-stage") {
-    image = await generateViaImage(entry.prompt, masterDataUrls);
+    image = await generateViaImage(entry.prompt, masterDataUrls, entry.angle);
   } else if (engineArg === "video") {
-    image = await generateViaVideo(entry.prompt, liveRefs);
+    image = await generateViaVideo(entry.prompt, liveRefs, entry.angle);
   } else {
-    try {
-      image = await generateViaImage(entry.prompt);
-    } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
-      const body = (error as { body?: string }).body ?? "";
-      if (isOverdue(detail) || isOverdue(body)) {
-        console.error(`${entry.angle}：账户欠费（AccountOverdueError）→ 整体失败，先充值再重跑（本轮不产出任何文件、不做部分安装）`);
-        process.exit(3);
-      }
-      if (engineArg === "image") {
-        console.error(`${entry.angle}：图片端点失败 —— ${detail}`);
-        process.exit(3);
-      }
-      console.log(`  ↻ ${entry.angle}：图片端点不可用（${detail.slice(0, 90)}）→ 退到视频路（asset 参考已实测可用）`);
-      image = await generateViaVideo(entry.prompt, liveRefs);
-    }
-  }
-  if (image.byteLength < 50_000) {
-    console.error(`${entry.angle}：返回图过小（${image.byteLength} 字节），疑似失败页`);
-    process.exit(3);
+    // Select the engine before paying. A lost image ACK must never fall through to a second paid engine.
+    const selected = engineArg === "auto" && !anchorDataUrl ? "video" : "image";
+    image = selected === "video" ? await generateViaVideo(entry.prompt, liveRefs, entry.angle)
+      : await generateViaImage(entry.prompt, [], entry.angle);
   }
   const file = join(outDir, `${characterId}-${entry.angle}.png`);
   writeFileSync(file, image);
-  const likeness = await likenessCheck(image, entry.angle);
+  // Decode validates an actual image; byte size, similarity and identity scores do not gate delivery.
+  execFileSync(process.env.WL_FFMPEG ?? "ffmpeg", ["-v", "error", "-i", file, "-frames:v", "1", "-f", "null", "-"]);
+  let likeness: Awaited<ReturnType<typeof likenessCheck>>;
+  try { likeness = await likenessCheck(image, entry.angle); }
+  catch (error) { likeness = { reviewed: true, ok: false, same: null, score: null,
+    reason: `校验执行失败（原图保留，不重出）：${error instanceof Error ? error.message : String(error)}` }; }
   /**
    * 机器像不像结论**不触发任何自动重做**（T-2026-1001-0007）：本文件已经写盘并进入本批产物，
    * 是否重做由人类看过 8 张后决定。曾经这里是“图生图不像 → 回退视频路重做一次”，
@@ -539,7 +500,7 @@ for (const entry of plan.angles) {
     bytes: image.byteLength, refs: entry.refs, likeness,
   });
   console.log(`  ${likeness.ok ? "✓" : "✗"} ${entry.angle} → ${file}（${(image.byteLength / 1024).toFixed(0)}KB）`
-    + ` 像不像：${likeness.same ? "同一人" : "疑似不一致"}${likeness.score === null ? "" : `（score ${likeness.score}）`} ${likeness.reason.slice(0, 60)}`);
+    + ` 像不像：${!likeness.reviewed ? "未审核" : likeness.same ? "同一人" : "未通过"}${likeness.score === null ? "" : `（score ${likeness.score}）`} ${likeness.reason.slice(0, 60)}`);
 }
 
 /**
@@ -550,7 +511,7 @@ for (const entry of plan.angles) {
  * `assessLikenessBatch` 固化“默认不阻断、不重做；只有显式 --require-likeness 才整批拒绝”。
  */
 const likenessDecision = assessLikenessBatch(
-  perAngle.map((entry) => ({ angle: entry.angle, ok: entry.likeness.ok, score: entry.likeness.score, reason: entry.likeness.reason })),
+  perAngle.filter(entry => entry.likeness.reviewed).map((entry) => ({ angle: entry.angle, ok: entry.likeness.ok, score: entry.likeness.score, reason: entry.likeness.reason })),
   { requireLikeness: flag("--require-likeness") },
 );
 if (likenessDecision.failed.length > 0) {
@@ -568,11 +529,12 @@ if (likenessDecision.failed.length > 0) {
 const byHash = new Map<string, string[]>();
 for (const entry of perAngle) byHash.set(entry.sha256, [...(byHash.get(entry.sha256) ?? []), entry.angle]);
 const duplicated = [...byHash.entries()].filter(([, list]) => list.length > 1);
-if (duplicated.length > 0) {
+if (duplicated.length > 0 && flag("--require-distinct-angles")) {
   console.error(`生成结果里有重复图（同一张被指到多个角度）：${duplicated.map(([, list]) => list.join("+")).join("，")} → 整套拒绝`);
   process.exit(2);
 }
 
+if (duplicated.length > 0) console.log(`角度重复图留证（未做质量拦截）：${duplicated.map(([, list]) => list.join("+")).join("，")}`);
 const mappingFile = join(outDir, "mapping.json");
 writeFileSync(mappingFile, `${JSON.stringify(Object.fromEntries(perAngle.map((entry) => [entry.angle, `${characterId}-${entry.angle}.png`])), null, 2)}\n`, "utf8");
 writeFileSync(join(outDir, "derived-plan.json"), `${JSON.stringify({ ...plan, perAngle }, null, 2)}\n`, "utf8");

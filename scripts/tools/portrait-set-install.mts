@@ -173,13 +173,15 @@ for (const entry of mapping) {
 const byHash = new Map<string, string[]>();
 for (const entry of perAngle) byHash.set(entry.sha256, [...(byHash.get(entry.sha256) ?? []), entry.angle]);
 const duplicated = [...byHash.entries()].filter(([, angles]) => angles.length > 1);
-if (duplicated.length > 0) {
+if (duplicated.length > 0 && sourceKind === "customer-export") {
   console.error(`同一张原图被指到多个角度（拒绝）：${duplicated.map(([, angles]) => angles.join("+")).join("，")}`);
   process.exit(2);
 }
 
+if (duplicated.length > 0) console.log(`派生图角度重复留证：${duplicated.map(([, angles]) => angles.join("+")).join("，")}；不自动重出`);
+
 /** 既有 set 的资产映射（asset://）尽量保留，供审计对照 */
-const previousSets = Array.isArray(profile.portraitSets) ? profile.portraitSets : [];
+const previousSets: Array<PortraitSet & { assets?: unknown }> = Array.isArray(profile.portraitSets) ? profile.portraitSets : [];
 const previousActive = previousSets.find((set) => set.active) ?? previousSets[previousSets.length - 1];
 
 let verification: unknown = null;
