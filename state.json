@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 805,
+  "revision": 807,
   "tasks": {
     "132": {
       "number": 132,
@@ -3745,7 +3745,7 @@
     },
     "155": {
       "number": 155,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791360181033,
       "attempts": {},
       "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
@@ -3880,7 +3880,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791360185552,
+      "updatedAt": 1791360611238,
       "admission": {
         "number": 155,
         "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
@@ -3889,7 +3889,11 @@
         "scopes": [],
         "owner": "admission/pr-155",
         "generation": {}
-      }
+      },
+      "dependencies": [
+        145,
+        154
+      ]
     }
   },
   "leases": {
@@ -20578,6 +20582,43 @@
       },
       "previous": "f0a7c36e79b69b524e8023da7f312580984162fa9746e7daf9948cdc6665dd4b",
       "digest": "b6e4fb1f188ed99ea02bd837a797e61d62f96ebb9dc84dd3918fa1752ad8f3f8"
+    },
+    {
+      "sequence": 806,
+      "at": "2026-10-07T08:10:11.238Z",
+      "kind": "task",
+      "data": {
+        "number": 155,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              145,
+              154
+            ],
+            "releases": []
+          },
+          "dependencies": [
+            145,
+            154
+          ]
+        }
+      },
+      "previous": "b6e4fb1f188ed99ea02bd837a797e61d62f96ebb9dc84dd3918fa1752ad8f3f8",
+      "digest": "4ca621adddf1c7e0f3233874c3421765f3ff48b164e97b707908ee302997aff3"
+    },
+    {
+      "sequence": 807,
+      "at": "2026-10-07T08:11:09.470Z",
+      "kind": "transaction",
+      "data": {
+        "id": "b366cb72-5e15-464a-8579-21d0d1dfae33"
+      },
+      "previous": "4ca621adddf1c7e0f3233874c3421765f3ff48b164e97b707908ee302997aff3",
+      "digest": "8e5f8dbe731fd8dfb9e9a6d862a38dc19a6de2d033b20b6986f674bb3e346e00"
     }
   ]
 }
