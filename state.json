@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3612,
+  "revision": 3614,
   "tasks": {
     "132": {
       "number": 132,
@@ -6940,7 +6940,7 @@
     },
     "167": {
       "number": 167,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791373275072,
       "attempts": {},
       "headSha": "a3ae5995629bcecc7f2417412fbe90758a25143c",
@@ -7080,7 +7080,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791409562785,
+      "updatedAt": 1791409819615,
       "admission": {
         "number": 167,
         "headSha": "a3ae5995629bcecc7f2417412fbe90758a25143c",
@@ -7098,7 +7098,7 @@
         "bundles/ai-video/library/style-variants/bold-promo.json"
       ],
       "ciSince": 1791374342093,
-      "error": "主干对齐失败：Command failed: git merge --no-ff --no-edit 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b\n",
+      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/167 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "repairRequired": {
         "provider": "codex",
         "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
@@ -7107,7 +7107,7 @@
         "at": 1791378611870
       },
       "recoveryIntent": null,
-      "blockedUntil": 1791379211870,
+      "blockedUntil": 1791410419615,
       "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -90475,6 +90475,31 @@
       },
       "previous": "a266e8d85ad1f3c256a699d2dd2f770db9c769bf385811a70131e7c9dd5d9416",
       "digest": "347d7593e584f8a4c57065d719402ed696310174c79382e7b6c00a516667af34"
+    },
+    {
+      "sequence": 3613,
+      "at": "2026-10-07T21:50:19.615Z",
+      "kind": "task",
+      "data": {
+        "number": 167,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/167 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791410419615
+        }
+      },
+      "previous": "347d7593e584f8a4c57065d719402ed696310174c79382e7b6c00a516667af34",
+      "digest": "d661dd664c3afc6b5fbd16e9b6a804fc835f635371661a1b917aebdfd50edc6e"
+    },
+    {
+      "sequence": 3614,
+      "at": "2026-10-07T21:50:38.799Z",
+      "kind": "transaction",
+      "data": {
+        "id": "c1340dc7-5f22-4036-b130-9fed7c983a29"
+      },
+      "previous": "d661dd664c3afc6b5fbd16e9b6a804fc835f635371661a1b917aebdfd50edc6e",
+      "digest": "84b27f0689aa499eef80bf8e10d4ec2df60347bcb068fd628a7716e473078732"
     }
   ]
 }
