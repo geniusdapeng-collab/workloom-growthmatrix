@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3832,
+  "revision": 3835,
   "tasks": {
     "132": {
       "number": 132,
@@ -6111,7 +6111,7 @@
     },
     "161": {
       "number": 161,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791368515129,
       "attempts": {},
       "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
@@ -6279,7 +6279,7 @@
           }
         ]
       },
-      "updatedAt": 1791410581428,
+      "updatedAt": 1791412510085,
       "admission": {
         "number": 161,
         "headSha": "fd1089d472ec538c5cdd64a32b8d926261d81135",
@@ -6302,12 +6302,12 @@
       "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
-      "blockedUntil": 1791411025056,
+      "blockedUntil": 1791413110085,
       "candidate": null,
       "dependencies": [
         160
       ],
-      "error": "Prerequisite #160 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/160 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n"
+      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/161 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n"
     },
     "162": {
       "number": 162,
@@ -6586,7 +6586,7 @@
     },
     "165": {
       "number": 165,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791370361439,
       "attempts": {},
       "headSha": "bbba1d0a1eea8a5d90db6c54327dd3fa91acca14",
@@ -6920,7 +6920,7 @@
           }
         ]
       },
-      "updatedAt": 1791411188927,
+      "updatedAt": 1791412510085,
       "admission": {
         "number": 165,
         "headSha": "bbba1d0a1eea8a5d90db6c54327dd3fa91acca14",
@@ -6934,8 +6934,8 @@
           "protocol": 64
         }
       },
-      "error": "Prerequisite #160 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/160 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791411025056,
+      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/165 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791413110085,
       "dependencies": [
         149,
         150,
@@ -95576,6 +95576,46 @@
       },
       "previous": "c9c0fcf7c4aabfa7aaede968c7db76de1cdecdb17a4e4263d76570dbc8819170",
       "digest": "9d9cae2bc1eca547150282f151ff66f9ecaae4dfc3f8b182ff8017b07cc8019b"
+    },
+    {
+      "sequence": 3833,
+      "at": "2026-10-07T22:35:10.085Z",
+      "kind": "task",
+      "data": {
+        "number": 165,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/165 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791413110085
+        }
+      },
+      "previous": "9d9cae2bc1eca547150282f151ff66f9ecaae4dfc3f8b182ff8017b07cc8019b",
+      "digest": "b0e10527ede4d36415883b7f8a18dfc58811d7ed293642be3a278469e2aea3f8"
+    },
+    {
+      "sequence": 3834,
+      "at": "2026-10-07T22:35:10.085Z",
+      "kind": "task",
+      "data": {
+        "number": 161,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/161 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791413110085
+        }
+      },
+      "previous": "b0e10527ede4d36415883b7f8a18dfc58811d7ed293642be3a278469e2aea3f8",
+      "digest": "2c5bc7e8e7ac31172585743e742b0a5a3b052c222bcdb23b704eb76559117653"
+    },
+    {
+      "sequence": 3835,
+      "at": "2026-10-07T22:35:35.709Z",
+      "kind": "transaction",
+      "data": {
+        "id": "98a41b2c-0ff5-4921-bad7-63433bf6b614"
+      },
+      "previous": "2c5bc7e8e7ac31172585743e742b0a5a3b052c222bcdb23b704eb76559117653",
+      "digest": "4bce00bb99193529d924cc47cdaf63271b59d8b88d258b9f25dddf8ba86c8d8f"
     }
   ]
 }
