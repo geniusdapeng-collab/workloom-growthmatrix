@@ -11,6 +11,7 @@ WorkLoom GrowthMatrix 面向企业增长与内容运营团队，把目标、数�
 1. 产品经理先看“使用场景”和“功能状态”，区分产品目标、已经有代码的链路与尚待接通的外部动作。
 2. 技术团队先看“系统架构”“行业包组合”和“快速开始”，再沿源码入口追到实际执行器、数据库与回执。
 3. 准备交付时，以真实环境的输入、产物、费用、失败恢复和外部回执验收；本页不提供未经实测的容量、延迟或经营收益承诺。
+4. 内置 AI 工作台接视频需求先读 [视频调用指南](docs/ai-video-workbench-guide.md)，或调用 `growth.video.workbench.guide`（CLI/MCP 空输入，只读）。该指南说明完整需求保存、真实入口、现存 30 秒意图限制及严格原生音轨后期缺口。
 
 ## 使用场景与产品边界
 
@@ -103,7 +104,7 @@ NATS/Redis 的事件总线库可在源码中找到，但当前主业务入口未
 同名岗位由主包 `composition.presetOwners` 裁决：`ads-optimizer`、`publish-operator`、`review-analyst` 归 `geo-growthmatrix`，`company-ceo` 归 `hotel`。下方数量从 manifest 和岗位标识自动派生，避免手工维护另一套总数。当前三包均为 `candidate`；稳定包签名校验能力的存在不能变成“这些候选包已经完成生产验收”的结论。
 
 <!-- CAPABILITIES:BEGIN -->
-<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（2026-10-04），请勿手改；重跑 pnpm capabilities 更新 -->
+<!-- 本区块由 scripts/generate-capabilities.mjs 自动生成（2026-10-07），请勿手改；重跑 pnpm capabilities 更新 -->
 
 ## 代码与资产速览（自动生成）
 
@@ -233,7 +234,7 @@ pnpm -C apps/webc dev
 | [`docs/demo`](docs/demo/)、[`apps/site`](apps/site/) | 静态演示与网站资产，不能替代当前路由事实 |
 
 - **当前入口与统计**：[自动导览](docs/capabilities.auto.md)、[结构化清单](docs/capabilities.auto.json)、[产品 manifest](product.manifest.json)。
-- **视频与角色**：[角色库与默认模特](docs/character-registry.md)、[视频交付与返修](docs/video-delivery-and-revision.md)、[口播解释片](docs/talkcraft-explainer.md)、[白板引擎](docs/whiteboard-engine.md)。
+- **视频与角色**：[内置 AI 工作台视频调用指南](docs/ai-video-workbench-guide.md)、[角色库与默认模特](docs/character-registry.md)、[视频交付与返修](docs/video-delivery-and-revision.md)、[口播解释片](docs/talkcraft-explainer.md)、[白板引擎](docs/whiteboard-engine.md)。
 - **桌面 Agent 接入（Codex / DeepSeek Harness）**：[客户端接入指南](docs/AGENT-CLIENTS.md)（5 分钟接入 + MCP 配置 + 视频能力清单 + 安全边界）。
 - **接入与运行**：[电脑工位指南](docs/computer-use-production.md)、[连接器退出 mock 的约定](docs/connectors-mock-exit.md)、[发布清单](docs/release-checklist.md)。
 - **系统与指定数字员工调用**：[CLI / MCP 指南](docs/agent-cli-mcp.md)（目标派遣、指定岗位、持久回执与取件）。

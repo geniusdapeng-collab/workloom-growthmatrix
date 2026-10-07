@@ -4,8 +4,13 @@
 > 目的：**别跳步**。真机事故（2026-09-30 出镜人物 片）的根因就是"直接跑出片命令、
 > 没先判视频类型、也没让分镜卡过字段规范闸"。
 
+内置 AI 工作台接视频需求第一步：完整读取 [视频调用指南](../../docs/ai-video-workbench-guide.md)，
+或调用 `growth.video.workbench.guide`（CLI/MCP 空输入，返回完整正文/版本/SHA-256）。
+保留完整 brief；Matrix 当前 Studio 有 30 秒意图构建限制，严格原生对白且禁止 TTS 的 standard-post 机制缺失，
+遇到冲突先停止并报缺口，不用旧 voice 或统一旁白偷偷替换需求。
+
 > **要把本仓能力接进桌面客户端（Codex / DeepSeek Harness）**：见 [`docs/AGENT-CLIENTS.md`](../../docs/AGENT-CLIENTS.md)
-> —— 里面有 5 分钟接入（`list`/`invoke`/MCP 冒烟）、MCP 配置片段、**视频能力清单**（只读/预览 6 条）
+> —— 里面有 5 分钟接入（`list`/`invoke`/MCP 冒烟）、MCP 配置片段、**视频能力清单**（指南/只读/预览与固定影片工位）
 > 与安全边界。本文（runbook）负责"怎么出片"，那份文档负责"怎么被 Agent 调起来"。
 
 ---
@@ -104,9 +109,10 @@ cine-kb → continuity → micromotion → spec（25 字段交付闸）→ plate
 4. **不要手工做封面 / 手工混音绕过管线**：交付清单要能核对（`delivery-manifest.json` 里有
    `reviewPolicy` / `assembly` / 封面来源 / 各变体 sha256）。
 5. **账户欠费**：`AccountOverdueError` 403 会拦住提交；**先充值**，不要连点重试。
-6. **服务端固定影片工位（`--worker`）第二批未接线**：CLI 侧还没有解析 `FILM_JOB_CONTEXT`
-   与受限通道（llm/image/video/media/voice/review）的实现，本 CLI 会显式报
-   `WORKER_MODE_NOT_WIRED`。需要"客户端 UI 派活 → 工位出片"时先完成第二批（`docs/repairs/T-2026-0927-0037.md` / `-0039.md`）。
+6. **服务端固定影片工位已接线**：`video.film.start/receipt/artifact` 通过 CLI/MCP 调用已有项目工位，
+   `FullChainFilmWorker` 读取冻结上下文并走服务父通道（llm/image/video/media/voice/review），保留期限、预算与文件摘要校验。
+   先读 [视频调用指南](../../docs/ai-video-workbench-guide.md) 与 [调用契约](../../docs/agent-cli-mcp.md)，不要手工伪造 `FILM_JOB_CONTEXT`，
+   也不能将固定阶段成功当作严格原生音轨后期或客户业务结果已验收。
 7. **创作口径不得写成硬闸**：片型配比、运镜强弱、造型主色这类"好不好看"的问题默认只做咨询项，
    硬闸只允许事实类（产物/时长/分辨率/音轨/音画对齐/字幕/命名/授权与素材用途）。CI 会拦（`scripts/ci/verify-hard-gate-policy.mjs`）。
 

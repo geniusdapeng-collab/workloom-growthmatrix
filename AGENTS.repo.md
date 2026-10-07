@@ -6,6 +6,12 @@
 
 ## 一、视频工位：内置角色资产（新接手最容易踩的一条）
 
+接到视频需求后先完整读取 [内置 AI 工作台视频调用指南](docs/ai-video-workbench-guide.md)，
+或调用 `node scripts/workloom-agent.mjs invoke growth.video.workbench.guide`（MCP 同名能力，空输入）。
+保留完整 brief 原文与声音/时长/授权等约束；`core.task.dispatch.title` 只有 120 字符，不能替代完整原稿。
+本仓 Studio 当前构建 30 秒意图；非 30 秒请求须核对并在冲突时停止。Matrix 未包含 Growthtest 的
+native standard-post 机制；严格保留原生对白且禁止 TTS 的请求不能偷偷改走旧 voice/统一旁白工位。
+
 **本仓自带默认模特「陈卓」（`chen-zhuo`），开箱即用——不要以为"仓库里没有人物资产"而重复建档。**
 
 - 资产位置：`bundles/ai-video/library/characters/`（`registry.json` + `model-01-chen-zhuo/`，8 角度定妆照随仓分发）。
