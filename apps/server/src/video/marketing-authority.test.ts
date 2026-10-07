@@ -187,6 +187,37 @@ async function prepareRegistered(characterArchive?: Record<string, unknown>): Pr
     } }, dependencies: { search: async () => [], fetchSource: async () => { throw new Error("测试不允许公网来源传输"); } } });
 }
 describe("登记档案复用正式营销宿主资格", () => {
+  it("真实事实拒绝之后的合同未验证可作为诊断反馈；重算一致且不提升为模型裁决", async () => {
+    const prepared = await prepareRegistered(); rejectJudge = true;
+    const current = [shots[0]!, { shotId: "S2", prompt: "台式机静态展示，不宣称任何性能。", fields: {
+      shotId: "S2", scene: "柜台上的台式机", character: "无人物", action: "静态展示台式机",
+      subject: { hasPerson: false, count: 0 }, environmentProfile: { setting: "interior", condition: "maintained" }, devices: [] } }];
+    await expect(finalizeMarketingFacts(prepared, current, env)).rejects.toThrow("PROMPT_FACTS_REJECTED");
+    const file = path.join(root, `${prepared.prefix}-shot-2.verdict.json`), before = await readFile(file, "utf8");
+    expect(JSON.parse(before).verdict).toMatchObject({ status: "unverified", via: "deterministic", evidence: [] });
+    const feedback = await restoreMarketingOutputRejection(prepared, current);
+    expect(feedback.verdict).toMatchObject({ status: "failed", approved: false, via: "llm" });
+    expect(feedback.reason).toContain("实际拒绝(S1"); expect(feedback.reason).toContain("S2确定性合同未验证（不是模型事实裁决");
+    expect(await readFile(file, "utf8")).toBe(before);
+    await expect(readFile(path.join(root, `${prepared.prefix}-facts.json`))).rejects.toMatchObject({ code: "ENOENT" });
+    const forged = JSON.parse(before); forged.verdict.reason = "改写的错误"; await writeFile(file, JSON.stringify(forged));
+    await expect(restoreMarketingOutputRejection(prepared, current)).rejects.toThrow("REJECTION_UNVERIFIED");
+  });
+  it("只有可重算的确定性合同未验证也可反馈修订，保留unverified状态，不产生模型拒绝或批准", async () => {
+    const prepared = await prepareRegistered();
+    const current = [{ shotId: "S1", prompt: "台式机静态展示。", fields: { shotId: "S1", scene: "台式机", character: "无人物", action: "静态展示",
+      subject: { hasPerson: false, count: 0 }, environmentProfile: { setting: "interior", condition: "maintained" }, devices: [] } }];
+    await expect(finalizeMarketingFacts(prepared, current, env)).rejects.toThrow("PROMPT_FACTS_REJECTED");
+    const file = path.join(root, `${prepared.prefix}-shot-1.verdict.json`), original = JSON.parse(await readFile(file, "utf8"));
+    const feedback = await restoreMarketingOutputRejection(prepared, current);
+    expect(feedback.verdict).toEqual(original.verdict); expect(feedback.verdict).toMatchObject({ status: "unverified", via: "deterministic", approved: false });
+    expect(feedback.reason).toContain("不是模型事实裁决");
+    await expect(readFile(path.join(root, `${prepared.prefix}-facts.json`))).rejects.toMatchObject({ code: "ENOENT" });
+    for (const change of [{ reason: "伪造的合同错误" }, { via: "fallback" }, { approved: true }]) {
+      await writeFile(file, JSON.stringify({ ...original, verdict: { ...original.verdict, ...change } }));
+      await expect(restoreMarketingOutputRejection(prepared, current)).rejects.toThrow("REJECTION_UNVERIFIED");
+    }
+  });
   it("外部事实审核超时只接续未完成镜；已通过完整正文/图像重新核验，旧失败回执不覆盖", async () => {
     const prepared = await prepareRegistered(), original = structuredClone(prepared);
     const current = [shots[0]!, { ...shots[0]!, shotId: "S2" }, { ...shots[0]!, shotId: "S3" }];

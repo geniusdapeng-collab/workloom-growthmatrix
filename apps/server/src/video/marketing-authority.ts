@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { constants } from "node:fs";
 import { mkdir, open, realpath, writeFile, readFile } from "node:fs/promises";
-import { reviewStage, type ProducerVerdict, type StudioConfig, type SceneBible } from "@hyperreality/video-studio";
+import { buildProducerReviewContract, reviewStage, type ProducerVerdict, type StudioConfig, type SceneBible } from "@hyperreality/video-studio";
 import { createDataMiningExecutor, createWebSearch, type DataMiningStagePlan, type ExecutorLlm, type IntelStage, type SearchFn, type SearchHit } from "./data-mining-executor.js";
 import { fetchMarketingSource, type SourceSnapshot } from "./marketing-source-fetcher.js";
 import { validateStageFacts, revalidateStageFacts, type ValidatedStageFacts } from "./marketing-facts.js";
@@ -339,11 +339,12 @@ async function verifyOutputVisualEvidence(bundle: MarketingFactsBundle, referenc
   }
 }
 
-/** 只把绑定本次实际最终镜头的真实LLM拒绝反馈给正式修订；不是取得批准。 */
+/** 复读真实LLM拒绝或重算确定性未验证合同，保留原裁决状态反馈正式修订；不取得批准。 */
 export async function restoreMarketingOutputRejection(prepared: PreparedMarketingFacts,
   shots: Array<{ shotId: string; prompt: string; fields: unknown }>, outputId?: string, sceneBible?: SceneBible): Promise<{ shotId: string; reason: string; verdict: ProducerVerdict }> {
   const prefix = outputPrefix(prepared, outputId);
   const rejections: Array<{ shotId: string; reason: string; verdict: ProducerVerdict }> = [];
+  const diagnostics: Array<{ shotId: string; reason: string; verdict: ProducerVerdict }> = [];
   for (const [index, shot] of shots.entries()) {
     const receiptPath = path.join(prepared.root, `${prefix}-shot-${index + 1}.verdict.json`);
     let receipt: { scope: MarketingScope; shotId: string; contentSha256: string; verdict: ProducerVerdict };
@@ -357,18 +358,43 @@ export async function restoreMarketingOutputRejection(prepared: PreparedMarketin
     const ref = `${prefix}-shot-${index + 1}.review.json`, file = path.join(prepared.root, ref);
     const bytes = await readBound(prepared.root, ref, receipt.contentSha256);
     const document = JSON.parse(bytes.toString("utf8")) as { visualReferences?: ProductVisualReference[]; sceneBible?: SceneBible };
-    await verifyOutputVisualEvidence(prepared.bundle, document.visualReferences, receipt.verdict);
+    await verifyOutputVisualEvidence(prepared.bundle, document.visualReferences);
     if (document.sceneBible && (!sceneBible || canonicalRenderJson(document.sceneBible) !== canonicalRenderJson(sceneBible))) fail("MARKETING_OUTPUT_REJECTION_UNBOUND", "拒绝回执的完整场景合同与当前影片不同");
     if (canonicalRenderJson(receipt.scope) !== canonicalRenderJson(prepared.bundle.scope) || receipt.shotId !== shot.shotId
       || bytes.toString("utf8") !== outputReviewContent(prepared.bundle, shot, document.visualReferences, document.sceneBible)) {
       fail("MARKETING_OUTPUT_REJECTION_UNBOUND", "拒绝回执与当前完整镜头或商品证据不同");
     }
     const verdict = receipt.verdict;
-    if (rejected(verdict, file, receipt.contentSha256)) rejections.push({ shotId: shot.shotId, verdict,
-      reason: `最终商品事实门实际拒绝(${shot.shotId},score=${verdict.score})：${verdict.reason}；${verdict.issues.join("；")}` });
-    else if (!accepted(verdict, file, receipt.contentSha256)) fail("MARKETING_OUTPUT_REJECTION_UNVERIFIED", "输出回执不是本次真实通过或拒绝");
+    if (rejected(verdict, file, receipt.contentSha256)) {
+      await verifyOutputVisualEvidence(prepared.bundle, document.visualReferences, verdict);
+      rejections.push({ shotId: shot.shotId, verdict,
+        reason: `最终商品事实门实际拒绝(${shot.shotId},score=${verdict.score})：${verdict.reason}；${verdict.issues.join("；")}` });
+    } else if (accepted(verdict, file, receipt.contentSha256)) {
+      await verifyOutputVisualEvidence(prepared.bundle, document.visualReferences, verdict);
+    } else {
+      // 合同编译在送模型/图像之前失败，没有模型证据。必须重算同一合同得到
+      // 同一错误；仅作为附带诊断，绝不冒充实际事实拒绝或提供批准资格。
+      const fields = shot.fields && typeof shot.fields === "object" && !Array.isArray(shot.fields) ? shot.fields as RecordValue : null;
+      let currentError = "";
+      if (fields?.environmentProfile) {
+        try { buildProducerReviewContract({ shots: [{ ...fields, shotId: shot.shotId }], ...(document.sceneBible ? { sceneBible: document.sceneBible } : {}) }); }
+        catch (error) {
+          if ((error as { status?: string })?.status !== "failed") currentError = error instanceof Error ? error.message : String(error);
+        }
+      }
+      if (verdict.stage !== "prompt" || verdict.status !== "unverified" || verdict.approved !== false || verdict.via !== "deterministic"
+        || verdict.degraded !== true || verdict.rerun !== true || verdict.score !== 0 || verdict.model || verdict.contractHash
+        || !Array.isArray(verdict.hardFailures) || verdict.hardFailures.length || !Array.isArray(verdict.evidence) || verdict.evidence.length
+        || !currentError || verdict.reason !== currentError) fail("MARKETING_OUTPUT_REJECTION_UNVERIFIED", "输出回执不是本次真实通过、拒绝或可重算的未验证合同诊断");
+      const productNaming = currentError.includes("设备年代未验证")
+        ? `；本次G1已核验商品名称为${String(prepared.bundle.productQuery.name)}，型号为${String(prepared.bundle.productQuery.model ?? "未核验")}。检查原产品是否被模糊称作消费电脑；仅在原商品事实范围澄清名词，完整同步scene、景深、时间轴、连续性及prompt，不能补编故事日期、电脑型号或把本片商品塞入消费电子目录。`
+        : "";
+      diagnostics.push({ shotId: shot.shotId, verdict,
+        reason: `${shot.shotId}确定性合同未验证（不是模型事实裁决，修订后仍须重新审核）：${currentError}${productNaming}` });
+    }
   }
-  if (rejections.length) return { ...rejections[0]!, reason: rejections.map(item => item.reason).join("\n") };
+  if (rejections.length) return { ...rejections[0]!, reason: [...rejections.map(item => item.reason), ...diagnostics.map(item => item.reason)].join("\n") };
+  if (diagnostics.length) return { ...diagnostics[0]!, reason: diagnostics.map(item => item.reason).join("\n") };
   fail("MARKETING_OUTPUT_REJECTION_REQUIRED", "没有当前最终镜头的真实事实拒绝");
 }
 
