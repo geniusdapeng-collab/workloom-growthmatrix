@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1423,
+  "revision": 1426,
   "tasks": {
     "132": {
       "number": 132,
@@ -2743,7 +2743,7 @@
     },
     "146": {
       "number": 146,
-      "status": "parked",
+      "status": "waiting_ci",
       "firstSeen": 1791354743310,
       "attempts": {},
       "admission": {
@@ -2759,12 +2759,57 @@
           "migrations": 2
         }
       },
-      "updatedAt": 1791371100874,
+      "updatedAt": 1791372125242,
       "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
       "blockedUntil": 0,
-      "developerReview": null,
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 146,
+        "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "apps/server/src/video/film-ledger.pg.test.ts",
+          "apps/server/src/video/film-ledger.ts",
+          "apps/server/src/video/film-paid-generation.pg.test.ts",
+          "apps/server/src/video/film-paid-generation.test.ts",
+          "apps/server/src/video/film-paid-generation.ts",
+          "apps/server/src/video/film-worker.ts",
+          "packages/db/migrations/0056_film_paid_receipts.sql"
+        ],
+        "filesHash": "962fe398a94a7554f5737ce053346e72cb3d4baf9b4e974ddcf75861c5dab088",
+        "dependsOn": [],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/film-paid-generation.test.ts apps/server/src/video/film-worker.test.ts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T06:28:25.751979+00:00",
+            "result": "2 files, 33 passed, 0 skipped"
+          },
+          {
+            "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/film-paid-generation.pg.test.ts apps/server/src/video/film-ledger.pg.test.ts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T06:28:25.370302+00:00",
+            "result": "2 files, 20 passed on real private PostgreSQL, 0 skipped"
+          },
+          {
+            "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T06:28:21.866237+00:00",
+            "result": "tsc noEmit passed"
+          }
+        ],
+        "reviewedAt": "2026-10-07T11:21:59.556683+00:00",
+        "summary": "Current Codex read and reviewed all seven changed files and their direct dependencies. Paid request identity is durably frozen before POST; provider acceptance is recorded before polling or downloading. Same-project complete request identity is reused across jobs under a transaction advisory lock. Unknown acceptance cannot trigger a new paid submission. Replay validates actual result and file hashes. SQL preserves tenant scope, terminal states and immutable paid identity, acceptance and dispatch counters. 33 unit tests and 20 real PostgreSQL concurrency, RLS, timeout, late acceptance and tampering tests passed against this exact committed checkout. Server typecheck and staged secret scan passed. Fault tests inject providers and make no new paid call. No unresolved review finding; rollback is a normal revert, retaining immutable payment evidence. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+        "passed": true,
+        "id": "dcb36a8cc0a28df865875791380d5b31a8850ab93031578cee3cc99e38217303"
+      },
       "candidate": null,
       "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
       "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
@@ -2804,7 +2849,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -2833,7 +2878,7 @@
           "statuses": {}
         },
         "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "files": [
           "apps/server/src/video/film-ledger.pg.test.ts",
           "apps/server/src/video/film-ledger.ts",
@@ -34139,6 +34184,167 @@
       },
       "previous": "6498886cb33caa1d7c1c238cd8f57a588f5104c93748a4335886f7d752aa891c",
       "digest": "87f680608050ff56927f97c266464de68fee3face91dc982405cfdfb40da702f"
+    },
+    {
+      "sequence": 1424,
+      "at": "2026-10-07T11:22:05.241Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 146,
+        "id": "dcb36a8cc0a28df865875791380d5b31a8850ab93031578cee3cc99e38217303",
+        "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0"
+      },
+      "previous": "87f680608050ff56927f97c266464de68fee3face91dc982405cfdfb40da702f",
+      "digest": "f287125cc414575d7092bdc50940e93647d9b3cf4c89d894acc8f008fdcb425c"
+    },
+    {
+      "sequence": 1425,
+      "at": "2026-10-07T11:22:05.242Z",
+      "kind": "task",
+      "data": {
+        "number": 146,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-film-paid-receipts",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 146,
+            "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "apps/server/src/video/film-ledger.pg.test.ts",
+              "apps/server/src/video/film-ledger.ts",
+              "apps/server/src/video/film-paid-generation.pg.test.ts",
+              "apps/server/src/video/film-paid-generation.test.ts",
+              "apps/server/src/video/film-paid-generation.ts",
+              "apps/server/src/video/film-worker.ts",
+              "packages/db/migrations/0056_film_paid_receipts.sql"
+            ],
+            "filesHash": "962fe398a94a7554f5737ce053346e72cb3d4baf9b4e974ddcf75861c5dab088",
+            "dependsOn": [],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/film-paid-generation.test.ts apps/server/src/video/film-worker.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T06:28:25.751979+00:00",
+                "result": "2 files, 33 passed, 0 skipped"
+              },
+              {
+                "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/film-paid-generation.pg.test.ts apps/server/src/video/film-ledger.pg.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T06:28:25.370302+00:00",
+                "result": "2 files, 20 passed on real private PostgreSQL, 0 skipped"
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T06:28:21.866237+00:00",
+                "result": "tsc noEmit passed"
+              }
+            ],
+            "reviewedAt": "2026-10-07T11:21:59.556683+00:00",
+            "summary": "Current Codex read and reviewed all seven changed files and their direct dependencies. Paid request identity is durably frozen before POST; provider acceptance is recorded before polling or downloading. Same-project complete request identity is reused across jobs under a transaction advisory lock. Unknown acceptance cannot trigger a new paid submission. Replay validates actual result and file hashes. SQL preserves tenant scope, terminal states and immutable paid identity, acceptance and dispatch counters. 33 unit tests and 20 real PostgreSQL concurrency, RLS, timeout, late acceptance and tampering tests passed against this exact committed checkout. Server typecheck and staged secret scan passed. Fault tests inject providers and make no new paid call. No unresolved review finding; rollback is a normal revert, retaining immutable payment evidence. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+            "passed": true,
+            "id": "dcb36a8cc0a28df865875791380d5b31a8850ab93031578cee3cc99e38217303"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 146,
+            "pull": {
+              "number": 146,
+              "state": "open",
+              "title": "fix(growth): persist film paid task acceptance [T-2026-1007-0918]",
+              "body": "Film worker原先在轮询和下载完成后才保存供应商任务号，换作业或调用键可能重复付费；Film worker图像同步受理也存在同样窗口。现在同作业以完整请求去重，跨作业在事务锁内绑定供应商、模型、端点及完整正文摘要，受理任务号先于轮询/下载持久保存。已受理请求恢复只复用原任务；未知受理明确待对账，禁止自动再提交。成功响应重放核对实际文件摘要，跨作业复用不再次预占或记生成费。\n\n0056迁移新增付费意图查询索引并保持原租户/状态约束，拒绝换绑受理身份、任务号与计数；晚到任务号只补证据，不改终态。当前Codex精读7个变更文件及直接依赖，准确提交后33项单测、20项真实PostgreSQL/RLS/并发/篡改/超时契约全过，服务类型检查和秘密扫描通过。依赖在独立工作树按锁文件安装。故障测试使用注入的测试供应商，未发出任何新付费调用。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-film-paid-receipts",
+                "sha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "unblocked",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "files": [
+              "apps/server/src/video/film-ledger.pg.test.ts",
+              "apps/server/src/video/film-ledger.ts",
+              "apps/server/src/video/film-paid-generation.pg.test.ts",
+              "apps/server/src/video/film-paid-generation.test.ts",
+              "apps/server/src/video/film-paid-generation.ts",
+              "apps/server/src/video/film-worker.ts",
+              "packages/db/migrations/0056_film_paid_receipts.sql"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791354500000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "f287125cc414575d7092bdc50940e93647d9b3cf4c89d894acc8f008fdcb425c",
+      "digest": "e4c778e58811f2c30dd2b8ef267019aa1018b96f94aa781e5d7d443b55e304ce"
+    },
+    {
+      "sequence": 1426,
+      "at": "2026-10-07T11:22:02.415Z",
+      "kind": "transaction",
+      "data": {
+        "id": "1fc1c1db-21d2-4639-a8a8-adb1be0b2039"
+      },
+      "previous": "e4c778e58811f2c30dd2b8ef267019aa1018b96f94aa781e5d7d443b55e304ce",
+      "digest": "f861d8d60c5bff21423d57e33f11bd548e7ebb8d6c15304b55309af25b431d16"
     }
   ]
 }
