@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1619,
+  "revision": 1621,
   "tasks": {
     "132": {
       "number": 132,
@@ -3297,15 +3297,15 @@
           "migrations": 4
         }
       },
-      "updatedAt": 1791374454307,
-      "alignmentCount": 1,
+      "updatedAt": 1791375289156,
+      "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
       "blockedUntil": 0,
       "developerReview": null,
       "candidate": null,
       "headSha": "4b9260e1184f8aac42e1f10e2f229ca3bac8db20",
-      "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+      "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-paid-receipts",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -41409,6 +41409,55 @@
       },
       "previous": "e5e51f1e7eacad65b4cce8372658649a02d560d3cc3f9968f05a8e84f5ef982f",
       "digest": "45561dcf168a5f832d94a6bd65f8b7ca3f44e65d49b369d6726934089ff533c0"
+    },
+    {
+      "sequence": 1620,
+      "at": "2026-10-07T12:14:49.156Z",
+      "kind": "task",
+      "data": {
+        "number": 146,
+        "patch": {
+          "alignmentCount": 0,
+          "recoveryCount": 0,
+          "reviewFailures": null,
+          "blockedUntil": 0,
+          "developerReview": null,
+          "candidate": null,
+          "headSha": "4b9260e1184f8aac42e1f10e2f229ca3bac8db20",
+          "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+          "branch": "fix/T-2026-1007-0918-film-paid-receipts",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "Film worker原先在轮询和下载完成后才保存供应商任务号，换作业或调用键可能重复付费；Film worker图像同步受理也存在同样窗口。现在同作业以完整请求去重，跨作业在事务锁内绑定供应商、模型、端点及完整正文摘要，受理任务号先于轮询/下载持久保存。已受理请求恢复只复用原任务；未知受理明确待对账，禁止自动再提交。成功响应重放核对实际文件摘要，跨作业复用不再次预占或记生成费。\n\n0056迁移新增付费意图查询索引并保持原租户/状态约束，拒绝换绑受理身份、任务号与计数；晚到任务号只补证据，不改终态。当前Codex精读7个变更文件及直接依赖，准确提交后33项单测、20项真实PostgreSQL/RLS/并发/篡改/超时契约全过，服务类型检查和秘密扫描通过。依赖在独立工作树按锁文件安装。故障测试使用注入的测试供应商，未发出任何新付费调用。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "apps/server/src/video/film-ledger.pg.test.ts",
+            "apps/server/src/video/film-ledger.ts",
+            "apps/server/src/video/film-paid-generation.pg.test.ts",
+            "apps/server/src/video/film-paid-generation.test.ts",
+            "apps/server/src/video/film-paid-generation.ts",
+            "apps/server/src/video/film-worker.ts",
+            "packages/db/migrations/0056_film_paid_receipts.sql"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791374342093
+        }
+      },
+      "previous": "45561dcf168a5f832d94a6bd65f8b7ca3f44e65d49b369d6726934089ff533c0",
+      "digest": "7eb69bf70bc0f6edc1b8bd6ff42df1a0b74731028e80659b6d06845cb6da4317"
+    },
+    {
+      "sequence": 1621,
+      "at": "2026-10-07T12:16:23.587Z",
+      "kind": "transaction",
+      "data": {
+        "id": "16a6f874-b4e2-4bb2-ba26-62e89030416b"
+      },
+      "previous": "7eb69bf70bc0f6edc1b8bd6ff42df1a0b74731028e80659b6d06845cb6da4317",
+      "digest": "b9c6988f498ff4575871341445ae7761343ee8dac7358057cd8c1f3e8976e08d"
     }
   ]
 }
