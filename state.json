@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 964,
+  "revision": 966,
   "tasks": {
     "132": {
       "number": 132,
@@ -3593,7 +3593,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791362800558,
+      "updatedAt": 1791363309873,
       "admission": {
         "number": 153,
         "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
@@ -3605,6 +3605,7 @@
       },
       "originalBody": "Knowledge enrichment could interpret indoor marble reflection as water, replace a left window direction with an unrelated right fill light, and append an unbounded camera movement over an authored timed end hold. Version 3 only applies context-supported instructions, preserves complete timed camera text and omits optional whole sentences that exceed a field budget. Omitted suggestions remain separate from actual written evidence. The source author text is retained.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
       "files": [
+        "bundles/ai-video/bundle.json",
         "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
         "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
         "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts"
@@ -23875,6 +23876,46 @@
       },
       "previous": "650337478b4b95abb366afbaee195f38447c0da101abbfee183f96221716605a",
       "digest": "67b623ea4c814d40cf47726334d979da069766144a395aecdf178affaf3e7636"
+    },
+    {
+      "sequence": 965,
+      "at": "2026-10-07T08:55:09.873Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-cine-kb-preserve-intent",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "Knowledge enrichment could interpret indoor marble reflection as water, replace a left window direction with an unrelated right fill light, and append an unbounded camera movement over an authored timed end hold. Version 3 only applies context-supported instructions, preserves complete timed camera text and omits optional whole sentences that exceed a field budget. Omitted suggestions remain separate from actual written evidence. The source author text is retained.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "bundles/ai-video/bundle.json",
+            "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
+            "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+            "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791359409167
+        }
+      },
+      "previous": "67b623ea4c814d40cf47726334d979da069766144a395aecdf178affaf3e7636",
+      "digest": "1bfc2f86a40c91eb2d8864bf7a2a835d66d27e1edd7647d088fbfeaa23696cd0"
+    },
+    {
+      "sequence": 966,
+      "at": "2026-10-07T08:56:49.195Z",
+      "kind": "transaction",
+      "data": {
+        "id": "1cd8455b-942f-4e37-b3a7-62e14b62fef6"
+      },
+      "previous": "1bfc2f86a40c91eb2d8864bf7a2a835d66d27e1edd7647d088fbfeaa23696cd0",
+      "digest": "9f8f8bf4df92715f60174b9244505a63047dd33d8d29aedb9992431e9b95277c"
     }
   ]
 }
