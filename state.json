@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1929,
+  "revision": 1931,
   "tasks": {
     "132": {
       "number": 132,
@@ -5483,7 +5483,7 @@
     },
     "158": {
       "number": 158,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791364616335,
       "attempts": {},
       "admission": {
@@ -5495,7 +5495,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791379299113,
+      "updatedAt": 1791379510199,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -51460,6 +51460,52 @@
       },
       "previous": "7f94e0a6f6ffc9f2022ea96f2cb3fd2a67a4bb31fc987640ed6d263ab72b6681",
       "digest": "f6bef83b2257b88c6b1f1463dec0027deecb6f2126cfa780a2db373d77a461a1"
+    },
+    {
+      "sequence": 1930,
+      "at": "2026-10-07T13:25:10.199Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "f6bef83b2257b88c6b1f1463dec0027deecb6f2126cfa780a2db373d77a461a1",
+      "digest": "1e7b9be8620c67840b63a1ec781d1fb508e5787a4b1a7597663b331ce6dccea7"
+    },
+    {
+      "sequence": 1931,
+      "at": "2026-10-07T13:27:07.244Z",
+      "kind": "transaction",
+      "data": {
+        "id": "48885b34-ef10-4706-9365-84a25813fd73"
+      },
+      "previous": "1e7b9be8620c67840b63a1ec781d1fb508e5787a4b1a7597663b331ce6dccea7",
+      "digest": "cb5d25afa5ae5fa8534802cabcbc4b4b097644dbea654317f785f65b993df022"
     }
   ]
 }
