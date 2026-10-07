@@ -1,6 +1,9 @@
 import { api, redactCredentials } from '../tools/cnb-api.mjs';
 import { SHA_RE, parseIntent, checksVerdict, hash, validRepoSlug } from './queue-model.mjs';
 import { ciImplementationChanges, readableCiChanges, sourcePipelineReport } from './queue-policy.mjs';
+import { performance } from 'node:perf_hooks';
+
+const waitForRequest = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
 function labelSignature(labels) {
   if (!Array.isArray(labels)) throw new Error('Platform label set is unreadable');
@@ -10,11 +13,28 @@ function labelSignature(labels) {
 }
 
 export class Platform {
-  constructor(repo, token, request = api) {
+  constructor(repo, token, request = api, { minIntervalMs = 1250, clock = () => performance.now(), wait = waitForRequest } = {}) {
     if (!validRepoSlug(repo)) throw new Error('Invalid repository slug');
+    if (!Number.isFinite(minIntervalMs) || minIntervalMs < 0 || minIntervalMs > 30_000 || typeof clock !== 'function' || typeof wait !== 'function') throw new Error('Invalid platform request pacing');
     this.repo = repo; this.token = token; this.request = request;
+    this.minIntervalMs = minIntervalMs; this.clock = clock; this.wait = wait;
+    this.lastRequestAt = null; this.callQueue = Promise.resolve();
   }
-  call(path, options = {}) { return this.request(this.repo, path, { token: this.token, retries: options.method && options.method !== 'GET' ? 0 : 2, ...options }); }
+  call(path, options = {}) {
+    // Hydration and final snapshot reads share the same finite request budget.
+    // Serialize actual requests, including Promise.all callers, without caching
+    // mutable PR/main/check metadata or retrying an uncertain external write.
+    const operation = this.callQueue.then(async () => {
+      const remaining = this.lastRequestAt === null ? 0 : this.minIntervalMs - (this.clock() - this.lastRequestAt);
+      if (remaining > 0) await this.wait(remaining);
+      this.lastRequestAt = this.clock();
+      return this.request(this.repo, path, { token: this.token, retries: options.method && options.method !== 'GET' ? 0 : 2, ...options });
+    });
+    // The original promise still exposes a failed request to its caller. Only
+    // the scheduling tail is settled so unrelated later reads can proceed.
+    this.callQueue = operation.then(() => undefined, () => undefined);
+    return operation;
+  }
   async pull(number) {
     const pull = await this.call(`/-/pulls/${Number(number)}`);
     const actual = Number(pull?.number);

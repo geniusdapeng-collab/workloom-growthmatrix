@@ -1,4 +1,4 @@
-import { appendEvent, branchName, dependencyState, eligibility, hash, leaseOperation, sensitiveScopes, updateTask } from './queue-model.mjs';
+import { appendEvent, branchName, dependencyState, eligibility, hash, leaseOperation, parseIntent, sensitiveScopes, updateTask } from './queue-model.mjs';
 import { alignBranch } from './queue-work.mjs';
 import { enqueueReleases } from './queue-release.mjs';
 import { performance } from 'node:perf_hooks';
@@ -10,7 +10,9 @@ export function integratedDependency(pull, task) {
 export async function dependencies(platform, pulls, state) {
   const graph = new Map(); const merged = new Set();
   const invalid = new Map();
-  const { parseIntent } = await import('./queue-model.mjs');
+  // These are hydrated PR details from this scan, not list-only summaries.
+  // Reuse them only for planning; mergeCandidate still re-reads every prerequisite.
+  const currentPulls = new Map(pulls.map(pull => [Number(pull.number), pull]));
   for (const pull of pulls) {
     try {
       const intent = parseIntent(pull);
@@ -22,7 +24,7 @@ export async function dependencies(platform, pulls, state) {
   const unavailable = new Map();
   for (const number of required) {
     try {
-      const pull = await platform.pull(number);
+      const pull = currentPulls.get(number) ?? await platform.pull(number);
       const task = state.tasks[String(number)];
       if (integratedDependency(pull, task)) merged.add(number);
     } catch (error) { unavailable.set(number, `Prerequisite #${number} is unreadable: ${error.message}`); }
@@ -241,6 +243,20 @@ export async function reconcile({ platform, store, policy, now = Date.now(), dry
     if (branchName(pull.head?.ref).startsWith('delivery/candidate/')) continue;
     if (elapsedClock() - started > deadlineMs) { report.waiting.push({ number, reason: 'Bounded runner time; next reconcile continues' }); continue; }
     try {
+      // A pending prerequisite cannot be fixed by inspecting source CI or by
+      // creating a candidate. Avoid the full multi-read snapshot for that lane.
+      // Once ready, the unchanged snapshot/eligibility/merge checks below apply.
+      const plannedDependencies = dependencyMap.get(number);
+      if (plannedDependencies?.error) throw new Error(plannedDependencies.error);
+      if (plannedDependencies?.pending.length && pull.state === 'open' && pull.is_wip === false
+        && parseIntent(pull).ready !== false && policy.branchPrefixes.some(prefix => branchName(pull.head?.ref).startsWith(prefix))) {
+        const sourceIntent = parseIntent(pull);
+        report.waiting.push({ number, reason: `Explicit prerequisites ${plannedDependencies.pending.join(',')}` });
+        if (!dryRun) await store.mutate(current => updateTask(current, number, {
+          status: 'waiting_dependency', headSha: pull.head?.sha, intent: sourceIntent, dependencies: plannedDependencies.pending,
+        }, now));
+        continue;
+      }
       const snapshot = await platform.snapshot(number, policy);
       const stored = state.tasks[String(number)];
       const identityChanged = stored && (stored.headSha !== snapshot.headSha || stored.mainSha !== snapshot.mainSha);
