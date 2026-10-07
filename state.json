@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 510,
+  "revision": 512,
   "tasks": {
     "132": {
       "number": 132,
@@ -2543,7 +2543,7 @@
     },
     "146": {
       "number": 146,
-      "status": "developing",
+      "status": "waiting_ci",
       "firstSeen": 1791354743310,
       "attempts": {},
       "admission": {
@@ -2559,7 +2559,33 @@
           "migrations": 2
         }
       },
-      "updatedAt": 1791354743310
+      "updatedAt": 1791354911374,
+      "alignmentCount": 0,
+      "recoveryCount": 0,
+      "reviewFailures": null,
+      "blockedUntil": 0,
+      "developerReview": null,
+      "candidate": null,
+      "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "branch": "fix/T-2026-1007-0918-film-paid-receipts",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [],
+        "releases": []
+      },
+      "originalBody": "Film worker原先在轮询和下载完成后才保存供应商任务号，换作业或调用键可能重复付费；Film worker图像同步受理也存在同样窗口。现在同作业以完整请求去重，跨作业在事务锁内绑定供应商、模型、端点及完整正文摘要，受理任务号先于轮询/下载持久保存。已受理请求恢复只复用原任务；未知受理明确待对账，禁止自动再提交。成功响应重放核对实际文件摘要，跨作业复用不再次预占或记生成费。\n\n0056迁移新增付费意图查询索引并保持原租户/状态约束，拒绝换绑受理身份、任务号与计数；晚到任务号只补证据，不改终态。当前Codex精读7个变更文件及直接依赖，准确提交后33项单测、20项真实PostgreSQL/RLS/并发/篡改/超时契约全过，服务类型检查和秘密扫描通过。依赖在独立工作树按锁文件安装。故障测试使用注入的测试供应商，未发出任何新付费调用。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+      "files": [
+        "apps/server/src/video/film-ledger.pg.test.ts",
+        "apps/server/src/video/film-ledger.ts",
+        "apps/server/src/video/film-paid-generation.pg.test.ts",
+        "apps/server/src/video/film-paid-generation.test.ts",
+        "apps/server/src/video/film-paid-generation.ts",
+        "apps/server/src/video/film-worker.ts",
+        "packages/db/migrations/0056_film_paid_receipts.sql"
+      ],
+      "ciSince": 1791354911374
     }
   },
   "leases": {
@@ -13426,6 +13452,55 @@
       },
       "previous": "07f38ff88fc35de9879b2ea478eef7abfa08260546bd3a6a54e1f084b4c9db57",
       "digest": "a02fc7f79c2db29c5aa71845dacda42eb1ac10034e9e4b0cd265f1619c842177"
+    },
+    {
+      "sequence": 511,
+      "at": "2026-10-07T06:35:11.374Z",
+      "kind": "task",
+      "data": {
+        "number": 146,
+        "patch": {
+          "alignmentCount": 0,
+          "recoveryCount": 0,
+          "reviewFailures": null,
+          "blockedUntil": 0,
+          "developerReview": null,
+          "candidate": null,
+          "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-film-paid-receipts",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "Film worker原先在轮询和下载完成后才保存供应商任务号，换作业或调用键可能重复付费；Film worker图像同步受理也存在同样窗口。现在同作业以完整请求去重，跨作业在事务锁内绑定供应商、模型、端点及完整正文摘要，受理任务号先于轮询/下载持久保存。已受理请求恢复只复用原任务；未知受理明确待对账，禁止自动再提交。成功响应重放核对实际文件摘要，跨作业复用不再次预占或记生成费。\n\n0056迁移新增付费意图查询索引并保持原租户/状态约束，拒绝换绑受理身份、任务号与计数；晚到任务号只补证据，不改终态。当前Codex精读7个变更文件及直接依赖，准确提交后33项单测、20项真实PostgreSQL/RLS/并发/篡改/超时契约全过，服务类型检查和秘密扫描通过。依赖在独立工作树按锁文件安装。故障测试使用注入的测试供应商，未发出任何新付费调用。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "apps/server/src/video/film-ledger.pg.test.ts",
+            "apps/server/src/video/film-ledger.ts",
+            "apps/server/src/video/film-paid-generation.pg.test.ts",
+            "apps/server/src/video/film-paid-generation.test.ts",
+            "apps/server/src/video/film-paid-generation.ts",
+            "apps/server/src/video/film-worker.ts",
+            "packages/db/migrations/0056_film_paid_receipts.sql"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791354911374
+        }
+      },
+      "previous": "a02fc7f79c2db29c5aa71845dacda42eb1ac10034e9e4b0cd265f1619c842177",
+      "digest": "e5b2c123d07dd4f1a0c4b0fb7a37ade9e3adf519c9cea18776a5fc35d8e96e9d"
+    },
+    {
+      "sequence": 512,
+      "at": "2026-10-07T06:35:51.010Z",
+      "kind": "transaction",
+      "data": {
+        "id": "cc645ac1-f2d9-4c8e-b6e6-6338d913ee98"
+      },
+      "previous": "e5b2c123d07dd4f1a0c4b0fb7a37ade9e3adf519c9cea18776a5fc35d8e96e9d",
+      "digest": "91a41d4eef02c689483dc6edd4666fc5952836291f6786f2f50bf2a448f03193"
     }
   ]
 }
