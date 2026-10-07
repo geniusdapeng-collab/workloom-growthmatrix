@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2739,
+  "revision": 2741,
   "tasks": {
     "132": {
       "number": 132,
@@ -688,14 +688,14 @@
         "at": 1791395403690
       },
       "developerReview": null,
-      "error": "Command failed: git merge --no-ff --no-edit 703947eeca100eb2598c9bb25c914d4dad8c9a9b\n",
+      "error": "主干对齐失败：Command failed: git merge --no-ff --no-edit 703947eeca100eb2598c9bb25c914d4dad8c9a9b\n",
       "blockedUntil": 1791396003690,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
-        "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
-        "reason": "主干对齐失败：Command failed: git merge --no-ff --no-edit 97d3d26cd046d74d94a24386be4b41fa8c059c17\n",
-        "at": 1791395352083
+        "mainSha": "703947eeca100eb2598c9bb25c914d4dad8c9a9b",
+        "reason": "主干对齐失败：Command failed: git merge --no-ff --no-edit 703947eeca100eb2598c9bb25c914d4dad8c9a9b\n",
+        "at": 1791395403690
       },
       "recoveryIntent": null,
       "recoveryCount": 0,
@@ -70778,6 +70778,39 @@
       },
       "previous": "7f9c71620cf61216a91eda7af6de26d9969f54a77dac2f6759c02e64464dea20",
       "digest": "21747bfc05b01c89129f66f6187d8fb101924de70c7ebfe3c890286c27d71c41"
+    },
+    {
+      "sequence": 2740,
+      "at": "2026-10-07T17:50:03.690Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "主干对齐失败：Command failed: git merge --no-ff --no-edit 703947eeca100eb2598c9bb25c914d4dad8c9a9b\n",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
+            "mainSha": "703947eeca100eb2598c9bb25c914d4dad8c9a9b",
+            "reason": "主干对齐失败：Command failed: git merge --no-ff --no-edit 703947eeca100eb2598c9bb25c914d4dad8c9a9b\n",
+            "at": 1791395403690
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791396003690
+        }
+      },
+      "previous": "21747bfc05b01c89129f66f6187d8fb101924de70c7ebfe3c890286c27d71c41",
+      "digest": "207765ce3c7c402690175d83fdbd8d341af1d77f01726a97b94a67db9fb51a7b"
+    },
+    {
+      "sequence": 2741,
+      "at": "2026-10-07T17:50:44.770Z",
+      "kind": "transaction",
+      "data": {
+        "id": "5e2840fa-15c2-4953-84de-d2571928c373"
+      },
+      "previous": "207765ce3c7c402690175d83fdbd8d341af1d77f01726a97b94a67db9fb51a7b",
+      "digest": "c3ddfad117245a18c37d173245718f70f3ff3e1ea17c08a054d5286858c01ad2"
     }
   ]
 }
