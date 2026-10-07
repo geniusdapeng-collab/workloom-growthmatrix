@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 545,
+  "revision": 548,
   "tasks": {
     "132": {
       "number": 132,
@@ -2709,6 +2709,130 @@
         "ciPolicyChanges": []
       },
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/147/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n"
+    },
+    "148": {
+      "number": 148,
+      "status": "waiting_ci",
+      "firstSeen": 1791356183843,
+      "attempts": {},
+      "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "branch": "fix/T-2026-1007-0918-image-paid-receipts",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [],
+        "releases": []
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 148,
+        "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "packages/video-studio/src/generation-file-store.ts",
+          "packages/video-studio/src/image-task-receipt.test.ts",
+          "packages/video-studio/src/image-task-receipt.ts",
+          "packages/video-studio/src/portrait-runtime.test.ts",
+          "packages/video-studio/src/portrait-runtime.ts",
+          "packages/video-studio/src/studio.ts"
+        ],
+        "filesHash": "9f676b003e61732685ac0219afb513c8ca6c3720d02a159af4201faf7be8d129",
+        "dependsOn": [],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/image-task-receipt.test.ts packages/video-studio/src/portrait-runtime.test.ts packages/video-studio/src/studio.test.ts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T06:54:57.215588+00:00",
+            "result": "50 paid-image fault/concurrency tests and existing Studio integration tests; all passed, no skips"
+          },
+          {
+            "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T06:54:57.511762+00:00",
+            "result": "video-studio typecheck passed"
+          }
+        ],
+        "reviewedAt": "2026-10-07T06:56:20.179500+00:00",
+        "summary": "Current Codex fully read and reviewed six changed files and their direct dependencies. Request identity includes project, slot, provider, endpoint, model and full body, with immutable transport input; caller reference path metadata cannot cause duplicate payment for identical bytes. Atomic private journal is written before POST and acceptance before any GET. Only downloads retry; network, HTTP failure or unknown acknowledgement cannot automatically resubmit. Cache tampering, missing outputs, separate runtime folders, real independent processes and stale locks are exercised. No unresolved finding; no CI, database, permission or external paid call. Rollback is a normal revert retaining payment journals.",
+        "passed": true,
+        "id": "ff5f289b94388ab5083fd570b4c9f37db63cfb66a79143a1d5112672ad0dc377"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 148,
+        "pull": {
+          "number": 148,
+          "state": "open",
+          "title": "fix(growth): journal image acceptance before download [T-2026-1007-0918]",
+          "body": "Paid portrait image generation retried POST after ambiguous network errors and did not persist the provider URL until the download succeeded. The runtime now journals the complete compiled request before one POST and saves the accepted URL before downloading. Download/cache/file failures recover from that same URL, including across run folders and independent processes. Unknown acceptance and missing legacy receipts prohibit automatic resubmission. Image result journals use private atomic writes, fsync, exact scope and request validation; dead locks may recover only with known acceptance. Studio supplies a stable journal root. Fault tests inject providers and make no live paid requests.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/fix/T-2026-1007-0918-image-paid-receipts",
+            "sha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "files": [
+          "packages/video-studio/src/generation-file-store.ts",
+          "packages/video-studio/src/image-task-receipt.test.ts",
+          "packages/video-studio/src/image-task-receipt.ts",
+          "packages/video-studio/src/portrait-runtime.test.ts",
+          "packages/video-studio/src/portrait-runtime.ts",
+          "packages/video-studio/src/studio.ts"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [],
+          "releases": []
+        },
+        "headTime": 1791356088000,
+        "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": []
+      },
+      "updatedAt": 1791356183843
     }
   },
   "leases": {
@@ -14244,6 +14368,159 @@
       },
       "previous": "b29c04587cc4fb7a0ce70e982a038b18c088fe82ce3ac25afd2576c679f0fd40",
       "digest": "50ecdc008ffcf9e6f16d4cdab2b7568e18cb2fbd296aef78691468608d9aad5a"
+    },
+    {
+      "sequence": 546,
+      "at": "2026-10-07T06:56:23.842Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 148,
+        "id": "ff5f289b94388ab5083fd570b4c9f37db63cfb66a79143a1d5112672ad0dc377",
+        "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8"
+      },
+      "previous": "50ecdc008ffcf9e6f16d4cdab2b7568e18cb2fbd296aef78691468608d9aad5a",
+      "digest": "b2499b9f04e5162777928397375006fc8a76d3c0afa36abce0adb37215c08858"
+    },
+    {
+      "sequence": 547,
+      "at": "2026-10-07T06:56:23.843Z",
+      "kind": "task",
+      "data": {
+        "number": 148,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-image-paid-receipts",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 148,
+            "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.test.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/portrait-runtime.test.ts",
+              "packages/video-studio/src/portrait-runtime.ts",
+              "packages/video-studio/src/studio.ts"
+            ],
+            "filesHash": "9f676b003e61732685ac0219afb513c8ca6c3720d02a159af4201faf7be8d129",
+            "dependsOn": [],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/image-task-receipt.test.ts packages/video-studio/src/portrait-runtime.test.ts packages/video-studio/src/studio.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T06:54:57.215588+00:00",
+                "result": "50 paid-image fault/concurrency tests and existing Studio integration tests; all passed, no skips"
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T06:54:57.511762+00:00",
+                "result": "video-studio typecheck passed"
+              }
+            ],
+            "reviewedAt": "2026-10-07T06:56:20.179500+00:00",
+            "summary": "Current Codex fully read and reviewed six changed files and their direct dependencies. Request identity includes project, slot, provider, endpoint, model and full body, with immutable transport input; caller reference path metadata cannot cause duplicate payment for identical bytes. Atomic private journal is written before POST and acceptance before any GET. Only downloads retry; network, HTTP failure or unknown acknowledgement cannot automatically resubmit. Cache tampering, missing outputs, separate runtime folders, real independent processes and stale locks are exercised. No unresolved finding; no CI, database, permission or external paid call. Rollback is a normal revert retaining payment journals.",
+            "passed": true,
+            "id": "ff5f289b94388ab5083fd570b4c9f37db63cfb66a79143a1d5112672ad0dc377"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 148,
+            "pull": {
+              "number": 148,
+              "state": "open",
+              "title": "fix(growth): journal image acceptance before download [T-2026-1007-0918]",
+              "body": "Paid portrait image generation retried POST after ambiguous network errors and did not persist the provider URL until the download succeeded. The runtime now journals the complete compiled request before one POST and saves the accepted URL before downloading. Download/cache/file failures recover from that same URL, including across run folders and independent processes. Unknown acceptance and missing legacy receipts prohibit automatic resubmission. Image result journals use private atomic writes, fsync, exact scope and request validation; dead locks may recover only with known acceptance. Studio supplies a stable journal root. Fault tests inject providers and make no live paid requests.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-image-paid-receipts",
+                "sha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "files": [
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.test.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/portrait-runtime.test.ts",
+              "packages/video-studio/src/portrait-runtime.ts",
+              "packages/video-studio/src/studio.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791356088000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "b2499b9f04e5162777928397375006fc8a76d3c0afa36abce0adb37215c08858",
+      "digest": "5fe3b6b55287422f35aaf2b8687d33763279648a6aaa2d6fe734d6840aab4f42"
+    },
+    {
+      "sequence": 548,
+      "at": "2026-10-07T06:56:22.306Z",
+      "kind": "transaction",
+      "data": {
+        "id": "0e9f8f56-483a-4d95-bc06-62d645cfe56f"
+      },
+      "previous": "5fe3b6b55287422f35aaf2b8687d33763279648a6aaa2d6fe734d6840aab4f42",
+      "digest": "8c9ba4fc63eb027fae76dd234d99bd2c51d1681168dc6b961260f31751072171"
     }
   ]
 }
