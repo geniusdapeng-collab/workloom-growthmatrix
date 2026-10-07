@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1731,
+  "revision": 1733,
   "tasks": {
     "132": {
       "number": 132,
@@ -3036,7 +3036,7 @@
     },
     "144": {
       "number": 144,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791352089622,
       "attempts": {},
       "headSha": "67ded9576aaa0c7664a602b60bf83aad414f013d",
@@ -3045,8 +3045,15 @@
       "intent": {
         "taskId": "T-2026-1007-0918",
         "ready": true,
-        "dependsOn": [],
-        "releases": []
+        "dependsOn": [
+          143
+        ],
+        "releases": [
+          {
+            "kind": "desktop",
+            "version": "0.1.5"
+          }
+        ]
       },
       "developerReview": {
         "schemaVersion": 1,
@@ -3168,7 +3175,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791376919233,
+      "updatedAt": 1791378611870,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 0,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
@@ -3215,7 +3222,10 @@
       },
       "recoveryCount": 0,
       "reviewFailures": null,
-      "candidate": null
+      "candidate": null,
+      "dependencies": [
+        143
+      ]
     },
     "145": {
       "number": 145,
@@ -45223,6 +45233,46 @@
       },
       "previous": "18c89ce97b09466e14d180675ea96c9f5eff73f34fdfc97fbb4db70a6e290f3c",
       "digest": "fa607760e313aba58dd6ed957fb6acf6771c7cd1d212fe661a4c67dc1e59648f"
+    },
+    {
+      "sequence": 1732,
+      "at": "2026-10-07T13:10:11.870Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "67ded9576aaa0c7664a602b60bf83aad414f013d",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              143
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.5"
+              }
+            ]
+          },
+          "dependencies": [
+            143
+          ]
+        }
+      },
+      "previous": "fa607760e313aba58dd6ed957fb6acf6771c7cd1d212fe661a4c67dc1e59648f",
+      "digest": "e393d5366ca62a12e5b16064654db49fa0518ec685cb5cb5d9f61ea4ed8445ab"
+    },
+    {
+      "sequence": 1733,
+      "at": "2026-10-07T13:11:01.742Z",
+      "kind": "transaction",
+      "data": {
+        "id": "69b58b45-756b-4a6f-af5a-88ed23bc2193"
+      },
+      "previous": "e393d5366ca62a12e5b16064654db49fa0518ec685cb5cb5d9f61ea4ed8445ab",
+      "digest": "230ef5826c55c7e65fa1c9764a5af027344a280afbac43600b23be90bd098e3b"
     }
   ]
 }
