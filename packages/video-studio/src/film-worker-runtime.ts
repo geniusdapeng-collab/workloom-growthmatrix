@@ -6,6 +6,7 @@ import { FilmChannelError, FilmWorkerChannel, parseFilmWorkerJobContext, process
   type FilmChannelTransport, type FilmWorkerJobContext } from "./film-worker-channel.js";
 import { POST_RENDER_STAGES } from "./post-render-acceptance.js";
 import type { ProducerGateOptions, ProducerVerdict } from "./producer-gate.js";
+import { filmReviewPolicy, reviewWithoutModel } from "./rendered-output-policy.js";
 
 export const FILM_CLI_STAGES = Object.freeze(["cine-kb", "continuity", "micromotion", "spec", "plates", "material-gen", "videos", "voice", "compose", "color", "subtitle", "danmaku", "bgm", "sfx", "cover", "mux", "master", "deliver", "revise"]);
 const valueOptions = new Set(["aspect", "resolution", "quality", "platform", "fps", "max-attempts", "xfade", "cut-transition", "cut-transition-duration", "cut-transition-at", "subtitle-mode", "subtitle-lang", "cover-platform", "cover-hero", "cover-hook", "theme", "account", "only", "review-policy", "route-kind", "assembly-mode", "assembly-reason", "revise-note", "revision-context", "narration-profile", "enhance-kind"]);
@@ -170,6 +171,11 @@ export class FullChainFilmWorker {
     return target;
   }
   async review(options: Omit<ProducerGateOptions, "contracts">): Promise<ProducerVerdict> {
+    const normalized = normalizeFilmJobRequest(this.context.stages, this.context.options);
+    // Postprocessing uses the parent's zero-cost technical receipt, never a quality model.
+    const local = POST_RENDER_STAGES.has(options.stage) ? null
+      : reviewWithoutModel(options, filmReviewPolicy(normalized.options["review-policy"]));
+    if (local) return local;
     const aliases: Record<string, string> = { script: "spec", prompt: "spec", keyframe: "plates", shot: "videos" };
     let stage = aliases[options.stage] ?? options.stage;
     if (options.stage === "shot") {
