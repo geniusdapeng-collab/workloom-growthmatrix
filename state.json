@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1183,
+  "revision": 1185,
   "tasks": {
     "132": {
       "number": 132,
@@ -2765,7 +2765,7 @@
     },
     "148": {
       "number": 148,
-      "status": "parked",
+      "status": "merging",
       "firstSeen": 1791356183843,
       "attempts": {},
       "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
@@ -2914,6 +2914,82 @@
         "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
         "marker": "delivery-origin:148:3f2ec2f06e576fac6c949560a982a26ced8c24ec:6e7bb78749a4ade1955cf03476ed249f630aa3f8",
         "at": 1791366610602
+      },
+      "mergePhase": "prepared",
+      "mergeSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 159,
+        "pull": {
+          "number": 159,
+          "state": "open",
+          "title": "chore(ci): deliver #148 fix(growth): journal image acceptance before download [T-2026-1007-0918]",
+          "body": "Immutable delivery candidate for #148. Exact source 3f2ec2f06e576fac6c949560a982a26ced8c24ec; tested main 6e7bb78749a4ade1955cf03476ed249f630aa3f8.\n\n<!-- delivery-origin:148:3f2ec2f06e576fac6c949560a982a26ced8c24ec:6e7bb78749a4ade1955cf03476ed249f630aa3f8 -->\n\n<!-- workloom-delivery\n{\"ready\":true,\"depends_on\":[],\"releases\":[]}\n-->",
+          "author": {
+            "username": "OCI",
+            "nickname": "Cloud Native Build",
+            "is_npc": true
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/delivery/candidate/pr-148-8ff6f127b0b6f69437c4485d70b80df3",
+            "sha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "files": [
+          "packages/video-studio/src/generation-file-store.ts",
+          "packages/video-studio/src/image-task-receipt.test.ts",
+          "packages/video-studio/src/image-task-receipt.ts",
+          "packages/video-studio/src/portrait-runtime.test.ts",
+          "packages/video-studio/src/portrait-runtime.ts",
+          "packages/video-studio/src/studio.ts"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [],
+          "releases": []
+        },
+        "headTime": 1791356088000,
+        "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "checkErrors": [],
+        "checkSha": "589c899e4f9882b68313cd21951e8cd7f5490968",
+        "hasFailedChecks": false,
+        "ciPolicyChanges": [],
+        "originNumber": 148,
+        "pendingDependencies": []
+      },
+      "integrationLease": {
+        "owner": "integration/pr-148",
+        "scopes": [],
+        "generation": {}
       }
     },
     "149": {
@@ -28031,6 +28107,105 @@
       },
       "previous": "25be37bb7c8faf2a8b1ea2ac4e8933c48e9baa621afa9a3c63eb41d163e74e92",
       "digest": "1998095e1b8b4662233c1521eff098cd83da7e091f5650953d78cec791bce95d"
+    },
+    {
+      "sequence": 1184,
+      "at": "2026-10-07T10:10:15.170Z",
+      "kind": "task",
+      "data": {
+        "number": 148,
+        "patch": {
+          "status": "merging",
+          "mergePhase": "prepared",
+          "mergeSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 159,
+            "pull": {
+              "number": 159,
+              "state": "open",
+              "title": "chore(ci): deliver #148 fix(growth): journal image acceptance before download [T-2026-1007-0918]",
+              "body": "Immutable delivery candidate for #148. Exact source 3f2ec2f06e576fac6c949560a982a26ced8c24ec; tested main 6e7bb78749a4ade1955cf03476ed249f630aa3f8.\n\n<!-- delivery-origin:148:3f2ec2f06e576fac6c949560a982a26ced8c24ec:6e7bb78749a4ade1955cf03476ed249f630aa3f8 -->\n\n<!-- workloom-delivery\n{\"ready\":true,\"depends_on\":[],\"releases\":[]}\n-->",
+              "author": {
+                "username": "OCI",
+                "nickname": "Cloud Native Build",
+                "is_npc": true
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/delivery/candidate/pr-148-8ff6f127b0b6f69437c4485d70b80df3",
+                "sha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "files": [
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.test.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/portrait-runtime.test.ts",
+              "packages/video-studio/src/portrait-runtime.ts",
+              "packages/video-studio/src/studio.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791356088000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": "589c899e4f9882b68313cd21951e8cd7f5490968",
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [],
+            "originNumber": 148,
+            "pendingDependencies": []
+          },
+          "integrationLease": {
+            "owner": "integration/pr-148",
+            "scopes": [],
+            "generation": {}
+          }
+        }
+      },
+      "previous": "1998095e1b8b4662233c1521eff098cd83da7e091f5650953d78cec791bce95d",
+      "digest": "2fe5262d25ba3f356bee25de6b5e1306ca1200298bb842a72bfe21b6c9e1f51d"
+    },
+    {
+      "sequence": 1185,
+      "at": "2026-10-07T10:11:45.000Z",
+      "kind": "transaction",
+      "data": {
+        "id": "44db9c29-7c15-46d7-9c95-a9b26a968da5"
+      },
+      "previous": "2fe5262d25ba3f356bee25de6b5e1306ca1200298bb842a72bfe21b6c9e1f51d",
+      "digest": "75ef6d7107f6b9d1aa57fd8c6de0ad799552626e87aef1f2b4b11c2bf28926c7"
     }
   ]
 }
