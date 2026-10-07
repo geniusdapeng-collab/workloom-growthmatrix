@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3920,
+  "revision": 3922,
   "tasks": {
     "132": {
       "number": 132,
@@ -8102,7 +8102,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791413412487,
+      "updatedAt": 1791413711542,
       "admission": {
         "number": 176,
         "headSha": "8f655f80b9683ec0dfe2008ed7b45375c2c3938c",
@@ -8115,8 +8115,8 @@
       "dependencies": [
         167
       ],
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/176 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791414012487
+      "error": "Prerequisite #167 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/167 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791414311542
     },
     "177": {
       "number": 177,
@@ -97320,6 +97320,31 @@
       },
       "previous": "a5dbc362810ee2622b3bc0c2cc14f1580b4b5a05b82fe055e2f1e74e666e7eb7",
       "digest": "27e9eef28201b65d93ec404dd9400196b3e6d1b94d3c8f542dc79bd65d96b03d"
+    },
+    {
+      "sequence": 3921,
+      "at": "2026-10-07T22:55:11.542Z",
+      "kind": "task",
+      "data": {
+        "number": 176,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #167 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/167 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791414311542
+        }
+      },
+      "previous": "27e9eef28201b65d93ec404dd9400196b3e6d1b94d3c8f542dc79bd65d96b03d",
+      "digest": "bb77cb7c62398df2aae373f41221216dfc585eae4f3ab2a369f0de900740e2bf"
+    },
+    {
+      "sequence": 3922,
+      "at": "2026-10-07T22:58:06.338Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8cd06fcf-61cc-40bc-8639-8048e50df7ff"
+      },
+      "previous": "bb77cb7c62398df2aae373f41221216dfc585eae4f3ab2a369f0de900740e2bf",
+      "digest": "e628892f026a54fd1c57c0179650301f8070671263d7a023a1afb5832e512dca"
     }
   ]
 }
