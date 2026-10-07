@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 356,
+  "revision": 358,
   "tasks": {
     "132": {
       "number": 132,
@@ -1769,7 +1769,7 @@
           "protocol": 10
         }
       },
-      "updatedAt": 1791344711725,
+      "updatedAt": 1791345312272,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls?state=all&base_ref=main&page_size=100&page=2 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 1791345311725,
       "headSha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
@@ -10225,6 +10225,58 @@
       },
       "previous": "3e9f2b2014d00f31d59f635fe2ee2ae39ae27852a3e9428d11588d8b0cb135c4",
       "digest": "b7ea7b99effb3dac7fa140448277492c4d3bd77016b23a348a98b43de3838c4e"
+    },
+    {
+      "sequence": 357,
+      "at": "2026-10-07T03:55:12.272Z",
+      "kind": "task",
+      "data": {
+        "number": 140,
+        "patch": {
+          "headSha": "19b31200978ce59e0b25ae279f387b4ea07c813f",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "task/T-2026-1007-0001",
+          "intent": {
+            "taskId": "T-2026-1007-0001",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "AI 工作台接到视频任务时，原有入口分散且插件网关与通用 MCP 不同，容易找不到流程或沿用错误参数。本次内置本仓唯一视频调用指南，CLI/MCP 返回同一完整正文与摘要，现有入口引导先读，运行载荷只包含这份固定指南。\n\n每条短片的镜头数、逐镜时长与编排继续由正式管线按本次需求自主规划；30 秒、6 镜、五版及 17–30 分钟仅为历史计时样本，不新增生产默认、全局超时或验收闸。指南核对人物、商品、平台、时长、账号调性、声音及特殊要求，说明正式前期、付费渲染、恢复、后期与真实交付的边界。\n\n固定读取只接受空输入，不接受调用方路径；缺件、产品或版本冲突、UTF-8/大小/链接边界失败均保留错误。新增回归接入原仓实际 CI 测试入口；必需 CI 和主干保护保持原口径。\n\n验证：\n- 当前提交 `19b31200978ce59e0b25ae279f387b4ea07c813f` 的离线回归 53/53 通过，0 失败或跳过。\n- 真实源码 CLI/MCP 全文和 SHA 一致；精确载荷复制及错误路径回归通过，生成器检查、diff 检查、暂存及提交范围秘密扫描通过。\n- 当前 Codex 会话和独立复核已审查变更及直接依赖，0 未解决发现；结构化实际测试及审查回执通过既有交付队列 handoff，云端原 CI 与准确候选合并继续为硬门禁。\n\n边界：本次没有模型、供应商、TTS、ASR 或新媒体调用；没有移植其它仓生产机制。载荷测试中的编译器是受控 fixture，不冒充完整签名安装包、桌面 GUI 或真实新片生产验收。回滚为 revert 本任务提交。\n\n任务卡：#139（T-2026-1007-0001）。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0001\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "AGENTS.repo.md",
+            "README.md",
+            "bundles/ai-video/README.md",
+            "bundles/geo-growthmatrix/agent-capabilities.json",
+            "bundles/geo-growthmatrix/capabilities/video.mjs",
+            "bundles/geo-growthmatrix/capabilities/workbench-guide.mjs",
+            "bundles/geo-growthmatrix/capabilities/workbench-guide.test.mjs",
+            "docs/AGENT-CLIENTS.md",
+            "docs/agent-cli-mcp.md",
+            "docs/ai-video-workbench-guide.md",
+            "docs/capabilities.auto.json",
+            "docs/capabilities.auto.md",
+            "scripts/AGENT-CAPABILITIES.md",
+            "scripts/agent-capabilities.test.mjs",
+            "scripts/product-runtime-assets.mjs",
+            "scripts/product-runtime-assets.test.mjs"
+          ],
+          "status": "parked",
+          "ciSince": 1791336313141
+        }
+      },
+      "previous": "b7ea7b99effb3dac7fa140448277492c4d3bd77016b23a348a98b43de3838c4e",
+      "digest": "6e4e0d455df5dba0628143af9aa0555496f20e5770828ece02b136623dd917f0"
+    },
+    {
+      "sequence": 358,
+      "at": "2026-10-07T03:55:21.318Z",
+      "kind": "transaction",
+      "data": {
+        "id": "1d8af8b4-251f-45fe-9d2a-08a7fbffd3b3"
+      },
+      "previous": "6e4e0d455df5dba0628143af9aa0555496f20e5770828ece02b136623dd917f0",
+      "digest": "8f2939ddb99a900ce8a8f03f2558d5a726596b9b272300935729ab99e09fde68"
     }
   ]
 }
