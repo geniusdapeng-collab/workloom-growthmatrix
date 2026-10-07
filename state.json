@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 426,
+  "revision": 428,
   "tasks": {
     "132": {
       "number": 132,
@@ -2023,7 +2023,7 @@
         "owner": "admission/pr-142",
         "generation": {}
       },
-      "updatedAt": 1791350711172,
+      "updatedAt": 1791351311526,
       "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
       "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
       "branch": "fix/T-2026-1007-0918-prompt-redlines",
@@ -11688,6 +11688,44 @@
       },
       "previous": "8d105a31c8768f790907b86735b56a432f802d967e266fe7b40656521af5338a",
       "digest": "da00285018a06488006b0b25251d35c2a1b74ae8c8a00b06fe64eb3c86cb6541"
+    },
+    {
+      "sequence": 427,
+      "at": "2026-10-07T05:35:11.526Z",
+      "kind": "task",
+      "data": {
+        "number": 142,
+        "patch": {
+          "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-prompt-redlines",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "画面字段明确写“不出现房卡、单据、证件”时，原红线检查将顿号后的名词误判为可见道具，阻断合法前期并触发修订。现在否定范围保持到同一名词清单末尾，遇到明确肯定动作或新分句重新检查；后续可见屏幕、手持证件和肯定枚举仍按原规则处理。\n\n当前 Codex 完整读取两个改动文件，复核否定范围、字段边界和肯定重启分支。准确提交后实际运行 prompt-redlines.test.ts，正常、否定清单、肯定恢复、证件与屏幕红线回归均通过。没有模型调用或新付费渲染。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/prompt-redlines.test.ts",
+            "packages/video-studio/src/prompt-redlines.ts"
+          ],
+          "status": "parked",
+          "ciSince": 1791350411754
+        }
+      },
+      "previous": "da00285018a06488006b0b25251d35c2a1b74ae8c8a00b06fe64eb3c86cb6541",
+      "digest": "323dbf56982ba5c9eaa24237a7b086c01434a659045e89bf8fca2e13ff38207c"
+    },
+    {
+      "sequence": 428,
+      "at": "2026-10-07T05:35:24.415Z",
+      "kind": "transaction",
+      "data": {
+        "id": "e28200ec-6623-4940-adc5-5a3dfec566a7"
+      },
+      "previous": "323dbf56982ba5c9eaa24237a7b086c01434a659045e89bf8fca2e13ff38207c",
+      "digest": "dd51d5e889bb81dd9dadeec14daa1174ddde62ac59d693bba0e0bf433307e9b0"
     }
   ]
 }
