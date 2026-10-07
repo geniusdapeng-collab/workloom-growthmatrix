@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1560,
+  "revision": 1562,
   "tasks": {
     "132": {
       "number": 132,
@@ -6068,7 +6068,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791373281152,
+      "updatedAt": 1791374342093,
       "admission": {
         "number": 167,
         "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
@@ -6077,7 +6077,15 @@
         "scopes": [],
         "owner": "admission/pr-167",
         "generation": {}
-      }
+      },
+      "originalBody": "The post delivery bridge shortened rendered clips by overlapping their heads and tails in xfade and failed packages when measured duration differed from the creative target. Preserve the complete clip timeline: reject xfade before creating output, use hard cuts in the bold-promo recipe, and record target/actual/delta without a duration admission gate. Hard cuts and fades inside each clip retain all frames; actual source duration and output consistency are still checked. Real FFmpeg regression proves all 225 frames of three source clips survive, source hashes remain unchanged, and forbidden transitions cannot call an encoder or create output. No paid generation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+      "files": [
+        "bundles/ai-video/connectors/post-bridge/README.md",
+        "bundles/ai-video/connectors/post-bridge/core.mjs",
+        "bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts",
+        "bundles/ai-video/library/style-variants/bold-promo.json"
+      ],
+      "ciSince": 1791374342093
     },
     "168": {
       "number": 168,
@@ -39825,6 +39833,46 @@
       },
       "previous": "6211d8482ef1844647073c3d1ea62a6acf18a87814c9564fe17c1af22950084f",
       "digest": "6e308638c527f1049cb172a8fb39befd454d8dea7a70a8a907702d91c4984afb"
+    },
+    {
+      "sequence": 1561,
+      "at": "2026-10-07T11:59:02.093Z",
+      "kind": "task",
+      "data": {
+        "number": 167,
+        "patch": {
+          "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-post-preserve-source-timeline",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "The post delivery bridge shortened rendered clips by overlapping their heads and tails in xfade and failed packages when measured duration differed from the creative target. Preserve the complete clip timeline: reject xfade before creating output, use hard cuts in the bold-promo recipe, and record target/actual/delta without a duration admission gate. Hard cuts and fades inside each clip retain all frames; actual source duration and output consistency are still checked. Real FFmpeg regression proves all 225 frames of three source clips survive, source hashes remain unchanged, and forbidden transitions cannot call an encoder or create output. No paid generation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "bundles/ai-video/connectors/post-bridge/README.md",
+            "bundles/ai-video/connectors/post-bridge/core.mjs",
+            "bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts",
+            "bundles/ai-video/library/style-variants/bold-promo.json"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791374342093
+        }
+      },
+      "previous": "6e308638c527f1049cb172a8fb39befd454d8dea7a70a8a907702d91c4984afb",
+      "digest": "19d39f5e69c50c3c250fa414e26522abae6450461cac8b2cfe8e4323ebe15ec5"
+    },
+    {
+      "sequence": 1562,
+      "at": "2026-10-07T12:01:51.441Z",
+      "kind": "transaction",
+      "data": {
+        "id": "d2ca38c9-a1fa-4bf5-b73f-4c3858cf63fd"
+      },
+      "previous": "19d39f5e69c50c3c250fa414e26522abae6450461cac8b2cfe8e4323ebe15ec5",
+      "digest": "1248ce13c144ddf8b06c834ddf598cd51ba30068b56fcf3f5f54deea4b8ff012"
     }
   ]
 }
