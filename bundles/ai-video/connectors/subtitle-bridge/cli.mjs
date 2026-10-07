@@ -160,6 +160,7 @@ async function main() {
         cues: flags.srt ? (await import("./core.mjs")).parseSrt(fs.readFileSync(flags.srt, "utf8")) : [],
         outputDir: typeof flags["out-dir"] === "string" ? flags["out-dir"] : null,
         evidenceDir: typeof flags["evidence-dir"] === "string" ? flags["evidence-dir"] : null,
+        analyze: flags.analyze === true,
       });
       line(`方案：${outcome.planPath}`);
       line(`平台版式：${outcome.plan.platform} · 分辨率 ${outcome.plan.resolution.join("x")} · 事件 ${outcome.plan.events} 条`);
@@ -185,8 +186,8 @@ async function main() {
       line(`已烧录：${report.output.path}（${report.encoder}）`);
       line(`  字幕字体 ${report.fonts.字幕?.name ?? "-"} · 标题字体 ${report.fonts.标题?.name ?? "-"}`);
       line(`  时间轴回读 ${report.timeline.cues}/${report.timeline.sourceCues} 条（${report.timeline.ok ? "一致" : "不一致"}）`);
-      line(`  字幕可现度 Δ${report.presence.delta}（阈值 ${report.presence.threshold}，t=${report.presence.at}s）`);
-      line(`  标点体检 ${report.checks.punctuation_ok ? "ok" : "fail"}（口径：字幕不带标点；数字内的 . : - / 保留）`);
+      line("  处理记录：未做画面品质评分或可现度复评");
+
       line(`  版式体检：${report.layoutChecks.map((check) => `${check.kind}=${check.ok ? "ok" : "fail"}`).join(" ")}`);
       line(`  sha256 ${report.output.hash}`);
       return 0;
@@ -280,7 +281,7 @@ async function main() {
         platform: typeof flags.platform === "string" ? flags.platform : null,
         brief: readBrief(flags),
         evidenceDir: typeof flags["evidence-dir"] === "string" ? flags["evidence-dir"] : null,
-        analyze: flags["no-analyze"] !== true,
+        analyze: flags.analyze === true,
       });
       line(`旁挂字幕交付：${outcome.outputDir}`);
       for (const file of outcome.files) {
@@ -324,8 +325,8 @@ async function main() {
         line(`结论：无需加字幕/无需改动 —— ${outcome.reason}`);
         return 0;
       }
-      line("结论：已出片（择优）");
-      line(`  赢家 ${outcome.winner.fontName} / ${outcome.winner.variant} · 得分 ${outcome.winner.score}（阈值 ${outcome.minScore}）`);
+      line("结论：已按请求配方处理");
+      line(`  字体 ${outcome.winner.fontName} / ${outcome.winner.variant} · 未进行候选画面评分`);
       line(`  成片 ${outcome.output.path} · sha256 ${outcome.sha256}`);
       return 0;
     }

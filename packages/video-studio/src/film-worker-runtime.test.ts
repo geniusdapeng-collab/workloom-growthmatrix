@@ -61,7 +61,7 @@ describe("frozen full-chain worker adapter", () => {
   });
   it("normalizes complete stage dependencies and rejects unknown stages, paths, code and bypass options", () => {
     expect(normalizeFilmJobRequest(["deliver"], { aspect: "16:9", maxAttempts: 2 }).stages).toEqual(["deliver", "master"]);
-    expect(normalizeFilmJobRequest(["compose"], { assemblyMode: "post-only" }).stages).toEqual(["compose", "spec"]);
+    expect(normalizeFilmJobRequest(["compose"], { assemblyMode: "post-only" }).stages).toEqual(["compose"]);
     for (const key of ["keys-file", "work-dir", "out", "shots", "worker", "execute-revision", "accept-rejected", "allow-fallback-approve"]) expect(() => normalizeFilmJobRequest(["plates"], { [key]: "secret" })).toThrow("不接受");
     expect(() => normalizeFilmJobRequest(["storyboard"], {})).toThrow("阶段");
     expect(() => normalizeFilmJobRequest(["plates"], { maxAttempts: 100 })).toThrow("范围");
@@ -132,6 +132,19 @@ describe("frozen full-chain worker adapter", () => {
     expect(frames[0]!.stepKey).toBe("plates:S1");
     setReply(() => ({ stage: "keyframe", approved: true }));
     await expect(worker.review({ stage: "keyframe", projectId: context.projectId, artifacts: [{ path: file, kind: "image" }], deterministic: [], context: { shotId: "S1" } })).rejects.toThrow("合同");
+    worker.channel.dispose();
+  });
+  it("post acceptance receives the current technical parent verdict without a creative contract or reference-image qualification", async () => {
+    const { context, worker, frames, setReply } = fixture();
+    const file = join(context.workDir, "clip.mp4"); writeFileSync(file, "parent-controlled fixture source");
+    setReply(() => ({ stage: "shot", approved: true, status: "passed", score: null, qualityReviewed: false }));
+    const verdict = await worker.review({ stage: "shot", projectId: context.projectId, artifacts: [{ path: file, kind: "video" }],
+      referenceImages: [join(context.workDir, "absent-old-identity.png")], deterministic: [], context: { shotId: "S1" } });
+    expect(verdict.approved).toBe(true); expect(verdict.score).toBeNull(); expect(verdict.contractHash).toBeUndefined();
+    expect(frames).toHaveLength(1); expect(frames[0]!.stepKey).toBe("videos:S1");
+    expect((frames[0]!.params as Record<string, unknown>).referenceImages).toBeUndefined();
+    setReply(() => ({ stage: "master", approved: true }));
+    await expect(worker.review({ stage: "shot", projectId: context.projectId, artifacts: [{ path: file, kind: "video" }], deterministic: [], context: { shotId: "S1" } })).rejects.toThrow("当前阶段");
     worker.channel.dispose();
   });
   it("material shot review remains in its original stage when both material and video stages are selected", async () => {

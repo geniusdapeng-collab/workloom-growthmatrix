@@ -60,3 +60,6 @@ export * from "./real-person-asset.js";
 export * from "./prompt-redlines.js";
 /** 一次过就绪度（花钱前判定风险与改卡建议；高风险先渲）。 */
 export * from "./first-pass.js";
+
+/** Provider-success sources enter official postproduction without quality review. */
+export * from "./post-render-acceptance.js";

@@ -8,13 +8,13 @@
  * 白烧 6 镜 × 2 次渲染。
  *
  * 因此本模块把"认证真人"变成**一等公民**：主档是人物属性与授权的唯一事实源，
- * 出片前必须过一致性门，花钱前必须先出小样（canary），出片后必须做身份比对。
+ * 新生成提交前过属性与授权一致性门。成功镜头默认直接正式后期，不再做 canary 或渲后身份放行。
  *
  * 硬纪律：
  *   1 没有主档不放行：镜头卡写 `asset://` 但库里没有对应主档 → fail-closed（禁止临时编属性）；
  *   2 属性冲突不放行：主档说 female/三十岁上下，镜头卡写"男士/四十岁上下" → **硬阻断**；
  *   3 不能猜：主档缺 gender 等关键属性时，**停下来问**，不许"先生成再看看"；
- *   4 先小样后全片：多镜真人片必须先渲 1 镜 canary 并通过身份比对，再渲其余镜头；
+ *   4 成功源片不复评：通过真实任务与源字节续用，不因身份/服装/动作或旧品质分触发重生成；
  *   5 授权有效期内：过期/未授权 → fail-closed；每次使用都留资产 ID 与授权证据。
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
@@ -42,7 +42,7 @@ export interface RealPersonAsset {
     evidence?: string;
   };
   /**
-   * 认证基准照（客户提供的本人照片；**只用于出片后的"像不像"比对与封面选帧**，
+   * 认证基准照（客户提供的本人照片；只供明确请求的独立身份诊断或预生产档案使用，
    * 绝不作为生成输入——平台禁止直传真人照片，生成只走 asset://）。
    * 约定：文件放在主档目录下（如 anchor.jpg），此处登记相对文件名。
    */
@@ -174,8 +174,8 @@ export function assertShotMatchesCertifiedAsset(shot: Record<string, unknown>, a
 }
 
 /**
- * 像不像门（T-2026-0929-0010）：客户提供 anchorPhoto 时，出片后把"认证基准照 + 抽帧"一起交给监制，
- * 要求判断"是否同一人"；判不是同一人 → 该镜不合格（禁止把不像的素材交付）。
+ * 显式身份诊断的历史上下文（T-2026-0929-0010），不是默认后期放行门。
+ * 影片成功镜头接收不调用该模型上下文，不由其结果触发重生成。
  */
 export function identityAnchorContext(asset: RealPersonAsset): Record<string, unknown> | null {
   if (!asset.anchorPhoto) return null;
@@ -208,7 +208,7 @@ export function identityAnchorPath(asset: RealPersonAsset, dir: string): string 
   return existsSync(abs) ? abs : null;
 }
 
-/** 出片后身份比对的判据文本（交给监制模型按主档属性核对抽帧，缺证据必须拒绝） */
+/** 显式身份诊断的历史判据文本；默认成功镜头后期不调用，不影响接收。 */
 export function identityReviewContext(asset: RealPersonAsset): Record<string, unknown> {
   return {
     policy: REAL_PERSON_POLICY_VERSION,
