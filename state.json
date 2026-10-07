@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3318,
+  "revision": 3320,
   "tasks": {
     "132": {
       "number": 132,
@@ -3185,7 +3185,7 @@
       "firstSeen": 1791352089622,
       "attempts": {},
       "headSha": "cf9b8a69f5d9a7eb361a0076e502474f894d09a8",
-      "mainSha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
+      "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
       "branch": "fix/T-2026-1007-0918-creative-duration",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -3280,9 +3280,9 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791403215350,
+      "updatedAt": 1791403724050,
       "error": "检查/评审阻断：Required check static-gate missing/failed/ambiguous; Codex review identity differs from the exact repository/source/main/policy",
-      "blockedUntil": 1791403815350,
+      "blockedUntil": 0,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    143\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.6\"\n    }\n  ]\n}\n-->",
       "files": [
         "packages/video-studio/src/creative-duration-policy.test.ts",
@@ -3304,7 +3304,7 @@
         "at": 1791403215350
       },
       "recoveryIntent": null,
-      "alignmentCount": 1,
+      "alignmentCount": 0,
       "alignmentIntent": null,
       "alignment": {
         "sha": "cf9b8a69f5d9a7eb361a0076e502474f894d09a8",
@@ -83577,6 +83577,64 @@
       },
       "previous": "56c801dd933d05076267acda2b6231dd4c7a5a6e0dc9dd8a51379c4f24698d67",
       "digest": "8519f7450cc6339c6b4ce19b0c00faeb0d615e1923576a526e1e92f4340b5e5f"
+    },
+    {
+      "sequence": 3319,
+      "at": "2026-10-07T20:08:44.050Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "alignmentCount": 0,
+          "recoveryCount": 0,
+          "reviewFailures": null,
+          "blockedUntil": 0,
+          "developerReview": null,
+          "candidate": null,
+          "headSha": "cf9b8a69f5d9a7eb361a0076e502474f894d09a8",
+          "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+          "branch": "fix/T-2026-1007-0918-creative-duration",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              143
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.6"
+              }
+            ]
+          },
+          "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    143\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.6\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "packages/video-studio/src/creative-duration-policy.test.ts",
+            "packages/video-studio/src/creative-duration-policy.ts",
+            "packages/video-studio/src/duration-projection-bridge.test.ts",
+            "packages/video-studio/src/duration-projection.test.ts",
+            "packages/video-studio/src/duration-projection.ts",
+            "packages/video-studio/src/duration-rules.test.ts",
+            "packages/video-studio/src/duration-rules.ts",
+            "packages/video-studio/src/vendor-compat.ts",
+            "scripts/tools/duration-projection-e2e.mts"
+          ],
+          "status": "parked",
+          "ciSince": 1791401379390
+        }
+      },
+      "previous": "8519f7450cc6339c6b4ce19b0c00faeb0d615e1923576a526e1e92f4340b5e5f",
+      "digest": "f2bd0bcf3845cbbee674168391788a12556feb55a169690067852e41514f911e"
+    },
+    {
+      "sequence": 3320,
+      "at": "2026-10-07T20:10:04.723Z",
+      "kind": "transaction",
+      "data": {
+        "id": "dc84575a-2990-45ac-9844-b3ac2ad540de"
+      },
+      "previous": "f2bd0bcf3845cbbee674168391788a12556feb55a169690067852e41514f911e",
+      "digest": "09a27cf70703223ddc827e330c9deec147b5bdf01e709da6ea7fcdcffa11a766"
     }
   ]
 }
