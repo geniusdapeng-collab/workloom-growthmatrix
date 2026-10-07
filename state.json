@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2045,
+  "revision": 2047,
   "tasks": {
     "132": {
       "number": 132,
@@ -5465,7 +5465,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791380029775,
+      "updatedAt": 1791380198087,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -53899,6 +53899,52 @@
       },
       "previous": "6f6b8540dfaf23ebf84b38d30b3e3b9893ecd86e5a47f638ab083fa36290ff89",
       "digest": "2206c12d83ca47df6e12413c6903e25961f08ddcac135dd8cb5c1a060d1d81a2"
+    },
+    {
+      "sequence": 2046,
+      "at": "2026-10-07T13:36:38.087Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "2206c12d83ca47df6e12413c6903e25961f08ddcac135dd8cb5c1a060d1d81a2",
+      "digest": "138e822970e1323161e59d2e1c3c696be3824e2ce231c34610c67c96f4425501"
+    },
+    {
+      "sequence": 2047,
+      "at": "2026-10-07T13:38:04.454Z",
+      "kind": "transaction",
+      "data": {
+        "id": "94437f0e-b400-45df-9557-37b5b9a387fb"
+      },
+      "previous": "138e822970e1323161e59d2e1c3c696be3824e2ce231c34610c67c96f4425501",
+      "digest": "fc4223ee46352fcd563752ead34625d93cd234e00d82c6d7d4e4239498ec5fc6"
     }
   ]
 }
