@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2559,
+  "revision": 2562,
   "tasks": {
     "132": {
       "number": 132,
@@ -7562,6 +7562,148 @@
         "generation": {}
       },
       "updatedAt": 1791388623465
+    },
+    "176": {
+      "number": 176,
+      "status": "waiting_ci",
+      "firstSeen": 1791391664418,
+      "attempts": {},
+      "headSha": "309d830dd6f7ef77627da282933d96b4b1fd42d7",
+      "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+      "branch": "fix/T-2026-1007-0918-bgm-declared-peak",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [
+          167
+        ],
+        "releases": [
+          {
+            "kind": "desktop",
+            "version": "0.1.24"
+          }
+        ]
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 176,
+        "headSha": "309d830dd6f7ef77627da282933d96b4b1fd42d7",
+        "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "bundles/ai-video/connectors/bgm-bridge/README.md",
+          "bundles/ai-video/connectors/bgm-bridge/cli.mjs",
+          "bundles/ai-video/connectors/bgm-bridge/core.mjs",
+          "bundles/ai-video/connectors/bgm-bridge/structure.test.ts"
+        ],
+        "filesHash": "466b16c87b08a13c5915bd24f8ebef1faf1ca568ef27a4c8eacf35bf8b8ece7b",
+        "dependsOn": [
+          167
+        ],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run bundles/ai-video/connectors/color-bridge/core.test.ts bundles/ai-video/connectors/bgm-bridge/structure.test.ts bundles/ai-video/connectors/subtitle-bridge/executor.test.ts bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts bundles/ai-video/connectors/post-bridge/revision-concurrency.test.ts --maxWorkers=1",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T16:45:19.385965+00:00",
+            "result": "Actual complete post workstation regression passes; explicit creative peak processing, original source bytes/full copied video streams, default no-quality review and public mix entries are exercised with real FFmpeg."
+          },
+          {
+            "command": "node --test bundles/ai-video/connectors/bgm-bridge/audio-stems-mix.test.mjs bundles/ai-video/connectors/bgm-bridge/declared-program-mix.test.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T16:45:30.446678+00:00",
+            "result": "Actual signed-source and original-program mix contracts, tool/CLI, tampering and duplicate request regressions pass; no paid provider calls."
+          },
+          {
+            "command": "node scripts/generate-capabilities.mjs --check",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T16:45:30.732116+00:00",
+            "result": "Repository-generated capability inventory is consistent; no capability declaration was removed or invented."
+          }
+        ],
+        "reviewedAt": "2026-10-07T16:47:38.524051+00:00",
+        "summary": "Current Codex fully read the complete current BGM core, CLI, README and structure regression plus all direct dependencies (measure, synth, audio-stems/trust, brief, sources and tag), checked unchanged dependency blobs against the earlier complete reads, and reviewed every final changed line. Real FFmpeg tests compare the actual rotated PCM to the expected phase rotation, verify full original video packet hashes and source file hash, require opening music, exercise CLI/tool/direct entries and invalid cues, and reject any source-video quality-null pass through a test wrapper that still executes real encoders. Full post regression and source-authority audio tests run at this exact commit. No external model or paid render was invoked. Native required CI, immutable integration and actual signed release bytes remain mandatory.",
+        "passed": true,
+        "id": "253a22c610d30917af65685ef137ad49b2af0eafbc0fbcfc8b41e85252028080"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 176,
+        "pull": {
+          "number": 176,
+          "state": "open",
+          "title": "fix(growth): align requested music peaks without reviewing source films [T-2026-1007-0918]",
+          "body": "Removing automatic source-film quality review also dropped the BGM section/peak processing receipt. Restore an explicit creative cue across mix, CLI and tool calls: use only the requested music to find an anchor, rotate its phase and loop from the opening. Never infer a cue by scanning rendered film. Record actual selected and rotated audio bytes, hashes and declared alignment; leave qualityReviewed=false and unmeasured quality metrics null. Reject malformed/out-of-timeline cues. Preserve the entire copied video stream and source file. This independent fix uses the current cloud main post cores; no paid generation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    167\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.24\"\n    }\n  ]\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/fix/T-2026-1007-0918-bgm-declared-peak",
+            "sha": "309d830dd6f7ef77627da282933d96b4b1fd42d7",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "309d830dd6f7ef77627da282933d96b4b1fd42d7",
+        "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+        "files": [
+          "bundles/ai-video/connectors/bgm-bridge/README.md",
+          "bundles/ai-video/connectors/bgm-bridge/cli.mjs",
+          "bundles/ai-video/connectors/bgm-bridge/core.mjs",
+          "bundles/ai-video/connectors/bgm-bridge/structure.test.ts"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [
+            167
+          ],
+          "releases": [
+            {
+              "kind": "desktop",
+              "version": "0.1.24"
+            }
+          ]
+        },
+        "headTime": 1791391457000,
+        "mergeBase": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": []
+      },
+      "updatedAt": 1791391664418
     }
   },
   "leases": {
@@ -66346,6 +66488,177 @@
       },
       "previous": "bba1ff6b033f1fa125fb4acdc744b73d14c91eb956172db4006acf751d12c7f1",
       "digest": "3f2c14e40619b7ccbc150d8a06e9efe0bbb762bfd8e1191a1f558b44f5b843cf"
+    },
+    {
+      "sequence": 2560,
+      "at": "2026-10-07T16:47:44.417Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 176,
+        "id": "253a22c610d30917af65685ef137ad49b2af0eafbc0fbcfc8b41e85252028080",
+        "headSha": "309d830dd6f7ef77627da282933d96b4b1fd42d7",
+        "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17"
+      },
+      "previous": "3f2c14e40619b7ccbc150d8a06e9efe0bbb762bfd8e1191a1f558b44f5b843cf",
+      "digest": "d245f137bdaa1ff6a8a7e325c9eb6c15d10fa1f9bd4866374fe926dbe0658d59"
+    },
+    {
+      "sequence": 2561,
+      "at": "2026-10-07T16:47:44.418Z",
+      "kind": "task",
+      "data": {
+        "number": 176,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "309d830dd6f7ef77627da282933d96b4b1fd42d7",
+          "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+          "branch": "fix/T-2026-1007-0918-bgm-declared-peak",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              167
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.24"
+              }
+            ]
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 176,
+            "headSha": "309d830dd6f7ef77627da282933d96b4b1fd42d7",
+            "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "bundles/ai-video/connectors/bgm-bridge/README.md",
+              "bundles/ai-video/connectors/bgm-bridge/cli.mjs",
+              "bundles/ai-video/connectors/bgm-bridge/core.mjs",
+              "bundles/ai-video/connectors/bgm-bridge/structure.test.ts"
+            ],
+            "filesHash": "466b16c87b08a13c5915bd24f8ebef1faf1ca568ef27a4c8eacf35bf8b8ece7b",
+            "dependsOn": [
+              167
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run bundles/ai-video/connectors/color-bridge/core.test.ts bundles/ai-video/connectors/bgm-bridge/structure.test.ts bundles/ai-video/connectors/subtitle-bridge/executor.test.ts bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts bundles/ai-video/connectors/post-bridge/revision-concurrency.test.ts --maxWorkers=1",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T16:45:19.385965+00:00",
+                "result": "Actual complete post workstation regression passes; explicit creative peak processing, original source bytes/full copied video streams, default no-quality review and public mix entries are exercised with real FFmpeg."
+              },
+              {
+                "command": "node --test bundles/ai-video/connectors/bgm-bridge/audio-stems-mix.test.mjs bundles/ai-video/connectors/bgm-bridge/declared-program-mix.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T16:45:30.446678+00:00",
+                "result": "Actual signed-source and original-program mix contracts, tool/CLI, tampering and duplicate request regressions pass; no paid provider calls."
+              },
+              {
+                "command": "node scripts/generate-capabilities.mjs --check",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T16:45:30.732116+00:00",
+                "result": "Repository-generated capability inventory is consistent; no capability declaration was removed or invented."
+              }
+            ],
+            "reviewedAt": "2026-10-07T16:47:38.524051+00:00",
+            "summary": "Current Codex fully read the complete current BGM core, CLI, README and structure regression plus all direct dependencies (measure, synth, audio-stems/trust, brief, sources and tag), checked unchanged dependency blobs against the earlier complete reads, and reviewed every final changed line. Real FFmpeg tests compare the actual rotated PCM to the expected phase rotation, verify full original video packet hashes and source file hash, require opening music, exercise CLI/tool/direct entries and invalid cues, and reject any source-video quality-null pass through a test wrapper that still executes real encoders. Full post regression and source-authority audio tests run at this exact commit. No external model or paid render was invoked. Native required CI, immutable integration and actual signed release bytes remain mandatory.",
+            "passed": true,
+            "id": "253a22c610d30917af65685ef137ad49b2af0eafbc0fbcfc8b41e85252028080"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 176,
+            "pull": {
+              "number": 176,
+              "state": "open",
+              "title": "fix(growth): align requested music peaks without reviewing source films [T-2026-1007-0918]",
+              "body": "Removing automatic source-film quality review also dropped the BGM section/peak processing receipt. Restore an explicit creative cue across mix, CLI and tool calls: use only the requested music to find an anchor, rotate its phase and loop from the opening. Never infer a cue by scanning rendered film. Record actual selected and rotated audio bytes, hashes and declared alignment; leave qualityReviewed=false and unmeasured quality metrics null. Reject malformed/out-of-timeline cues. Preserve the entire copied video stream and source file. This independent fix uses the current cloud main post cores; no paid generation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    167\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.24\"\n    }\n  ]\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-bgm-declared-peak",
+                "sha": "309d830dd6f7ef77627da282933d96b4b1fd42d7",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "309d830dd6f7ef77627da282933d96b4b1fd42d7",
+            "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+            "files": [
+              "bundles/ai-video/connectors/bgm-bridge/README.md",
+              "bundles/ai-video/connectors/bgm-bridge/cli.mjs",
+              "bundles/ai-video/connectors/bgm-bridge/core.mjs",
+              "bundles/ai-video/connectors/bgm-bridge/structure.test.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                167
+              ],
+              "releases": [
+                {
+                  "kind": "desktop",
+                  "version": "0.1.24"
+                }
+              ]
+            },
+            "headTime": 1791391457000,
+            "mergeBase": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "d245f137bdaa1ff6a8a7e325c9eb6c15d10fa1f9bd4866374fe926dbe0658d59",
+      "digest": "12247727b40f0bacb06190a8a5f2e14bc08ecad606e8d24ac7cfa0257d9eebe0"
+    },
+    {
+      "sequence": 2562,
+      "at": "2026-10-07T16:47:40.398Z",
+      "kind": "transaction",
+      "data": {
+        "id": "b2a727d4-f0e1-4ae6-a39c-73144402fef3"
+      },
+      "previous": "12247727b40f0bacb06190a8a5f2e14bc08ecad606e8d24ac7cfa0257d9eebe0",
+      "digest": "9dd3128174ae21c12ea6e3fc0bdf722d3e96dbf9bbde89e971b47b0c54744300"
     }
   ]
 }
