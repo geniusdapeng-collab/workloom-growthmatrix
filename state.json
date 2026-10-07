@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3291,
+  "revision": 3293,
   "tasks": {
     "132": {
       "number": 132,
@@ -5572,7 +5572,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791403215350,
+      "updatedAt": 1791403507903,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -82922,6 +82922,52 @@
       },
       "previous": "188c1b84529d6bb6e01c1f82e72492c0264c6f649897ba3391231abf34be2cbe",
       "digest": "e2783b6ec81b0125e80502a5a36d22e0306f641d1578c16f2b3a13a0a939ddc2"
+    },
+    {
+      "sequence": 3292,
+      "at": "2026-10-07T20:05:07.903Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "e2783b6ec81b0125e80502a5a36d22e0306f641d1578c16f2b3a13a0a939ddc2",
+      "digest": "d892ed834a8c642928b656368818c2ef6aabd4b18c48953ddf0a234d683ef0a4"
+    },
+    {
+      "sequence": 3293,
+      "at": "2026-10-07T20:06:54.628Z",
+      "kind": "transaction",
+      "data": {
+        "id": "174a8285-ab89-4dc3-947b-8070caaddd14"
+      },
+      "previous": "d892ed834a8c642928b656368818c2ef6aabd4b18c48953ddf0a234d683ef0a4",
+      "digest": "c2f717733a9b3da425436825cf9ac2a0422a2236a93219eaf2ed7ffcf6f46f60"
     }
   ]
 }
