@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3906,
+  "revision": 3908,
   "tasks": {
     "132": {
       "number": 132,
@@ -688,14 +688,14 @@
         "at": 1791412814026
       },
       "developerReview": null,
-      "error": "Alignment retry budget exhausted",
-      "blockedUntil": 1791413414026,
+      "error": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+      "blockedUntil": 1791414311542,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
         "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
-        "reason": "主干对齐失败：Command failed: git merge --no-ff --no-edit 5e148fc1ae3ad097bce2fcecf5d724fee9075219\n",
-        "at": 1791412814026
+        "reason": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+        "at": 1791413711542
       },
       "recoveryIntent": null,
       "recoveryCount": 0,
@@ -97101,6 +97101,39 @@
       },
       "previous": "dfe43c8b5c6a071e3b02dce2ad14ba7f38fdcc086c760d08291270a5e37a1136",
       "digest": "859d86902fd66e69a95b6de9294c59316ed833f680821f815a3afc47323dad11"
+    },
+    {
+      "sequence": 3907,
+      "at": "2026-10-07T22:55:11.542Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "reason": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+            "at": 1791413711542
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791414311542
+        }
+      },
+      "previous": "859d86902fd66e69a95b6de9294c59316ed833f680821f815a3afc47323dad11",
+      "digest": "6691b2c1a0a38b37b32943dad8002bf4263c23384739172c8545676a2c776502"
+    },
+    {
+      "sequence": 3908,
+      "at": "2026-10-07T22:56:30.349Z",
+      "kind": "transaction",
+      "data": {
+        "id": "b4db2710-3df3-4b90-81e2-6c6faba71809"
+      },
+      "previous": "6691b2c1a0a38b37b32943dad8002bf4263c23384739172c8545676a2c776502",
+      "digest": "20e643cbae400048e3c7c5c5b804a1c863997ae169217a9d1e58225541ed84ff"
     }
   ]
 }
