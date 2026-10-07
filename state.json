@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 537,
+  "revision": 539,
   "tasks": {
     "132": {
       "number": 132,
@@ -2538,8 +2538,8 @@
         "packages/video-studio/src/rendered-output-policy.ts"
       ],
       "ciSince": 1791352820859,
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791355511374
+      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls?state=all&base_ref=main&page_size=100&page=2 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791356113461
     },
     "146": {
       "number": 146,
@@ -14113,6 +14113,31 @@
       },
       "previous": "5937b714cecc1db26075463b6b8ae058cb47e6f7804da1338ffa70dae518ac23",
       "digest": "46e2e127c86b198f47bdd3c3e8ac05b20e8c12a6df0c747845e9e13f974bc21f"
+    },
+    {
+      "sequence": 538,
+      "at": "2026-10-07T06:45:13.461Z",
+      "kind": "task",
+      "data": {
+        "number": 145,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls?state=all&base_ref=main&page_size=100&page=2 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791356113461
+        }
+      },
+      "previous": "46e2e127c86b198f47bdd3c3e8ac05b20e8c12a6df0c747845e9e13f974bc21f",
+      "digest": "8625f0156ef77425b0709ab24be212395eb4926d722878245851804b93de62a8"
+    },
+    {
+      "sequence": 539,
+      "at": "2026-10-07T06:45:49.170Z",
+      "kind": "transaction",
+      "data": {
+        "id": "f45a5e24-7494-40cf-b5b7-dceca49dfe43"
+      },
+      "previous": "8625f0156ef77425b0709ab24be212395eb4926d722878245851804b93de62a8",
+      "digest": "cd31da6e86ae28b848783f92e506dd606c294a83a8e23f6084c118eacce4a3a8"
     }
   ]
 }
