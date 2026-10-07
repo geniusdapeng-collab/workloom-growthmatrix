@@ -81,12 +81,17 @@ describe("配乐围栏（G-BGM0..G-BGM9）语义", () => {
     expect(evaluate("G-BGM2", { output_path: "/a.mp4", input_path: "/a.mp4" })).toBe(true);
     expect(evaluate("G-BGM2", { output_path: "/b.mp4", input_path: "/a.mp4" })).toBe(false);
 
-    // G-BGM3：关闭复检 / 丢弃原声 → block
-    expect(evaluate("G-BGM3", { skip_verify: true })).toBe(true);
-    expect(evaluate("G-BGM3", { verify: false })).toBe(true);
+    expect(evaluate("G-BGM2")).toBe(false);
+
+    // G-BGM3：旧品质复检开关不阻断；丢弃原声必须取得明确授权。
+    expect(evaluate("G-BGM3", { skip_verify: true })).toBe(false);
+    expect(evaluate("G-BGM3", { verify: false })).toBe(false);
     expect(evaluate("G-BGM3", { mute_dialogue: true })).toBe(true);
+    expect(evaluate("G-BGM3", { mute_dialogue: true, allow_discard_original: true })).toBe(false);
     expect(evaluate("G-BGM3", { policy: "music-only" })).toBe(true);
     expect(evaluate("G-BGM3", { policy: "music-only", allow_discard_original: true })).toBe(false);
+    expect(evaluate("G-BGM3", { remove_vocals_full: true })).toBe(true);
+    expect(evaluate("G-BGM3", { remove_vocals_full: true, allow_discard_original: true })).toBe(false);
     expect(evaluate("G-BGM3", { policy: "keep-dialogue" })).toBe(false);
 
     // G-BGM4：日配额熔断（缺字段按求值异常 → block，属 fail-closed，故运行时必须带值）

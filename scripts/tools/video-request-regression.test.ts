@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -243,6 +244,32 @@ describe("全链路当前血缘与返修范围", () => {
 describe("成片硬切 CFR 接缝", () => {
   const available = [ffmpeg, ffprobe].every((bin) => spawnSync(bin, ["-version"], { stdio: "ignore" }).status === 0);
 
+  const hash = (file: string) => createHash("sha256").update(readFileSync(file)).digest("hex");
+  const assertComposeReceipt = (master: string, clips: string[], expectedDuration: number) => {
+    const receipt = JSON.parse(readFileSync(master.replace(/\.mp4$/i, ".compose-receipt.json"), "utf8"));
+    expect(receipt.policy).toBe("workloom.provider-success-direct-post/v1");
+    expect(receipt.qualityReviewed).toBe(false);
+    expect(receipt.output.path).toBe(master);
+    expect(receipt.output.sha256).toBe(hash(master));
+    expect(receipt.output.hasAudio).toBe(true);
+    expect(Math.abs(receipt.output.durationSec - expectedDuration)).toBeLessThanOrEqual(0.13); // Existing one-frame tolerance @8fps.
+    expect(receipt.sourceReceipts.map((source: { path: string }) => source.path)).toEqual(clips);
+    expect(receipt.sourceReceipts.map((source: { sha256: string }) => source.sha256)).toEqual(clips.map(hash));
+    expect(receipt.sourceReceipts.every((source: { qualityReviewed: boolean }) => source.qualityReviewed === false)).toBe(true);
+    expect(receipt).not.toHaveProperty("samples");
+    const timing = spawnSync(ffprobe, ["-v", "error", "-show_entries", "stream=codec_type,duration", "-of", "json", master],
+      { encoding: "utf8", timeout: 15_000 });
+    expect(timing.status, `${timing.error ?? ""}\n${timing.stderr}`).toBe(0);
+    const streams = JSON.parse(timing.stdout).streams as Array<{ codec_type: string; duration: string }>;
+    for (const type of ["video", "audio"]) {
+      const duration = Number(streams.find(stream => stream.codec_type === type)?.duration);
+      expect(Number.isFinite(duration), `${type} has a real output clock`).toBe(true);
+      expect(Math.abs(duration - expectedDuration), `${type} follows the declared timeline`).toBeLessThanOrEqual(0.13);
+      if (type === "video") expect(receipt.output.durationSec).toBe(duration);
+    }
+    return receipt;
+  };
+
   it.skipIf(!available)("视频直拷拼接的每个接缝保持整帧间隔，音画同步按同一时长计算", () => {
     const dir = mkdtempSync(join(tmpdir(), "compose-cfr-")); temporary.push(dir);
     const clips: string[] = [];
@@ -287,9 +314,9 @@ describe("成片硬切 CFR 接缝", () => {
         expect(pts[index]! - pts[index - 1]!, `${file}: frame ${index}`).toBeCloseTo(0.125, 4);
       }
     }
-    const sync = JSON.parse(readFileSync(join(dir, "master.av-sync.json"), "utf8")) as { ok: boolean; measured: number };
-    expect(sync.ok).toBe(true);
-    expect(sync.measured).toBe(3);
+    const receipt = assertComposeReceipt(master, clips, 3);
+    expect(receipt.requested).toEqual({ width: 64, height: 96, fps: 8, durationSec: null });
+    expect(receipt.transforms).toEqual({ silencePadding: [], transition: "", transitionDuration: 0, fade: 0 });
   }, 100_000);
 
   it.skipIf(!available)("--transition-at 3 只在第三镜入点转场，音画起点与刀数同源", () => {
@@ -316,10 +343,8 @@ describe("成片硬切 CFR 接缝", () => {
     expect(result.stdout).toContain("× 1 刀");
     const duration = spawnSync(ffprobe, ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", master], { encoding: "utf8" });
     expect(Math.abs(Number(duration.stdout.trim()) - 2.75)).toBeLessThanOrEqual(0.13); // ≤1 frame @8fps
-    const report = JSON.parse(readFileSync(join(dir, "master.av-sync.json"), "utf8"));
-    expect(report.outputSha256).toMatch(/^[a-f0-9]{64}$/);
-    expect(report.clipCount).toBe(3);
-    expect(report.samples.map((sample: { index: number }) => sample.index)).toEqual([0, 1, 2]);
+    const receipt = assertComposeReceipt(master, clips, 2.75);
+    expect(receipt.transforms).toEqual({ silencePadding: [], transition: "fade", transitionDuration: 0.25, fade: 0 });
     const pixel = (at: number) => {
       const frame = spawnSync(ffmpeg, ["-v", "error", "-ss", String(at), "-i", master, "-frames:v", "1",
         "-vf", "scale=1:1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], { encoding: "buffer" });
