@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2813,
+  "revision": 2815,
   "tasks": {
     "132": {
       "number": 132,
@@ -688,14 +688,14 @@
         "at": 1791397819607
       },
       "developerReview": null,
-      "error": "Alignment retry budget exhausted",
-      "blockedUntil": 1791398419607,
+      "error": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+      "blockedUntil": 1791399314863,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
         "mainSha": "703947eeca100eb2598c9bb25c914d4dad8c9a9b",
-        "reason": "主干对齐失败：Command failed: git merge --no-ff --no-edit 703947eeca100eb2598c9bb25c914d4dad8c9a9b\n",
-        "at": 1791397819607
+        "reason": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+        "at": 1791398714863
       },
       "recoveryIntent": null,
       "recoveryCount": 0,
@@ -72249,6 +72249,39 @@
       },
       "previous": "64e83534d735814535dc77f2621aa46636e0c2ad096fbdc8d6eed2ea6ed6c209",
       "digest": "065d37afb4caf5b4fbfbd95c719d72df54dc6ca75ae6cc62edf9bbaa75e9aa3d"
+    },
+    {
+      "sequence": 2814,
+      "at": "2026-10-07T18:45:14.863Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
+            "mainSha": "703947eeca100eb2598c9bb25c914d4dad8c9a9b",
+            "reason": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+            "at": 1791398714863
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791399314863
+        }
+      },
+      "previous": "065d37afb4caf5b4fbfbd95c719d72df54dc6ca75ae6cc62edf9bbaa75e9aa3d",
+      "digest": "2a0ac8b5c02d3ee535fef11f7b2fe6d442b716af681bd99a05adbc9ee6cff6e3"
+    },
+    {
+      "sequence": 2815,
+      "at": "2026-10-07T18:45:29.964Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8359c04b-bb15-4607-9d25-921f533b64de"
+      },
+      "previous": "2a0ac8b5c02d3ee535fef11f7b2fe6d442b716af681bd99a05adbc9ee6cff6e3",
+      "digest": "eb1afcc9323c9960f250f8fcd3d6e037b42bc1feb63e7a75578e5e9af44708f0"
     }
   ]
 }
