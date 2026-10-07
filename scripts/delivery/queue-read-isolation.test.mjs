@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Platform } from './queue-platform.mjs';
 import { dependencies, reconcile } from './queue-controller.mjs';
-import { appendEvent, emptyState, updateTask, validateState } from './queue-model.mjs';
+import { appendEvent, emptyState, parseIntent, updateTask, validateState } from './queue-model.mjs';
 import { BASE_POLICY } from './queue-policy.mjs';
 
 const repo = 'workloom-ai/read-isolation-fixture';
@@ -139,4 +139,46 @@ test('a later scan reads recovered current details again; stale source reviews s
   assert.ok(calls.some(call => call.path === '/-/pulls/2/commit-statuses'));
   assert.deepEqual(result.failed, []); assert.deepEqual(result.integrated, []);
   assert.match(result.waiting.find(row => row.number === 2).reasons.join(';'), /Codex review/);
+});
+
+test('unchanged waiting tasks cannot consume the deadline before a newer independent source is checked', async () => {
+  const state = activated();
+  const waiting = Array.from({ length: 20 }, (_, index) => pull(index + 1, [90]));
+  for (const row of waiting) updateTask(state, row.number, { status: 'waiting_dependency',
+    headSha: row.head.sha, intent: parseIntent(row), dependencies: [90] }, now);
+  const store = memoryStore(state), mutate = store.mutate;
+  let elapsed = 0, writes = 0;
+  store.mutate = async operation => { writes++; elapsed += 2000; return mutate(operation); };
+  const { platform, calls } = platformFixture([...waiting, pull(21), pull(90, [], { state: 'closed' })]);
+  const result = await reconcile({ platform, store, policy, now: now + 1,
+    deadlineMs: 1000, elapsedClock: () => elapsed });
+  assert.equal(calls.filter(call => call.path === '/-/pulls/90').length, 1, 'Current prerequisite is still read');
+  assert.ok(calls.some(call => call.path === '/-/pulls/21/commit-statuses'), 'Independent source receives real full snapshot checks');
+  assert.equal(writes, 1, 'Only the newly inspected independent source changes durable state');
+  assert.match(result.waiting.find(row => row.number === 21).reasons.join(';'), /Codex review/);
+  assert.deepEqual(result.integrated, []);
+  const after = await store.read();
+  for (const row of waiting) assert.deepEqual(after.tasks[String(row.number)], state.tasks[String(row.number)]);
+});
+
+for (const changed of ['head', 'intent', 'pending dependencies', 'missing intent', 'missing pending dependencies']) test(`changed ${changed} is persisted despite waiting-write suppression`, async () => {
+  const current = pull(1, [90, 91]), state = activated();
+  const old = { status: 'waiting_dependency', headSha: head, intent: parseIntent(current), dependencies: [90] };
+  if (changed === 'head') old.headSha = 'd'.repeat(40);
+  if (changed === 'intent') old.intent = parseIntent(pull(1, [90]));
+  if (changed === 'pending dependencies') old.dependencies = [90, 91];
+  if (changed === 'missing intent') delete old.intent;
+  if (changed === 'missing pending dependencies') delete old.dependencies;
+  updateTask(state, 1, old, now);
+  const store = memoryStore(state), { platform, calls } = platformFixture([current,
+    pull(90, [], { state: 'closed' }), pull(91, [], { state: 'closed', is_merged: true })]);
+  const result = await reconcile({ platform, store, policy, now: now + 1 });
+  const after = await store.read();
+  assert.equal(after.revision, state.revision + 1);
+  assert.equal(after.tasks['1'].headSha, current.head.sha);
+  assert.deepEqual(after.tasks['1'].intent, parseIntent(current));
+  assert.deepEqual(after.tasks['1'].dependencies, [90]);
+  assert.equal(after.tasks['1'].updatedAt, now + 1);
+  assert.ok(!calls.some(call => call.path === '/-/pulls/1/commit-statuses'));
+  assert.deepEqual(result.integrated, []);
 });

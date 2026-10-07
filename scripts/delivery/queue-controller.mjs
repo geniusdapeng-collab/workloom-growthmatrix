@@ -263,7 +263,16 @@ export async function reconcile({ platform, store, policy, now = Date.now(), dry
         && parseIntent(pull).ready !== false && policy.branchPrefixes.some(prefix => branchName(pull.head?.ref).startsWith(prefix))) {
         const sourceIntent = parseIntent(pull);
         report.waiting.push({ number, reason: `Explicit prerequisites ${plannedDependencies.pending.join(',')}` });
-        if (!dryRun) await store.mutate(current => updateTask(current, number, {
+        // Current source/prerequisite reads still decide this lane. Do not append
+        // an identical waiting event on every scan: remote Git writes can spend
+        // the entire runner deadline before newer independent work is inspected.
+        const storedWaiting = state.tasks[String(number)];
+        const unchangedWaiting = storedWaiting?.status === 'waiting_dependency'
+          && storedWaiting.headSha === pull.head?.sha
+          && storedWaiting.intent !== undefined && Array.isArray(storedWaiting.dependencies)
+          && hash(storedWaiting.intent) === hash(sourceIntent)
+          && hash(storedWaiting.dependencies) === hash(plannedDependencies.pending);
+        if (!dryRun && !unchangedWaiting) await store.mutate(current => updateTask(current, number, {
           status: 'waiting_dependency', headSha: pull.head?.sha, intent: sourceIntent, dependencies: plannedDependencies.pending,
         }, now));
         continue;
