@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 840,
+  "revision": 842,
   "tasks": {
     "132": {
       "number": 132,
@@ -2399,7 +2399,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791358810413,
+      "updatedAt": 1791362108120,
       "error": "检查/评审阻断：Required check static-gate missing/failed/ambiguous",
       "blockedUntil": 1791359410413,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
@@ -21431,6 +21431,51 @@
       },
       "previous": "5db45d0cec0553c14f395a6eb1a734f82921bac55e2224052f3c8d3f875fe530",
       "digest": "66a28ff5be7136bf06085821f63437a5dfb2d4d582feeb79cea2639842e181c6"
+    },
+    {
+      "sequence": 841,
+      "at": "2026-10-07T08:35:08.120Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-creative-duration",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/creative-duration-policy.test.ts",
+            "packages/video-studio/src/creative-duration-policy.ts",
+            "packages/video-studio/src/duration-projection-bridge.test.ts",
+            "packages/video-studio/src/duration-projection.test.ts",
+            "packages/video-studio/src/duration-projection.ts",
+            "packages/video-studio/src/duration-rules.test.ts",
+            "packages/video-studio/src/duration-rules.ts",
+            "packages/video-studio/src/vendor-compat.ts",
+            "scripts/tools/duration-projection-e2e.mts"
+          ],
+          "status": "parked",
+          "ciSince": 1791358810413
+        }
+      },
+      "previous": "66a28ff5be7136bf06085821f63437a5dfb2d4d582feeb79cea2639842e181c6",
+      "digest": "09996818d81260dcf0765a1efdd0be30a05a955aed848eaa8a84dbc8cd96cfac"
+    },
+    {
+      "sequence": 842,
+      "at": "2026-10-07T08:35:46.875Z",
+      "kind": "transaction",
+      "data": {
+        "id": "4fca2ee2-5363-4eb8-9ae0-dbfbb015f94b"
+      },
+      "previous": "09996818d81260dcf0765a1efdd0be30a05a955aed848eaa8a84dbc8cd96cfac",
+      "digest": "1fd73b535f7aacd1a92ff2913903384f1aceaafd22209088df76690ce4f07130"
     }
   ]
 }
