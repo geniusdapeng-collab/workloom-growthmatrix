@@ -1,7 +1,9 @@
 # 成片配乐 bridge 连接器（ai-video）
 
 把 `bgmread.* / bgmwrite.*` 工具接到 Mac 配乐工位（ffmpeg 内核 + 仓内自算作曲内核），
-供「BGM 配乐师」数字员工在后期环节对成片做**定调 → 分层 → 铺设 → 复检**。
+供「BGM 配乐师」数字员工在后期环节按请求为成片选配方、铺设与实际混音一次。
+
+**2026-10-07 当前默认**：成功源片原节目音直接使用；不审音频、对白、口型、响度、人声余量、可闻度或既有配乐，不触发品质分轨、重混重试、ASR/TTS。缺省 `best` 用 `compose-only` 确定性选配方并加工一次；`section` 缺省 `full`。回执标 `sourceAuthority=original-program-bytes`、`stemsVerified=false`、`qualityReviewed=false`，`levels` 与品质分数为 `null`。原片无音轨时按实际时间轴补静音，再完成请求混音。显式提供的签章分轨保持严格权限、范围、签名、时限与字节校验。
 
 ## 部署形态
 
@@ -13,7 +15,7 @@ WorkLoom（大脑：岗位/技能/围栏/事件账本）          Mac 配乐工�
                                             ├─ 可选：demucs / audio-separator（深度学习分离，外部安装）
                                             ├─ 素材区（原片只读）
                                             ├─ 产物区（新文件 + 版本链）
-                                            └─ 回执：sha256 / 响度 / 让位深度 / 人声余量 / 配乐可闻度
+                                            └─ 回执：源/产物 sha256 / 实际参数 / 时间轴 / 来源
 ```
 
 **大文件不出工位**：服务器只传路径与参数，工位本地读写素材，只回元数据、小图（波形对比）与哈希。
@@ -36,7 +38,7 @@ const toolExecutor = createBgmBridgeExecutor({
 与调色工位同款：基座 seam 提案仍处「暂缓」（`proposals/workloom-im/0001-deployment-tool-executor-seam.md`），
 因此当前生产入口是**行业侧脚本注入**（见 `runtime-smoke.mts` 与部署层 `server-adapter.mts`），不改任何基座文件。
 
-## 工具面（10 个）
+## 工具面
 
 | 工具 | 类型 | 用途 |
 |---|---|---|
@@ -47,10 +49,12 @@ const toolExecutor = createBgmBridgeExecutor({
 | `bgmread.recipes` | 读 | **题材×情绪配方检索**（调式/调性/BPM/和弦/配器/电平/让位/禁忌） |
 | `bgmread.library` | 读 | 无版权曲库检索 + 许可判定 + TASL 署名文件 |
 | `bgmwrite.compose` | 写 | **自算作曲**出 BGM（可按时长对齐片子、可按剪辑点定速） |
-| `bgmwrite.mix` | 写 | 分层混音出片：原声保留策略、侧链让位、卡点对齐、淡入淡出、-14 LUFS 母版 |
+| `bgmwrite.mix` | 写 | 请求混音一次：保留策略、请求让位/电平/淡入淡出；记录实际产物与参数，不以声学分数放行 |
 | `bgmwrite.separate` | 写 | 人声分离（demucs/audio-separator → ffmpeg 中心声道近似，质量等级如实标注） |
-| `bgmwrite.best` | 写 | 择优配乐：候选池打分；**允许结论是"这片子不需要配乐"**（不产出文件） |
+| `bgmwrite.best` | 写 | 按请求选择确定性配方并混音一次，无源片品质候选评分或自动取消请求配乐 |
 | `bgmwrite.tag` | 写 | **曲库打标**：素材目录逐首实测（响度/真峰值/削波/拍速/结构/频谱/静音）→ 多维标签 + 置信度 → 写曲库索引；许可必须先声明（围栏 G-BGM8），低置信交人审（G-BGM9） |
+
+`bgmread.analyze` / `bgmread.structure`、分離与曲库打标是显式诊断/素材管理工具，不由默认成功源片出片路径调用。以下曲库生成和结构选段介绍保持其显式工具语义。
 
 ## 随仓兜底曲库（50 首可商用纯音乐选段）
 
@@ -111,7 +115,7 @@ bgm-cli library --scan
 ```bash
 bgm-cli fetch --prompt "国风古筝，中国古典" --catalog chinese-classical
 bgm-cli fetch --prompt "欧美流行风格，快节奏" --catalog western-pop
-bgm-cli best  --in clip.mp4 --out scored.mp4 --audio-stems pinned-audio-reference.json --prompt "..." --catalog cinematic-score
+bgm-cli best  --in clip.mp4 --out scored.mp4 --prompt "..." --catalog cinematic-score
 ```
 
 | catalog | 含义 | 曲源参数（Jamendo 标签 / Freesound 检索词） |
@@ -131,58 +135,54 @@ bgm-cli best  --in clip.mp4 --out scored.mp4 --audio-stems pinned-audio-referenc
 
 ```bash
 bgm-cli structure --in track.wav                       # 看结构：分段 + BPM + 高潮候选
-bgm-cli mix --in clip.mp4 --out scored.mp4 --bgm track.wav --audio-stems pinned-audio-reference.json --section auto
+bgm-cli mix --in clip.mp4 --out scored.mp4 --bgm track.wav --section full
+# 显式选段可用 --section auto|climax|calm；不审源片品质
 bgm-cli mix ... --section climax                       # 强制取高潮段
 bgm-cli mix ... --section calm                         # 强制取铺垫段
 bgm-cli mix ... --section-start 62 --section-end 78    # 人工指定（秒）
 ```
 
-`section=auto` 的决策链（每一步都写进回执 `report.section`）：
+以下是显式结构诊断的历史决策说明。当前默认 `section=full` 不对源片扫描高潮、人声或能量。显式 `auto` 依据曲目结构选段，回执记实际所选时间；不把该选择称为源片品质通过。
+
+原结构诊断设计（不作为默认放行条件）：
 
 1. 先定**片子的高潮时刻**，依据按优先级：剪辑密度成簇（±2s 内 ≥2 剪辑点）→ 非对白段能量峰（比非对白中位数高 ≥3dB）→ 音频总能量峰（且对白占比 <35%）；
 2. 找得到 → 取曲子的 `drop` 段，把它内部的能量峰值**对齐到片子高潮时刻**（片子高潮更早则向前裁片头）；
 3. 找不到（口播/访谈这类无画面高潮的片子）→ **不做峰值对齐**，取曲子最有代表性的一段从片头铺，回执写明原因；
 4. 选出的段比片子还长 → 段内**滑窗**（以能量最高处为中心取 片长×40%）；曲子平坦则从曲头取。
 
-边界纪律：片段边界优先吸结构边界、其次吸节拍（BPM 置信度 low 时不吸）；两端各 120ms 微淡防爆音；选段后**重新量片段电平**再定增益。
-证据：`section-picked.png`（上=曲目波形+选中片段红框，下=片子波形+高潮时刻红框）。
+默认实际混音只按请求参数执行一次，短曲先物化为有限时间轴 WAV，再输入复杂滤镜；不在该混音滤镜内使用无限循环。实际循环次数、WAV 摘要和最终产物时间轴留在回执；不默认量源片电平或生成品质证据图。
 
 ## 四种分层策略（回答"声音全去掉？直接盖？还是先分离人声？"）
 
 | policy | 声音床 | 适用 | 纪律 |
 |---|---|---|---|
-| `keep-dialogue`（默认） | 独立对白 + 环境 + 拟音 | 口播/访谈/带货 | 只由独立对白驱动侧链；对白-音乐余量 ≥3dB，3–6dB 告警 |
-| `keep-all` | 同一独立节目轨，BGM 更轻 | 纪录片/现场感 | 配乐电平再降 3dB，旧音乐不进入节目轨 |
-| `replace-bed` | 经签章的独立对白 | 环境声脏、要换氛围 | 不做中心声道近似分离；独立对白缺失拒绝 |
-| `music-only` | 静音节目床 | 无对白纯音乐片 | 显式 `allow_discard_original=true` 且对白须有权威不适用回执 |
+| `keep-dialogue`（默认） | 原节目音；显式签章分轨时为独立节目轨 | 保留原声并添加请求配乐 | 按请求参数让位，不以人声余量评审 |
+| `keep-all` | 同一原节目音；显式分轨仍按所选角色 | 纪录片/现场感 | 按请求保留策略加工，不审既有配乐 |
+| `replace-bed` | 按显式请求的所选节目来源 | 明确要求改变声床 | 不自动分离或作声学质量判断 |
+| `music-only` | 静音节目床 | 明确要求只保留新音乐 | 必须明确 `allow_discard_original=true`；签章分轨仍遵守其角色授权合同 |
 
-## 正常混音的独立来源要求
+## 默认原节目音与显式签章分轨
 
-`mix`/`best` 的 CLI 参数 `--audio-stems` 指向固定引用 JSON：`{dir,manifestSha256,recipeSha256,scope}`；
+默认 `mix`/`best` 使用源片原节目音，无需 `--audio-stems`、声明或签发密钥。旧 `--declared-program-mix` 可兼容明确原节目音选择，回执不冒充签章。显式 CLI 参数 `--audio-stems` 指向固定引用 JSON：`{dir,manifestSha256,recipeSha256,scope}`；
 工具参数名为 `audio_stems`。来源由本工位自持的 `audio-stems.mjs` 生成/校验（后期工位同源引用），四角色与签章合同见
-[`post-bridge/README.md`](../post-bridge/README.md#独立音轨来源合同t-2026-0927-0037)。工位使用
-`WORKLOOM_AUDIO_STEM_SIGNING_SECRET` / `WORKLOOM_AUDIO_STEM_SIGNING_KEY_ID` 验证，未配置时拒绝。
-本连接器只含验证器，尚未实现生产签发者。分离工具的输出不是生产独立来源资格。
+[`post-bridge/README.md`](../post-bridge/README.md#默认原节目音与显式独立音轨合同)。该显式来源使用
+`WORKLOOM_AUDIO_STEM_SIGNING_SECRET` / `WORKLOOM_AUDIO_STEM_SIGNING_KEY_ID` 验证，显式选择该来源而未配置时拒绝。
+本连接器只含验证器，尚未实现生产签发者；默认原节目音无需它。分离工具的输出不是生产独立来源资格。任何显式 `audio_stems`（含 null、数组、基本类型、丢失文件）或与声明冲突的输入均明确失败，不能静默丢引用后改用默认来源。
 
 混音前后均重验当前签章、作用域、源/角色/节目字节及配方重放。画面、音乐、节目与对白从校验后的
-FD 快照读取，画面内嵌音频不参与混音。对白活动、侧链和人声余量均来自独立对白轨。最终对白/音乐/
-节目测量使用同一线性主增益，保留处理后轨道与哈希，不以不同响度归一化的文件比较余量。
-增益受真峰值余量限制；无法同时满足响度和峰值时失败，不使用未记录的动态限制器。
-合法无对白决定显示 `applicability=not_applicable`；其人声余量与让位数值为 null，未获得不适用签章的
-缺失测量仍失败。音频/视频时间线差超过 40ms 拒绝。
+FD 快照读取，画面内嵌音频不参与混音。实际混音使用所选节目来源与请求参数，无额外人声、响度、真峰值、可闻度品质测量或重试；未测指标为 `null`，不冒充通过。源/音乐字节、所请求时间轴与真实加工错误继续核对，文件缺失、授权无效或实际音视频时间轴不符请求时失败。
 
 输出路径必须为新文件。相同 HTTP 请求仅在途共用作业；已完成请求重交会返回
 `idempotency_revalidation_required`，同键不同参数为 `idempotency_conflict`。旧回执不作为新一次成功依据。
 
 ## 安装与自检（工位一次性）
 
-下列旧 selftest/demo/runtime-smoke 脚本尚未接入独立来源签发合同，其混音步骤会按缺少签章拒绝；
-当前合同的真实 FFmpeg、CLI/HTTP 与总装测试由 `audio-stems*.test.mjs`、`audio-stems-mix.test.mjs` 和
-`delivery-integration.test.ts` 覆盖。不得把旧脚本执行失败解释为需要放宽来源校验。
+默认原节目音及显式签章分轨的真实 FFmpeg/CLI/工具入口回归见 `declared-program-mix.test.mjs`、`audio-stems-mix.test.mjs`、`audio-stems*.test.mjs` 和 `delivery-integration.test.ts`。历史演示的诊断指标只适用于显式诊断，不能作为默认品质或本轮生产模型验收。
 
 ```bash
 bash kit/install.sh            # 受控下载 ffmpeg/ffprobe（pin 版本 + sha256 校验 + 必需滤镜检查）
-bash kit/selftest.sh           # 自造片子 → 诊断 → 作曲 → 混音 → 指标核验
+bash kit/selftest.sh           # 历史显式诊断演示；当前默认加工合同以实际回归为准
 ```
 
 ## 真机演示与产物导出（不依赖数据库）
@@ -241,12 +241,11 @@ node_modules/.bin/tsx bundles/ai-video/connectors/bgm-bridge/runtime-smoke.mts
 
 | 纪律 | 落点 |
 |---|---|
-| 保留人声、BGM 让位 | `sidechaincompress` 侧链由人声频段驱动；`duckingDepthDb` / `speechToMusicMarginDb` 实测 |
-| 配了不能像没配 | `musicPresenceDb` <3dB 直接 `verify_failed` 并删除产物（do-no-harm） |
-| 不压住人声 | 人声-音乐余量 <3dB 直接 `verify_failed`；3–6dB 记告警 |
-| 响度交付口径 | 由实测节目响度/真峰值求同一线性增益；-14 LUFS / -1 dBTP，超差拒绝发布 |
-| 卡点对齐 | 剪辑点（scene 检测）→ 节拍网格偏移搜索；平均/达标率与阈值写进回执 |
-| 选段可解释 | `bgmread.structure` 的段表 + `chooseSection` 的决策理由 + `section-picked.png` 证据；无高潮点如实写 `skipped` |
+| 原节目音默认接受 | 不做源片声学/对白/口型品质评审或 ASR/TTS |
+| 请求配乐实际执行 | 一次请求配方混音，所请求产物缺失/加工失败直接报错 |
+| 品质事实诚实 | `qualityReviewed=false`；`levels`、品质分数与未测响度为 `null` |
+| 短音乐有限时间轴 | 先实际物化请求长度的 WAV，记录循环次数与摘要，再输入有限混音图 |
+| 显式来源不丢弃 | 签章/租户/范围/时限/字节照验，错误引用不能默认回退 |
 | 原片只读 | `assertOutputWritable` 同款检查 + 围栏 G-BGM2 |
-| 无回执不算完成 | 指标复检 + sha256 回执 + 围栏 G-BGM3；outage 场景负例 |
+| 实际加工可对账 | 源/产物摘要、真实请求参数与时间轴；G-BGM3 保留弃原声的明确请求合同 |
 | 许可干净 | 曲库白名单 + G-BGM1/G-BGM5；自算作曲为默认路径 |

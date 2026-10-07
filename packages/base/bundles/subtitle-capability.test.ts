@@ -51,8 +51,8 @@ const when = (ruleId: string): string => fencePack.rules.find((rule) => rule.rul
 const evaluate = (ruleId: string, params: Record<string, unknown> = {}, context: Record<string, unknown> = {}): boolean =>
   evalCondition(when(ruleId), { params, context } as never);
 
-describe("标题字幕围栏（G-SUB0..G-SUB5）语义", () => {
-  it("六条规则齐备，级别与基线口径正确", () => {
+describe("标题字幕围栏（G-SUB0..G-SUB6）语义", () => {
+  it("七条规则齐备，级别与基线口径正确", () => {
     expect(fencePack.version).toBe("ai-video-subtitle/v3");
     expect(fencePack.rules.map((rule) => rule.rule_id)).toEqual([
       "G-SUB0", "G-SUB1", "G-SUB2", "G-SUB3", "G-SUB4", "G-SUB5", "G-SUB6",
@@ -80,11 +80,16 @@ describe("标题字幕围栏（G-SUB0..G-SUB5）语义", () => {
     expect(evaluate("G-SUB2", { output_path: "/a.mp4", input_path: "/a.mp4" })).toBe(true);
     expect(evaluate("G-SUB2", { output_path: "/b.mp4", input_path: "/a.mp4" })).toBe(false);
 
-    // G-SUB3：关闭复检 / 无视安全区 → block
-    expect(evaluate("G-SUB3", { skip_verify: true })).toBe(true);
-    expect(evaluate("G-SUB3", { verify: false })).toBe(true);
-    expect(evaluate("G-SUB3", { ignore_safe_area: true })).toBe(true);
-    expect(evaluate("G-SUB3", { allow_ui_overlap: true })).toBe(true);
+    expect(evaluate("G-SUB2")).toBe(false);
+
+    // G-SUB3：成功源片直接后期；只有实际字体、ASS、时间线错误阻断。
+    expect(evaluate("G-SUB3", { skip_verify: true })).toBe(false);
+    expect(evaluate("G-SUB3", { verify: false })).toBe(false);
+    expect(evaluate("G-SUB3", { ignore_safe_area: true })).toBe(false);
+    expect(evaluate("G-SUB3", { allow_ui_overlap: true })).toBe(false);
+    for (const flag of ["font_unreadable", "ass_invalid", "timeline_invalid"]) {
+      expect(evaluate("G-SUB3", { [flag]: true }), flag).toBe(true);
+    }
     expect(evaluate("G-SUB3", { verify: true })).toBe(false);
     expect(evaluate("G-SUB3")).toBe(false);
 
@@ -102,10 +107,11 @@ describe("标题字幕围栏（G-SUB0..G-SUB5）语义", () => {
     expect(evaluate("G-SUB5", { commercial_use: true, font_license: "vendor-free-commercial" })).toBe(false);
     expect(evaluate("G-SUB5", { commercial_use: false, font_license: "unknown-vendor" })).toBe(false);
 
-    // G-SUB6：弹幕/贴纸不得绕过密度与安全区（allow_flood / ignore_density / skip_safe_area）
-    expect(evaluate("G-SUB6", { allow_flood: true })).toBe(true);
-    expect(evaluate("G-SUB6", { ignore_density: true })).toBe(true);
-    expect(evaluate("G-SUB6", { skip_safe_area: true })).toBe(true);
+    // G-SUB6：保留全部明确请求的弹幕/贴纸；无密度与安全区品质二检。
+    expect(evaluate("G-SUB6", { allow_flood: true })).toBe(false);
+    expect(evaluate("G-SUB6", { ignore_density: true })).toBe(false);
+    expect(evaluate("G-SUB6", { skip_safe_area: true })).toBe(false);
+    expect(evaluate("G-SUB6", { invalid_event_timing: true })).toBe(true);
     expect(evaluate("G-SUB6", { max_concurrent: 8 })).toBe(false);
   });
 

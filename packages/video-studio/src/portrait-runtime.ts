@@ -20,6 +20,7 @@
 import { existsSync, mkdirSync, readFileSync, statSync, lstatSync, realpathSync, writeFileSync, renameSync, unlinkSync, openSync, closeSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { shotIntentHash } from "./shot-intent.js";
+import { readAcceptedImageTask, resumeOrSubmitImageTask } from "./image-task-receipt.js";
 import { isAbsolute, join, resolve, relative, dirname, sep } from "node:path";
 
 /** vendor → 渲染核心要求的四个角度文件名（REQUIRED_ANGLES 口径） */
@@ -86,6 +87,8 @@ export interface PortraitIndex {
 export interface PortraitRuntimeOptions {
   /** 运行产物根（与 vendor 的 charactersDir 同一口径），默认 .vm-work */
   workDir: string;
+  /** Stable private acceptance journal shared by different run directories. */
+  receiptRoot?: string;
   projectId: string;
   /** 火山方舟密钥（ARK_API_KEY / VOLCENGINE_ARK_API_KEY） */
   apiKey: string;
@@ -112,7 +115,7 @@ export interface PortraitRuntimeOptions {
   maxReferenceImages?: number;
   log?: (line: string) => void;
   fetchImpl?: typeof fetch;
-  /** 失败重试次数（仅网络/限流/5xx 类，默认 2） */
+  /** 下载重试次数（仅GET网络/限流/5xx，默认2）；付费POST从不自动重试。 */
   retries?: number;
 }
 
@@ -304,15 +307,21 @@ export function createPortraitRuntime(options: PortraitRuntimeOptions): Portrait
     atomicWrite(indexFile, `${JSON.stringify(index, null, 2)}\n`);
   }
   /** Serialize filesystem publication across runtime instances and processes. Never steal an unknown paid request's lock. */
-  async function locked<T>(fn: () => Promise<T>): Promise<T> {
+  async function locked<T>(fn: () => Promise<T>, canRecover: () => boolean = () => false): Promise<T> {
     const path = join(charactersRoot, ".portrait-cache.lock");
     const owner = JSON.stringify({ pid: process.pid, token: randomUUID() });
     const started = Date.now();
     for (;;) {
       assertOutputDirectory(charactersRoot);
+      if (existsSync(`${path}.recover`)) throw new Error("PORTRAIT_CACHE_RECOVERY_BUSY");
       try {
         const fd = openSync(path, "wx", 0o600);
         try { writeFileSync(fd, owner); } finally { closeSync(fd); }
+        if (existsSync(`${path}.recover`)) {
+          if (readFileSync(path, "utf8") !== owner) throw new Error("PORTRAIT_CACHE_LOCK_CHANGED");
+          unlinkSync(path);
+          continue;
+        }
         break;
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
@@ -327,7 +336,24 @@ export function createPortraitRuntime(options: PortraitRuntimeOptions): Portrait
           if (!record(holder) || !Number.isInteger(holder.pid) || Number(holder.pid) <= 0 || typeof holder.token !== "string") throw new Error("PORTRAIT_CACHE_LOCK_INVALID: 锁所有者不可核实");
           try { process.kill(Number(holder.pid), 0); }
           catch (error) {
-            if ((error as NodeJS.ErrnoException).code === "ESRCH") throw new Error("PORTRAIT_CACHE_LOCK_STALE: 上次进程已结束，需核对是否已收费/有产物后恢复，禁止盲目重发");
+            if ((error as NodeJS.ErrnoException).code === "ESRCH") {
+              if (!canRecover()) throw new Error("PORTRAIT_CACHE_LOCK_STALE: 上次进程已结束且没有当前请求受理回执，禁止盲目重发");
+              const fence = `${path}.recover`;
+              let fd: number;
+              try { fd = openSync(fence, "wx", 0o600); }
+              catch (recoveryError) { if ((recoveryError as NodeJS.ErrnoException).code === "EEXIST") throw new Error("PORTRAIT_CACHE_RECOVERY_BUSY"); throw recoveryError; }
+              try {
+                writeFileSync(fd, owner);
+                if (readFileSync(path, "utf8") !== existing || !canRecover()) throw new Error("PORTRAIT_CACHE_LOCK_CHANGED");
+                // The same request can now only restore its already accepted URL.
+                unlinkSync(path);
+              } finally {
+                closeSync(fd);
+                if (readFileSync(fence, "utf8") !== owner) throw new Error("PORTRAIT_CACHE_LOCK_CHANGED");
+                unlinkSync(fence);
+              }
+              continue;
+            }
             if ((error as NodeJS.ErrnoException).code !== "EPERM") throw error;
           }
         }
@@ -438,49 +464,43 @@ export function createPortraitRuntime(options: PortraitRuntimeOptions): Portrait
     return text.length >= 8 && descriptive.test(text) ? raw.trim() : null;
   }
 
-  async function generateImage(payload: Record<string, unknown>): Promise<string> {
-    let lastError: Error | null = null;
-    for (let attempt = 0; attempt <= retries; attempt += 1) {
-      try {
+  async function generateImage(payload: Record<string, unknown>, slotId: string, requireExisting: boolean): Promise<string> {
+    const result = await resumeOrSubmitImageTask({ root: options.receiptRoot ?? join(workRoot, "image-task-receipts"),
+      projectId, slotId, provider: "ark", endpoint: `${base}/images/generations`, body: payload, requireExisting, lockTimeoutMs: timeoutMs,
+      submit: async frozenBody => {
         const res = await fetchImpl(`${base}/images/generations`, {
           method: "POST",
           headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(frozenBody),
           signal: AbortSignal.timeout(timeoutMs)
         });
         const text = await res.text();
-        if (!res.ok) {
-          const err = new Error(`定妆照出图失败：HTTP ${res.status} ${text.slice(0, 200)}`);
-          if (res.status === 429 || res.status >= 500) {
-            lastError = err;
-            await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-            continue;
-          }
-          Object.assign(err, { noRetry: true });
-          throw err;
-        }
+        if (!res.ok) throw new Error(`定妆照出图失败：HTTP ${res.status} ${text.slice(0, 200)}（已保留提交回执，不自动重交）`);
         let data: { data?: Array<{ url?: string; size?: string }> };
         try { data = JSON.parse(text) as typeof data; }
-        catch { throw Object.assign(new Error("定妆照出图成功响应不是有效JSON，禁止自动重复收费"), { noRetry: true }); }
+        catch { throw new Error("定妆照出图成功响应不是有效JSON，禁止自动重复收费"); }
         const url = data?.data?.[0]?.url;
-        if (!url) throw Object.assign(new Error(`定妆照出图响应缺少 url：${text.slice(0, 200)}`), { noRetry: true });
-        log(`[portrait] 出图成功（${data.data?.[0]?.size ?? "?"}）`);
-        return url;
-      } catch (err) {
-        lastError = err instanceof Error ? err : new Error(String(err));
-        if ((err as { noRetry?: boolean })?.noRetry || attempt >= retries) break;
-        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-      }
-    }
-    throw lastError ?? new Error("定妆照出图失败：未知错误");
+        if (!url) throw new Error(`定妆照出图响应缺少 url：${text.slice(0, 200)}`);
+        return { url, ...(data.data?.[0]?.size ? { size: data.data[0].size } : {}) };
+      },
+    });
+    log(`[portrait] 出图成功/恢复已受理URL（${result.size ?? "?"}）`);
+    return result.url;
   }
 
   async function download(url: string): Promise<Buffer> {
-    const res = await fetchImpl(url, { signal: AbortSignal.timeout(IMAGE_DOWNLOAD_TIMEOUT_MS) });
-    if (!res.ok) throw new Error(`定妆照下载失败：HTTP ${res.status}`);
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.byteLength < 1024) throw new Error(`定妆照下载内容过小（${buf.byteLength} 字节）`);
-    return buf;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const res = await fetchImpl(url, { signal: AbortSignal.timeout(IMAGE_DOWNLOAD_TIMEOUT_MS) });
+        if (!res.ok) throw Object.assign(new Error(`定妆照下载失败：HTTP ${res.status}`), { noRetry: res.status !== 429 && res.status < 500 });
+        const buf = Buffer.from(await res.arrayBuffer());
+        if (buf.byteLength < 1024) throw Object.assign(new Error(`定妆照下载内容过小（${buf.byteLength} 字节）`), { noRetry: true });
+        return buf;
+      } catch (error) {
+        if ((error as { noRetry?: boolean })?.noRetry || attempt >= retries) throw error;
+        await new Promise(resolveWait => setTimeout(resolveWait, 200 * (attempt + 1)));
+      }
+    }
   }
 
   async function apiRender(task: PortraitTask, baseImage?: string | null): Promise<string> {
@@ -501,6 +521,8 @@ export function createPortraitRuntime(options: PortraitRuntimeOptions): Portrait
     const images = anchors.map(({ receipt, bytes }) => `data:image/${receipt.path.toLowerCase().endsWith(".png") ? "png" : "jpeg"};base64,${bytes.toString("base64")}`);
     const payload: Record<string, unknown> = { model, prompt, response_format: "url", watermark: false, ...(size ? { size } : {}), ...(images.length ? { image: images.length === 1 ? images[0] : images } : {}) };
     const endpoint = `${base}/images/generations`;
+    const slotId = `${kind}:${id}:${angle}`;
+    const paidInput = { root: options.receiptRoot ?? join(workRoot, "image-task-receipts"), projectId, slotId, provider: "ark", endpoint, body: payload };
     const requestHash = shotIntentHash({ schemaVersion: CACHE_VERSION, projectId, kind, id, angle, sourceHash, endpoint, payload, references: anchors.map((anchor) => anchor.receipt) });
     const planned: Omit<PortraitCacheReceipt, "output"> = { schemaVersion: CACHE_VERSION, requestHash, sourceHash, kind, id, angle, model, size: size ?? null, endpoint, promptHash: shotIntentHash(prompt), references: anchors.map((anchor) => anchor.receipt) };
     const dir = kind === "character" ? join(charactersRoot, key) : join(charactersRoot, "_products", key);
@@ -520,7 +542,12 @@ export function createPortraitRuntime(options: PortraitRuntimeOptions): Portrait
       if (cached) { log(`[portrait] 完整请求及产物哈希一致，复用：${kind}/${key}/${angle}`); return cached; }
       ensureOutputDirectory(dirname(file));
       log(`[portrait] 出图：${name} / ${angle}，来源 ${requestHash.slice(0, 12)}，锚点 ${anchors.length}`);
-      const url = await generateImage(payload);
+      const entry = index[bucket][key], prior = entry?.receipts?.[angle];
+      const samePaidBody = prior && prior.endpoint === endpoint && prior.model === model && prior.size === (size ?? null) && prior.promptHash === planned.promptHash
+        && shotIntentHash(prior.references?.map(ref => ({ sha256: ref.sha256, bytes: ref.bytes }))) === shotIntentHash(planned.references.map(ref => ({ sha256: ref.sha256, bytes: ref.bytes })));
+      const legacyEvidence = existsSync(file) || entry?.files?.[angle] === file || prior?.requestHash === requestHash || Boolean(samePaidBody)
+        || Boolean(entry?.files?.[angle] && !prior);
+      const url = await generateImage(payload, slotId, legacyEvidence);
       const bytes = await download(url);
       if (shotIntentHash(task) !== sourceHash) throw new Error("PORTRAIT_INPUT_CHANGED: 出图期间角色任务变化，产物未纳入索引");
       for (const anchor of anchors) verifySource(anchor.receipt);
@@ -529,7 +556,7 @@ export function createPortraitRuntime(options: PortraitRuntimeOptions): Portrait
       if (output.sha256 !== hashBytes(bytes)) throw new Error("PORTRAIT_OUTPUT_CHANGED: 落盘期间产物变化");
       upsert(bucket, key, name, dir, { ...planned, output });
       return file;
-    });
+    }, () => readAcceptedImageTask(paidInput) !== null);
     inFlight.set(flightKey, operation);
     try { return await operation; }
     finally { if (inFlight.get(flightKey) === operation) inFlight.delete(flightKey); }
