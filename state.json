@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 401,
+  "revision": 404,
   "tasks": {
     "132": {
       "number": 132,
@@ -2011,7 +2011,7 @@
     },
     "142": {
       "number": 142,
-      "status": "developing",
+      "status": "waiting_ci",
       "firstSeen": 1791350268258,
       "attempts": {},
       "admission": {
@@ -2023,7 +2023,110 @@
         "owner": "admission/pr-142",
         "generation": {}
       },
-      "updatedAt": 1791350268258
+      "updatedAt": 1791350400643,
+      "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
+      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "branch": "fix/T-2026-1007-0918-prompt-redlines",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [],
+        "releases": []
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 142,
+        "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "packages/video-studio/src/prompt-redlines.test.ts",
+          "packages/video-studio/src/prompt-redlines.ts"
+        ],
+        "filesHash": "b4a20ae8cb6aec4159cc1221b9be7a9e5928e3abc28bce0c23f1299ba4bc6e91",
+        "dependsOn": [],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/prompt-redlines.test.ts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T05:17:10.797884+00:00",
+            "result": "1 test file passed; 13 tests passed; zero failed/skip. Actual result log work/evidence/delivery-01-tests-exact.log."
+          }
+        ],
+        "reviewedAt": "2026-10-07T05:19:57.057966+00:00",
+        "summary": "当前 Codex 完整读取两个改动文件。逐行复核 positiveOnly 的分句及顿号枚举否定范围、独立肯定动作重新启用、字段边界和原风险判据；否定不跨字段或标点，新可见屏幕和手持证件仍触发原检查。无外部写调用、数据库或权限变更，不新增依赖。13 项准确提交后回归通过。回滚可普通 Revert 该单一提交；回滚不删除任何模型回执或素材。未发现未解决问题。",
+        "passed": true,
+        "id": "e0e1d1e576dfe6965dd460f81d31f1913c6ca5c0849204691f960812f2105a7c"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 142,
+        "pull": {
+          "number": 142,
+          "state": "open",
+          "title": "fix(growth): preserve negation across prompt noun lists [T-2026-1007-0918]",
+          "body": "画面字段明确写“不出现房卡、单据、证件”时，原红线检查将顿号后的名词误判为可见道具，阻断合法前期并触发修订。现在否定范围保持到同一名词清单末尾，遇到明确肯定动作或新分句重新检查；后续可见屏幕、手持证件和肯定枚举仍按原规则处理。\n\n当前 Codex 完整读取两个改动文件，复核否定范围、字段边界和肯定重启分支。准确提交后实际运行 prompt-redlines.test.ts，正常、否定清单、肯定恢复、证件与屏幕红线回归均通过。没有模型调用或新付费渲染。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/fix/T-2026-1007-0918-prompt-redlines",
+            "sha": "455a03def02419fc9b071d26edde019a7a4a7402",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "files": [
+          "packages/video-studio/src/prompt-redlines.test.ts",
+          "packages/video-studio/src/prompt-redlines.ts"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [],
+          "releases": []
+        },
+        "headTime": 1791350195000,
+        "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": []
+      }
     }
   },
   "leases": {
@@ -10906,6 +11009,145 @@
       },
       "previous": "c9f0ac0f5d76353f39c6196ca29ac915cde3f541dd4eb3cbe4ac778c7fdf2cb2",
       "digest": "86fe68e985daa188141af7f4b5500fa98aed1b090ffdfa94bf41e4c6eafb0e84"
+    },
+    {
+      "sequence": 402,
+      "at": "2026-10-07T05:20:00.643Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 142,
+        "id": "e0e1d1e576dfe6965dd460f81d31f1913c6ca5c0849204691f960812f2105a7c",
+        "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8"
+      },
+      "previous": "86fe68e985daa188141af7f4b5500fa98aed1b090ffdfa94bf41e4c6eafb0e84",
+      "digest": "d0ae0576eccd23e58ea7c965a949cece762e573aa33b1440318ce8c27288266c"
+    },
+    {
+      "sequence": 403,
+      "at": "2026-10-07T05:20:00.643Z",
+      "kind": "task",
+      "data": {
+        "number": 142,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-prompt-redlines",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 142,
+            "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/prompt-redlines.test.ts",
+              "packages/video-studio/src/prompt-redlines.ts"
+            ],
+            "filesHash": "b4a20ae8cb6aec4159cc1221b9be7a9e5928e3abc28bce0c23f1299ba4bc6e91",
+            "dependsOn": [],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/prompt-redlines.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T05:17:10.797884+00:00",
+                "result": "1 test file passed; 13 tests passed; zero failed/skip. Actual result log work/evidence/delivery-01-tests-exact.log."
+              }
+            ],
+            "reviewedAt": "2026-10-07T05:19:57.057966+00:00",
+            "summary": "当前 Codex 完整读取两个改动文件。逐行复核 positiveOnly 的分句及顿号枚举否定范围、独立肯定动作重新启用、字段边界和原风险判据；否定不跨字段或标点，新可见屏幕和手持证件仍触发原检查。无外部写调用、数据库或权限变更，不新增依赖。13 项准确提交后回归通过。回滚可普通 Revert 该单一提交；回滚不删除任何模型回执或素材。未发现未解决问题。",
+            "passed": true,
+            "id": "e0e1d1e576dfe6965dd460f81d31f1913c6ca5c0849204691f960812f2105a7c"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 142,
+            "pull": {
+              "number": 142,
+              "state": "open",
+              "title": "fix(growth): preserve negation across prompt noun lists [T-2026-1007-0918]",
+              "body": "画面字段明确写“不出现房卡、单据、证件”时，原红线检查将顿号后的名词误判为可见道具，阻断合法前期并触发修订。现在否定范围保持到同一名词清单末尾，遇到明确肯定动作或新分句重新检查；后续可见屏幕、手持证件和肯定枚举仍按原规则处理。\n\n当前 Codex 完整读取两个改动文件，复核否定范围、字段边界和肯定重启分支。准确提交后实际运行 prompt-redlines.test.ts，正常、否定清单、肯定恢复、证件与屏幕红线回归均通过。没有模型调用或新付费渲染。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-prompt-redlines",
+                "sha": "455a03def02419fc9b071d26edde019a7a4a7402",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "455a03def02419fc9b071d26edde019a7a4a7402",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "files": [
+              "packages/video-studio/src/prompt-redlines.test.ts",
+              "packages/video-studio/src/prompt-redlines.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791350195000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "d0ae0576eccd23e58ea7c965a949cece762e573aa33b1440318ce8c27288266c",
+      "digest": "3d15bedf858d6969110a3df589a34db9acf458b2365773f727776a041169cc33"
+    },
+    {
+      "sequence": 404,
+      "at": "2026-10-07T05:19:59.440Z",
+      "kind": "transaction",
+      "data": {
+        "id": "cab49e14-0b31-49a6-81f0-23d655018fc8"
+      },
+      "previous": "3d15bedf858d6969110a3df589a34db9acf458b2365773f727776a041169cc33",
+      "digest": "528f9b64cd8610ce3b2efeece87748315eb28f1d52b6d81423e50dbc29d455a9"
     }
   ]
 }
