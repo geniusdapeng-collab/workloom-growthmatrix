@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2578,
+  "revision": 2580,
   "tasks": {
     "132": {
       "number": 132,
@@ -3329,7 +3329,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791390911806,
+      "updatedAt": 1791392115502,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 0,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    143\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.6\"\n    }\n  ]\n}\n-->",
@@ -66951,6 +66951,58 @@
       },
       "previous": "685b5d8c6fb2d2ad9f9c6fc8f0377c56008d75b60206667746162719d31b7f9f",
       "digest": "325dd59a505af356a8c117e947c39428b41416f011a61e9988fb489125cc5ab9"
+    },
+    {
+      "sequence": 2579,
+      "at": "2026-10-07T16:55:15.502Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "headSha": "a248bf621d885644e70ce55d0147cbf9449a2bb2",
+          "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+          "branch": "fix/T-2026-1007-0918-creative-duration",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              143
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.6"
+              }
+            ]
+          },
+          "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    143\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.6\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "packages/video-studio/src/creative-duration-policy.test.ts",
+            "packages/video-studio/src/creative-duration-policy.ts",
+            "packages/video-studio/src/duration-projection-bridge.test.ts",
+            "packages/video-studio/src/duration-projection.test.ts",
+            "packages/video-studio/src/duration-projection.ts",
+            "packages/video-studio/src/duration-rules.test.ts",
+            "packages/video-studio/src/duration-rules.ts",
+            "packages/video-studio/src/vendor-compat.ts",
+            "scripts/tools/duration-projection-e2e.mts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791374342093
+        }
+      },
+      "previous": "325dd59a505af356a8c117e947c39428b41416f011a61e9988fb489125cc5ab9",
+      "digest": "b54f221c136657455a61feaf32bd6d421788d9163db59d6bf82dcefc16745739"
+    },
+    {
+      "sequence": 2580,
+      "at": "2026-10-07T16:56:33.108Z",
+      "kind": "transaction",
+      "data": {
+        "id": "74e27128-b491-47a1-95b1-fe9a074b9129"
+      },
+      "previous": "b54f221c136657455a61feaf32bd6d421788d9163db59d6bf82dcefc16745739",
+      "digest": "d20a5a58a44d7947e6719b749801b19a748b321485c99fe56451bd7b6aefe9b6"
     }
   ]
 }
