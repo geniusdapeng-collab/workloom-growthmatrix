@@ -15,6 +15,32 @@ describe("一次过就绪度（花钱前判定）", () => {
     const r = assessShotFirstPass({ shotId: "S3", timeline: "T00:02.5–T00:06 完全定住", camera_movement: "缓推后定住" });
     expect(r.blockers.map((b) => b.id)).toContain("timing-lock-vs-motion");
   });
+  it("明确无推拉摇移与停止移动不是肯定运镜，不误拦固定机位", () => {
+    const r = assessShotFirstPass({ timeline: "T00:03.8-T00:04 镜头定住", camera_movement: "全程固定机位，无推拉摇移，机位停止移动，保持轻微呼吸感" });
+    expect(r.blockers.map(b => b.id)).not.toContain("timing-lock-vs-motion");
+  });
+  it("前段推近与后段同窗口定住分离，边界相接不算重叠；输入不改变", () => {
+    const shot = { timeline: "T00:00-T00:04.9 缓推；T00:04.9-T00:05 镜头定住", camera_movement: "T00:00-T00:04.9 匀速推近；T00:04.9-T00:05 镜头定住，机位停止移动，构图保持" };
+    const before = structuredClone(shot);
+    expect(assessShotFirstPass(shot).blockers.map(b => b.id)).not.toContain("timing-lock-vs-motion");
+    expect(shot).toEqual(before);
+  });
+  it.each([
+    "T00:00-T00:05 缓推后定住",
+    "T00:00-T00:04.95 推近；T00:04.95-T00:05 定住",
+    "T00:00-T00:04.8 推近；T00:04.95-T00:05 定住",
+    "T00:00-T00:04.9 推近；T00:04.9-T00:05 定住但继续后拉",
+    "T00:00-T00:04.9 推近；T00:05-T00:04.9 定住",
+    "缓推后定住",
+  ])("有真实运动重叠/静止缺口/无时段的运镜仍阻断：%s", camera_movement => {
+    const r = assessShotFirstPass({ timeline: "T00:04.9-T00:05 镜头定住", camera_movement });
+    expect(r.blockers.map(b => b.id)).toContain("timing-lock-vs-motion");
+  });
+  it("无抖动不能遮盖同分句的肯定推近；否定清单后新增肯定运动仍阻断", () => {
+    for (const camera_movement of ["固定机位无抖动并继续推近", "无推、拉、摇、移，随后继续推近"]) {
+      expect(assessShotFirstPass({ timeline: "T00:02-T00:04 定住", camera_movement }).blockers.map(b => b.id)).toContain("timing-lock-vs-motion");
+    }
+  });
   it("客户的造型意图（面料/配饰）与同镜多诉求只作提示，不再当风险打分", () => {
     const r = assessShotFirstPass({ shotId: "S4", costume: "黑色粗花呢套装配珍珠耳饰及膝裙", composition: "广角全景，人物中近景占比并保持视觉主导，机身清晰可辨" });
     const ids = r.findings.map((f) => f.id);
