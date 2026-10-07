@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1540,
+  "revision": 1542,
   "tasks": {
     "132": {
       "number": 132,
@@ -4228,7 +4228,7 @@
           }
         ]
       },
-      "updatedAt": 1791372227774,
+      "updatedAt": 1791374342093,
       "admission": {
         "number": 153,
         "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
@@ -4243,7 +4243,8 @@
         "bundles/ai-video/bundle.json",
         "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
         "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
-        "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts"
+        "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts",
+        "scripts/tools/video-request-regression.test.ts"
       ],
       "ciSince": 1791359409167,
       "error": "检查/评审阻断：Required check test-gate missing/failed/ambiguous",
@@ -39413,6 +39414,47 @@
       },
       "previous": "d696997237fa064ccebaafa8e4a0274663be928ca2fd9cb0af190869cdd21fb6",
       "digest": "3566c66e2197bdcf9588b91e6752f7a099ae8b810a9fb268df7a52be7ed08df8"
+    },
+    {
+      "sequence": 1541,
+      "at": "2026-10-07T11:59:02.093Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "headSha": "9173ca0fbbd8ebecbcf12444753c66caffb22ad7",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-cine-kb-preserve-intent",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "Knowledge enrichment could interpret indoor marble reflection as water, replace a left window direction with an unrelated right fill light, and append an unbounded camera movement over an authored timed end hold. Version 3 only applies context-supported instructions, preserves complete timed camera text and omits optional whole sentences that exceed a field budget. Omitted suggestions remain separate from actual written evidence. The source author text is retained.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "bundles/ai-video/bundle.json",
+            "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
+            "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+            "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts",
+            "scripts/tools/video-request-regression.test.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791359409167
+        }
+      },
+      "previous": "3566c66e2197bdcf9588b91e6752f7a099ae8b810a9fb268df7a52be7ed08df8",
+      "digest": "bcc9153e25ddf91ab42b268164e9b41d8f4fc699c779a964ac1a1943be8754c6"
+    },
+    {
+      "sequence": 1542,
+      "at": "2026-10-07T12:01:08.397Z",
+      "kind": "transaction",
+      "data": {
+        "id": "347428d4-b8fd-435d-9f20-b55f7a26fc7e"
+      },
+      "previous": "bcc9153e25ddf91ab42b268164e9b41d8f4fc699c779a964ac1a1943be8754c6",
+      "digest": "2e18cea747e328606aaf79de6dae6c54e2e1acf2ab9d9587702af3efab19c5c6"
     }
   ]
 }
