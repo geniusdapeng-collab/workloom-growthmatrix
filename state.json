@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1548,
+  "revision": 1550,
   "tasks": {
     "132": {
       "number": 132,
@@ -4722,7 +4722,7 @@
     },
     "157": {
       "number": 157,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791362963095,
       "attempts": {},
       "headSha": "7c59fcb1805defb3a9b588cce0817dc2e5618bd2",
@@ -4878,7 +4878,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791372281448,
+      "updatedAt": 1791374342093,
       "admission": {
         "number": 157,
         "headSha": "7c59fcb1805defb3a9b588cce0817dc2e5618bd2",
@@ -39564,6 +39564,44 @@
       },
       "previous": "fadd9e5966c5046a1ed509f84d7f3fc3972e686b3b3a37e3b4265067119b1bdc",
       "digest": "93daa104a1d29bd0c27b9b43c32f29959219bd3ea17bbbd645caaf038a2e1b39"
+    },
+    {
+      "sequence": 1549,
+      "at": "2026-10-07T11:59:02.093Z",
+      "kind": "task",
+      "data": {
+        "number": 157,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "7c59fcb1805defb3a9b588cce0817dc2e5618bd2",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              148,
+              150
+            ],
+            "releases": []
+          },
+          "dependencies": [
+            144,
+            150
+          ]
+        }
+      },
+      "previous": "93daa104a1d29bd0c27b9b43c32f29959219bd3ea17bbbd645caaf038a2e1b39",
+      "digest": "23714efd1a19edd28683f0e56922ef37d4201e19ceb7b95fc4461a19d6b91238"
+    },
+    {
+      "sequence": 1550,
+      "at": "2026-10-07T12:01:25.509Z",
+      "kind": "transaction",
+      "data": {
+        "id": "b3896abc-08f6-4e29-a281-669d4c302480"
+      },
+      "previous": "23714efd1a19edd28683f0e56922ef37d4201e19ceb7b95fc4461a19d6b91238",
+      "digest": "780f14d85ee58190fecf100bd0b73e62298b1c6ba7251d79647724b34acb973f"
     }
   ]
 }
