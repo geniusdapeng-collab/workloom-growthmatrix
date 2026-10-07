@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2469,
+  "revision": 2472,
   "tasks": {
     "132": {
       "number": 132,
@@ -3993,11 +3993,11 @@
     },
     "149": {
       "number": 149,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791356934499,
       "attempts": {},
       "headSha": "b1fbb483bb3ccf88c6c6ec2cf4c863a155aefb72",
-      "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+      "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
       "branch": "fix/T-2026-1007-0918-video-ack-recovery",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -4018,8 +4018,8 @@
         "provider": "codex",
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 149,
-        "headSha": "a1f2889cef3f8fc31ecd00bec2683b1a375e1ab8",
-        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headSha": "b1fbb483bb3ccf88c6c6ec2cf4c863a155aefb72",
+        "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "packages/video-studio/src/video-surface-repair.test.ts",
@@ -4038,20 +4038,20 @@
           {
             "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/video-task-receipt.test.ts packages/video-studio/src/video-surface-repair.test.ts",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T12:52:41.674870+00:00",
-            "result": "Actual corresponding recorded checks rerun at this source head; see exact output and counts."
+            "finishedAt": "2026-10-07T15:46:32.995871+00:00",
+            "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           },
           {
             "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T12:52:42.020518+00:00",
-            "result": "Actual corresponding recorded checks rerun at this source head; see exact output and counts."
+            "finishedAt": "2026-10-07T15:46:33.357858+00:00",
+            "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           }
         ],
-        "reviewedAt": "2026-10-07T13:21:08.726645+00:00",
-        "summary": "Current Codex fully read and reviewed all five changed files and their direct dependencies. The journal saves complete compiled identity before one POST and taskId before polling; frozen input prevents mutations. Provider/endpoint/model/body changes cannot reuse a shot identity to pay again. Legacy v1 evidence retains its explicit endpoint verification gap and allows only original task queries, never a new POST. Multiple original task IDs fail safely. Known dead-owner recovery is GET-only; unknown and live owners are retained. Read-only postproduction validates v2 scope and hash. 58 exact-source tests include real media, independent child processes, timeout, late ACK, tampering and unknown-response cases; typecheck passes. Main CLI stable-root wiring remains a separately declared integration task. No unresolved finding within this fix; no database/CI/permission change or live paid call. This is a current Codex review of the normal semantic source merge at the exact head shown. The complete merged video-surface-repair source and test were read in this Codex session. Preserve current main provider-success acceptance: do not reinstate identity qualification or review after a paid output. Retain project, endpoint, provider, canonical request/body and stable receipt authority; legacy paid receipts recover task IDs and only resume polling/downloading. Keep the new main v2 identity contract test and the explicit positive no-quality-review tests. The existing canonical request, concurrency, unknown ACK and actual FFmpeg decode regressions were rerun at this exact committed head. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either.",
+        "reviewedAt": "2026-10-07T16:06:20.687023+00:00",
+        "summary": "Current Codex fully read and reviewed all five changed files and their direct dependencies. The journal saves complete compiled identity before one POST and taskId before polling; frozen input prevents mutations. Provider/endpoint/model/body changes cannot reuse a shot identity to pay again. Legacy v1 evidence retains its explicit endpoint verification gap and allows only original task queries, never a new POST. Multiple original task IDs fail safely. Known dead-owner recovery is GET-only; unknown and live owners are retained. Read-only postproduction validates v2 scope and hash. 58 exact-source tests include real media, independent child processes, timeout, late ACK, tampering and unknown-response cases; typecheck passes. Main CLI stable-root wiring remains a separately declared integration task. No unresolved finding within this fix; no database/CI/permission change or live paid call. This is a current Codex review of the normal semantic source merge at the exact head shown. The complete merged video-surface-repair source and test were read in this Codex session. Preserve current main provider-success acceptance: do not reinstate identity qualification or review after a paid output. Retain project, endpoint, provider, canonical request/body and stable receipt authority; legacy paid receipts recover task IDs and only resume polling/downloading. Keep the new main v2 identity contract test and the explicit positive no-quality-review tests. The existing canonical request, concurrency, unknown ACK and actual FFmpeg decode regressions were rerun at this exact committed head. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
         "passed": true,
-        "id": "c1b3eb8d3a6e645e5b632376ce6981303c1b36661a2644e4231efe8cbe2ecf19"
+        "id": "7e26ec067687a9672d4aa104e4308470752e39ff192f67d06fcf11745fd85efa"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -4071,7 +4071,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "sha": "e58d356e51c8c4f26851141972d54a4081da563c",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4081,7 +4081,7 @@
           },
           "head": {
             "ref": "refs/heads/fix/T-2026-1007-0918-video-ack-recovery",
-            "sha": "a1f2889cef3f8fc31ecd00bec2683b1a375e1ab8",
+            "sha": "b1fbb483bb3ccf88c6c6ec2cf4c863a155aefb72",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4089,7 +4089,7 @@
               "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
             }
           },
-          "blocked_on": "status_check",
+          "blocked_on": "unblocked",
           "merged_by": {
             "is_npc": false
           },
@@ -4099,8 +4099,8 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "a1f2889cef3f8fc31ecd00bec2683b1a375e1ab8",
-        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headSha": "b1fbb483bb3ccf88c6c6ec2cf4c863a155aefb72",
+        "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
         "files": [
           "packages/video-studio/src/video-surface-repair.test.ts",
           "packages/video-studio/src/video-surface-repair.ts",
@@ -4121,14 +4121,14 @@
             }
           ]
         },
-        "headTime": 1791377495000,
-        "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headTime": 1791387990000,
+        "mergeBase": "e58d356e51c8c4f26851141972d54a4081da563c",
         "checkErrors": [],
         "checkSha": null,
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791388536253,
+      "updatedAt": 1791389185987,
       "admission": {
         "number": 149,
         "headSha": "b1fbb483bb3ccf88c6c6ec2cf4c863a155aefb72",
@@ -64084,6 +64084,174 @@
       },
       "previous": "5f91a316e263ee6bb44a70e880d9c40597814bd77297c531b5125b4ebf498ba5",
       "digest": "f92c9b36a396bbb349072d34f2eb5d28259eb8491c8a3a98496cabbafbcbc60c"
+    },
+    {
+      "sequence": 2470,
+      "at": "2026-10-07T16:06:25.982Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 149,
+        "id": "7e26ec067687a9672d4aa104e4308470752e39ff192f67d06fcf11745fd85efa",
+        "headSha": "b1fbb483bb3ccf88c6c6ec2cf4c863a155aefb72",
+        "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c"
+      },
+      "previous": "f92c9b36a396bbb349072d34f2eb5d28259eb8491c8a3a98496cabbafbcbc60c",
+      "digest": "04cddccbc6471fd220fcbf8a71722172718628a10526081d2285cd5951e75b7a"
+    },
+    {
+      "sequence": 2471,
+      "at": "2026-10-07T16:06:25.987Z",
+      "kind": "task",
+      "data": {
+        "number": 149,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "b1fbb483bb3ccf88c6c6ec2cf4c863a155aefb72",
+          "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
+          "branch": "fix/T-2026-1007-0918-video-ack-recovery",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              146
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.9"
+              }
+            ]
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 149,
+            "headSha": "b1fbb483bb3ccf88c6c6ec2cf4c863a155aefb72",
+            "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/video-surface-repair.test.ts",
+              "packages/video-studio/src/video-surface-repair.ts",
+              "packages/video-studio/src/video-task-receipt.test.ts",
+              "packages/video-studio/src/video-task-receipt.ts"
+            ],
+            "filesHash": "6786def1d3be6067f4d28dbaa5494b82d6ae568c75796d4e59bae78bfd4c60a1",
+            "dependsOn": [
+              146,
+              148
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/video-task-receipt.test.ts packages/video-studio/src/video-surface-repair.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T15:46:32.995871+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T15:46:33.357858+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              }
+            ],
+            "reviewedAt": "2026-10-07T16:06:20.687023+00:00",
+            "summary": "Current Codex fully read and reviewed all five changed files and their direct dependencies. The journal saves complete compiled identity before one POST and taskId before polling; frozen input prevents mutations. Provider/endpoint/model/body changes cannot reuse a shot identity to pay again. Legacy v1 evidence retains its explicit endpoint verification gap and allows only original task queries, never a new POST. Multiple original task IDs fail safely. Known dead-owner recovery is GET-only; unknown and live owners are retained. Read-only postproduction validates v2 scope and hash. 58 exact-source tests include real media, independent child processes, timeout, late ACK, tampering and unknown-response cases; typecheck passes. Main CLI stable-root wiring remains a separately declared integration task. No unresolved finding within this fix; no database/CI/permission change or live paid call. This is a current Codex review of the normal semantic source merge at the exact head shown. The complete merged video-surface-repair source and test were read in this Codex session. Preserve current main provider-success acceptance: do not reinstate identity qualification or review after a paid output. Retain project, endpoint, provider, canonical request/body and stable receipt authority; legacy paid receipts recover task IDs and only resume polling/downloading. Keep the new main v2 identity contract test and the explicit positive no-quality-review tests. The existing canonical request, concurrency, unknown ACK and actual FFmpeg decode regressions were rerun at this exact committed head. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
+            "passed": true,
+            "id": "7e26ec067687a9672d4aa104e4308470752e39ff192f67d06fcf11745fd85efa"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 149,
+            "pull": {
+              "number": 149,
+              "state": "open",
+              "title": "fix(growth): recover video ACKs without resubmission [T-2026-1007-0918]",
+              "body": "Video generation now freezes project/shot/provider/endpoint/full body in a private durable v2 journal before POST and saves ACK before all GETs. Complete v1 receipts can be imported without reissuing generation; unknown submissions stay pending reconciliation, and late legacy ACKs permit GET-only recovery. Conflicting task IDs, modified requests, corrupt identity and unknown dead locks reject without another payment. Existing postproduction consumers validate v2 identity while retaining v1 read support. The shared file journal matches PR148 byte for byte. A subsequent CLI integration connects stable project paths; this fix independently protects acknowledgement and legacy recovery in the existing journal scope. All fault tests inject providers, with no live paid generation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148,\n    146\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.9\"\n    }\n  ]\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "e58d356e51c8c4f26851141972d54a4081da563c",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-video-ack-recovery",
+                "sha": "b1fbb483bb3ccf88c6c6ec2cf4c863a155aefb72",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "unblocked",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "b1fbb483bb3ccf88c6c6ec2cf4c863a155aefb72",
+            "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
+            "files": [
+              "packages/video-studio/src/video-surface-repair.test.ts",
+              "packages/video-studio/src/video-surface-repair.ts",
+              "packages/video-studio/src/video-task-receipt.test.ts",
+              "packages/video-studio/src/video-task-receipt.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                148,
+                146
+              ],
+              "releases": [
+                {
+                  "kind": "desktop",
+                  "version": "0.1.9"
+                }
+              ]
+            },
+            "headTime": 1791387990000,
+            "mergeBase": "e58d356e51c8c4f26851141972d54a4081da563c",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "04cddccbc6471fd220fcbf8a71722172718628a10526081d2285cd5951e75b7a",
+      "digest": "e4eaede352eeba865e7e86fde23b148b04c2e93644390a437c62670cb364cf6c"
+    },
+    {
+      "sequence": 2472,
+      "at": "2026-10-07T16:06:22.699Z",
+      "kind": "transaction",
+      "data": {
+        "id": "d51aeb0e-199e-4c9a-92e4-f06f68becde6"
+      },
+      "previous": "e4eaede352eeba865e7e86fde23b148b04c2e93644390a437c62670cb364cf6c",
+      "digest": "e3c585bcd6a2d9a2396e255b06cfe74cb10ebc9d6e7f1dac0d79a525c28070dc"
     }
   ]
 }
