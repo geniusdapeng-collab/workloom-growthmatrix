@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3952,
+  "revision": 3955,
   "tasks": {
     "132": {
       "number": 132,
@@ -5242,11 +5242,11 @@
     },
     "155": {
       "number": 155,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791360181033,
       "attempts": {},
-      "headSha": "71eb49c142a0952db14e7ef83d857e876e22999c",
-      "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+      "headSha": "e405885fc5c78266b5830c358ceb1a8ae983ea5e",
+      "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
       "branch": "fix/T-2026-1007-0918-explainer-rendered-acceptance",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -5267,8 +5267,8 @@
         "provider": "codex",
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 155,
-        "headSha": "71eb49c142a0952db14e7ef83d857e876e22999c",
-        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headSha": "e405885fc5c78266b5830c358ceb1a8ae983ea5e",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "apps/server/src/video/explainer/pipeline-policy.test.ts",
@@ -5277,10 +5277,9 @@
           "apps/server/src/video/explainer/qa-gates.ts",
           "apps/server/src/video/explainer/router.ts",
           "apps/server/src/video/explainer/types.ts",
-          "packages/video-studio/package.json",
-          "packages/video-studio/src/rendered-output-policy.ts"
+          "packages/video-studio/package.json"
         ],
-        "filesHash": "0637ec1eb81bc819a30bd3be84e2338acc121404ddab3c976e5110fabd8c5b18",
+        "filesHash": "07a5b0918b2cb0649c1c60f30b7ddc7595a257b12cf5ccdc4c2b78a4fc17c3af",
         "dependsOn": [
           145,
           154
@@ -5291,20 +5290,20 @@
           {
             "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/explainer/qa-gates.test.ts apps/server/src/video/explainer/pipeline-policy.test.ts apps/server/src/video/explainer/explainer.test.ts",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T12:47:55.420238+00:00",
-            "result": "Actual corresponding recorded checks rerun at this source head; see exact output and counts."
+            "finishedAt": "2026-10-07T22:29:26.380716+00:00",
+            "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           },
           {
             "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T12:47:56.478431+00:00",
-            "result": "Actual corresponding recorded checks rerun at this source head; see exact output and counts."
+            "finishedAt": "2026-10-07T22:29:27.763253+00:00",
+            "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           }
         ],
-        "reviewedAt": "2026-10-07T13:21:25.610327+00:00",
-        "summary": "Current Codex fully read all nine changed files and direct implementation dependencies: explainer ASR/timing, semantics, engine, card registry, shotbook, project builder, voice, delivery, database, Remotion provider, server video routing, local registration, tRPC scope, rendered policy and ProducerStage. Default off verifies a real nonempty readable movie then skips all six quality scripts without fake measured approval. Unavailable explicit checks preserve their actual failure and existing movie; advisory admits and blocking refuses. Resume mismatched dimensions emits a diagnostic and keeps the original, unreadable output fails without a submit call. Asset provenance separates accepted from measured pass. Exact-source real ffmpeg/ffprobe fixtures and injected preparation/provider seams prove no render after resume, corruption or failed postproduction. Existing scoped API immutability tests and server types pass. The existing optional vendor/talkcraft integration remains skipped because that vendor is not installed; no claim of full native engine certification. No live paid test calls or unresolved finding. This is a current Codex review of the normal semantic source merge at the exact head shown. Preserves main 3a78 provider-success direct postprocessing and source audio. Complete current producer/post-acceptance code and changed worker files were read. Where a worker local off adapter overlaps the new parent post path, post stages now retain the zero-cost parent technical receipt with score=null and no reference images or model calls. The default keyframe acceptance test remains, actual parent technical failures remain failures, and the native direct-post regression remains intact. Source scope, byte hashes, original paid requests and authored timing options retain their actual checks. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either.",
+        "reviewedAt": "2026-10-07T23:02:23.815604+00:00",
+        "summary": "Current Codex fully read all nine changed files and direct implementation dependencies: explainer ASR/timing, semantics, engine, card registry, shotbook, project builder, voice, delivery, database, Remotion provider, server video routing, local registration, tRPC scope, rendered policy and ProducerStage. Default off verifies a real nonempty readable movie then skips all six quality scripts without fake measured approval. Unavailable explicit checks preserve their actual failure and existing movie; advisory admits and blocking refuses. Resume mismatched dimensions emits a diagnostic and keeps the original, unreadable output fails without a submit call. Asset provenance separates accepted from measured pass. Exact-source real ffmpeg/ffprobe fixtures and injected preparation/provider seams prove no render after resume, corruption or failed postproduction. Existing scoped API immutability tests and server types pass. The existing optional vendor/talkcraft integration remains skipped because that vendor is not installed; no claim of full native engine certification. No live paid test calls or unresolved finding. This is a current Codex review of the normal semantic source merge at the exact head shown. Preserves main 3a78 provider-success direct postprocessing and source audio. Complete current producer/post-acceptance code and changed worker files were read. Where a worker local off adapter overlaps the new parent post path, post stages now retain the zero-cost parent technical receipt with score=null and no reference images or model calls. The default keyframe acceptance test remains, actual parent technical failures remain failures, and the native direct-post regression remains intact. Source scope, byte hashes, original paid requests and authored timing options retain their actual checks. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either. The native source alignment is an ordinary fast-forward or merge with current main 5e148fc1ae3ad097bce2fcecf5d724fee9075219. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
         "passed": true,
-        "id": "5d88d9c793702bbf6dbd6632d5221bc61113ce3bdee26927c8a6f05f29321c70"
+        "id": "00ab10eed29966e06fa74d8472b8b4514e2ebc7c8c2678da3f205edde9af1711"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -5324,7 +5323,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "sha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -5334,7 +5333,7 @@
           },
           "head": {
             "ref": "refs/heads/fix/T-2026-1007-0918-explainer-rendered-acceptance",
-            "sha": "71eb49c142a0952db14e7ef83d857e876e22999c",
+            "sha": "e405885fc5c78266b5830c358ceb1a8ae983ea5e",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -5352,8 +5351,8 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "71eb49c142a0952db14e7ef83d857e876e22999c",
-        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headSha": "e405885fc5c78266b5830c358ceb1a8ae983ea5e",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "files": [
           "apps/server/src/video/explainer/pipeline-policy.test.ts",
           "apps/server/src/video/explainer/pipeline.ts",
@@ -5361,8 +5360,7 @@
           "apps/server/src/video/explainer/qa-gates.ts",
           "apps/server/src/video/explainer/router.ts",
           "apps/server/src/video/explainer/types.ts",
-          "packages/video-studio/package.json",
-          "packages/video-studio/src/rendered-output-policy.ts"
+          "packages/video-studio/package.json"
         ],
         "intent": {
           "taskId": "T-2026-1007-0918",
@@ -5378,14 +5376,14 @@
             }
           ]
         },
-        "headTime": 1791377153000,
-        "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+        "headTime": 1791412161000,
+        "mergeBase": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "checkErrors": [],
         "checkSha": null,
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791411188927,
+      "updatedAt": 1791414257418,
       "admission": {
         "number": 155,
         "headSha": "71eb49c142a0952db14e7ef83d857e876e22999c",
@@ -98093,6 +98091,180 @@
       },
       "previous": "952841d285dd0a5b284004009b9fd7be683ecc16f75de63086b68b8f80eae58e",
       "digest": "a346bdcdfd7e2c6db23ad175bd69fc0c6e93519d88c4485c974b4e567d62291b"
+    },
+    {
+      "sequence": 3953,
+      "at": "2026-10-07T23:04:17.415Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 155,
+        "id": "00ab10eed29966e06fa74d8472b8b4514e2ebc7c8c2678da3f205edde9af1711",
+        "headSha": "e405885fc5c78266b5830c358ceb1a8ae983ea5e",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219"
+      },
+      "previous": "a346bdcdfd7e2c6db23ad175bd69fc0c6e93519d88c4485c974b4e567d62291b",
+      "digest": "170c499114ff0beafb958f2b05f1a0d585b1dc60e37e4a4fc559bb36dcd83636"
+    },
+    {
+      "sequence": 3954,
+      "at": "2026-10-07T23:04:17.418Z",
+      "kind": "task",
+      "data": {
+        "number": 155,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "e405885fc5c78266b5830c358ceb1a8ae983ea5e",
+          "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+          "branch": "fix/T-2026-1007-0918-explainer-rendered-acceptance",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              145,
+              154
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.15"
+              }
+            ]
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 155,
+            "headSha": "e405885fc5c78266b5830c358ceb1a8ae983ea5e",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "apps/server/src/video/explainer/pipeline-policy.test.ts",
+              "apps/server/src/video/explainer/pipeline.ts",
+              "apps/server/src/video/explainer/qa-gates.test.ts",
+              "apps/server/src/video/explainer/qa-gates.ts",
+              "apps/server/src/video/explainer/router.ts",
+              "apps/server/src/video/explainer/types.ts",
+              "packages/video-studio/package.json"
+            ],
+            "filesHash": "07a5b0918b2cb0649c1c60f30b7ddc7595a257b12cf5ccdc4c2b78a4fc17c3af",
+            "dependsOn": [
+              145,
+              154
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/explainer/qa-gates.test.ts apps/server/src/video/explainer/pipeline-policy.test.ts apps/server/src/video/explainer/explainer.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T22:29:26.380716+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T22:29:27.763253+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              }
+            ],
+            "reviewedAt": "2026-10-07T23:02:23.815604+00:00",
+            "summary": "Current Codex fully read all nine changed files and direct implementation dependencies: explainer ASR/timing, semantics, engine, card registry, shotbook, project builder, voice, delivery, database, Remotion provider, server video routing, local registration, tRPC scope, rendered policy and ProducerStage. Default off verifies a real nonempty readable movie then skips all six quality scripts without fake measured approval. Unavailable explicit checks preserve their actual failure and existing movie; advisory admits and blocking refuses. Resume mismatched dimensions emits a diagnostic and keeps the original, unreadable output fails without a submit call. Asset provenance separates accepted from measured pass. Exact-source real ffmpeg/ffprobe fixtures and injected preparation/provider seams prove no render after resume, corruption or failed postproduction. Existing scoped API immutability tests and server types pass. The existing optional vendor/talkcraft integration remains skipped because that vendor is not installed; no claim of full native engine certification. No live paid test calls or unresolved finding. This is a current Codex review of the normal semantic source merge at the exact head shown. Preserves main 3a78 provider-success direct postprocessing and source audio. Complete current producer/post-acceptance code and changed worker files were read. Where a worker local off adapter overlaps the new parent post path, post stages now retain the zero-cost parent technical receipt with score=null and no reference images or model calls. The default keyframe acceptance test remains, actual parent technical failures remain failures, and the native direct-post regression remains intact. Source scope, byte hashes, original paid requests and authored timing options retain their actual checks. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either. The native source alignment is an ordinary fast-forward or merge with current main 5e148fc1ae3ad097bce2fcecf5d724fee9075219. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
+            "passed": true,
+            "id": "00ab10eed29966e06fa74d8472b8b4514e2ebc7c8c2678da3f205edde9af1711"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 155,
+            "pull": {
+              "number": 155,
+              "state": "open",
+              "title": "fix(growth): deliver rendered explainers without quality reruns [T-2026-1007-0918]",
+              "body": "The explainer pipeline blocked delivered movies on post-render motion, audio, card and beat quality gates, and its resume path silently rendered again when existing dimensions differed. Default now accepts readable generated movies and continues postproduction with six explicit skipped records. Measured pass remains false when no quality review ran; policy acceptance, review mode and qualityReviewed are stored separately in the QA report and asset provenance. Advisory reviews preserve failures; only explicitly blocking reviews refuse admission. Existing unreadable movies and postproduction failures retain their output and never trigger automatic re-render. API finalize and shared pipeline use the same acceptance contract.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    145,\n    154\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.15\"\n    }\n  ]\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-explainer-rendered-acceptance",
+                "sha": "e405885fc5c78266b5830c358ceb1a8ae983ea5e",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "e405885fc5c78266b5830c358ceb1a8ae983ea5e",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "files": [
+              "apps/server/src/video/explainer/pipeline-policy.test.ts",
+              "apps/server/src/video/explainer/pipeline.ts",
+              "apps/server/src/video/explainer/qa-gates.test.ts",
+              "apps/server/src/video/explainer/qa-gates.ts",
+              "apps/server/src/video/explainer/router.ts",
+              "apps/server/src/video/explainer/types.ts",
+              "packages/video-studio/package.json"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                145,
+                154
+              ],
+              "releases": [
+                {
+                  "kind": "desktop",
+                  "version": "0.1.15"
+                }
+              ]
+            },
+            "headTime": 1791412161000,
+            "mergeBase": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "170c499114ff0beafb958f2b05f1a0d585b1dc60e37e4a4fc559bb36dcd83636",
+      "digest": "eae87fa454115e110913c2c117c8ba72f8a65113b29b1dd039d1592f527b22e3"
+    },
+    {
+      "sequence": 3955,
+      "at": "2026-10-07T23:02:42.529Z",
+      "kind": "transaction",
+      "data": {
+        "id": "640a361d-c6b7-4b6b-a9c1-732883832a3b"
+      },
+      "previous": "eae87fa454115e110913c2c117c8ba72f8a65113b29b1dd039d1592f527b22e3",
+      "digest": "6b6a80107c15ee1a3a601d4f56b17d6457ab4e8e42e59690d867488f1dfdbfac"
     }
   ]
 }
