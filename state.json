@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1198,
+  "revision": 1200,
   "tasks": {
     "132": {
       "number": 132,
@@ -3541,7 +3541,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791366610602,
+      "updatedAt": 1791367815170,
       "admission": {
         "number": 152,
         "headSha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
@@ -28402,6 +28402,44 @@
       },
       "previous": "3dbd8316372e8b8e06d538eb84fc5589c61cca043f2836aa7b44054aa38ea84f",
       "digest": "9d96c396f2c7299f04fa8ca9eafdc1d40d91ed97608b94fbccb0ab0738bbde16"
+    },
+    {
+      "sequence": 1199,
+      "at": "2026-10-07T10:10:15.170Z",
+      "kind": "task",
+      "data": {
+        "number": 152,
+        "patch": {
+          "headSha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-marketing-failure-feedback",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "Final fact repair could lose a genuine model rejection when a later shot failed deterministic contract compilation. Recovery now rereads each complete source-bound review, verifies real passed/rejected evidence and separately recomputes unverified contract diagnostics. A diagnostic retains its unverified deterministic status and never supplies model approval. Changed scope, content, evidence, error, fallback or forged approval is refused. Each corrected candidate still requires fresh final fact review. The actual six-shot production completed through this path; regression fixtures use no live paid calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "apps/server/src/video/marketing-authority.test.ts",
+            "apps/server/src/video/marketing-authority.ts"
+          ],
+          "status": "parked",
+          "ciSince": 1791358810413
+        }
+      },
+      "previous": "9d96c396f2c7299f04fa8ca9eafdc1d40d91ed97608b94fbccb0ab0738bbde16",
+      "digest": "80f76c783822ee1e0bcd7a9d7e08e68e58650072e87455764b1dd5a83b373c65"
+    },
+    {
+      "sequence": 1200,
+      "at": "2026-10-07T10:12:03.139Z",
+      "kind": "transaction",
+      "data": {
+        "id": "32868c44-1df7-40d3-a302-477f08389047"
+      },
+      "previous": "80f76c783822ee1e0bcd7a9d7e08e68e58650072e87455764b1dd5a83b373c65",
+      "digest": "2d5d0107ee114648122117673786947cb2cd681bcd83de75bb08bca9c8941d75"
     }
   ]
 }
