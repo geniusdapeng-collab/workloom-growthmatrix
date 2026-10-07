@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3942,
+  "revision": 3944,
   "tasks": {
     "132": {
       "number": 132,
@@ -5754,7 +5754,7 @@
     },
     "158": {
       "number": 158,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791364616335,
       "attempts": {},
       "admission": {
@@ -5766,7 +5766,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791413711542,
+      "updatedAt": 1791414018724,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -97874,6 +97874,50 @@
       },
       "previous": "ce321164e623785557b2a078d018d9c9b5b94dd8b78fff5e4d08b06cf3945d48",
       "digest": "3890f2e6781b1113e71bfee9d05e842ddf1161b726cd05a65fa2d876a3becc4e"
+    },
+    {
+      "sequence": 3943,
+      "at": "2026-10-07T23:00:18.724Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "3890f2e6781b1113e71bfee9d05e842ddf1161b726cd05a65fa2d876a3becc4e",
+      "digest": "e6d8d9c70af1346f20b55f2b7098bfe9ffde59811176f9ad317ca2003623a874"
+    },
+    {
+      "sequence": 3944,
+      "at": "2026-10-07T23:02:58.821Z",
+      "kind": "transaction",
+      "data": {
+        "id": "c4cf61c2-69be-4a1f-92ea-6349ac30460e"
+      },
+      "previous": "e6d8d9c70af1346f20b55f2b7098bfe9ffde59811176f9ad317ca2003623a874",
+      "digest": "0910e93e1424abc579744633fbf4e92fc1468e11cec860fe9d2f467c5d2da614"
     }
   ]
 }
