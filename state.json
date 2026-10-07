@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3512,
+  "revision": 3514,
   "tasks": {
     "132": {
       "number": 132,
@@ -659,7 +659,7 @@
     },
     "134": {
       "number": 134,
-      "status": "aligning",
+      "status": "parked",
       "firstSeen": 1791310212615,
       "attempts": {},
       "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -688,8 +688,8 @@
         "at": 1791407529981
       },
       "developerReview": null,
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/134/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 0,
+      "error": "Command failed: git merge --no-ff --no-edit 639ff83ade8ae1c116aae907d5489efd2093d32d\n",
+      "blockedUntil": 1791408129981,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -88242,6 +88242,31 @@
       },
       "previous": "98543df4b45827799920255f9adaaeec9f94d95fa1721f67242264b2460c5376",
       "digest": "88269052881eafbb2507f69236097506fdf9c7fd6dbfde23848bfc7821e89ec0"
+    },
+    {
+      "sequence": 3513,
+      "at": "2026-10-07T21:12:09.981Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "Command failed: git merge --no-ff --no-edit 639ff83ade8ae1c116aae907d5489efd2093d32d\n",
+          "blockedUntil": 1791408129981
+        }
+      },
+      "previous": "88269052881eafbb2507f69236097506fdf9c7fd6dbfde23848bfc7821e89ec0",
+      "digest": "232977914dab0cec9289852a78ba95c88aca74d81bb4038b7245d5b12957c726"
+    },
+    {
+      "sequence": 3514,
+      "at": "2026-10-07T21:12:38.576Z",
+      "kind": "transaction",
+      "data": {
+        "id": "0dd95115-9103-469e-82ab-ec94186c7ad0"
+      },
+      "previous": "232977914dab0cec9289852a78ba95c88aca74d81bb4038b7245d5b12957c726",
+      "digest": "2fe34251d658b9c3447360389e78c83f338999fab2f5bd434021f1fd40a9f6b4"
     }
   ]
 }
