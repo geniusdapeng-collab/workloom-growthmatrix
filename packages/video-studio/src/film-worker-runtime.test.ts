@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { FullChainFilmWorker, normalizeFilmJobRequest, assertFilmStageCoverage } from "./film-worker-runtime.js";
+import { FullChainFilmWorker, normalizeFilmJobRequest, normalizeFilmJobDocument, assertFilmStageCoverage } from "./film-worker-runtime.js";
 import type { FilmWorkerJobContext, FilmChannelRequestFrame, FilmChannelTransport } from "./film-worker-channel.js";
 const dirs: string[] = [];
 const hash = (data: Buffer | string): string => createHash("sha256").update(data).digest("hex");
@@ -38,6 +38,40 @@ function fixture() {
 }
 afterEach(() => dirs.splice(0).forEach((dir) => rmSync(dir, { recursive: true, force: true })));
 describe("frozen full-chain worker adapter", () => {
+  it("defaults to complete creative delivery and off post-render review without changing the source", () => {
+    const document = { shots: [{ shotId: "S1" }], brief: { durationSec: 30 } }, before = JSON.stringify(document);
+    const authored = normalizeFilmJobDocument(document);
+    expect(authored.document.durationPolicy).toBe("creative-target");
+    expect((authored.document.brief as Record<string, unknown>).durationPolicy).toBe("creative-target");
+    expect(String(authored.document.completenessPrinciple)).toContain("最高创作目标");
+    expect(normalizeFilmJobRequest(["compose"], authored.options).options["review-policy"]).toBe("off");
+    expect(JSON.stringify(document)).toBe(before);
+    expect(normalizeFilmJobDocument({ durationPolicy: "strict" }).options["duration-policy"]).toBe("strict");
+    expect(() => normalizeFilmJobDocument({ durationPolicy: "strict" }, { durationPolicy: "creative-target" })).toThrow("CONFLICT");
+    expect(() => normalizeFilmJobDocument({ durationPolicy: "invalid" })).toThrow("INVALID");
+    expect(() => normalizeFilmJobDocument({ brief: [] })).toThrow("brief");
+  });
+  it("validates editorial choices and keeps source timing protected before any provider call", () => {
+    const result = normalizeFilmJobRequest(["compose"], { durationPolicy: "creative-target", noTitleCard: true, openingTitle: false,
+      postExcludeShots: "S5", assemblyMode: "post-only", assemblyReason: "客户删除突兀镜头，其他保留", bgmLufs: -18,
+      endCardRef: "assets/card.png", endCardSha256: "a".repeat(64), endCardSeconds: 2 });
+    expect(result.options["post-exclude-shots"]).toBe("S5"); expect(result.options["no-title-card"]).toBe(true);
+    for (const options of [{ durationPolicy: "invalid" }, { materialSpeedRamp: true }, { xfade: 0.2 }, { cutTransitionDuration: 0.2 },
+      { postExcludeShots: "S5" }, { endCardSeconds: 2 }, { endCardRef: "a.png" }, { bgmLufs: "NaN" },
+      { endCardRef: "../a.png", endCardSha256: "a".repeat(64) }, { endCardRef: "a.png", endCardSha256: "bad" }]) {
+      expect(() => normalizeFilmJobRequest(["compose"], options)).toThrow();
+    }
+  });
+  it("resolves only digest-bound archive post assets into CLI paths", () => {
+    const { root, context, worker } = fixture(); worker.channel.dispose();
+    const file = join(context.archiveRoot, "card.png"); writeFileSync(file, "card bytes");
+    const next = new FullChainFilmWorker({ ...context, options: { ...context.options, endCardRef: "card.png", endCardSha256: hash("card bytes"), endCardSeconds: 2 } }, root,
+      { send() { throw new Error("not expected"); }, subscribe() { return () => {}; } });
+    expect(next.args).toContain("--end-card-image"); expect(next.args).toContain(file);
+    expect(next.args).not.toContain("--end-card-ref"); expect(next.args).not.toContain("--end-card-sha256"); next.channel.dispose();
+    writeFileSync(file, "changed");
+    expect(() => new FullChainFilmWorker({ ...context, options: { endCardRef: "card.png", endCardSha256: hash("card bytes") } }, root)).toThrow("摘要不符");
+  });
   it("requires evidence for each requested stage and does not accept a bare summary or stale success", () => {
     const source = { shots: [{ shotId: "S1" }] };
     expect(() => assertFilmStageCoverage(["cine-kb"], {}, source, [])).toThrow("缺请求阶段");
@@ -125,6 +159,7 @@ describe("frozen full-chain worker adapter", () => {
   });
   it("review excludes process environment and functions and requires a parent contract receipt", async () => {
     const { context, worker, frames, setReply } = fixture();
+    context.options["review-policy"] = "blocking";
     const file = join(context.workDir, "plate.png"); writeFileSync(file, "image");
     setReply(() => ({ stage: "keyframe", approved: true, contractHash: "a".repeat(64) }));
     await worker.review({ stage: "keyframe", projectId: context.projectId, artifacts: [{ path: file, kind: "image" }], deterministic: [{ id: "bytes", pass: true, hard: true, detail: "tested" }], context: { shotId: "S1" }, env: { LLM_API_KEY: "must-not-leak" }, log: () => {} });
@@ -136,6 +171,7 @@ describe("frozen full-chain worker adapter", () => {
   });
   it("material shot review remains in its original stage when both material and video stages are selected", async () => {
     const { context, worker, frames, setReply } = fixture();
+    context.options["review-policy"] = "blocking";
     context.stages.push("material-gen");
     const file = join(context.workDir, "clip.mp4"); writeFileSync(file, "video");
     setReply(() => ({ stage: "shot", approved: true, contractHash: "a".repeat(64) }));
@@ -143,5 +179,16 @@ describe("frozen full-chain worker adapter", () => {
       deterministic: [], context: { shotId: "S1", sourceStage: "material-gen" } });
     expect(frames[0]!.stepKey).toBe("material-gen:S1");
     worker.channel.dispose();
+  });
+  it("default off policy accepts rendered clips without a parent gate.review call", async () => {
+    const { context, worker, frames } = fixture();
+    const file = join(context.workDir, "clip.mp4"); writeFileSync(file, "actual artifact bytes");
+    const verdict = await worker.review({ stage: "shot", projectId: context.projectId, artifacts: [{ path: file, kind: "video" }],
+      deterministic: [{ id: "motion-evidence", pass: false, hard: true, detail: "still output" }] });
+    expect(verdict.approved).toBe(true); expect(verdict.score).toBe(0); expect(verdict.reason).toContain("未进行模型");
+    expect(frames).toHaveLength(0);
+    rmSync(file);
+    expect((await worker.review({ stage: "shot", projectId: context.projectId, artifacts: [{ path: file, kind: "video" }], deterministic: [] })).approved).toBe(false);
+    expect(frames).toHaveLength(0); worker.channel.dispose();
   });
 });

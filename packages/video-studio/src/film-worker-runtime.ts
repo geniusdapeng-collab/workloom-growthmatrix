@@ -3,18 +3,22 @@ import { createHash } from "node:crypto";
 import { constants, copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { FilmChannelError, FilmWorkerChannel, parseFilmWorkerJobContext, processIpcTransport,
-  type FilmChannelTransport, type FilmWorkerJobContext } from "./film-worker-channel.js";
+  filmCanonicalJson, type FilmChannelTransport, type FilmWorkerJobContext } from "./film-worker-channel.js";
 import type { ProducerGateOptions, ProducerVerdict } from "./producer-gate.js";
+import { filmReviewPolicy, reviewWithoutModel } from "./rendered-output-policy.js";
+import { durationPolicy, FILM_COMPLETENESS_PRINCIPLE } from "./creative-duration-policy.js";
+import { filmArchiveRef, readFilmJobPostAssets } from "./film-job-assets.js";
 
 export const FILM_CLI_STAGES = Object.freeze(["cine-kb", "continuity", "micromotion", "spec", "plates", "material-gen", "videos", "voice", "compose", "color", "subtitle", "danmaku", "bgm", "sfx", "cover", "mux", "master", "deliver", "revise"]);
-const valueOptions = new Set(["aspect", "resolution", "quality", "platform", "fps", "max-attempts", "xfade", "cut-transition", "cut-transition-duration", "cut-transition-at", "subtitle-mode", "subtitle-lang", "cover-platform", "cover-hero", "cover-hook", "theme", "account", "only", "review-policy", "route-kind", "assembly-mode", "assembly-reason", "revise-note", "revision-context", "narration-profile", "enhance-kind"]);
-const flagOptions = new Set(["no-resume", "no-danmaku", "no-open-with-cover", "no-cover-kb", "unified-narration", "prompt-english-gloss", "material-post-only", "material-speed-ramp", "bgm-declared-program-mix"]);
+const valueOptions = new Set(["aspect", "resolution", "quality", "platform", "fps", "max-attempts", "xfade", "cut-transition", "cut-transition-duration", "cut-transition-at", "subtitle-mode", "subtitle-lang", "cover-platform", "cover-hero", "cover-hook", "theme", "account", "only", "review-policy", "route-kind", "assembly-mode", "assembly-reason", "revise-note", "revision-context", "narration-profile", "enhance-kind", "duration-policy", "post-exclude-shots", "bgm-lufs", "end-card-seconds", "end-card-ref", "end-card-sha256", "presentation-plan-ref", "presentation-plan-sha256"]);
+const flagOptions = new Set(["no-resume", "no-danmaku", "no-open-with-cover", "no-cover-kb", "unified-narration", "prompt-english-gloss", "material-post-only", "material-speed-ramp", "bgm-declared-program-mix", "no-title-card", "opening-title"]);
 const enumOptions: Record<string, readonly string[]> = {
   aspect: ["9:16", "16:9", "1:1", "4:5"], resolution: ["720p", "1080p", "2160p"], quality: ["hd", "uhd"],
   "subtitle-mode": ["sidecar", "burn", "both"], "review-policy": ["off", "advisory", "blocking"],
   "route-kind": ["narrative", "marketing"], "assembly-mode": ["post-only"], "enhance-kind": ["live-action", "animation"],
+  "duration-policy": ["creative-target", "strict"],
 };
-const numericOptions: Record<string, [number, number]> = { fps: [1, 120], "max-attempts": [1, 3], xfade: [0, 5], "cut-transition-duration": [0, 5] };
+const numericOptions: Record<string, [number, number]> = { fps: [1, 120], "max-attempts": [1, 3], xfade: [0, 0], "cut-transition-duration": [0, 0], "bgm-lufs": [-60, -1], "end-card-seconds": [1, 15] };
 const stageAliases: Record<string, string[]> = { spec: ["prompt-review", "prompt-package"], plates: ["keyframe"], videos: ["shot"] };
 
 /** The parent checks that requested work has evidence; a summary file alone is not a completed job. */
@@ -71,10 +75,40 @@ export function normalizeFilmJobRequest(stages: string[], options: Record<string
     }
     normalized[key] = value;
   }
+  normalized["duration-policy"] ??= "creative-target";
+  normalized["review-policy"] ??= "off";
+  if (normalized["material-speed-ramp"] === true) throw new FilmChannelError("OPTION_INVALID", "SOURCE_TIMING_PROTECTED: 不得自动变速已渲染镜头");
+  for (const ref of ["end-card", "presentation-plan"]) {
+    const path = normalized[`${ref}-ref`], sha = normalized[`${ref}-sha256`];
+    if ((path === undefined) !== (sha === undefined)) throw new FilmChannelError("OPTION_INVALID", `${ref} 必须同时声明引用和摘要`);
+    if (path !== undefined) {
+      filmArchiveRef(path);
+      if (typeof sha !== "string" || !/^[a-f0-9]{64}$/u.test(sha)) throw new FilmChannelError("OPTION_INVALID", `${ref} 摘要非法`);
+    }
+  }
+  if (normalized["end-card-seconds"] && !normalized["end-card-ref"] && !normalized["presentation-plan-ref"]) throw new FilmChannelError("OPTION_INVALID", "结尾卡时长必须绑定图片或后期计划");
+  if (normalized["post-exclude-shots"] && (normalized["assembly-mode"] !== "post-only" || String(normalized["assembly-reason"] ?? "").trim().length < 8)) throw new FilmChannelError("OPTION_INVALID", "删除镜头必须声明后期模式及理由");
   const effective = [...new Set(stages)];
   if (effective.includes("deliver") && !effective.includes("master")) effective.push("master");
   if (normalized["assembly-mode"] === "post-only" && !effective.includes("spec")) effective.push("spec");
   return { stages: effective, options: normalized };
+}
+/** Resolve authored policy once, without mutating caller input or leaving options and source in conflict. */
+export function normalizeFilmJobDocument(document: unknown, options: Record<string, unknown> = {}): { document: Record<string, unknown>; options: Record<string, unknown> } {
+  const source = JSON.parse(filmCanonicalJson(document)) as Record<string, unknown>;
+  if (!source || typeof source !== "object" || Array.isArray(source)) throw new FilmChannelError("INPUT_INVALID", "原稿必须为 JSON 对象");
+  if (source.brief !== undefined && (!source.brief || typeof source.brief !== "object" || Array.isArray(source.brief))) throw new FilmChannelError("INPUT_INVALID", "brief 必须为 JSON 对象");
+  const brief = source.brief as Record<string, unknown> | undefined;
+  const values = [source.durationPolicy, brief?.durationPolicy, options["duration-policy"], options.durationPolicy].filter(value => value !== undefined && value !== null && value !== "");
+  const policies = values.map(value => durationPolicy(value));
+  if (new Set(policies).size > 1) throw new FilmChannelError("OPTION_INVALID", "DURATION_POLICY_CONFLICT: 原稿和选项时长策略不一致");
+  const policy = policies[0] ?? "creative-target";
+  source.durationPolicy = policy;
+  source.completenessPrinciple = FILM_COMPLETENESS_PRINCIPLE;
+  if (brief) { brief.durationPolicy = policy; brief.completenessPrinciple = FILM_COMPLETENESS_PRINCIPLE; }
+  const next = { ...options }; delete next.durationPolicy;
+  next["duration-policy"] = policy;
+  return { document: source, options: next };
 }
 const within = (root: string, file: string): boolean => file === root || file.startsWith(`${root}${sep}`);
 const digest = (file: string): string => createHash("sha256").update(readFileSync(file)).digest("hex");
@@ -93,7 +127,9 @@ export class FullChainFilmWorker {
     const input = resolve(archive, context.inputRef);
     if (isAbsolute(context.inputRef) || !within(archive, input) || !within(archive, realpathSync(input))) throw new FilmChannelError("PATH_INVALID", "冻结原稿引用越出项目档案");
     if (!statSync(input).isFile() || digest(input) !== context.inputSha256) throw new FilmChannelError("INPUT_CHANGED", "冻结原稿摘要不符");
-    const normalized = normalizeFilmJobRequest(context.stages, context.options);
+    const source = JSON.parse(readFileSync(input, "utf8"));
+    const authored = normalizeFilmJobDocument(source, context.options);
+    const normalized = normalizeFilmJobRequest(context.stages, authored.options);
     if (JSON.stringify(normalized.stages) !== JSON.stringify(context.stages)) throw new FilmChannelError("CONTEXT_INVALID", "工位不得自行增加阶段");
     this.inputPath = join(work, "inputs", "source.json");
     mkdirSync(dirname(this.inputPath), { recursive: true });
@@ -101,9 +137,13 @@ export class FullChainFilmWorker {
     if (digest(this.inputPath) !== context.inputSha256) throw new FilmChannelError("INPUT_CHANGED", "原稿复制时发生变化");
     this.args = ["--shots", this.inputPath, "--project", context.projectId, "--work-dir", join(work, "work"), "--out", join(work, "delivery"), "--stages", context.stages.join(",")];
     for (const [key, value] of Object.entries(normalized.options)) {
+      if (["end-card-ref", "end-card-sha256", "presentation-plan-ref", "presentation-plan-sha256"].includes(key)) continue;
       if (typeof value === "boolean") { if (value) this.args.push(`--${key}`); }
       else this.args.push(`--${key}`, value);
     }
+    const postAssets = readFilmJobPostAssets(archive, normalized.options);
+    if (postAssets.endCard) this.args.push("--end-card-image", postAssets.endCard.file);
+    if (postAssets.presentation) this.args.push("--presentation-plan", postAssets.presentation.file);
     this.channel = new FilmWorkerChannel({ transport });
   }
   static fromEnvironment(repoRoot: string): FullChainFilmWorker {
@@ -170,6 +210,9 @@ export class FullChainFilmWorker {
     return target;
   }
   async review(options: Omit<ProducerGateOptions, "contracts">): Promise<ProducerVerdict> {
+    const normalized = normalizeFilmJobRequest(this.context.stages, this.context.options);
+    const local = reviewWithoutModel(options, filmReviewPolicy(normalized.options["review-policy"]));
+    if (local) return local;
     const aliases: Record<string, string> = { script: "spec", prompt: "spec", keyframe: "plates", shot: "videos" };
     let stage = aliases[options.stage] ?? options.stage;
     if (options.stage === "shot") {
