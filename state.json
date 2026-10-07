@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 874,
+  "revision": 876,
   "tasks": {
     "132": {
       "number": 132,
@@ -3917,7 +3917,7 @@
     },
     "156": {
       "number": 156,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791361029790,
       "attempts": {},
       "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
@@ -4054,7 +4054,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791361032558,
+      "updatedAt": 1791362108120,
       "admission": {
         "number": 156,
         "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
@@ -4067,7 +4067,11 @@
         "generation": {
           "protocol": 16
         }
-      }
+      },
+      "dependencies": [
+        148,
+        149
+      ]
     }
   },
   "leases": {
@@ -22024,6 +22028,43 @@
       },
       "previous": "012af43076d4b63656905954cd0dc5a5d4743a4715ebb25d77824f6fa215f4fb",
       "digest": "da9050d770a33f61e95949dd23b3f6fa5f274250baa8ab1958ced3e4cdb7eee5"
+    },
+    {
+      "sequence": 875,
+      "at": "2026-10-07T08:35:08.120Z",
+      "kind": "task",
+      "data": {
+        "number": 156,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "7fe4c2475f16713e2ada0ec8154d77b21ab88100",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              149
+            ],
+            "releases": []
+          },
+          "dependencies": [
+            148,
+            149
+          ]
+        }
+      },
+      "previous": "da9050d770a33f61e95949dd23b3f6fa5f274250baa8ab1958ced3e4cdb7eee5",
+      "digest": "877724252e67c493a9d8ea5f8c6c37315d16f416cc71651bb4b612bd6c49afaf"
+    },
+    {
+      "sequence": 876,
+      "at": "2026-10-07T08:36:49.155Z",
+      "kind": "transaction",
+      "data": {
+        "id": "1204e732-eb7b-4bd7-8494-255f14d59a48"
+      },
+      "previous": "877724252e67c493a9d8ea5f8c6c37315d16f416cc71651bb4b612bd6c49afaf",
+      "digest": "0adc87c75d548c3c62607267c2c8f27a84516ad37ec0ebd4f554409f21a24b4a"
     }
   ]
 }
