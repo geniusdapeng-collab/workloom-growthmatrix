@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3110,
+  "revision": 3112,
   "tasks": {
     "132": {
       "number": 132,
@@ -5572,7 +5572,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791401116024,
+      "updatedAt": 1791401379390,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -79081,6 +79081,52 @@
       },
       "previous": "6645afa2c1c7ced194db80eedbd4f5a3953bd258dd80a84b89375e7da7df4ecb",
       "digest": "a6bc1b1056416cb615e58cff652166ef8a909cecc0020542184846eb8d89d916"
+    },
+    {
+      "sequence": 3111,
+      "at": "2026-10-07T19:29:39.390Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "a6bc1b1056416cb615e58cff652166ef8a909cecc0020542184846eb8d89d916",
+      "digest": "355152d355bf8d1577adcd005cfbeef00647b9170eafafa7025da0858a1197e4"
+    },
+    {
+      "sequence": 3112,
+      "at": "2026-10-07T19:31:46.075Z",
+      "kind": "transaction",
+      "data": {
+        "id": "9cddf33b-cd47-42d8-9f26-cabaed7d101b"
+      },
+      "previous": "355152d355bf8d1577adcd005cfbeef00647b9170eafafa7025da0858a1197e4",
+      "digest": "edeb61d1b8d24fb1e8b1f38b3a967885d223c2c4e9e3d1da9ab49a5ac7c15efc"
     }
   ]
 }
