@@ -29,6 +29,7 @@ import {
   resolveRateKey,
 } from "./duration-projection.js";
 import { REQUIRED_ANGLES, type PortraitIndex, type PortraitIndexEntry } from "./portrait-runtime.js";
+import { durationPolicy, type DurationPolicy } from "./creative-duration-policy.js";
 import {
   CinematicSkillError, cinematicSkillHash, checkCinematicSkillCompliance, planCinematicSkills,
   type CinematicSkillRouter, type CinematicSkillStatus,
@@ -1376,6 +1377,7 @@ export interface DurationProjectionBridgeOptions {
   onEvent?: (event: DurationProjectionEvent) => void;
   minShotSeconds?: number;
   maxShotSeconds?: number;
+  durationPolicy?: DurationPolicy;
 }
 
 /** 进程级共享桥注册表：第一个安装、最后一个卸载（并发 run 安全） */
@@ -1420,6 +1422,7 @@ export function installVendorDurationProjectionBridge(options: DurationProjectio
   const emit = options.onEvent ?? (() => undefined);
   const minShot = options.minShotSeconds ?? 4;
   const maxShot = options.maxShotSeconds ?? 30;
+  const policy = durationPolicy(options.durationPolicy);
   const repoRoot = resolvePath(dirname(fileURLToPath(import.meta.url)), "../../..");
   let vendorRequire: NodeJS.Require;
   try {
@@ -1480,6 +1483,7 @@ export function installVendorDurationProjectionBridge(options: DurationProjectio
         minSeconds: minShot,
         maxSeconds: maxShot,
         enforceVoiceFloor,
+        durationPolicy: policy,
       });
     let result = projectOnce(true);
     if (!result.ok && planningMode) {
@@ -1504,7 +1508,7 @@ export function installVendorDurationProjectionBridge(options: DurationProjectio
         message: `${result.reason}：${result.suggestions.join("；")}`,
       });
       log(`[vendor-compat] 时长投影 INFEASIBLE（${source}）：${result.suggestions.join("；")}`);
-      return false;
+      throw new Error(`DURATION_PLAN_INFEASIBLE: ${result.suggestions.join("；")}`);
     }
     const applied = applyProjectedDurations(
       records.map((record, index) => ({ ...record, shotId: idOf(record, `${kindLabel}-${index + 1}`) })),

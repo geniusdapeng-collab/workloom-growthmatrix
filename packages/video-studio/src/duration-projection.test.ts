@@ -91,7 +91,7 @@ describe("守恒投影（性质测试）", () => {
         return shot(`S${index + 1}`, 3 + Math.floor(rnd() * 40), text, { emotion });
       });
       const target = 20 + Math.floor(rnd() * 120);
-      const result = projectShotDurations(shots, { targetSeconds: target, minSeconds: 4, maxSeconds: 30 });
+      const result = projectShotDurations(shots, { durationPolicy: "strict", targetSeconds: target, minSeconds: 4, maxSeconds: 30 });
       if (!result.ok) continue; // INFEASIBLE 由下一组用例专门覆盖
       expect(result.totalSeconds, `round=${round} 目标 ${target} 未守恒`).toBe(target);
       for (const entry of result.entries) {
@@ -104,14 +104,14 @@ describe("守恒投影（性质测试）", () => {
 
   it("确定性：同输入两次投影结果完全一致", () => {
     const shots = [shot("S1", 5, "字".repeat(20)), shot("S2", 20, "字".repeat(40), { emotion: "gently" }), shot("S3", 8)];
-    const first = projectShotDurations(shots, { targetSeconds: 45 });
-    const second = projectShotDurations(shots, { targetSeconds: 45 });
+    const first = projectShotDurations(shots, { durationPolicy: "strict", targetSeconds: 45 });
+    const second = projectShotDurations(shots, { durationPolicy: "strict", targetSeconds: 45 });
     expect(first).toEqual(second);
   });
 
   it("台词下限超过目标 → INFEASIBLE（不静默压低台词）", () => {
     const shots = [shot("S1", 5, LINE_48), shot("S2", 5, LINE_48), shot("S3", 5, LINE_48)];
-    const result = projectShotDurations(shots, { targetSeconds: 20, minSeconds: 4, maxSeconds: 30 });
+    const result = projectShotDurations(shots, { durationPolicy: "strict", targetSeconds: 20, minSeconds: 4, maxSeconds: 30 });
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("应当 INFEASIBLE");
     expect(result.reason).toBe("voice-floor-exceeds-target");
@@ -121,7 +121,7 @@ describe("守恒投影（性质测试）", () => {
 
   it("镜头数 × 上限 < 目标 → INFEASIBLE（并给出加镜建议）", () => {
     const shots = [shot("S1", 10), shot("S2", 10)];
-    const result = projectShotDurations(shots, { targetSeconds: 90, minSeconds: 4, maxSeconds: 30 });
+    const result = projectShotDurations(shots, { durationPolicy: "strict", targetSeconds: 90, minSeconds: 4, maxSeconds: 30 });
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("应当 INFEASIBLE");
     expect(result.reason).toBe("capacity-below-target");
@@ -130,7 +130,7 @@ describe("守恒投影（性质测试）", () => {
 
   it("计划时长低于台词下限时被抬高，并在 raisedShotIds 里如实登记", () => {
     const shots = [shot("S1", 5, LINE_48), shot("S2", 35)];
-    const result = projectShotDurations(shots, { targetSeconds: 60, minSeconds: 4, maxSeconds: 30 });
+    const result = projectShotDurations(shots, { durationPolicy: "strict", targetSeconds: 60, minSeconds: 4, maxSeconds: 30 });
     if (!result.ok) throw new Error(`不应 INFEASIBLE：${JSON.stringify(result)}`);
     expect(result.raisedShotIds).toContain("S1");
     const s1 = result.entries.find((entry) => entry.shotId === "S1")!;
@@ -145,7 +145,7 @@ describe("写回：消除 duration / timing 双字段分叉", () => {
       { shotId: "S1", duration: 5, timing: { start: 0, duration: 5, end: 5 } },
       { shotId: "S2", duration: 20, timing: { start: 5, duration: 20, end: 25 } },
     ];
-    const result = projectShotDurations(shots, { targetSeconds: 30, minSeconds: 4, maxSeconds: 30 });
+    const result = projectShotDurations(shots, { durationPolicy: "strict", targetSeconds: 30, minSeconds: 4, maxSeconds: 30 });
     if (!result.ok) throw new Error("不应 INFEASIBLE");
     const applied = applyProjectedDurations(shots, result.entries);
     expect(applied[0]!.duration).toBe(applied[0]!.timing.duration);
