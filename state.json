@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4002,
+  "revision": 4004,
   "tasks": {
     "132": {
       "number": 132,
@@ -663,7 +663,7 @@
       "firstSeen": 1791310212615,
       "attempts": {},
       "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
-      "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+      "mainSha": "6213c885ba4d5dd77981228d3ba0890092c297f9",
       "branch": "task/T-2026-1006-0850",
       "intent": {
         "taskId": "T-2026-1006-0850",
@@ -680,8 +680,8 @@
         "scripts/tools/full-chain-film.mts"
       ],
       "ciSince": 1791310212615,
-      "updatedAt": 1791414311674,
-      "alignmentCount": 3,
+      "updatedAt": 1791414813102,
+      "alignmentCount": 0,
       "alignmentIntent": {
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
         "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
@@ -689,7 +689,7 @@
       },
       "developerReview": null,
       "error": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
-      "blockedUntil": 1791414911674,
+      "blockedUntil": 0,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -99370,6 +99370,53 @@
       },
       "previous": "087c0a445cbedcdc8e06271511f109dbc8c6e99950e8f33b2f5f68da93763c05",
       "digest": "1e75521239fdb497bb20994fc47bc475dd40030e055354cda24b944e22d4f4d6"
+    },
+    {
+      "sequence": 4003,
+      "at": "2026-10-07T23:13:33.102Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "alignmentCount": 0,
+          "recoveryCount": 0,
+          "reviewFailures": null,
+          "blockedUntil": 0,
+          "developerReview": null,
+          "candidate": null,
+          "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
+          "mainSha": "6213c885ba4d5dd77981228d3ba0890092c297f9",
+          "branch": "task/T-2026-1006-0850",
+          "intent": {
+            "taskId": "T-2026-1006-0850",
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "正式 v0.1.2 签名发行误拒 CNB 返回的受保护 main 完整引用，真实成功视频任务又因下载超时中断；S3屏幕UI事实拒绝后的正式局部后期在黑边与人物黑衣连通时找不到唯一候选。\n\n精确兼容 main/refs/heads/main 并保持原保护/SHA/tag/Release/签名校验；媒体组件只重试已成功任务的GET。补充局部定位候选路径，仍以完整逐帧像素、真实定位/修复结果/完整合同身份审核决定能否接入后期，不重复生成，不把局部修复等同完整合格。保留原片、原请求摘要及所有拒绝。\n\n已有产品所有者修复合入发布授权，影响发布信任项显式review；正常平台三门禁与精确合并树通过后合入，普通Revert回滚。本隔离仓不回流公共基座。原生Mac/Windows Runner及签名配置仍缺，不能把代码/tag或只读预检称为签名安装包已发布。\n\n声明路径：\n- `scripts/ci/cnb-desktop-release.mjs`\n- `scripts/ci/cnb-desktop-release.test.mjs`\n- `packages/video-studio/src/media-download.ts`\n- `packages/video-studio/src/media-download.test.ts`\n- `packages/video-studio/src/video-surface-repair.ts`\n- `packages/video-studio/src/video-surface-repair.test.ts`\n- `scripts/tools/full-chain-film.mts`\n- `docs/tasks/T-2026-1006-0850.md`\n\n当前已通过发行/finalizer21项、媒体/成功回执/正式CLI51项和视频TSC，实际CNB main+v0.1.2只读绑定通过；局部定位追加验收完成后补最终真实回执。测试替身不冒充实际签名发行。\n\nCloses #133",
+          "files": [
+            "docs/tasks/T-2026-1006-0850.md",
+            "packages/video-studio/src/media-download.test.ts",
+            "packages/video-studio/src/media-download.ts",
+            "scripts/ci/cnb-desktop-release.mjs",
+            "scripts/ci/cnb-desktop-release.test.mjs",
+            "scripts/tools/full-chain-film.mts"
+          ],
+          "status": "parked",
+          "ciSince": 1791310212615
+        }
+      },
+      "previous": "1e75521239fdb497bb20994fc47bc475dd40030e055354cda24b944e22d4f4d6",
+      "digest": "8f6f2fc8d015ca4943e7c19f3345555626e58057361dd6d3c2d7117dee5fc845"
+    },
+    {
+      "sequence": 4004,
+      "at": "2026-10-07T23:14:13.197Z",
+      "kind": "transaction",
+      "data": {
+        "id": "ee7854c0-70ce-4608-894a-8d6881a31e03"
+      },
+      "previous": "8f6f2fc8d015ca4943e7c19f3345555626e58057361dd6d3c2d7117dee5fc845",
+      "digest": "5cf3e4ed7475efbdc46caae089dbc5bdb9d24329b45d4108084a4cb627898064"
     }
   ]
 }
