@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4018,
+  "revision": 4020,
   "tasks": {
     "132": {
       "number": 132,
@@ -5866,7 +5866,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791414018724,
+      "updatedAt": 1791414813102,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -6034,7 +6034,6 @@
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/158 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 1791414311542,
       "dependencies": [
-        146,
         157
       ]
     },
@@ -99657,6 +99656,49 @@
       },
       "previous": "53a598b8db6b7accf9a43afb4bb655441b3a603e764c795446fdd278679e9886",
       "digest": "b087589553b14abaa17a8b9276d5588a968f896270d6d770a1e4f3bbcb96173c"
+    },
+    {
+      "sequence": 4019,
+      "at": "2026-10-07T23:13:33.102Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            157
+          ]
+        }
+      },
+      "previous": "b087589553b14abaa17a8b9276d5588a968f896270d6d770a1e4f3bbcb96173c",
+      "digest": "ca999227725eb15efcb96c836ea4255e8e3b080eb427bc2c3f97b44fb3618b74"
+    },
+    {
+      "sequence": 4020,
+      "at": "2026-10-07T23:16:11.677Z",
+      "kind": "transaction",
+      "data": {
+        "id": "f72da3ea-3ec9-438c-bcd7-e13fb431f9eb"
+      },
+      "previous": "ca999227725eb15efcb96c836ea4255e8e3b080eb427bc2c3f97b44fb3618b74",
+      "digest": "9916c99452c05d9dd4cf5547429fe0dc23ce63b29159da737a55c45f3e00e109"
     }
   ]
 }
