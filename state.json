@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1898,
+  "revision": 1901,
   "tasks": {
     "132": {
       "number": 132,
@@ -5847,7 +5847,7 @@
     },
     "161": {
       "number": 161,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791368515129,
       "attempts": {},
       "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
@@ -5862,7 +5862,7 @@
         "releases": [
           {
             "kind": "desktop",
-            "version": "0.1.19"
+            "version": "0.1.20"
           }
         ]
       },
@@ -5879,7 +5879,9 @@
           "scripts/tools/generate-model-02-seedream.test.py"
         ],
         "filesHash": "4b436090624addec30509590d9cf146669c4cef1d90bcbd70326ffe7467d41f8",
-        "dependsOn": [],
+        "dependsOn": [
+          160
+        ],
         "ciPolicyChanges": [
           {
             "id": "CI-001",
@@ -5905,10 +5907,10 @@
             "result": "Injected provider fault tests, actual small JPEG decoding and independent-process concurrency passed; no live paid requests."
           }
         ],
-        "reviewedAt": "2026-10-07T12:44:25.882614+00:00",
+        "reviewedAt": "2026-10-07T13:24:53.664987+00:00",
         "summary": "Current Codex fully read the original utility, both revised files and their direct standard-library/media dependencies. The request and acknowledgement are written atomically with file and directory fsync, and private no-follow bounded journal reads validate full immutable scope before recovery. Persistent flock avoids unlink races; live locks time out without another POST. Provider response loss or process death preserves an unknown/submitting record. Known URL recovery precedes every download and public provenance omits authentication and the image URL. Same-slot body changes refuse; independent slots remain independent. Tests inject providers only and include actual decoding, failed acceptance write, credential absence, original-URL download recovery, legacy artifacts, corruption, symlinks and three real child processes. Exact committed tests passed; no unresolved finding. Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release.",
         "passed": true,
-        "id": "744211f39604af9c23d4e01dcb7b8fe195302e7fc2cee46796aea29015cd22a7"
+        "id": "eac948e12076c0dd1bbf081f478097fa47c211a611ea0f3f2292e25d4cab92b6"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -5917,7 +5919,7 @@
           "number": 161,
           "state": "open",
           "title": "fix(growth): retain Seedream utility acceptance before download [T-2026-1007-0918]",
-          "body": "The standalone Seedream portrait utility could pay again after a successful generation whose download or provenance write failed. Persist the complete scoped request before one POST and the accepted URL before any GET, using a private fsynced slot journal and a persistent flock inode. A restart or different output folder restores the original acceptance without rereading credentials. Unknown responses, altered same-slot requests, corrupt files and ambiguous legacy artifacts refuse automatic payment. Valid small JPEGs are accepted through actual decoding without the old 50 KiB quality gate.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "body": "The standalone Seedream portrait utility could pay again after a successful generation whose download or provenance write failed. Persist the complete scoped request before one POST and the accepted URL before any GET, using a private fsynced slot journal and a persistent flock inode. A restart or different output folder restores the original acceptance without rereading credentials. Unknown responses, altered same-slot requests, corrupt files and ambiguous legacy artifacts refuse automatic payment. Valid small JPEGs are accepted through actual decoding without the old 50 KiB quality gate.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    160\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.20\"\n    }\n  ]\n}\n-->",
           "author": {
             "username": "cnb.dYiF05kxAGA",
             "nickname": "Genius",
@@ -5965,8 +5967,15 @@
         "intent": {
           "taskId": "T-2026-1007-0918",
           "ready": true,
-          "dependsOn": [],
-          "releases": []
+          "dependsOn": [
+            160
+          ],
+          "releases": [
+            {
+              "kind": "desktop",
+              "version": "0.1.20"
+            }
+          ]
         },
         "headTime": 1791376367000,
         "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
@@ -6006,7 +6015,7 @@
           }
         ]
       },
-      "updatedAt": 1791379005941,
+      "updatedAt": 1791379499782,
       "admission": {
         "number": 161,
         "headSha": "fd1089d472ec538c5cdd64a32b8d926261d81135",
@@ -50708,6 +50717,207 @@
       },
       "previous": "79fc919a55a7136f7119fe57042aa7d9fdef4cf1a7cb5ef785681cf14e07b90b",
       "digest": "51bd792204d9be1af872d6389daeadb7a80b32eabeaa6bb2dc849585011be252"
+    },
+    {
+      "sequence": 1899,
+      "at": "2026-10-07T13:24:59.781Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 161,
+        "id": "eac948e12076c0dd1bbf081f478097fa47c211a611ea0f3f2292e25d4cab92b6",
+        "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b"
+      },
+      "previous": "51bd792204d9be1af872d6389daeadb7a80b32eabeaa6bb2dc849585011be252",
+      "digest": "b7b9c325c9cb2b5f8238eba3095a326fec69146631194686595a64054cff4fa5"
+    },
+    {
+      "sequence": 1900,
+      "at": "2026-10-07T13:24:59.782Z",
+      "kind": "task",
+      "data": {
+        "number": 161,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+          "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+          "branch": "fix/T-2026-1007-0918-seedream-utility-paid-ack",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              160
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.20"
+              }
+            ]
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 161,
+            "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+            "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "scripts/tools/generate-model-02-seedream.py",
+              "scripts/tools/generate-model-02-seedream.test.py"
+            ],
+            "filesHash": "4b436090624addec30509590d9cf146669c4cef1d90bcbd70326ffe7467d41f8",
+            "dependsOn": [
+              160
+            ],
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "rationale": "Read the complete exact before/after utility and its standard-library/media call chain. Preserve the registered model, endpoint and pure text-to-image contract. Improve money safety by saving full request identity before one POST and accepted response before downloads; unknown or changed same-slot requests never authorize a second POST. Remove only the arbitrary minimum image byte quality gate; complete bounded JPEG bytes must actually decode. Actual fault and process tests passed without live provider calls. No native CI pipeline or required stage changed. Rollback is a revert while retaining private payment journals."
+              },
+              {
+                "id": "CI-002",
+                "rationale": "This is a new offline fault test suite, fully read and actually run against the exact committed utility. It exercises ACK-before-download, response loss, process exit, disk-write failure, missing credentials, corrupted/symlink evidence, live lock timeout, explicit same-slot change refusal, legacy output refusal and independent process concurrency. A real small JPEG must decode. Provider functions are injected and cannot perform live paid work. No required check is removed or skipped; existing native CI remains mandatory. Rollback removes the test only alongside the corresponding utility revert."
+              }
+            ],
+            "ciPolicyChangesHash": "658bf73a752be49fe559376aeeab60770533d54ef7a4a908305ad799d89d8a15",
+            "tests": [
+              {
+                "command": "python3 -m py_compile scripts/tools/generate-model-02-seedream.py scripts/tools/generate-model-02-seedream.test.py",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T12:39:36.816924+00:00",
+                "result": "Both exact utility and test files compile."
+              },
+              {
+                "command": "python3 scripts/tools/generate-model-02-seedream.test.py",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T12:39:37.223508+00:00",
+                "result": "Injected provider fault tests, actual small JPEG decoding and independent-process concurrency passed; no live paid requests."
+              }
+            ],
+            "reviewedAt": "2026-10-07T13:24:53.664987+00:00",
+            "summary": "Current Codex fully read the original utility, both revised files and their direct standard-library/media dependencies. The request and acknowledgement are written atomically with file and directory fsync, and private no-follow bounded journal reads validate full immutable scope before recovery. Persistent flock avoids unlink races; live locks time out without another POST. Provider response loss or process death preserves an unknown/submitting record. Known URL recovery precedes every download and public provenance omits authentication and the image URL. Same-slot body changes refuse; independent slots remain independent. Tests inject providers only and include actual decoding, failed acceptance write, credential absence, original-URL download recovery, legacy artifacts, corruption, symlinks and three real child processes. Exact committed tests passed; no unresolved finding. Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release.",
+            "passed": true,
+            "id": "eac948e12076c0dd1bbf081f478097fa47c211a611ea0f3f2292e25d4cab92b6"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 161,
+            "pull": {
+              "number": 161,
+              "state": "open",
+              "title": "fix(growth): retain Seedream utility acceptance before download [T-2026-1007-0918]",
+              "body": "The standalone Seedream portrait utility could pay again after a successful generation whose download or provenance write failed. Persist the complete scoped request before one POST and the accepted URL before any GET, using a private fsynced slot journal and a persistent flock inode. A restart or different output folder restores the original acceptance without rereading credentials. Unknown responses, altered same-slot requests, corrupt files and ambiguous legacy artifacts refuse automatic payment. Valid small JPEGs are accepted through actual decoding without the old 50 KiB quality gate.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    160\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.20\"\n    }\n  ]\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-seedream-utility-paid-ack",
+                "sha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+            "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "files": [
+              "scripts/tools/generate-model-02-seedream.py",
+              "scripts/tools/generate-model-02-seedream.test.py"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                160
+              ],
+              "releases": [
+                {
+                  "kind": "desktop",
+                  "version": "0.1.20"
+                }
+              ]
+            },
+            "headTime": 1791376367000,
+            "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": "scripts/tools/generate-model-02-seedream.test.py",
+                "before": {
+                  "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+                  "path": "scripts/tools/generate-model-02-seedream.test.py",
+                  "absent": true
+                },
+                "after": {
+                  "ref": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+                  "path": "scripts/tools/generate-model-02-seedream.test.py",
+                  "absent": false
+                },
+                "digest": "8c9e72d3e16eb42f4a2ebd666573c23fbedc7361340f12b254a017904abec846"
+              },
+              {
+                "id": "CI-002",
+                "file": "scripts/tools/generate-model-02-seedream.py",
+                "before": {
+                  "ref": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+                  "path": "scripts/tools/generate-model-02-seedream.py",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+                  "path": "scripts/tools/generate-model-02-seedream.py",
+                  "absent": false
+                },
+                "digest": "cf4be2e4e61af373a906e4d173beec26c6403ce001ed16c5dd9bbeb512816c0e"
+              }
+            ]
+          }
+        }
+      },
+      "previous": "b7b9c325c9cb2b5f8238eba3095a326fec69146631194686595a64054cff4fa5",
+      "digest": "5eb9f8155be427094782eb685db97e2fe6a074ced93ebd1908a16b717692e604"
+    },
+    {
+      "sequence": 1901,
+      "at": "2026-10-07T13:24:56.388Z",
+      "kind": "transaction",
+      "data": {
+        "id": "99eb31ee-4baa-4244-8ddf-3dd103c47f7b"
+      },
+      "previous": "5eb9f8155be427094782eb685db97e2fe6a074ced93ebd1908a16b717692e604",
+      "digest": "718ea65bcac2fafe1bf4329824b86eb866942edce7cdaa95c99df9f4243ac8d9"
     }
   ]
 }
