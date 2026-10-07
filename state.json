@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3791,
+  "revision": 3793,
   "tasks": {
     "132": {
       "number": 132,
@@ -3786,7 +3786,7 @@
           "migrations": 11
         }
       },
-      "updatedAt": 1791411188927,
+      "updatedAt": 1791411612299,
       "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -94331,6 +94331,56 @@
       },
       "previous": "07487483c6416af9f529c70696b45a1a7e997e1a52562eae3895c55576663946",
       "digest": "d814f1e4b5458ff9c1f42551c53593d33b1f8e8cae41de4301f81f6ceaccc583"
+    },
+    {
+      "sequence": 3792,
+      "at": "2026-10-07T22:20:12.299Z",
+      "kind": "task",
+      "data": {
+        "number": 146,
+        "patch": {
+          "headSha": "4f7b89a7342017b8ee8458d0f7d29d85bc627dce",
+          "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+          "branch": "fix/T-2026-1007-0918-film-paid-receipts",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              145
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.8"
+              }
+            ]
+          },
+          "originalBody": "Film worker原先在轮询和下载完成后才保存供应商任务号，换作业或调用键可能重复付费；Film worker图像同步受理也存在同样窗口。现在同作业以完整请求去重，跨作业在事务锁内绑定供应商、模型、端点及完整正文摘要，受理任务号先于轮询/下载持久保存。已受理请求恢复只复用原任务；未知受理明确待对账，禁止自动再提交。成功响应重放核对实际文件摘要，跨作业复用不再次预占或记生成费。\n\n0056迁移新增付费意图查询索引并保持原租户/状态约束，拒绝换绑受理身份、任务号与计数；晚到任务号只补证据，不改终态。当前Codex精读7个变更文件及直接依赖，准确提交后33项单测、20项真实PostgreSQL/RLS/并发/篡改/超时契约全过，服务类型检查和秘密扫描通过。依赖在独立工作树按锁文件安装。故障测试使用注入的测试供应商，未发出任何新付费调用。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    145\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.8\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "apps/server/src/video/film-ledger.pg.test.ts",
+            "apps/server/src/video/film-ledger.ts",
+            "apps/server/src/video/film-paid-generation.pg.test.ts",
+            "apps/server/src/video/film-paid-generation.test.ts",
+            "apps/server/src/video/film-paid-generation.ts",
+            "apps/server/src/video/film-worker.ts",
+            "packages/db/migrations/0056_film_paid_receipts.sql"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791411188927
+        }
+      },
+      "previous": "d814f1e4b5458ff9c1f42551c53593d33b1f8e8cae41de4301f81f6ceaccc583",
+      "digest": "34e09734e5b3449b3799c2d599e1f06c18e59aaf51297b601b4f04c6c7fdf228"
+    },
+    {
+      "sequence": 3793,
+      "at": "2026-10-07T22:21:22.606Z",
+      "kind": "transaction",
+      "data": {
+        "id": "fb726603-fc28-4ca0-a3cd-099591201519"
+      },
+      "previous": "34e09734e5b3449b3799c2d599e1f06c18e59aaf51297b601b4f04c6c7fdf228",
+      "digest": "ae45a3e0c761f3a3683629140c5bdbc4676fe0e5160da630b4c250cae12345a0"
     }
   ]
 }
