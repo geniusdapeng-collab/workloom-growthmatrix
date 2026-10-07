@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2288,
+  "revision": 2290,
   "tasks": {
     "132": {
       "number": 132,
@@ -5491,7 +5491,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791384610536,
+      "updatedAt": 1791385024507,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -59271,6 +59271,52 @@
       },
       "previous": "9b990618bb5fe8ae75f6d5956caafcb07ee2abc97d5fcb45f6052a3c1f16e42a",
       "digest": "be3cb744d954eb1bcfa03992a9900223f13683d1478e361fd210f45a67345832"
+    },
+    {
+      "sequence": 2289,
+      "at": "2026-10-07T14:57:04.507Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "be3cb744d954eb1bcfa03992a9900223f13683d1478e361fd210f45a67345832",
+      "digest": "429cea6a12468c217e73d1eca3c55711549432e56fe8b0ecece02d87bace7a0e"
+    },
+    {
+      "sequence": 2290,
+      "at": "2026-10-07T14:59:40.081Z",
+      "kind": "transaction",
+      "data": {
+        "id": "78cb86c5-f31c-4e59-8ce0-631c0484d9ae"
+      },
+      "previous": "429cea6a12468c217e73d1eca3c55711549432e56fe8b0ecece02d87bace7a0e",
+      "digest": "c8f1a4451904f746af406dff29f333a3e3952d6e30b5e303d825d77c70c9918c"
     }
   ]
 }
