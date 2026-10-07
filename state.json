@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3763,
+  "revision": 3765,
   "tasks": {
     "132": {
       "number": 132,
@@ -659,7 +659,7 @@
     },
     "134": {
       "number": 134,
-      "status": "aligning",
+      "status": "parked",
       "firstSeen": 1791310212615,
       "attempts": {},
       "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -688,8 +688,8 @@
         "at": 1791411188927
       },
       "developerReview": null,
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/134 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 0,
+      "error": "Command failed: git merge --no-ff --no-edit 5e148fc1ae3ad097bce2fcecf5d724fee9075219\n",
+      "blockedUntil": 1791411788927,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -93837,6 +93837,31 @@
       },
       "previous": "0125a49063c3687c5d5513685675984f0babe2b6e27fc8698d821f0e2dbc22c1",
       "digest": "15bec90932148503d3727ded375761540688e6003dd5791011bfa280fe922c26"
+    },
+    {
+      "sequence": 3764,
+      "at": "2026-10-07T22:13:08.927Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "Command failed: git merge --no-ff --no-edit 5e148fc1ae3ad097bce2fcecf5d724fee9075219\n",
+          "blockedUntil": 1791411788927
+        }
+      },
+      "previous": "15bec90932148503d3727ded375761540688e6003dd5791011bfa280fe922c26",
+      "digest": "e7c3a612104306e729a0c5899cc5f64320963a4fcf4ad60b053d62138ccd2759"
+    },
+    {
+      "sequence": 3765,
+      "at": "2026-10-07T22:14:14.500Z",
+      "kind": "transaction",
+      "data": {
+        "id": "dadf14eb-f519-4b97-ab67-c4f313f776a3"
+      },
+      "previous": "e7c3a612104306e729a0c5899cc5f64320963a4fcf4ad60b053d62138ccd2759",
+      "digest": "2d6489d6f56842d84309bbcbc2367b980c884d6816f7100af9f087859d65368f"
     }
   ]
 }
