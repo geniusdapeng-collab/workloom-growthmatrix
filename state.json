@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1769,
+  "revision": 1771,
   "tasks": {
     "132": {
       "number": 132,
@@ -6344,7 +6344,7 @@
     },
     "167": {
       "number": 167,
-      "status": "aligning",
+      "status": "parked",
       "firstSeen": 1791373275072,
       "attempts": {},
       "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
@@ -6442,7 +6442,7 @@
         "bundles/ai-video/library/style-variants/bold-promo.json"
       ],
       "ciSince": 1791374342093,
-      "error": "检查/评审阻断：Required check db-gate missing/failed/ambiguous; Required check test-gate missing/failed/ambiguous",
+      "error": "Command failed: git merge --no-ff --no-edit 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b\n",
       "repairRequired": {
         "provider": "codex",
         "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
@@ -6451,7 +6451,7 @@
         "at": 1791374342093
       },
       "recoveryIntent": null,
-      "blockedUntil": 0,
+      "blockedUntil": 1791379211870,
       "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -46148,6 +46148,31 @@
       },
       "previous": "bb71ce2352d26f80226f93d177be92d3e433680ae1700c6a69cfdd45f3f312de",
       "digest": "841360cf9db23afab3519b19ab2b601961238efe942f6f40ec15aac688edee0f"
+    },
+    {
+      "sequence": 1770,
+      "at": "2026-10-07T13:10:11.870Z",
+      "kind": "task",
+      "data": {
+        "number": 167,
+        "patch": {
+          "status": "parked",
+          "error": "Command failed: git merge --no-ff --no-edit 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b\n",
+          "blockedUntil": 1791379211870
+        }
+      },
+      "previous": "841360cf9db23afab3519b19ab2b601961238efe942f6f40ec15aac688edee0f",
+      "digest": "a54882729819891e866d9ce6126fc9a9bf64fea28460050d6f6ce487ac67768c"
+    },
+    {
+      "sequence": 1771,
+      "at": "2026-10-07T13:12:05.234Z",
+      "kind": "transaction",
+      "data": {
+        "id": "f72479d1-ec55-4f77-8307-15852db206f2"
+      },
+      "previous": "a54882729819891e866d9ce6126fc9a9bf64fea28460050d6f6ce487ac67768c",
+      "digest": "b902fe8c54d94015f4e984971bf8876cb67ef7106ab12db0cd1ffc937e78b978"
     }
   ]
 }
