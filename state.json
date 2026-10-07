@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2272,
+  "revision": 2274,
   "tasks": {
     "132": {
       "number": 132,
@@ -4268,7 +4268,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791384610536,
+      "updatedAt": 1791385024507,
       "admission": {
         "number": 150,
         "headSha": "57d2a9cb68d013a8c22599499044d9d591b83e16",
@@ -4279,7 +4279,6 @@
         "generation": {}
       },
       "dependencies": [
-        142,
         144,
         149
       ],
@@ -58935,6 +58934,49 @@
       },
       "previous": "04bace7d8da53f554e8e8fc17c79fab6ed1f73d277712d5b00ce129ac4ecc929",
       "digest": "9c0625f168eb709515e38d4bb0c7a6a45a14b8e3875263cb3f9fc17a4d90701f"
+    },
+    {
+      "sequence": 2273,
+      "at": "2026-10-07T14:57:04.507Z",
+      "kind": "task",
+      "data": {
+        "number": 150,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "57d2a9cb68d013a8c22599499044d9d591b83e16",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              142,
+              144,
+              149
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.10"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            149
+          ]
+        }
+      },
+      "previous": "9c0625f168eb709515e38d4bb0c7a6a45a14b8e3875263cb3f9fc17a4d90701f",
+      "digest": "3338f966d68393d7b0d2c1a989ef327b6aaaa6d9e211143fd67fb612982ee4cc"
+    },
+    {
+      "sequence": 2274,
+      "at": "2026-10-07T14:58:54.036Z",
+      "kind": "transaction",
+      "data": {
+        "id": "ba46836b-b69d-4de6-b149-b19d78ccbfc3"
+      },
+      "previous": "3338f966d68393d7b0d2c1a989ef327b6aaaa6d9e211143fd67fb612982ee4cc",
+      "digest": "a451035e0fba7e688982504c5f3ae877e333798841a7b3ee76d4f0dcb0736751"
     }
   ]
 }
