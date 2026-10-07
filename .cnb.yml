@@ -316,8 +316,10 @@ main:
     - *test_gate
 
   # 只由有仓库触发权限的操作者调用 api_trigger_desktop_release。
-  # 请求须指定 branch=main、sha=main 当前 HEAD，env 须有 RELEASE_TAG、RELEASE_SHA、
-  # PLATFORM_SIGNING=signed。三个 Pipeline 同属一个事件；publisher 等双平台 resolve。
+  # 请求须指定 branch=main、sha=已通过本仓 CI 并集成的固定发布提交，env 须有
+  # RELEASE_TAG、RELEASE_SHA、PLATFORM_SIGNING=signed。构建/工作区/tag 必须精确
+  # 对应该 SHA；发布前以准确 Git 比较核验源码仍在受保护 main 的历史中，允许主干
+  # 在构建期间正常推进。三个 Pipeline 同属一个事件；publisher 等双平台 resolve。
   # Mac/Windows 自托管 runner 与 Node/npm/pnpm 须先配好；签名/公证/Bundle 密钥
   # 应从仅允许本仓 main + 此事件读取的 CNB KeyStore 注入，不得放在 build/start
   # 请求 env 中。KeyStore 路径尚未由平台确认，故未硬编码虚构 URL；缺任一凭据时
