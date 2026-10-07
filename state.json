@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1523,
+  "revision": 1525,
   "tasks": {
     "132": {
       "number": 132,
@@ -3087,7 +3087,7 @@
     },
     "146": {
       "number": 146,
-      "status": "waiting_ci",
+      "status": "aligning",
       "firstSeen": 1791354743310,
       "attempts": {},
       "admission": {
@@ -3104,56 +3104,11 @@
         }
       },
       "updatedAt": 1791374342093,
-      "alignmentCount": 0,
+      "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
       "blockedUntil": 0,
-      "developerReview": {
-        "schemaVersion": 1,
-        "provider": "codex",
-        "repo": "workloom-ai/workloom-growthmatrix",
-        "number": 146,
-        "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
-        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
-        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
-        "reviewedFiles": [
-          "apps/server/src/video/film-ledger.pg.test.ts",
-          "apps/server/src/video/film-ledger.ts",
-          "apps/server/src/video/film-paid-generation.pg.test.ts",
-          "apps/server/src/video/film-paid-generation.test.ts",
-          "apps/server/src/video/film-paid-generation.ts",
-          "apps/server/src/video/film-worker.ts",
-          "packages/db/migrations/0056_film_paid_receipts.sql"
-        ],
-        "filesHash": "962fe398a94a7554f5737ce053346e72cb3d4baf9b4e974ddcf75861c5dab088",
-        "dependsOn": [],
-        "ciPolicyChanges": [],
-        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-        "tests": [
-          {
-            "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/film-paid-generation.test.ts apps/server/src/video/film-worker.test.ts",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T06:28:25.751979+00:00",
-            "result": "2 files, 33 passed, 0 skipped"
-          },
-          {
-            "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/film-paid-generation.pg.test.ts apps/server/src/video/film-ledger.pg.test.ts",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T06:28:25.370302+00:00",
-            "result": "2 files, 20 passed on real private PostgreSQL, 0 skipped"
-          },
-          {
-            "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T06:28:21.866237+00:00",
-            "result": "tsc noEmit passed"
-          }
-        ],
-        "reviewedAt": "2026-10-07T11:21:59.556683+00:00",
-        "summary": "Current Codex read and reviewed all seven changed files and their direct dependencies. Paid request identity is durably frozen before POST; provider acceptance is recorded before polling or downloading. Same-project complete request identity is reused across jobs under a transaction advisory lock. Unknown acceptance cannot trigger a new paid submission. Replay validates actual result and file hashes. SQL preserves tenant scope, terminal states and immutable paid identity, acceptance and dispatch counters. 33 unit tests and 20 real PostgreSQL concurrency, RLS, timeout, late acceptance and tampering tests passed against this exact committed checkout. Server typecheck and staged secret scan passed. Fault tests inject providers and make no new paid call. No unresolved review finding; rollback is a normal revert, retaining immutable payment evidence. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
-        "passed": true,
-        "id": "dcb36a8cc0a28df865875791380d5b31a8850ab93031578cee3cc99e38217303"
-      },
+      "developerReview": null,
       "candidate": null,
       "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
       "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
@@ -3253,7 +3208,12 @@
         "reason": "候选 #147 的实际 CI 失败；在当前 Codex 会话修复原分支并重新审查实测",
         "at": 1791371003713
       },
-      "recoveryIntent": null
+      "recoveryIntent": null,
+      "alignmentIntent": {
+        "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "at": 1791374342093
+      }
     },
     "147": {
       "number": 147,
@@ -39142,6 +39102,36 @@
       },
       "previous": "f30b966e7d05d8b734d03fb4808cb23d52cd396d4ad398e615705af6c508a9f9",
       "digest": "317455361133696ebadab51548fdee8bb18da078cdb6f98f6d7320e82d4361bd"
+    },
+    {
+      "sequence": 1524,
+      "at": "2026-10-07T11:59:02.093Z",
+      "kind": "task",
+      "data": {
+        "number": 146,
+        "patch": {
+          "status": "aligning",
+          "alignmentCount": 1,
+          "alignmentIntent": {
+            "headSha": "6d22a76063381d4a512b6bcec8c7627726a27d46",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "at": 1791374342093
+          },
+          "developerReview": null
+        }
+      },
+      "previous": "317455361133696ebadab51548fdee8bb18da078cdb6f98f6d7320e82d4361bd",
+      "digest": "46b3417bf86e7588ad2fd16fd8b5a85ba5ff98c552ff3595e16a02cef7006149"
+    },
+    {
+      "sequence": 1525,
+      "at": "2026-10-07T12:00:27.618Z",
+      "kind": "transaction",
+      "data": {
+        "id": "69619494-c32f-4c78-9446-456b1806d24b"
+      },
+      "previous": "46b3417bf86e7588ad2fd16fd8b5a85ba5ff98c552ff3595e16a02cef7006149",
+      "digest": "f3cd0ad08adfa24cbb73253719f81e3627ac9108b24c6f4a130ec3c19f2f48e1"
     }
   ]
 }
