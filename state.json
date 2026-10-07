@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3493,
+  "revision": 3495,
   "tasks": {
     "132": {
       "number": 132,
@@ -3329,7 +3329,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791405908044,
+      "updatedAt": 1791407404617,
       "error": "候选 #183 的实际 CI 失败；在当前 Codex 会话修复原分支并重新审查实测",
       "blockedUntil": 1791406508044,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    143\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.6\"\n    }\n  ]\n}\n-->",
@@ -87716,6 +87716,58 @@
       },
       "previous": "b3debd5a04f653989f2fb8500640eefd67b0ec603f4da94e6a7ba3b46c60d2d4",
       "digest": "0554fe25e739b84e329788773593eac249f2347f6b714791512854a7099b65c9"
+    },
+    {
+      "sequence": 3494,
+      "at": "2026-10-07T21:10:04.617Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "headSha": "56cf4290bbf323aec76a334ac3e2aedfa297120b",
+          "mainSha": "cf3615e67aedadf4094aaf5b0d6d738a5fc61e98",
+          "branch": "fix/T-2026-1007-0918-creative-duration",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              143
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.6"
+              }
+            ]
+          },
+          "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    143\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.6\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "packages/video-studio/src/creative-duration-policy.test.ts",
+            "packages/video-studio/src/creative-duration-policy.ts",
+            "packages/video-studio/src/duration-projection-bridge.test.ts",
+            "packages/video-studio/src/duration-projection.test.ts",
+            "packages/video-studio/src/duration-projection.ts",
+            "packages/video-studio/src/duration-rules.test.ts",
+            "packages/video-studio/src/duration-rules.ts",
+            "packages/video-studio/src/vendor-compat.ts",
+            "scripts/tools/duration-projection-e2e.mts"
+          ],
+          "status": "parked",
+          "ciSince": 1791401379390
+        }
+      },
+      "previous": "0554fe25e739b84e329788773593eac249f2347f6b714791512854a7099b65c9",
+      "digest": "dc13982fb5695f378bf634683f4ba197f0f74c06ddef09b6b81ade03dfd35ea6"
+    },
+    {
+      "sequence": 3495,
+      "at": "2026-10-07T21:10:42.416Z",
+      "kind": "transaction",
+      "data": {
+        "id": "a30d5b7e-081a-4c50-aa77-e96fbff892f9"
+      },
+      "previous": "dc13982fb5695f378bf634683f4ba197f0f74c06ddef09b6b81ade03dfd35ea6",
+      "digest": "aa9d25317d56f65a2486e781d5d1f81c95513b6f4475fb33d676742c0ace81ad"
     }
   ]
 }
