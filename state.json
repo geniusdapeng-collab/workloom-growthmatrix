@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2925,
+  "revision": 2927,
   "tasks": {
     "132": {
       "number": 132,
@@ -3181,7 +3181,7 @@
     },
     "144": {
       "number": 144,
-      "status": "waiting_ci",
+      "status": "parked",
       "firstSeen": 1791352089622,
       "attempts": {},
       "headSha": "4d86382388c118c1f3a989140dd420742c3f072a",
@@ -3281,8 +3281,8 @@
         "ciPolicyChanges": []
       },
       "updatedAt": 1791400515635,
-      "error": "Prerequisite #143 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/143 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 0,
+      "error": "检查/评审阻断：Required check static-gate missing/failed/ambiguous; Codex review identity differs from the exact repository/source/main/policy",
+      "blockedUntil": 1791401115635,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    143\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.6\"\n    }\n  ]\n}\n-->",
       "files": [
         "packages/video-studio/src/creative-duration-policy.test.ts",
@@ -3298,10 +3298,10 @@
       "ciSince": 1791399914273,
       "repairRequired": {
         "provider": "codex",
-        "headSha": "80be99f7b1db8a9727aca2469a23a0eb03831d1c",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
-        "reason": "检查/评审阻断：Required check static-gate missing/failed/ambiguous",
-        "at": 1791362108120
+        "headSha": "4d86382388c118c1f3a989140dd420742c3f072a",
+        "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+        "reason": "检查/评审阻断：Required check static-gate missing/failed/ambiguous; Codex review identity differs from the exact repository/source/main/policy",
+        "at": 1791400515635
       },
       "recoveryIntent": null,
       "alignmentCount": 1,
@@ -75069,6 +75069,39 @@
       },
       "previous": "1b84edfb80b1d6aa728d02851493259edc11989b069b70b89a203f2569441671",
       "digest": "806a9f3fd7cdd8126d36d8824db90192a2aec87051edf60bec279a77f14398c6"
+    },
+    {
+      "sequence": 2926,
+      "at": "2026-10-07T19:15:15.635Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "status": "parked",
+          "error": "检查/评审阻断：Required check static-gate missing/failed/ambiguous; Codex review identity differs from the exact repository/source/main/policy",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "4d86382388c118c1f3a989140dd420742c3f072a",
+            "mainSha": "d4431bae77c5af2345402949978f95a70c1db5f1",
+            "reason": "检查/评审阻断：Required check static-gate missing/failed/ambiguous; Codex review identity differs from the exact repository/source/main/policy",
+            "at": 1791400515635
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791401115635
+        }
+      },
+      "previous": "806a9f3fd7cdd8126d36d8824db90192a2aec87051edf60bec279a77f14398c6",
+      "digest": "707b12b91080c320f59485b24b111963f9e2dc61b11ad53b3bcbf0ca26278c00"
+    },
+    {
+      "sequence": 2927,
+      "at": "2026-10-07T19:16:40.513Z",
+      "kind": "transaction",
+      "data": {
+        "id": "d8ff5f25-5dd9-4c71-be0e-08fb3a224a6c"
+      },
+      "previous": "707b12b91080c320f59485b24b111963f9e2dc61b11ad53b3bcbf0ca26278c00",
+      "digest": "5a613cbf57f234aab9d6e1dc90e43996f8dd602aa20b082f15579b9669f03cee"
     }
   ]
 }
