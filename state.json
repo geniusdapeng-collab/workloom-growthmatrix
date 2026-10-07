@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3563,
+  "revision": 3565,
   "tasks": {
     "132": {
       "number": 132,
@@ -8928,7 +8928,7 @@
           "protocol": 74
         }
       },
-      "updatedAt": 1791408916152,
+      "updatedAt": 1791409327077,
       "headSha": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
       "mainSha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
       "branch": "fix/T-2026-1007-0918-isolate-pr-read-failures",
@@ -89298,6 +89298,47 @@
       },
       "previous": "016ddd270a695e9e1187818c7a30f84a5d058bd31217043e7fa25d003557f37a",
       "digest": "25a74a75c8a3da8aa0ab04a0f64c7869f1badbe50f8f360bd7b568e543bdf4d5"
+    },
+    {
+      "sequence": 3564,
+      "at": "2026-10-07T21:42:07.077Z",
+      "kind": "task",
+      "data": {
+        "number": 184,
+        "patch": {
+          "headSha": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+          "mainSha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+          "branch": "fix/T-2026-1007-0918-isolate-pr-read-failures",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              178
+            ],
+            "releases": []
+          },
+          "originalBody": "Actual native reconcile builds repeatedly ended before processing the queue because one known open PR detail returned CNB 429. Make per-PR isolation an explicit optional Platform.pulls handler, preserving the strict default and fatal incomplete/ambiguous global pagination. The native controller records each failed known PR, excludes its unreadable identity from delivery, blocks its dependents without retrying it during planning, and continues full fresh checks for unrelated sources. No summary or stale integration proof substitutes for a current read. All native source/check/config, immutable candidate, protection and immediate merge prerequisite checks remain required. This native infrastructure repair declares no desktop version; actual integration/readback is still necessary.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    178\n  ],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "scripts/delivery/queue-controller.mjs",
+            "scripts/delivery/queue-platform.mjs",
+            "scripts/delivery/queue-read-isolation.test.mjs"
+          ],
+          "status": "parked",
+          "ciSince": 1791407529981
+        }
+      },
+      "previous": "25a74a75c8a3da8aa0ab04a0f64c7869f1badbe50f8f360bd7b568e543bdf4d5",
+      "digest": "3cc99187b400ce9e426b4eeea636169a48d2a771b2d97865d47887523d56f14c"
+    },
+    {
+      "sequence": 3565,
+      "at": "2026-10-07T21:43:01.924Z",
+      "kind": "transaction",
+      "data": {
+        "id": "5f301fd2-b567-4898-af2d-a262e63ca3d1"
+      },
+      "previous": "3cc99187b400ce9e426b4eeea636169a48d2a771b2d97865d47887523d56f14c",
+      "digest": "e1b45b5d63ec5bf9ea1fe16ff54daa772048d5d21f4df3d8031dcfd73eb44ce7"
     }
   ]
 }
