@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 791,
+  "revision": 793,
   "tasks": {
     "132": {
       "number": 132,
@@ -3582,16 +3582,16 @@
         "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts"
       ],
       "ciSince": 1791359409167,
-      "error": "检查/评审阻断：Required check static-gate missing/failed/ambiguous; Required check db-gate missing/failed/ambiguous; Required check test-gate missing/failed/ambiguous",
+      "error": "检查/评审阻断：Required check db-gate missing/failed/ambiguous; Required check test-gate missing/failed/ambiguous",
       "repairRequired": {
         "provider": "codex",
         "headSha": "827457a93b536d51f98533d29d90304896ef835d",
         "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
-        "reason": "检查/评审阻断：Required check static-gate missing/failed/ambiguous; Required check db-gate missing/failed/ambiguous; Required check test-gate missing/failed/ambiguous",
-        "at": 1791359409167
+        "reason": "检查/评审阻断：Required check db-gate missing/failed/ambiguous; Required check test-gate missing/failed/ambiguous",
+        "at": 1791360012385
       },
       "recoveryIntent": null,
-      "blockedUntil": 1791360009167
+      "blockedUntil": 1791360612385
     },
     "154": {
       "number": 154,
@@ -20099,6 +20099,39 @@
       },
       "previous": "f91226d0b4657c43f54adb001e7f0d2933eeded6d3f45d959beebf632c40a8ea",
       "digest": "b95cbdc710d6a33fdeaaccf9e16b3e4d4c6dedd66a35d52e17ddec7edcdb85d2"
+    },
+    {
+      "sequence": 792,
+      "at": "2026-10-07T08:00:12.385Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "parked",
+          "error": "检查/评审阻断：Required check db-gate missing/failed/ambiguous; Required check test-gate missing/failed/ambiguous",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "827457a93b536d51f98533d29d90304896ef835d",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "reason": "检查/评审阻断：Required check db-gate missing/failed/ambiguous; Required check test-gate missing/failed/ambiguous",
+            "at": 1791360012385
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791360612385
+        }
+      },
+      "previous": "b95cbdc710d6a33fdeaaccf9e16b3e4d4c6dedd66a35d52e17ddec7edcdb85d2",
+      "digest": "48c45bcd539528db3904e76e813cb57d6e06ba0c5b38210d3ce2cd4223928cfc"
+    },
+    {
+      "sequence": 793,
+      "at": "2026-10-07T08:01:51.930Z",
+      "kind": "transaction",
+      "data": {
+        "id": "262f5d24-074b-4c73-97c8-55717cbe34c1"
+      },
+      "previous": "48c45bcd539528db3904e76e813cb57d6e06ba0c5b38210d3ce2cd4223928cfc",
+      "digest": "eda549135898b1c23b8d4356eb67cbea8c829260af243eba3e8ccaf7acfe433d"
     }
   ]
 }
