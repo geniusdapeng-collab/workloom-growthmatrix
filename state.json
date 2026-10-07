@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3200,
+  "revision": 3202,
   "tasks": {
     "132": {
       "number": 132,
@@ -5572,7 +5572,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791402317791,
+      "updatedAt": 1791402909225,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -81041,6 +81041,52 @@
       },
       "previous": "c2bc67ce14c462fefd73d24aff8b7948000c78f087edfc4532d8632a29643869",
       "digest": "32654c9375a1c360aae00ae04a4f5668fcf4cede18076c084f6a105d285ef320"
+    },
+    {
+      "sequence": 3201,
+      "at": "2026-10-07T19:55:09.225Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "32654c9375a1c360aae00ae04a4f5668fcf4cede18076c084f6a105d285ef320",
+      "digest": "f58260d7243e3b97528882bd5e299faee0a3cd50e320fd1a874b732574bc0dde"
+    },
+    {
+      "sequence": 3202,
+      "at": "2026-10-07T19:57:12.928Z",
+      "kind": "transaction",
+      "data": {
+        "id": "ae762efa-ff08-447f-90d3-1337f1e92217"
+      },
+      "previous": "f58260d7243e3b97528882bd5e299faee0a3cd50e320fd1a874b732574bc0dde",
+      "digest": "03f9468aae8aa7be0974878ab6cb502640216b523bfe34d8f545ace090e8608c"
     }
   ]
 }
