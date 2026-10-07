@@ -61,15 +61,25 @@ export class Platform {
     }
     throw new Error('Platform pagination limit exceeded');
   }
-  async pulls() {
+  async pulls({ onReadError } = {}) {
+    if (onReadError !== undefined && typeof onReadError !== 'function') throw new Error('PR read failure handler must be a function');
     // CNB list rows carry an empty body even when the detail has a handoff/DAG.
     // Keep list-only age fields, but use actual details for all delivery intent.
     const summaries = await this.list('/-/pulls?state=open&base_ref=main');
     const pulls = [];
     for (const summary of summaries) {
-      const detail = await this.pull(summary.number);
-      if (typeof detail.body !== 'string') throw new Error('Platform PR detail body is unreadable');
-      pulls.push({ ...summary, ...detail });
+      const number = Number(summary.number);
+      if (!Number.isSafeInteger(number) || number <= 0) throw new Error('Platform PR list identity is invalid');
+      try {
+        const detail = await this.pull(number);
+        if (typeof detail.body !== 'string') throw new Error('Platform PR detail body is unreadable');
+        pulls.push({ ...summary, ...detail });
+      } catch (error) {
+        // Only a known row may be isolated. Never deliver a list summary or an
+        // old ledger identity as a substitute for the unreadable current PR.
+        if (!onReadError) throw error;
+        await onReadError({ number, error });
+      }
     }
     return pulls;
   }
