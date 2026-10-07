@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2341,
+  "revision": 2343,
   "tasks": {
     "132": {
       "number": 132,
@@ -5491,7 +5491,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791385024507,
+      "updatedAt": 1791386715475,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -60297,6 +60297,52 @@
       },
       "previous": "5e153dda8c6bcf9febe60ca3941a0c4b1c96c7782120e5667c0853d29b88a665",
       "digest": "924cf43fc4494b154033df24be5ebcf314480c615823aa45b29a55e4bf28ffe8"
+    },
+    {
+      "sequence": 2342,
+      "at": "2026-10-07T15:25:15.475Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "924cf43fc4494b154033df24be5ebcf314480c615823aa45b29a55e4bf28ffe8",
+      "digest": "1bbad89a0ffe9cb258af9e4874635912dabfa25efdd0f6d96fae3fe89c550fe2"
+    },
+    {
+      "sequence": 2343,
+      "at": "2026-10-07T15:27:28.704Z",
+      "kind": "transaction",
+      "data": {
+        "id": "e6073ea4-a88f-43ae-9449-da98734bf296"
+      },
+      "previous": "1bbad89a0ffe9cb258af9e4874635912dabfa25efdd0f6d96fae3fe89c550fe2",
+      "digest": "527733cbe40e4013e5ad711d7c0293e7fcf9495e84949574a6283ee8f7536f26"
     }
   ]
 }
