@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1755,
+  "revision": 1757,
   "tasks": {
     "132": {
       "number": 132,
@@ -5269,7 +5269,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791375289156,
+      "updatedAt": 1791378611870,
       "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
       "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -5279,9 +5279,15 @@
         "dependsOn": [
           144,
           145,
-          146
+          146,
+          157
         ],
-        "releases": []
+        "releases": [
+          {
+            "kind": "desktop",
+            "version": "0.1.17"
+          }
+        ]
       },
       "developerReview": {
         "schemaVersion": 1,
@@ -5428,7 +5434,8 @@
       "dependencies": [
         144,
         145,
-        146
+        146,
+        157
       ]
     },
     "159": {
@@ -45817,6 +45824,52 @@
       },
       "previous": "6ac1099744590716d20d4c7963da321eec21e9029fe08943115219cb17ceb3c0",
       "digest": "28147a0d2ee7e13e13bdc84027134c27c84f9719481204eec9dd7ec983fc0e78"
+    },
+    {
+      "sequence": 1756,
+      "at": "2026-10-07T13:10:11.870Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "c805a5b2b5fc10c33ad93370c08c1cd33805f979",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.17"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "28147a0d2ee7e13e13bdc84027134c27c84f9719481204eec9dd7ec983fc0e78",
+      "digest": "46b69cda2256242088000fe50f159289250bdb323d7b85421daf497a6143f41e"
+    },
+    {
+      "sequence": 1757,
+      "at": "2026-10-07T13:11:40.215Z",
+      "kind": "transaction",
+      "data": {
+        "id": "bd9912c9-dd4f-4207-9e76-fc36af5cdc75"
+      },
+      "previous": "46b69cda2256242088000fe50f159289250bdb323d7b85421daf497a6143f41e",
+      "digest": "1dd18560b2e6b9f292899ac86fe5cb5575be0c7cf823405ae7bdb6f0cbfc06b3"
     }
   ]
 }
