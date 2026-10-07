@@ -4,6 +4,8 @@ import pg from "pg";
 import { createHash, randomBytes } from "node:crypto";
 import { FilmLedger, filmWorkerId } from "./film-ledger.js";
 import type { AppPool } from "./gen/db.js";
+import { compileProviderRequest } from "./gen/compiled-request.js";
+import { filmPaidRequestIdentity } from "./film-paid-generation.js";
 
 const RUN_DB = process.env.RUN_DB_TESTS === "1" && Boolean(process.env.DATABASE_URL) && Boolean(process.env.DATABASE_APP_URL);
 /** 台账只接受 64 位十六进制；用真实摘要而不是重复字符。 */
@@ -85,7 +87,7 @@ describe.runIf(RUN_DB)("固定影片工位台账活库契约（T-2026-0927-0039�
     expect(deduped.deduped).toBe(true);
     expect(deduped.row.id).toBe(reserved.row.id);
     await expect(ledger.reserveComponent({ ...base, payloadHash: hash("q") })).rejects.toMatchObject({ code: "IDEMPOTENCY_CONFLICT" });
-    await expect(ledger.reserveComponent({ ...base, idempotencyKey: "image:plates:SC-01:2", reservedCny: 4.8 })).rejects.toMatchObject({ code: "FILM_BUDGET_EXCEEDED" });
+    await expect(ledger.reserveComponent({ ...base, idempotencyKey: "image:plates:SC-01:2", payloadHash: hash("distinct-budget-request"), reservedCny: 4.8 })).rejects.toMatchObject({ code: "FILM_BUDGET_EXCEEDED" });
     await expect(ledger.reserveComponent({ ...base, idempotencyKey: "image:plates:SC-01:3", stepKey: "not-frozen:1" })).resolves.toMatchObject({ deduped: false });
   });
 
@@ -96,7 +98,10 @@ describe.runIf(RUN_DB)("固定影片工位台账活库契约（T-2026-0927-0039�
     const claimed = await ledger.claimComponent(row.id, "owner-1");
     expect(claimed?.state).toBe("dispatched");
     expect(await ledger.claimComponent(row.id, "owner-2")).toBeNull();
-    await ledger.recordDispatch(row.id, "owner-1", "seedance", "doubao-test");
+    const identity = filmPaidRequestIdentity(compileProviderRequest("seedance", { prompt: "actual test shot", refId: "SC-09", estimatedUnits: 5,
+      params: { providerModel: "doubao-test", durationSec: 5 } }));
+    await ledger.beginPaidDispatch(row.id, "owner-1", identity);
+    await ledger.recordProviderTaskAccepted(row.id, "owner-1", identity, "test-task");
     await ledger.recordComponentAccepted(row.id, "owner-1", { provider: "seedance", providerModel: "doubao-test", actualCny: null,
       evidence: { artifactSha256: hash("e"), artifactRef: "clips/SC-09.mp4" } });
     const stored = await ledger.componentById(row.id);

@@ -47,6 +47,7 @@ import { canonicalRenderJson, compileProviderRequest, providerEndpointOptions, r
 import type { Scope } from "./gen/db.js";
 import { ArkImageProvider, ArkVideoProvider } from "./gen/providers.js";
 import { SubmissionError } from "./gen/submission-ledger.js";
+import { obtainFilmPaidTask, replayFilmPaidResult, submitBoundFilmRequest } from "./film-paid-generation.js";
 import type { AgentInvocationRef } from "../agent/invocations.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -562,25 +563,42 @@ async function handleChannelRequest(ctx: RunContext, frame: FilmChannelRequestFr
     reservedCny: reserveFor(frame),
   }).then(async ({ row, deduped }) => {
     if (deduped) {
+      if (row.state === "accepted" && (row.component === "image" || row.component === "video")) return row;
       if (row.state === "accepted") fail("IDEMPOTENT_REPLAY", "同一请求已接受；工位不得重放已完成的外部调用");
       if (row.state === "dispatched" || row.state === "unknown") {
         fail("RECONCILIATION_REQUIRED", "同一请求状态未核实（dispatched/unknown），必须对账，禁止自动重发");
       }
+      if (row.state === "failed") fail("PAID_RESULT_RECOVERY_REQUIRED", "已有失败回执；新作业将复用已受理任务，不会重新提交付费生成");
     }
     const claimed = await ledger.claimComponent(row.id, ctx.ownerToken);
     if (!claimed) fail("COMPONENT_CLAIM_FAILED", "组件请求已被其它执行者认领");
     return claimed;
   });
   const component = await reserved;
+  if (component.state === "accepted") {
+    const result = await replayFilmPaidResult({ evidence: component.evidence,
+      readArtifact: (ref) => readJobBytes(ctx, ref, MEDIA_FETCH_LIMIT_BYTES) });
+    if (typeof result.hostedUrl === "string") {
+      const hosted = new URL(result.hostedUrl);
+      if (hosted.protocol !== "https:") fail("PAID_RESULT_UNVERIFIED", "已有响应的供应商产物地址非法");
+      ctx.issuedUrls.set(result.hostedUrl, { stepKey: frame.stepKey, shotId: frame.shotId });
+    }
+    return result;
+  }
   try {
     return await abortable(ctx.signal, () => dispatchComponent(ctx, frame, component.id));
   } catch (error) {
     const failureClass = error instanceof SubmissionError ? error.code.split(":")[0]! : "UNEXPECTED";
-    await ledger.recordComponentFailure(component.id, ctx.ownerToken, {
-      state: !(error instanceof SubmissionError) || /UNKNOWN|TIMEOUT|DEADLINE/.test(error.code) ? "unknown" : "failed",
-      failureClass,
-      evidence: { message: error instanceof Error ? error.message.slice(0, 400) : String(error).slice(0, 400) },
-    }).catch(() => undefined);
+    try {
+      await ledger.recordComponentFailure(component.id, ctx.ownerToken, {
+        state: !(error instanceof SubmissionError) || /UNKNOWN|TIMEOUT|DEADLINE/.test(error.code) ? "unknown" : "failed",
+        failureClass,
+        evidence: { message: error instanceof Error ? error.message.slice(0, 400) : String(error).slice(0, 400) },
+      });
+    } catch (receiptError) {
+      ctx.log(`组件失败回执写入失败；受理账本仍保留：${receiptError instanceof Error ? receiptError.message : String(receiptError)}`);
+      throw new AggregateError([error, receiptError], "FILM_COMPONENT_FAILURE_RECEIPT_FAILED");
+    }
     throw error;
   }
 }
@@ -749,8 +767,9 @@ async function runImage(ctx: RunContext, frame: FilmChannelRequestFrame, compone
   const compiled = compileProviderRequest("seedream", genRequest, endpoint);
   const provider = new ArkImageProvider({ apiKey, baseUrl: endpoint.baseUrl });
   const started = Date.now();
-  await ctx.ledger.recordDispatch(componentId, ctx.ownerToken, "seedream", model);
-  const submitted = await provider.submit(genRequest);
+  const submitted = await obtainFilmPaidTask({ ledger: ctx.ledger, componentId, ownerToken: ctx.ownerToken,
+    compiled, signal: ctx.signal,
+    submit: (frozen) => submitBoundFilmRequest({ compiled: frozen, request: genRequest, endpoint, provider }) });
   const polled = await provider.poll(submitted.taskId);
   if (polled.status !== "succeeded" || !polled.uri) fail("PROVIDER_FAILED", `出图未成功：${polled.error ?? polled.status}`);
   const written = await fetchToFile(ctx, polled.uri, targetRef);
@@ -764,11 +783,13 @@ async function runImage(ctx: RunContext, frame: FilmChannelRequestFrame, compone
     providerRequestHash: compiled.payloadHash,
     durationMs: Date.now() - started,
   };
+  const result = { ...written, hostedUrl: polled.uri, provider: "seedream", providerModel: model };
   await ctx.ledger.recordComponentAccepted(componentId, ctx.ownerToken, {
-    provider: "seedream", providerModel: model, actualCny: null, evidence,
+    provider: "seedream", providerModel: model, actualCny: submitted.reused ? 0 : null,
+    evidence: { ...evidence, result, resultSha256: renderSha256(canonicalRenderJson(result)) },
   });
   ctx.log(`出图完成 ${frame.shotId ?? frame.stepKey} → ${written.ref}（${written.bytes}B）`);
-  return { ...written, hostedUrl: polled.uri, provider: "seedream", providerModel: model };
+  return result;
 }
 
 async function runMediaFetch(ctx: RunContext, frame: FilmChannelRequestFrame, componentId: string): Promise<unknown> {
@@ -835,8 +856,9 @@ async function runVideo(ctx: RunContext, frame: FilmChannelRequestFrame, compone
   const compiled = compileProviderRequest("seedance", genRequest, endpoint);
   const provider = new ArkVideoProvider({ apiKey, baseUrl: endpoint.baseUrl });
   const started = Date.now();
-  await ctx.ledger.recordDispatch(componentId, ctx.ownerToken, "seedance", model);
-  const submitted = await provider.submit(genRequest);
+  const submitted = await obtainFilmPaidTask({ ledger: ctx.ledger, componentId, ownerToken: ctx.ownerToken,
+    compiled, signal: ctx.signal,
+    submit: (frozen) => submitBoundFilmRequest({ compiled: frozen, request: genRequest, endpoint, provider }) });
   const deadline = Date.now() + VIDEO_POLL_DEADLINE_MS;
   let last: Awaited<ReturnType<ArkVideoProvider["poll"]>> = { status: "submitted" };
   while (Date.now() < deadline) {
@@ -861,10 +883,12 @@ async function runVideo(ctx: RunContext, frame: FilmChannelRequestFrame, compone
     generateAudio,
   };
   ctx.log(`出片完成 ${frame.shotId ?? frame.stepKey} → ${written.ref}（${written.bytes}B，${seconds}s）`);
+  const result = { ...written, taskId: submitted.taskId, hostedUrl: last.uri, provider: "seedance", providerModel: model };
   await ctx.ledger.recordComponentAccepted(componentId, ctx.ownerToken, {
-    provider: "seedance", providerModel: model, actualCny: null, evidence,
+    provider: "seedance", providerModel: model, actualCny: submitted.reused ? 0 : null,
+    evidence: { ...evidence, result, resultSha256: renderSha256(canonicalRenderJson(result)) },
   });
-  return { ...written, taskId: submitted.taskId, hostedUrl: last.uri, provider: "seedance", providerModel: model };
+  return result;
 }
 
 async function runGateReview(ctx: RunContext, frame: FilmChannelRequestFrame, componentId: string): Promise<unknown> {
