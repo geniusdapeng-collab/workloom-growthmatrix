@@ -56,7 +56,7 @@ describe("explainer pipeline rendered resume", () => {
     expect(seam.submit).not.toHaveBeenCalled(); expect(seam.poll).not.toHaveBeenCalled();
     expect(seam.deliver).toHaveBeenCalledTimes(1);
     expect(result.qa).toMatchObject({ pass: false, accepted: true, reviewPolicy: "off", qualityReviewed: false });
-    expect(events.find(event => event.stageId === "machineGates")).toMatchObject({ status: "skipped" });
+    expect(events.filter(event => event.stageId === "machineGates").at(-1)).toMatchObject({ status: "skipped" });
     expect(readFileSync(result.renderVideoPath)).toEqual(before);
   });
   it("corrupted existing movie reports execution failure and never resubmits render", async () => {
