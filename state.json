@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 649,
+  "revision": 651,
   "tasks": {
     "132": {
       "number": 132,
@@ -2842,7 +2842,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791357309101,
+      "updatedAt": 1791358211330,
       "admission": {
         "number": 148,
         "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
@@ -16690,6 +16690,48 @@
       },
       "previous": "f036f36dccc41c37256c4f2564870e5416fe57275d460dc609c607a8a4dc9052",
       "digest": "44926e54abc29cbe7f357ed9bdae21a54b257f7f83a5341683cd608498fc71c1"
+    },
+    {
+      "sequence": 650,
+      "at": "2026-10-07T07:30:11.330Z",
+      "kind": "task",
+      "data": {
+        "number": 148,
+        "patch": {
+          "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-image-paid-receipts",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "Paid portrait image generation retried POST after ambiguous network errors and did not persist the provider URL until the download succeeded. The runtime now journals the complete compiled request before one POST and saves the accepted URL before downloading. Download/cache/file failures recover from that same URL, including across run folders and independent processes. Unknown acceptance and missing legacy receipts prohibit automatic resubmission. Image result journals use private atomic writes, fsync, exact scope and request validation; dead locks may recover only with known acceptance. Studio supplies a stable journal root. Fault tests inject providers and make no live paid requests.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/generation-file-store.ts",
+            "packages/video-studio/src/image-task-receipt.test.ts",
+            "packages/video-studio/src/image-task-receipt.ts",
+            "packages/video-studio/src/portrait-runtime.test.ts",
+            "packages/video-studio/src/portrait-runtime.ts",
+            "packages/video-studio/src/studio.ts"
+          ],
+          "status": "parked",
+          "ciSince": 1791356412845
+        }
+      },
+      "previous": "44926e54abc29cbe7f357ed9bdae21a54b257f7f83a5341683cd608498fc71c1",
+      "digest": "44154e3bfde88d1c51ce838916f6e352e70885e3587bb5fd67a7ea1d8f7cb96b"
+    },
+    {
+      "sequence": 651,
+      "at": "2026-10-07T07:31:04.566Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8165db5e-5e99-47a4-b7e4-b5a29f22b8fc"
+      },
+      "previous": "44154e3bfde88d1c51ce838916f6e352e70885e3587bb5fd67a7ea1d8f7cb96b",
+      "digest": "bb7763e4ddc6977b6b0619bd005e767d9419be9af7aef4a8ec346aac70695961"
     }
   ]
 }
