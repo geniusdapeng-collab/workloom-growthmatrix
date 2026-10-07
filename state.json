@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1843,
+  "revision": 1845,
   "tasks": {
     "132": {
       "number": 132,
@@ -5882,7 +5882,7 @@
       "status": "waiting_dependency",
       "firstSeen": 1791370002564,
       "attempts": {},
-      "headSha": "09e2f2e8fe054b3b400b058f46ebfa870aad1b34",
+      "headSha": "fd4ef420a5411e6e45c0afd792c53d460abf2f4c",
       "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-generation-atomic-lock",
       "intent": {
@@ -6009,7 +6009,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791378611870,
+      "updatedAt": 1791379005941,
       "admission": {
         "number": 164,
         "headSha": "09e2f2e8fe054b3b400b058f46ebfa870aad1b34",
@@ -47768,6 +47768,51 @@
       },
       "previous": "693b39ab785ec0da0ea55203a17ee0280a01ea1308bee76cc0527dcd2e39aef4",
       "digest": "3699e7ceaf1c3734808089491faa3b43cd8c182b7ee3bf90e30de2907e8a40e8"
+    },
+    {
+      "sequence": 1844,
+      "at": "2026-10-07T13:16:45.941Z",
+      "kind": "task",
+      "data": {
+        "number": 164,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "fd4ef420a5411e6e45c0afd792c53d460abf2f4c",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              149,
+              160,
+              161
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.20"
+              }
+            ]
+          },
+          "dependencies": [
+            149,
+            160,
+            161
+          ]
+        }
+      },
+      "previous": "3699e7ceaf1c3734808089491faa3b43cd8c182b7ee3bf90e30de2907e8a40e8",
+      "digest": "3f16aed3a62267894b0c03e589b5f9d61881a106adadf1f64efb565b97fa713a"
+    },
+    {
+      "sequence": 1845,
+      "at": "2026-10-07T13:18:16.151Z",
+      "kind": "transaction",
+      "data": {
+        "id": "499df21d-ae12-4e22-b5c7-f5b82fa791e2"
+      },
+      "previous": "3f16aed3a62267894b0c03e589b5f9d61881a106adadf1f64efb565b97fa713a",
+      "digest": "f2ea8ec5680ebf2a767fe301aae50f2b021b0c357dc9a209cf3bf8a31ae5f3b2"
     }
   ]
 }
