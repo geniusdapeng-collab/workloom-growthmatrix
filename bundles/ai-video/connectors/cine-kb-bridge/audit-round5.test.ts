@@ -31,7 +31,7 @@ describe("第五轮修复 · 字段预算（不许静默吃注入，也不许改
     const card = { shotId: "R5-1", scene: "江南水乡石拱桥", character: "陈卓", action: "沿桥面走近镜头", camera_movement: LONG };
     const { card: out, trace } = enrichShotCard(kb, card);
     expect(String(out.camera_movement), "卡片原文不得被截断").toBe(LONG);
-    const rec = trace.applied.find((a: { field: string }) => a.field === "camera_movement");
+    const rec = trace.omitted.find((a: { field: string }) => a.field === "camera_movement");
     expect(rec.added, "注入短语仍在 trace 里留痕").toContain("晃动");
     expect(rec.dropped).toBe("field-over-budget");
     expect(rec.writtenChars).toBe(0);

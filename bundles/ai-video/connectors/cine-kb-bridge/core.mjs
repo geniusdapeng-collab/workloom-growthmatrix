@@ -23,7 +23,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { appendShotContributions, normalizeShotIntent, resolveShotIntent, restoreShotContributions, shotIntentHash, shotText, splitShotAssertions } from "./shot-intent.mjs";
 
-export const CINE_KB_POLICY_VERSION = "workloom.cine-kb-policy/v2";
+export const CINE_KB_POLICY_VERSION = "workloom.cine-kb-policy/v3";
 
 /* ================= 解析 ================= */
 
@@ -1251,7 +1251,7 @@ export function injectionContext(card) {
     snowNow: has(/下雪|雪中|飘雪|雪花|飞雪|大雪|暴雪|雪夜|雪粒/) && !has(/雪后|雪停|残雪|融雪/),
     water: has(/水|河|湖|江|倒影/),
     /** 镜面倒影必须是"平静水面"语境；水下/冰面/雪地不算（三轮审计：水下镜头被注入镜面倒影） */
-    mirrorWater: has(/倒影|镜面|如镜|平静水面|无风水面|静水/) && !has(/水下|海底|冰|雪/),
+    mirrorWater: has(/水面|河面|湖面|池塘|水池|溪流/) && has(/倒影|镜面|如镜|平静水面|无风水面|静水/) && !has(/水下|海底|冰|雪/),
     watercraft: has(/船|摇橹|乌篷|橹/),
     /** 舞台/演出语境（四轮审计）：LIGHT-003 §六 有点名的「舞台追光」行 */
     stageLight: intent.scene.lightSources.includes("stage"),
@@ -1339,6 +1339,9 @@ function compatibleRow(row, rule, ctx) {
     if (rule.id === "blue-hour" && !/城市|街道|市区|楼宇/.test(intent.scene.positiveText)) zh = "蓝调时刻，环境天光偏蓝";
   }
   if (rule.field === "camera_movement") {
+    // A generic KB sentence has no time window and can contradict an authored end hold.
+    // The complete timed camera contract already provides the specific instruction.
+    if (/T?\d{1,2}:\d{2}(?:\.\d+)?\s*[-–—~～]\s*T?\d{1,2}:\d{2}/.test(shotText(intent.source.camera_movement ?? intent.source.fields?.camera_movement))) return null;
     if (intent.camera.hardStatic && rule.id !== "static") return null;
     if (intent.camera.modes.includes("static") && rule.id !== "static") return null;
     if (rule.id === "static" && /晃动|微动|呼吸/.test(intent.camera.positiveText)) return null;
@@ -1357,10 +1360,14 @@ function compatibleRow(row, rule, ctx) {
     else if (intent.camera.pace === "unspecified") zh = zh.replace(/缓慢|缓缓/g, "");
   }
   if (rule.id === "window-light") {
-    const direction = intent.scene.lightDirections.includes("right") ? "右侧" : intent.scene.lightDirections.includes("left") ? "左侧" : "";
+    const sourceLighting = shotText(intent.source.lighting ?? intent.source.fields?.lighting);
+    const windowClauses = splitShotAssertions(sourceLighting).positive.split(/[；。]/).filter(clause => /窗/.test(clause));
+    const windowText = windowClauses.length ? windowClauses.join("；") : intent.scene.positiveText.split(/[；。]/).filter(clause => /窗光|窗.*光/.test(clause)).join("；");
+    const left = /左/.test(windowText), right = /右/.test(windowText);
+    if (left && right) return null; // Ambiguous window directions: preserve author text without guessing.
+    const direction = right ? "右侧" : left ? "左侧" : "";
     zh = zh.replace("左侧大窗", `${direction}窗户`);
     if (!intent.scene.lightSources.includes("daylight")) zh = zh.replace("自然光", "光线");
-    const sourceLighting = shotText(intent.source.lighting ?? intent.source.fields?.lighting);
     if (/硬光|直射|强光|锐利阴影/.test(splitShotAssertions(sourceLighting + "；" + intent.scene.text).positive)) {
       zh = zh.replace("柔和的", "").replace(/，面部.*$/, "");
     }
@@ -1427,9 +1434,13 @@ export function enrichShotCard(kb, card, options = {}) {
     }
     const result = appendShotContributions(card, { owner: "cine-kb", policyVersion: `${CINE_KB_POLICY_VERSION}:${kbHash}`, sourceHash: intent.sourceHash },
       [...byField].map(([field, entry]) => ({ field, text: entry.phrase, maxFieldChars: MAX_FIELD_CHARS })));
-    const applied = result.applied.map((entry) => { const { phrase, ...meta } = byField.get(entry.field); return { ...entry, ...meta }; });
+    const proposed = result.applied.map((entry) => { const { phrase, ...meta } = byField.get(entry.field); return { ...entry, ...meta }; });
+    // Optional enrichment must not erase or invalidate a longer, already complete author field.
+    // Omitted whole sentences are retained separately; they never count as actual write evidence.
+    const omitted = proposed.filter(entry => entry.dropped);
+    const applied = proposed.filter(entry => !entry.dropped && entry.writtenChars > 0);
     const freeSearch = selectEntries(kb, source, { maxEntries: 5 });
-    const status = applied.some((entry) => entry.dropped) || rejected.some((entry) => entry.reason === "knowledge-row-missing") ? "unverified"
+    const status = rejected.some((entry) => entry.reason === "knowledge-row-missing") ? "unverified"
       : applied.some((entry) => entry.writtenChars > 0) ? "passed" : intent.subject.kind === "unknown" ? "unverified" : "not_applicable";
     const reused = shotIntentHash(result.card) === shotIntentHash(card) && applied.some((entry) => entry.writtenChars > 0);
     return { card: result.card, trace: {
@@ -1439,7 +1450,7 @@ export function enrichShotCard(kb, card, options = {}) {
       ranked: pickedRows.map(({ rule, row }) => ({ topicId: row.topicId, title: row.topicTitle, ruleId: rule.id, field: rule.field })),
       picks: pickedRows.map(({ rule, row }) => ({ ...row, ruleId: rule.id, field: rule.field })), rejected,
       explored: freeSearch.picks.map((entry) => ({ topicId: entry.topicId, intent: entry.intent, zh: entry.zh })), recipeDispatch: freeSearch.recipeDispatch ?? null,
-      applied, actualWrittenFields: applied.filter((entry) => entry.writtenChars > 0).map((entry) => entry.field),
+      applied, omitted, actualWrittenFields: applied.map((entry) => entry.field),
       suggestedParams: {
         ...(aperture ? { aperture: { recommendedRange: aperture.aperture, direction: aperture.direction, scenario: aperture.scenarioLabel, reason: aperture.reason, matchedBy: aperture.matchedBy, source: aperture.source, promptPhrase: applied.find((entry) => entry.field === "depth_of_field")?.written ?? "" } } : {}),
         ...(options.aperture ? { aperture: apertureToEffect(options.aperture) } : {}),

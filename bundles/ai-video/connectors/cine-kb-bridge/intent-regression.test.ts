@@ -165,9 +165,10 @@ describe("跨增强器幂等、来源变化和真实写入凭据", () => {
     const card = { ...source, camera_movement: "手持镜头".repeat(100) };
     const out = enrichShotCard(kb, card);
     expect(out.card.camera_movement).toBe(card.camera_movement);
-    const record = out.trace.applied.find((entry: { field: string }) => entry.field === "camera_movement");
+    const record = out.trace.omitted.find((entry: { field: string }) => entry.field === "camera_movement");
     expect(record).toMatchObject({ written: "", writtenChars: 0, dropped: "field-over-budget" });
-    expect(out.trace.status).toBe("unverified");
+    expect(out.trace.status).toBe("passed");
+    expect(out.trace.applied.some((entry: { field: string }) => entry.field === "camera_movement")).toBe(false);
     expect(out.trace.actualWrittenFields).not.toContain("camera_movement");
     for (const entry of out.trace.applied.filter((item: { writtenChars: number }) => item.writtenChars > 0)) {
       expect(out.card[entry.field]).toContain(entry.written);
@@ -193,6 +194,26 @@ describe("跨增强器幂等、来源变化和真实写入凭据", () => {
     const inputs = Array.from({ length: 12 }, (_, index) => ({ ...source, shotId: `SC-${index}`, lighting: index % 2 ? "右侧窗光" : "左侧窗光" }));
     const outputs = await Promise.all(inputs.map((card) => Promise.resolve(enrichShotCard(kb, card))));
     outputs.forEach((out, index) => expect(restoreShotContributions(out.card).card).toEqual(inputs[index]));
+  });
+});
+
+describe("详细作者卡的保守增强", () => {
+  it("左侧主窗光与右侧辅光不会被翻成右窗光", () => {
+    const card = { scene: "上午酒店大堂，女人站立", lighting: "主光为左侧高窗自然日光；右侧环境反射光作辅光" };
+    expect(added(card, "lighting")).toContain("左侧窗户");
+    expect(added(card, "lighting")).not.toContain("右侧窗户");
+  });
+  it("大理石或玻璃镜面反光不能制造水面", () => {
+    const card = { scene: "酒店大堂大理石地面镜面反光，映出机器倒影", props: "白色台式自助机" };
+    expect(injectionContext(card).mirrorWater).toBe(false);
+    expect(added(card, "props")).not.toMatch(/水面|湖面/);
+    expect(injectionContext({ scene: "平静湖面映出树木倒影" }).mirrorWater).toBe(true);
+  });
+  it("分段推镜与落幅定住不追加无边界的推近句", () => {
+    const card = { scene: "酒店大堂女人口播", camera_movement: "T00:00-T00:04 缓慢推近；T00:04-T00:05 镜头定住，停止移动" };
+    const out = enrichShotCard(kb, card);
+    expect(out.card.camera_movement).toBe(card.camera_movement);
+    expect(out.trace.actualWrittenFields).not.toContain("camera_movement");
   });
 });
 
