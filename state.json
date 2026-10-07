@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1816,
+  "revision": 1818,
   "tasks": {
     "132": {
       "number": 132,
@@ -3926,7 +3926,7 @@
       "status": "waiting_dependency",
       "firstSeen": 1791356934499,
       "attempts": {},
-      "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
+      "headSha": "a1f2889cef3f8fc31ecd00bec2683b1a375e1ab8",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-video-ack-recovery",
       "intent": {
@@ -3939,7 +3939,7 @@
         "releases": [
           {
             "kind": "desktop",
-            "version": "0.1.8"
+            "version": "0.1.9"
           }
         ]
       },
@@ -4014,7 +4014,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791378802568,
+      "updatedAt": 1791379005941,
       "admission": {
         "number": 149,
         "headSha": "a1f2889cef3f8fc31ecd00bec2683b1a375e1ab8",
@@ -47096,6 +47096,47 @@
       },
       "previous": "2ba1a37538e07c2b28198d8bfb20ce5649866a8c420ae618eaeda03cc9fee222",
       "digest": "c00e4bd34b7a0d0002629120196caa6ee8b67c0cd3f855b000767587e856f6a1"
+    },
+    {
+      "sequence": 1817,
+      "at": "2026-10-07T13:16:45.941Z",
+      "kind": "task",
+      "data": {
+        "number": 149,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "a1f2889cef3f8fc31ecd00bec2683b1a375e1ab8",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              146
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.9"
+              }
+            ]
+          },
+          "dependencies": [
+            146
+          ]
+        }
+      },
+      "previous": "c00e4bd34b7a0d0002629120196caa6ee8b67c0cd3f855b000767587e856f6a1",
+      "digest": "e52ff25a5da6e9e9466173c5193fe73c055e84cf3c81f709e4a2545a6f8caee3"
+    },
+    {
+      "sequence": 1818,
+      "at": "2026-10-07T13:17:31.175Z",
+      "kind": "transaction",
+      "data": {
+        "id": "f07e9dd8-8343-4053-aa24-051417073912"
+      },
+      "previous": "e52ff25a5da6e9e9466173c5193fe73c055e84cf3c81f709e4a2545a6f8caee3",
+      "digest": "3d352fa80ec2608d0f31fd6e24e02815484ddbd7a732ca7c331922e25a21cee9"
     }
   ]
 }
