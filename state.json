@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3820,
+  "revision": 3823,
   "tasks": {
     "132": {
       "number": 132,
@@ -4400,11 +4400,11 @@
     },
     "150": {
       "number": 150,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791357138520,
       "attempts": {},
-      "headSha": "47b75cbb571d65d98bc6537b67eb7254a1fe2185",
-      "mainSha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+      "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
+      "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
       "branch": "fix/T-2026-1007-0918-formal-preproduction-recovery",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -4426,8 +4426,8 @@
         "provider": "codex",
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 150,
-        "headSha": "47b75cbb571d65d98bc6537b67eb7254a1fe2185",
-        "mainSha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+        "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "packages/video-studio/src/film-shotlist.test.ts",
@@ -4449,20 +4449,20 @@
           {
             "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/requirement-bridge.test.ts packages/video-studio/src/prompt-review-bridge.test.ts packages/video-studio/src/film-shotlist.test.ts packages/video-studio/src/creative-duration-policy.test.ts",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T22:00:04.323892+00:00",
+            "finishedAt": "2026-10-07T22:23:23.573540+00:00",
             "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           },
           {
             "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T22:00:04.725736+00:00",
+            "finishedAt": "2026-10-07T22:23:23.915750+00:00",
             "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           }
         ],
-        "reviewedAt": "2026-10-07T22:01:28.428901+00:00",
-        "summary": "Current Codex fully read and reviewed all eight changed files and direct dependencies. Structured LLM failure and required nested fields are checked before vendor defaults, awaited conversion is cached per discovery, and restoration closes all proxies. Scene JSON carries real props/actions, exact self-consistent totals and explicit cast; total target is flexible by default. Original rejected G6 verdict and actual failed repair are preserved, retry budget remains two and nonretryable failures stop. Checkpoint reuse binds project, complete original prompts, brief/cast and actual complete-contract rejection; recomputed response errors must match. It never grants approval. Output schema, speaker, individual frozen duration, speech budgets and original render redlines remain checked before original G6/G7. No-person mapping rejects contradictions. Same-source valid prompt candidate is reused with a new review, avoiding upstream regeneration. Exact-source tests and typecheck pass; no unresolved finding. No vendor, CI, permission or new live paid call. Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
+        "reviewedAt": "2026-10-07T22:31:37.427716+00:00",
+        "summary": "Current Codex fully read and reviewed all eight changed files and direct dependencies. Structured LLM failure and required nested fields are checked before vendor defaults, awaited conversion is cached per discovery, and restoration closes all proxies. Scene JSON carries real props/actions, exact self-consistent totals and explicit cast; total target is flexible by default. Original rejected G6 verdict and actual failed repair are preserved, retry budget remains two and nonretryable failures stop. Checkpoint reuse binds project, complete original prompts, brief/cast and actual complete-contract rejection; recomputed response errors must match. It never grants approval. Output schema, speaker, individual frozen duration, speech budgets and original render redlines remain checked before original G6/G7. No-person mapping rejects contradictions. Same-source valid prompt candidate is reused with a new review, avoiding upstream regeneration. Exact-source tests and typecheck pass; no unresolved finding. No vendor, CI, permission or new live paid call. Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main 5e148fc1ae3ad097bce2fcecf5d724fee9075219. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
         "passed": true,
-        "id": "108eacc2c30304ffd777c192581ddc56ff879c00cadf428937c23591a60ebf04"
+        "id": "e34a34fe5a9b416ef6ab2e1efd199fdf7aff7073b31cea5124028d8743690df9"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -4482,7 +4482,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+            "sha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4492,7 +4492,7 @@
           },
           "head": {
             "ref": "refs/heads/fix/T-2026-1007-0918-formal-preproduction-recovery",
-            "sha": "47b75cbb571d65d98bc6537b67eb7254a1fe2185",
+            "sha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4510,8 +4510,8 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "47b75cbb571d65d98bc6537b67eb7254a1fe2185",
-        "mainSha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+        "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "files": [
           "packages/video-studio/src/film-shotlist.test.ts",
           "packages/video-studio/src/film-shotlist.ts",
@@ -4535,14 +4535,14 @@
             }
           ]
         },
-        "headTime": 1791410403000,
-        "mergeBase": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+        "headTime": 1791411802000,
+        "mergeBase": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "checkErrors": [],
         "checkSha": null,
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791410581428,
+      "updatedAt": 1791412325459,
       "admission": {
         "number": 150,
         "headSha": "47b75cbb571d65d98bc6537b67eb7254a1fe2185",
@@ -95146,6 +95146,181 @@
       },
       "previous": "ac3f4fde7cd58209d49c06cbff952fa7bcb69157b996eef9f44ce3303c909bfc",
       "digest": "5da6f540a3a178604b53f37df1e6eaeac2b82da93f5eb233ecb6548dbb951942"
+    },
+    {
+      "sequence": 3821,
+      "at": "2026-10-07T22:32:05.455Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 150,
+        "id": "e34a34fe5a9b416ef6ab2e1efd199fdf7aff7073b31cea5124028d8743690df9",
+        "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219"
+      },
+      "previous": "5da6f540a3a178604b53f37df1e6eaeac2b82da93f5eb233ecb6548dbb951942",
+      "digest": "b9fb11f9e25fc0d14228e8bb3d7cdf8663cbd2a68beac51f7e6f4c984f3cb898"
+    },
+    {
+      "sequence": 3822,
+      "at": "2026-10-07T22:32:05.459Z",
+      "kind": "task",
+      "data": {
+        "number": 150,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
+          "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+          "branch": "fix/T-2026-1007-0918-formal-preproduction-recovery",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              142,
+              144,
+              149
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.10"
+              }
+            ]
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 150,
+            "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/film-shotlist.test.ts",
+              "packages/video-studio/src/film-shotlist.ts",
+              "packages/video-studio/src/prompt-review-bridge.test.ts",
+              "packages/video-studio/src/prompt-review-bridge.ts",
+              "packages/video-studio/src/requirement-bridge.test.ts",
+              "packages/video-studio/src/requirement-bridge.ts"
+            ],
+            "filesHash": "d1f29cd6ae65e463d6c07619538899da226ff26a7396926a0ff1d94b07d7003a",
+            "dependsOn": [
+              142,
+              144,
+              149
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/requirement-bridge.test.ts packages/video-studio/src/prompt-review-bridge.test.ts packages/video-studio/src/film-shotlist.test.ts packages/video-studio/src/creative-duration-policy.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T22:23:23.573540+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T22:23:23.915750+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              }
+            ],
+            "reviewedAt": "2026-10-07T22:31:37.427716+00:00",
+            "summary": "Current Codex fully read and reviewed all eight changed files and direct dependencies. Structured LLM failure and required nested fields are checked before vendor defaults, awaited conversion is cached per discovery, and restoration closes all proxies. Scene JSON carries real props/actions, exact self-consistent totals and explicit cast; total target is flexible by default. Original rejected G6 verdict and actual failed repair are preserved, retry budget remains two and nonretryable failures stop. Checkpoint reuse binds project, complete original prompts, brief/cast and actual complete-contract rejection; recomputed response errors must match. It never grants approval. Output schema, speaker, individual frozen duration, speech budgets and original render redlines remain checked before original G6/G7. No-person mapping rejects contradictions. Same-source valid prompt candidate is reused with a new review, avoiding upstream regeneration. Exact-source tests and typecheck pass; no unresolved finding. No vendor, CI, permission or new live paid call. Normal source merge now contains actual native main 3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b. Owned files without changes retain the earlier complete code review; the current film-worker and marketing-authority files and their changed direct-post call paths were fully read in this Codex session where relevant. Peer direct-post acceptance and source-audio behavior are preserved. Every recorded test was actually rerun at this exact head. This receipt does not substitute for required cloud CI or production release. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main 5e148fc1ae3ad097bce2fcecf5d724fee9075219. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
+            "passed": true,
+            "id": "e34a34fe5a9b416ef6ab2e1efd199fdf7aff7073b31cea5124028d8743690df9"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 150,
+            "pull": {
+              "number": 150,
+              "state": "open",
+              "title": "fix(growth): preserve real preproduction failures for repair [T-2026-1007-0918]",
+              "body": "Failed audience JSON was silently replaced by vendor defaults, and unsuccessful prompt repair lost the original rejection needed for same-stage recovery. The host now awaits the real requirement conversion, validates nested model output before fallback, retains the real rejected verdict and repair response, and reuses checkpoints only after exact source/contract/error verification. Legal candidates still undergo fresh G6/G7 approval; no old approval is reused. Environment errors collect every shot and first-hook mismatch. Explicit no-person shots retain no-person metadata and reject contradictory human declarations. The completeness principle is fed to requirement and prompt workstations; default overall seconds are a creative target while already planned individual shot durations stay frozen during repair. PR144 owns the matching duration core and PR142 its render redline correctness. The actual task completed real G1-G7 and six render tasks after this repair; test fixtures make no live paid calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    142,\n    144,\n    149\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.10\"\n    }\n  ]\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-formal-preproduction-recovery",
+                "sha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "f409347e11fb6066e013c83b0fea98e19cf3d340",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "files": [
+              "packages/video-studio/src/film-shotlist.test.ts",
+              "packages/video-studio/src/film-shotlist.ts",
+              "packages/video-studio/src/prompt-review-bridge.test.ts",
+              "packages/video-studio/src/prompt-review-bridge.ts",
+              "packages/video-studio/src/requirement-bridge.test.ts",
+              "packages/video-studio/src/requirement-bridge.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                142,
+                144,
+                149
+              ],
+              "releases": [
+                {
+                  "kind": "desktop",
+                  "version": "0.1.10"
+                }
+              ]
+            },
+            "headTime": 1791411802000,
+            "mergeBase": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "b9fb11f9e25fc0d14228e8bb3d7cdf8663cbd2a68beac51f7e6f4c984f3cb898",
+      "digest": "a8235c948d5a7e9897bb15e81439d28812d866de7dd6870ead497dc3060322b8"
+    },
+    {
+      "sequence": 3823,
+      "at": "2026-10-07T22:31:55.040Z",
+      "kind": "transaction",
+      "data": {
+        "id": "f5bf5e99-71a1-4fd4-93f6-be901ddbda94"
+      },
+      "previous": "a8235c948d5a7e9897bb15e81439d28812d866de7dd6870ead497dc3060322b8",
+      "digest": "f82a2748db3a9d4dad0ffb5dde0abc229596448a41d7e0636911d9dc3eb35b0e"
     }
   ]
 }
