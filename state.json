@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2247,
+  "revision": 2250,
   "tasks": {
     "132": {
       "number": 132,
@@ -2667,7 +2667,7 @@
     },
     "142": {
       "number": 142,
-      "status": "merging",
+      "status": "release_pending",
       "firstSeen": 1791350268258,
       "attempts": {},
       "admission": {
@@ -2805,7 +2805,7 @@
         "packages/video-studio/src/prompt-redlines.ts"
       ],
       "ciSince": 1791380198087,
-      "error": "CNB 409 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/162/merge :: {\"errcode\":2009014,\"errmsg\":\"the pull can not merge yet\"}\n",
+      "error": null,
       "blockedUntil": 0,
       "candidate": {
         "number": 173,
@@ -2815,7 +2815,7 @@
         "marker": "delivery-origin:142:bbc1e45a38a23615380fa157296dc0699f0e2c77:8fd04b0a045ae4623c0c4dc822a475645b142baf",
         "at": 1791384312588
       },
-      "mergePhase": "merge_verified",
+      "mergePhase": null,
       "mergeSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 173,
@@ -2910,7 +2910,17 @@
         "checkSha": "0fba59c31ada1a5b19a6e9b575bcf10034dcbf0c",
         "mergedBy": "cnb.dYiF05kxAGA",
         "verifiedAt": "2026-10-07T14:56:43.572Z"
-      }
+      },
+      "integrationHistory": [
+        {
+          "sha": "e58d356e51c8c4f26851141972d54a4081da563c",
+          "sourceSha": "bbc1e45a38a23615380fa157296dc0699f0e2c77",
+          "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+          "checkSha": "0fba59c31ada1a5b19a6e9b575bcf10034dcbf0c",
+          "mergedBy": "cnb.dYiF05kxAGA",
+          "verifiedAt": "2026-10-07T14:56:43.572Z"
+        }
+      ]
     },
     "143": {
       "number": 143,
@@ -7448,6 +7458,18 @@
         "sha": "8fd04b0a045ae4623c0c4dc822a475645b142baf"
       },
       "error": "Release build history unreadable"
+    },
+    "dc39bb2824c746bb4045b6f0875d456abef742ce0af363c3647d3aeb045b82a0": {
+      "key": "dc39bb2824c746bb4045b6f0875d456abef742ce0af363c3647d3aeb045b82a0",
+      "repo": "workloom-ai/workloom-growthmatrix",
+      "sha": "e58d356e51c8c4f26851141972d54a4081da563c",
+      "kind": "desktop",
+      "version": "v0.1.4",
+      "number": 142,
+      "status": "pending",
+      "attempts": 0,
+      "createdAt": 1791384912975,
+      "builds": []
     }
   },
   "events": [
@@ -58478,6 +58500,62 @@
       },
       "previous": "fa6aeed500226120dff66ef77341847a4d339ad721e6d1061671719564fb6dc2",
       "digest": "c6a81554b7950b527b7b8dc4b72c5a49185ec351c3a799b87ac723f92b68f4b1"
+    },
+    {
+      "sequence": 2248,
+      "at": "2026-10-07T14:55:12.975Z",
+      "kind": "task",
+      "data": {
+        "number": 142,
+        "patch": {
+          "status": "release_pending",
+          "merge": {
+            "sha": "e58d356e51c8c4f26851141972d54a4081da563c",
+            "sourceSha": "bbc1e45a38a23615380fa157296dc0699f0e2c77",
+            "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+            "checkSha": "0fba59c31ada1a5b19a6e9b575bcf10034dcbf0c",
+            "mergedBy": "cnb.dYiF05kxAGA",
+            "verifiedAt": "2026-10-07T14:56:43.572Z"
+          },
+          "mergePhase": null,
+          "error": null,
+          "integrationHistory": [
+            {
+              "sha": "e58d356e51c8c4f26851141972d54a4081da563c",
+              "sourceSha": "bbc1e45a38a23615380fa157296dc0699f0e2c77",
+              "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+              "checkSha": "0fba59c31ada1a5b19a6e9b575bcf10034dcbf0c",
+              "mergedBy": "cnb.dYiF05kxAGA",
+              "verifiedAt": "2026-10-07T14:56:43.572Z"
+            }
+          ]
+        }
+      },
+      "previous": "c6a81554b7950b527b7b8dc4b72c5a49185ec351c3a799b87ac723f92b68f4b1",
+      "digest": "93c717bf88d4804d69c6434aa3a7ad0042442148e2b614ca91ca98ae443edeb3"
+    },
+    {
+      "sequence": 2249,
+      "at": "2026-10-07T14:55:12.975Z",
+      "kind": "release_enqueued",
+      "data": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "sha": "e58d356e51c8c4f26851141972d54a4081da563c",
+        "kind": "desktop",
+        "version": "v0.1.4"
+      },
+      "previous": "93c717bf88d4804d69c6434aa3a7ad0042442148e2b614ca91ca98ae443edeb3",
+      "digest": "ff393be3f4bba42a4ff0e086c642f7d85f7ff328bc22b24f1f3a9d38ebfd2935"
+    },
+    {
+      "sequence": 2250,
+      "at": "2026-10-07T14:56:48.965Z",
+      "kind": "transaction",
+      "data": {
+        "id": "3cbb51f0-98e6-4db0-a111-d803c9fdc11c"
+      },
+      "previous": "ff393be3f4bba42a4ff0e086c642f7d85f7ff328bc22b24f1f3a9d38ebfd2935",
+      "digest": "0851656db4aa11a424384d315e58c5993777eace44b6899df66ab0a5bf714651"
     }
   ]
 }
