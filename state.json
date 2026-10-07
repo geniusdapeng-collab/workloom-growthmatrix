@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1839,
+  "revision": 1841,
   "tasks": {
     "132": {
       "number": 132,
@@ -5516,7 +5516,7 @@
       "status": "waiting_dependency",
       "firstSeen": 1791367142457,
       "attempts": {},
-      "headSha": "be29dda375e54653969941d7a2e552ce57159d25",
+      "headSha": "39bce071a4fd7653292591ae29a4bb9bbb19a685",
       "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-stable-film-generation-roots",
       "intent": {
@@ -5654,7 +5654,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791378853412,
+      "updatedAt": 1791379005941,
       "admission": {
         "number": 160,
         "headSha": "39bce071a4fd7653292591ae29a4bb9bbb19a685",
@@ -47685,6 +47685,49 @@
       },
       "previous": "bce46ea4c6fe18a84083493e0bd795080800577b114f4da92b0115101f6aa01a",
       "digest": "b7f102e2f59ff550b7efff8b5e3587a473925e23d0817557f60e8466b08e5ad4"
+    },
+    {
+      "sequence": 1840,
+      "at": "2026-10-07T13:16:45.941Z",
+      "kind": "task",
+      "data": {
+        "number": 160,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "39bce071a4fd7653292591ae29a4bb9bbb19a685",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              149,
+              158
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            149,
+            158
+          ]
+        }
+      },
+      "previous": "b7f102e2f59ff550b7efff8b5e3587a473925e23d0817557f60e8466b08e5ad4",
+      "digest": "7245c4e261eb313d1d233cc25b8ea3ce6fd8eb932e37ba93f161209e5ac60370"
+    },
+    {
+      "sequence": 1841,
+      "at": "2026-10-07T13:18:08.880Z",
+      "kind": "transaction",
+      "data": {
+        "id": "f80dc491-bac4-483d-9056-d5ceed3df719"
+      },
+      "previous": "7245c4e261eb313d1d233cc25b8ea3ce6fd8eb932e37ba93f161209e5ac60370",
+      "digest": "6c0f9a31db38cef01ebc126991fc48bc8a435becfefd927c260ec6ae5d33d647"
     }
   ]
 }
