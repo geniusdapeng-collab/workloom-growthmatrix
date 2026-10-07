@@ -108,7 +108,7 @@ describe("实际制片CLI的持久受理与原片保留", () => {
     const second = setup.run("second", "ok");
     expect(second.result.status, second.diagnostic).toBe(0);
     expect(setup.postCalls()).toHaveLength(1);
-    expect(second.rows().filter(row => row.stage === "keyframe").at(-1)).toMatchObject({ ok: true, verdict: { via: "deterministic", score: 0, degraded: false } });
+    expect(second.rows().filter(row => row.stage === "keyframe").at(-1)).toMatchObject({ ok: true, verdict: { via: "deterministic", score: null, degraded: false } });
     const delivered = join(second.workDir, "plates", setup.project, "EMPTY-plate.png");
     expect(sha(delivered)).toBe(sha(setup.media));
     expect(setup.calls().every(row => row.url.startsWith("https://fixture.invalid/"))).toBe(true);
@@ -145,7 +145,7 @@ describe("实际制片CLI的持久受理与原片保留", () => {
     const probe = spawnSync(ffprobe, ["-v", "error", "-show_entries", "format=duration", "-of", "json", clip], { encoding: "utf8", timeout: 5_000 });
     expect(probe.status, probe.stderr).toBe(0);
     expect(Number(JSON.parse(probe.stdout).format.duration)).toBeLessThan(1.1);
-    expect(second.rows().filter(row => row.stage === "material-gen").at(-1)).toMatchObject({ ok: true, evidence: { taskId: "fixture-task-1", measurements: { motion: null, identity: null, referenceReuse: null } } });
+    expect(second.rows().filter(row => row.stage === "material-gen").at(-1)).toMatchObject({ ok: true, evidence: { taskId: "fixture-task-1", qualityReviewed: false, normalized: { factor: 1, sourceTiming: "preserved" } } });
   }, 85_000);
 
   it.each(["image", "video"] as const)("%s旧产物缺受理记录时，不因为换目录或禁用缓存而重新付费", kind => {

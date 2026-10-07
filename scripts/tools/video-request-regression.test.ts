@@ -250,6 +250,32 @@ describe("全链路当前血缘与返修范围", () => {
 describe("成片硬切 CFR 接缝", () => {
   const available = [ffmpeg, ffprobe].every((bin) => spawnSync(bin, ["-version"], { stdio: "ignore" }).status === 0);
 
+  const hash = (file: string) => createHash("sha256").update(readFileSync(file)).digest("hex");
+  const assertComposeReceipt = (master: string, clips: string[], expectedDuration: number) => {
+    const receipt = JSON.parse(readFileSync(master.replace(/\.mp4$/i, ".compose-receipt.json"), "utf8"));
+    expect(receipt.policy).toBe("workloom.provider-success-direct-post/v1");
+    expect(receipt.qualityReviewed).toBe(false);
+    expect(receipt.output.path).toBe(master);
+    expect(receipt.output.sha256).toBe(hash(master));
+    expect(receipt.output.hasAudio).toBe(true);
+    expect(Math.abs(receipt.output.durationSec - expectedDuration)).toBeLessThanOrEqual(0.13); // Existing one-frame tolerance @8fps.
+    expect(receipt.sourceReceipts.map((source: { path: string }) => source.path)).toEqual(clips);
+    expect(receipt.sourceReceipts.map((source: { sha256: string }) => source.sha256)).toEqual(clips.map(hash));
+    expect(receipt.sourceReceipts.every((source: { qualityReviewed: boolean }) => source.qualityReviewed === false)).toBe(true);
+    expect(receipt).not.toHaveProperty("samples");
+    const timing = spawnSync(ffprobe, ["-v", "error", "-show_entries", "stream=codec_type,duration", "-of", "json", master],
+      { encoding: "utf8", timeout: 15_000 });
+    expect(timing.status, `${timing.error ?? ""}\n${timing.stderr}`).toBe(0);
+    const streams = JSON.parse(timing.stdout).streams as Array<{ codec_type: string; duration: string }>;
+    for (const type of ["video", "audio"]) {
+      const duration = Number(streams.find(stream => stream.codec_type === type)?.duration);
+      expect(Number.isFinite(duration), `${type} has a real output clock`).toBe(true);
+      expect(Math.abs(duration - expectedDuration), `${type} follows the declared timeline`).toBeLessThanOrEqual(0.13);
+      if (type === "video") expect(receipt.output.durationSec).toBe(duration);
+    }
+    return receipt;
+  };
+
   it.skipIf(!available)("视频直拷拼接的每个接缝保持整帧间隔，音画同步按同一时长计算", () => {
     const dir = mkdtempSync(join(tmpdir(), "compose-cfr-")); temporary.push(dir);
     const clips: string[] = [];
@@ -294,12 +320,12 @@ describe("成片硬切 CFR 接缝", () => {
         expect(pts[index]! - pts[index - 1]!, `${file}: frame ${index}`).toBeCloseTo(0.125, 4);
       }
     }
-    const sync = JSON.parse(readFileSync(join(dir, "master.av-sync.json"), "utf8")) as { ok: boolean; measured: number };
-    expect(sync.ok).toBe(true);
-    expect(sync.measured).toBe(3);
+    const receipt = assertComposeReceipt(master, clips, 3);
+    expect(receipt.requested).toEqual({ width: 64, height: 96, fps: 8, durationSec: null });
+    expect(receipt.transforms).toEqual({ silencePadding: [], transition: "", transitionDuration: 0, fade: 0 });
   }, 100_000);
 
-  it.skipIf(!available)("重叠转场、变速和冻结补秒在写出前拒绝，硬切保留完整源片时长", () => {
+  it.skipIf(!available)("重叠转场、整片变速或冻结尾帧在输出前拒绝，源片字节保持完整", () => {
     const dir = mkdtempSync(join(tmpdir(), "compose-transition-entry-")); temporary.push(dir);
     const clips: string[] = [];
     for (const [index, color] of ["red", "green", "blue"].entries()) {
@@ -313,48 +339,22 @@ describe("成片硬切 CFR 接缝", () => {
       expect(made.status, `${made.error ?? ""}\n${made.stderr}`).toBe(0);
       clips.push(file);
     }
-    const originalHashes = clips.map(file => createHash("sha256").update(readFileSync(file)).digest("hex"));
-    for (const [index, forbidden] of [
+    const hashes = clips.map(file => createHash("sha256").update(readFileSync(file)).digest("hex"));
+    for (const [index, flags] of [
       ["--transition", "fade", "--transition-duration", "0.25", "--transition-at", "3"],
-      ["--retime-to", "2"],
+      ["--retime-to", "2.75"],
       ["--clip-tail-holds", "0,0,1"],
     ].entries()) {
-      const output = join(dir, `forbidden-${index}.mp4`);
-      const rejected = spawnSync(process.execPath, ["--import", "tsx", "scripts/tools/compose-film.mts",
-        "--clips", clips.join(","), "--out", output, "--width", "64", "--height", "96", "--fps", "8",
-        "--fade", "0", "--color", "none", ...forbidden],
-      { cwd: root, encoding: "utf8", timeout: 30_000, env: { ...process.env, WL_FFMPEG: ffmpeg, WL_FFPROBE: ffprobe } });
-      expect(rejected.status, `${rejected.error ?? ""}\n${rejected.stderr}`).not.toBe(0);
-      expect(rejected.stderr).toContain("SOURCE_TIMING_PROTECTED");
-      expect(existsSync(output)).toBe(false);
+      const master = join(dir, `refused-${index}.mp4`);
+      const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/tools/compose-film.mts",
+        "--clips", clips.join(","), "--out", master, "--width", "64", "--height", "96", "--fps", "8",
+        "--fade", "0", "--color", "none", ...flags,
+      ], { cwd: root, encoding: "utf8", timeout: 90_000, env: { ...process.env, WL_FFMPEG: ffmpeg, WL_FFPROBE: ffprobe } });
+      expect(result.status, `${result.error ?? ""}\n${result.stdout}\n${result.stderr}`).not.toBe(0);
+      expect(result.stderr).toContain("SOURCE_TIMING_PROTECTED");
+      expect(existsSync(master)).toBe(false);
+      expect(clips.map(file => createHash("sha256").update(readFileSync(file)).digest("hex"))).toEqual(hashes);
     }
-    const master = join(dir, "master.mp4");
-    const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/tools/compose-film.mts",
-      "--clips", clips.join(","), "--out", master, "--width", "64", "--height", "96", "--fps", "8",
-      "--fade", "0", "--color", "none",
-    ], { cwd: root, encoding: "utf8", timeout: 90_000, env: { ...process.env, WL_FFMPEG: ffmpeg, WL_FFPROBE: ffprobe } });
-    expect(result.status, `${result.error ?? ""}\n${result.stdout}\n${result.stderr}`).toBe(0);
-    const duration = spawnSync(ffprobe, ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", master], { encoding: "utf8" });
-    expect(Math.abs(Number(duration.stdout.trim()) - 3)).toBeLessThanOrEqual(0.13); // ≤1 encoding frame @8fps
-    const report = JSON.parse(readFileSync(join(dir, "master.av-sync.json"), "utf8"));
-    expect(report.outputSha256).toMatch(/^[a-f0-9]{64}$/);
-    expect(report.clipCount).toBe(3);
-    expect(report.samples.map((sample: { index: number }) => sample.index)).toEqual([0, 1, 2]);
-    expect(report.retimeFactor).toBe(1);
-    expect(report.clipTailHolds).toEqual([0, 0, 0]);
-    expect(report.normalizedTimeline.map((row: Card) => row.speedFactor)).toEqual([1, 1, 1]);
-    expect(report.sourceTiming.map((row: Card) => row.sha256)).toEqual(originalHashes);
-    expect(clips.map(file => createHash("sha256").update(readFileSync(file)).digest("hex"))).toEqual(originalHashes);
-    const pixel = (at: number) => {
-      const frame = spawnSync(ffmpeg, ["-v", "error", "-ss", String(at), "-i", master, "-frames:v", "1",
-        "-vf", "scale=1:1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], { encoding: "buffer" });
-      expect(frame.status, `${frame.error ?? ""}\n${String(frame.stderr)}`).toBe(0);
-      return [...frame.stdout.subarray(0, 3)];
-    };
-    const firstCut = pixel(1.125), beforeThirdEntry = pixel(1.875), thirdShot = pixel(2.125);
-    expect(firstCut[1]).toBeGreaterThan(firstCut[2]); // second shot, not a blend into blue
-    expect(beforeThirdEntry[1]).toBeGreaterThan(beforeThirdEntry[2]); // the complete second shot reaches its original end
-    expect(thirdShot[2]).toBeGreaterThan(thirdShot[1]);
   }, 100_000);
 });
 

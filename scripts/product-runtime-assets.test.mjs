@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -29,16 +30,20 @@ function fixture(t) {
   put(root, "packages/industry-contract/tsconfig.json", "{}\n");
   put(root, "packages/industry-contract/tsconfig.build.json", "{}\n");
   put(root, "packages/film/src/worker.ts", "export const value = 'canonical fixture source';\n");
+  for (const ref of ["docs/ai-video-workbench-guide.md", "bundles/geo-growthmatrix/capabilities/workbench-guide.mjs"]) {
+    put(root, ref, readFileSync(new URL("../" + ref, import.meta.url)));
+  }
+  put(root, "docs/unrelated-private-note.md", "synthetic excluded documentation\n");
   execFileSync("git", ["init", "-q"], { cwd: root });
-  execFileSync("git", ["add", "packages", "product.manifest.json", "package.json", "scripts", "apps", ".env.example"], { cwd: root });
+  execFileSync("git", ["add", "packages", "product.manifest.json", "package.json", "scripts", "apps", "docs", "bundles", ".env.example"], { cwd: root });
   return { root, destination, outside };
 }
 
 test("canonical allowlist preserves director/media/agent sources and rejects dev/secret assets", () => {
-  for (const ref of ["apps/server/src/video/director-worker.ts", "bundles/ai-video/library/director-system/core.mjs", "scripts/media-runtime.mjs", "scripts/workloom-agent.mjs"]) {
+  for (const ref of ["apps/server/src/video/director-worker.ts", "bundles/ai-video/library/director-system/core.mjs", "scripts/media-runtime.mjs", "scripts/workloom-agent.mjs", "docs/ai-video-workbench-guide.md"]) {
     assert.equal(isRuntimeSource(ref, { includePlatformOps: false }), true, ref);
   }
-  for (const ref of ["packages/a/node_modules/tool/index.js", "packages/a/.env", "apps/server/src/fixture.test.ts", "platform-ops/secret.ts", "../escape.ts"]) {
+  for (const ref of ["packages/a/node_modules/tool/index.js", "packages/a/.env", "apps/server/src/fixture.test.ts", "platform-ops/secret.ts", "../escape.ts", "docs/unrelated-private-note.md", "docs/ai-video-workbench-guide.md.bak"]) {
     assert.equal(isRuntimeSource(ref, { includePlatformOps: false }), false, ref);
   }
 });
@@ -52,6 +57,32 @@ test("normal physical source copy records canonical source and generated contrac
   assert.equal(readFileSync(path.join(destination, ".env.defaults"), "utf8"), "LLM_PROVIDER=mock\n");
   const assets = JSON.parse(readFileSync(path.join(destination, "RUNTIME_ASSETS.json")));
   assert.ok(assets.files.some(item => item.path === "packages/industry-contract/dist/index.js" && item.origin === "compiled-internal-contract"));
+  const expected = readFileSync(path.join(root, "docs/ai-video-workbench-guide.md"));
+  assert.deepEqual(readFileSync(path.join(destination, "docs/ai-video-workbench-guide.md")), expected);
+  const sha256 = createHash("sha256").update(expected).digest("hex");
+  assert.ok(assets.files.some(item => item.path === "docs/ai-video-workbench-guide.md" && item.sha256 === sha256 && item.bytes === expected.length));
+  assert.equal(existsSync(path.join(destination, "docs/unrelated-private-note.md")), false);
+  const output = JSON.parse(execFileSync(process.execPath, ["--input-type=module", "-e", "import {workbenchGuide} from './bundles/geo-growthmatrix/capabilities/workbench-guide.mjs';console.log(JSON.stringify(workbenchGuide({})));"], { cwd: destination, encoding: "utf8" }));
+  assert.equal(output.sha256, sha256);
+  assert.equal(output.content, expected.toString("utf8"));
+});
+
+test("missing fixed guide fails assembly before compiler or runtime writes", (t) => {
+  const { root, destination } = fixture(t);
+  rmSync(path.join(root, "docs/ai-video-workbench-guide.md"));
+  assert.throws(() => copyRuntimeSources(root, destination), /源码载荷.*docs\/ai-video-workbench-guide.md/u);
+  assert.equal(existsSync(path.join(root, "compiler-ran.txt")), false);
+  assert.equal(existsSync(destination), false);
+});
+
+test("fixed guide symlink cannot include external content in runtime", (t) => {
+  const { root, destination, outside } = fixture(t);
+  put(outside, "guide.md", "synthetic external content\n");
+  rmSync(path.join(root, "docs/ai-video-workbench-guide.md"));
+  symlinkSync(path.join(outside, "guide.md"), path.join(root, "docs/ai-video-workbench-guide.md"));
+  assert.throws(() => copyRuntimeSources(root, destination), /源码.*(?:链接|越界)/u);
+  assert.equal(existsSync(path.join(root, "compiler-ran.txt")), false);
+  assert.equal(existsSync(destination), false);
 });
 
 test("cross-target structure checks the installed video package without requiring Growthtest-only director sources", (t) => {

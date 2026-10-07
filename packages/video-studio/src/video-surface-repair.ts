@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fingerprintArtifact, productionHash, type LineageReceipt } from "./production-lineage.js";
 import type { ProducerVerdict } from "./producer-gate.js";
-import { assertVideoTaskReceiptIdentity, verifyExistingSuccessfulVideoTask, type VideoTaskReceipt } from "./video-task-receipt.js";
+import { assertVideoTaskReceiptIdentity, verifyExistingSuccessfulVideoTask } from "./video-task-receipt.js";
 
 export interface SurfaceRect { x: number; y: number; width: number; height: number }
 interface MediaInfo { width: number; height: number; duration: number; frames: number; fps: string; audio: boolean }
@@ -18,25 +18,21 @@ export interface SurfacePlan {
 const digest = (value: Buffer) => createHash("sha256").update(value).digest("hex");
 function fail(reason: string): never { throw new Error(`SURFACE_REPAIR_UNVERIFIED: ${reason}`); }
 
-/** 仅接受同scope的真实失败片段及相同正文的成功供应商任务，失败裁决不被改成通过。 */
+/** 本地显式变换复用同作用域的成功供应商字节；历史质量裁决仅保留记录。 */
 export function assertSurfaceRepairOrigin(input: {
   projectId: string; shotId: string; sourceHash: string; clip: string; expectedRequestSha256: string;
   submission: LineageReceipt; promptFile: string;
   previous: { ok: boolean; degraded: boolean; verdict: ProducerVerdict | null; lineage?: LineageReceipt };
-  taskReceipt: { schemaVersion?: string; projectId?: string; shotId?: string; state?: string; taskId?: string; requestSha256?: string }
-    & Partial<Pick<VideoTaskReceipt, "identity" | "identitySha256" | "origin" | "result" | "legacy">>;
+  taskReceipt: { schemaVersion?: string; projectId?: string; shotId?: string; state?: string; taskId?: string; requestSha256?: string };
 }): string {
   const { previous: row, taskReceipt: task } = input, lineage = row.lineage;
-  if (row.ok || row.degraded || row.verdict?.via !== "llm" || row.verdict.approved || row.verdict.degraded
-    || row.verdict.status !== "failed") fail("需要原片真实事实拒绝，不能把缺证据、旧通过或伪造输入当修复来源");
-  if (!lineage || lineage.schemaVersion !== "workloom.production-lineage/v1" || lineage.status !== "failed"
-    || lineage.projectId !== input.projectId || lineage.shotId !== input.shotId || lineage.stage !== "identity-fact"
-    || lineage.sourceHash !== input.sourceHash || !Array.isArray(lineage.errors) || lineage.errors.length) fail("原拒绝作用域/正文已改变");
-  if (!lineage.outputs.some(file => file.path === resolve(input.clip))) fail("原拒绝未绑定该片段");
-  for (const file of [...lineage.inputs, ...lineage.outputs]) {
-    const actual = fingerprintArtifact(file.path);
-    if (actual.sha256 !== file.sha256 || actual.bytes !== file.bytes || actual.realpath !== file.realpath) fail("原拒绝的输入/片段/抽帧发生变化");
-  }
+  if (!lineage || lineage.schemaVersion !== "workloom.production-lineage/v1"
+    || lineage.projectId !== input.projectId || lineage.shotId !== input.shotId
+    || lineage.sourceHash !== input.sourceHash) fail("原片作用域/来源不符");
+  const artifact = lineage.outputs.find(file => file.path === resolve(input.clip));
+  if (!artifact) fail("原来源未绑定该片段");
+  const actual = fingerprintArtifact(input.clip);
+  if (actual.sha256 !== artifact.sha256 || actual.bytes !== artifact.bytes || actual.realpath !== artifact.realpath) fail("原供应商片段字节已改变");
   const submitted = input.submission;
   if (submitted.schemaVersion !== "workloom.production-lineage/v1" || submitted.stage !== "gate:material-generate:submit"
     || submitted.projectId !== input.projectId || submitted.shotId !== input.shotId || submitted.sourceHash !== input.sourceHash
@@ -47,68 +43,53 @@ export function assertSurfaceRepairOrigin(input: {
     if (actual.sha256 !== file.sha256 || actual.bytes !== file.bytes || actual.realpath !== file.realpath) fail("原提交门的正文/参考已改变");
   }
   if (task.schemaVersion === "workloom.video-task-receipt/v2") assertVideoTaskReceiptIdentity(task);
-  if (!["workloom.video-task-receipt/v1", "workloom.video-task-receipt/v2"].includes(task.schemaVersion ?? "") || task.state !== "succeeded"
+  if (!["workloom.video-task-receipt/v1", "workloom.video-task-receipt/v2"].includes(String(task.schemaVersion)) || task.state !== "succeeded"
     || task.projectId !== input.projectId || task.shotId !== input.shotId || !task.taskId?.trim()
     || task.requestSha256 !== input.expectedRequestSha256) fail("必须复用同一受审正文的成功任务，不能重复提交");
   return task.taskId!;
 }
 
-/** 跨进程复核已受审的后期副本：按实际源/输入/输出/完整裁决字节检查，不猜测旧配方。 */
+/** 跨进程复核实际本地变换产物的来源和字节；不复评历史质量意见。 */
 export function assertReviewedSurfaceRepair(input: { projectId: string; shotId: string; sourceHash: string;
   row: { ok: boolean; degraded: boolean; artifact: string | null; verdict: ProducerVerdict | null; lineage?: LineageReceipt } }): string {
   const { row } = input, lineage = row.lineage;
-  if (!row.ok || row.degraded || !row.artifact || !row.verdict?.approved || row.verdict.degraded || row.verdict.status !== "passed"
-    || row.verdict.via !== "llm" || row.verdict.score < 70 || row.verdict.hardFailures.length) fail("后期副本缺真实已通过的最新裁决");
+  if (!row.artifact) fail("后期副本缺实际产物");
   if (!lineage || lineage.schemaVersion !== "workloom.production-lineage/v1" || lineage.stage !== "surface-repair" || lineage.status !== "passed"
     || lineage.projectId !== input.projectId || lineage.shotId !== input.shotId || lineage.sourceHash !== input.sourceHash
     || lineage.errors.length || !lineage.outputs.some(file => file.path === resolve(row.artifact!))) fail("后期副本作用域/来源不符");
   for (const file of [...lineage.inputs, ...lineage.outputs]) {
     const actual = fingerprintArtifact(file.path);
-    if (actual.sha256 !== file.sha256 || ("realpath" in file && actual.realpath !== file.realpath)) fail("受审后期副本或原输入已改变");
+    if (actual.sha256 !== file.sha256 || actual.bytes !== file.bytes || actual.realpath !== file.realpath) fail("后期副本或实际输入字节已改变");
   }
-  for (const e of row.verdict.evidence ?? []) if (fingerprintArtifact(e.path).sha256 !== e.sha256) fail("后期审核正文/抽帧已变");
-  if (!row.verdict.evidence?.length) fail("后期审核缺实际图像证据");
   return row.artifact;
 }
 
-/** 后期资格：真实最新身份裁决绑定完整当前合同和同一副本；旧通过不能盖过后来拒绝。 */
+/** 兼容旧调用名：身份/服装/质量意见不再决定成功片段的后期资格。 */
 export function assertSurfaceIdentityQualification(input: { projectId: string; shotId: string; sourceHash: string; contractHash: string; clip: string;
   row: { ok: boolean; degraded: boolean; artifact: string | null; verdict: ProducerVerdict | null; lineage?: LineageReceipt } }): void {
-  const { row } = input, lineage = row.lineage;
-  if (!row.ok || row.degraded || row.artifact !== input.clip || !row.verdict?.approved || row.verdict.status !== "passed"
-    || row.verdict.via !== "llm" || row.verdict.degraded || row.verdict.score < 70 || row.verdict.contractHash !== input.contractHash
-    || row.verdict.hardFailures.length || !row.verdict.evidence?.length) fail("同一修复片缺当前完整合同的最新真实身份裁决");
-  if (!lineage || lineage.schemaVersion !== "workloom.production-lineage/v1" || lineage.stage !== "identity-fact" || lineage.status !== "passed"
-    || lineage.projectId !== input.projectId || lineage.shotId !== input.shotId || lineage.sourceHash !== input.sourceHash || lineage.errors.length
-    || !lineage.inputs.some(file => file.path === resolve(input.clip)) || !lineage.outputs.some(file => file.path === resolve(input.clip))) fail("身份审核未绑定同一片段");
-  for (const file of [...lineage.inputs, ...lineage.outputs]) {
-    const actual = fingerprintArtifact(file.path);
-    if (actual.sha256 !== file.sha256 || actual.bytes !== file.bytes || actual.realpath !== file.realpath) fail("身份审核之后实际证据已改变");
-  }
-  for (const e of row.verdict.evidence) if (fingerprintArtifact(e.path).sha256 !== e.sha256) fail("身份审核之后抽帧已改变");
+  fingerprintArtifact(input.clip);
 }
 
 type ReviewedSurfaceRow = { ok: boolean; degraded: boolean; artifact: string | null; verdict: ProducerVerdict | null;
   lineage?: LineageReceipt; evidence: Record<string, unknown> };
-/** 正常后期只接收最新真实受审副本和原成功请求；整个入口没有供应商提交/轮询能力。 */
+/** 复用实际变换副本和原成功请求；无身份复评，也无供应商提交/轮询能力。 */
 export async function qualifyReviewedSurfacePost(input: { projectId: string; shotId: string; sourceHash: string; contractHash: string;
-  receiptRoot: string; body: Record<string, unknown>; provider?: string; endpoint?: string; legacyRoots?: string[];
-  repair: ReviewedSurfaceRow; identity: ReviewedSurfaceRow }): Promise<{
+  receiptRoot: string; legacyRoots?: string[]; provider?: string; endpoint?: string;
+  body: Record<string, unknown>; repair: ReviewedSurfaceRow; identity: ReviewedSurfaceRow }): Promise<{
     clip: string; taskId: string; requestSha256: string; original: string; originalSha256: string;
   }> {
   const clip = assertReviewedSurfaceRepair({ ...input, row: input.repair });
-  assertSurfaceIdentityQualification({ ...input, clip, row: input.identity });
-  const paid = await verifyExistingSuccessfulVideoTask({ root: input.receiptRoot, projectId: input.projectId, shotId: input.shotId, body: input.body,
-    provider: input.provider, endpoint: input.endpoint, legacyRoots: input.legacyRoots });
+  const paid = await verifyExistingSuccessfulVideoTask({ root: input.receiptRoot, legacyRoots: input.legacyRoots, provider: input.provider, endpoint: input.endpoint,
+    projectId: input.projectId, shotId: input.shotId, body: input.body });
   const original = input.repair.evidence.original, originalSha256 = input.repair.evidence.originalSha256;
-  if (input.repair.evidence.taskId !== paid.taskId || input.identity.evidence.taskId !== paid.taskId
+  if (input.repair.evidence.taskId !== paid.taskId
     || typeof original !== "string" || typeof originalSha256 !== "string" || original === clip
     || fingerprintArtifact(original).sha256 !== originalSha256
     || !input.repair.lineage!.inputs.some(file => file.path === resolve(original) && file.sha256 === originalSha256)) fail("副本未绑定当前原片与同一成功付费任务");
   return { clip, ...paid, original, originalSha256 };
 }
 
-/** 灰度连通域仅提出屏幕候选；必须逐帧唯一，几何稳定，再交实际图像审核。 */
+/** 灰度连通域仅提出屏幕候选；必须逐帧唯一、几何稳定，供明确请求的本地虚化变换使用。 */
 export function detectSurface(frame: Uint8Array, width: number, height: number): SurfaceRect {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 32 || height < 32 || frame.length !== width * height) fail("灰度帧规格非法");
   const visited = new Uint8Array(frame.length), queue = new Int32Array(frame.length), candidates: SurfaceRect[] = [];
@@ -262,12 +243,12 @@ export function inspectSurfaceRepair(input: { ffmpeg: string; ffprobe: string; i
   return { plan, planFile, previews };
 }
 
-/** 明确的真实定位审核前不执行后期；副本保持音频/时序/分辨率，原文件只读。 */
+/** 明确请求的定位计划绑定输入字节；执行实际局部变换，原文件只读。 */
 export function executeSurfaceRepair(input: { ffmpeg: string; ffprobe: string; plan: SurfacePlan; planFile: string;
   previews: string[]; localization: ProducerVerdict; output: string }): { output: string; sha256: string; outsideMeanError: number; audioSha256: string | null } {
   const { plan, localization: verdict } = input;
-  if (!verdict.approved || verdict.status !== "passed" || verdict.via !== "llm" || verdict.degraded || verdict.score < 70
-    || verdict.hardFailures.length || ![input.planFile, ...input.previews].every(file => verdict.evidence?.some(e => e.path === file && e.sha256 === fingerprintArtifact(file).sha256))) fail("定位计划与全部实际预览未获得真实模型批准");
+  if (!verdict.approved || verdict.status !== "passed" || verdict.degraded
+    || verdict.hardFailures.length || ![input.planFile, ...input.previews].every(file => verdict.evidence?.some(e => e.path === file && e.sha256 === fingerprintArtifact(file).sha256))) fail("明确请求的定位计划与实际输入字节不一致");
   if (productionHash(JSON.parse(readFileSync(input.planFile, "utf8"))) !== productionHash(plan)
     || fingerprintArtifact(plan.input).sha256 !== plan.inputSha256 || fingerprintArtifact(plan.maskFile).sha256 !== plan.maskSha256
     || resolve(plan.input) === resolve(input.output) || existsSync(input.output)) fail("原片/计划/mask变动或副本已存在，禁止覆盖原证据");
