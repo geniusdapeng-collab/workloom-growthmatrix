@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 573,
+  "revision": 575,
   "tasks": {
     "132": {
       "number": 132,
@@ -2840,7 +2840,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791356186913,
+      "updatedAt": 1791356412845,
       "admission": {
         "number": 148,
         "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
@@ -2849,7 +2849,17 @@
         "scopes": [],
         "owner": "admission/pr-148",
         "generation": {}
-      }
+      },
+      "originalBody": "Paid portrait image generation retried POST after ambiguous network errors and did not persist the provider URL until the download succeeded. The runtime now journals the complete compiled request before one POST and saves the accepted URL before downloading. Download/cache/file failures recover from that same URL, including across run folders and independent processes. Unknown acceptance and missing legacy receipts prohibit automatic resubmission. Image result journals use private atomic writes, fsync, exact scope and request validation; dead locks may recover only with known acceptance. Studio supplies a stable journal root. Fault tests inject providers and make no live paid requests.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+      "files": [
+        "packages/video-studio/src/generation-file-store.ts",
+        "packages/video-studio/src/image-task-receipt.test.ts",
+        "packages/video-studio/src/image-task-receipt.ts",
+        "packages/video-studio/src/portrait-runtime.test.ts",
+        "packages/video-studio/src/portrait-runtime.ts",
+        "packages/video-studio/src/studio.ts"
+      ],
+      "ciSince": 1791356412845
     }
   },
   "leases": {
@@ -14939,6 +14949,48 @@
       },
       "previous": "fe6959937a63a4a98db333c3e562d11be31244066bdbeb452f1fe5e290bda196",
       "digest": "29e49a718be8196105e0a88edee5684671cbee089a1beba69900319bde866f03"
+    },
+    {
+      "sequence": 574,
+      "at": "2026-10-07T07:00:12.845Z",
+      "kind": "task",
+      "data": {
+        "number": 148,
+        "patch": {
+          "headSha": "3f2ec2f06e576fac6c949560a982a26ced8c24ec",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-image-paid-receipts",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "Paid portrait image generation retried POST after ambiguous network errors and did not persist the provider URL until the download succeeded. The runtime now journals the complete compiled request before one POST and saves the accepted URL before downloading. Download/cache/file failures recover from that same URL, including across run folders and independent processes. Unknown acceptance and missing legacy receipts prohibit automatic resubmission. Image result journals use private atomic writes, fsync, exact scope and request validation; dead locks may recover only with known acceptance. Studio supplies a stable journal root. Fault tests inject providers and make no live paid requests.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/generation-file-store.ts",
+            "packages/video-studio/src/image-task-receipt.test.ts",
+            "packages/video-studio/src/image-task-receipt.ts",
+            "packages/video-studio/src/portrait-runtime.test.ts",
+            "packages/video-studio/src/portrait-runtime.ts",
+            "packages/video-studio/src/studio.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791356412845
+        }
+      },
+      "previous": "29e49a718be8196105e0a88edee5684671cbee089a1beba69900319bde866f03",
+      "digest": "18aafc193f710f071b6b124dfb9305fa32fe0092b2b6d1bf255891bddeadd374"
+    },
+    {
+      "sequence": 575,
+      "at": "2026-10-07T07:01:02.708Z",
+      "kind": "transaction",
+      "data": {
+        "id": "bf913c67-15be-452f-bf32-3186d6204558"
+      },
+      "previous": "18aafc193f710f071b6b124dfb9305fa32fe0092b2b6d1bf255891bddeadd374",
+      "digest": "ade4fed77c414fb8f1849e460fc8a68bf949e956eaa36d46c1e53790c3d70623"
     }
   ]
 }
