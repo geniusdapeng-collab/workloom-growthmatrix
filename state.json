@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 432,
+  "revision": 434,
   "tasks": {
     "132": {
       "number": 132,
@@ -2138,7 +2138,7 @@
     },
     "143": {
       "number": 143,
-      "status": "waiting_ci",
+      "status": "parked",
       "firstSeen": 1791351161492,
       "attempts": {},
       "admission": {
@@ -2150,7 +2150,7 @@
         "owner": "admission/pr-143",
         "generation": {}
       },
-      "updatedAt": 1791351311526,
+      "updatedAt": 1791351610719,
       "headSha": "5ee0686f9f8b4e938b42bd7b47364e31e2c17557",
       "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
       "branch": "fix/T-2026-1007-0918-first-pass-camera",
@@ -2259,7 +2259,9 @@
         "packages/video-studio/src/first-pass.test.ts",
         "packages/video-studio/src/first-pass.ts"
       ],
-      "ciSince": 1791351311526
+      "ciSince": 1791351311526,
+      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/143 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791352210719
     }
   },
   "leases": {
@@ -11795,6 +11797,31 @@
       },
       "previous": "d95870b942a226248732698948d401105837e4d6ddd5fc80c1347d3c9a3dedd8",
       "digest": "5578e08c128536524830c2162f1ddc4ea65677dd890861df41e42498dffb99f2"
+    },
+    {
+      "sequence": 433,
+      "at": "2026-10-07T05:40:10.719Z",
+      "kind": "task",
+      "data": {
+        "number": 143,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/143 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791352210719
+        }
+      },
+      "previous": "5578e08c128536524830c2162f1ddc4ea65677dd890861df41e42498dffb99f2",
+      "digest": "4ccac8f3433090dec02b60d14874cb95759960bed4f4c2f8a0fbca1db91a05fa"
+    },
+    {
+      "sequence": 434,
+      "at": "2026-10-07T05:40:16.955Z",
+      "kind": "transaction",
+      "data": {
+        "id": "c7b05077-69a2-4903-948b-5f97eace1f45"
+      },
+      "previous": "4ccac8f3433090dec02b60d14874cb95759960bed4f4c2f8a0fbca1db91a05fa",
+      "digest": "e9f80459fb31e1a0374b6b3d55f351118a62258cced16cdfe304838f11be2112"
     }
   ]
 }
