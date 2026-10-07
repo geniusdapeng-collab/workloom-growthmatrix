@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 868,
+  "revision": 870,
   "tasks": {
     "132": {
       "number": 132,
@@ -3585,7 +3585,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791360012385,
+      "updatedAt": 1791362108120,
       "admission": {
         "number": 153,
         "headSha": "827457a93b536d51f98533d29d90304896ef835d",
@@ -21911,6 +21911,45 @@
       },
       "previous": "1bee390da0293d8a1dc9dff641868eb5e3cd0ebed040eb30ffb344af19b8fa32",
       "digest": "db894b287954e0194d6d7f43c6ba4611531f016160383449b4e152bebe2031b9"
+    },
+    {
+      "sequence": 869,
+      "at": "2026-10-07T08:35:08.120Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "headSha": "827457a93b536d51f98533d29d90304896ef835d",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-cine-kb-preserve-intent",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "Knowledge enrichment could interpret indoor marble reflection as water, replace a left window direction with an unrelated right fill light, and append an unbounded camera movement over an authored timed end hold. Version 3 only applies context-supported instructions, preserves complete timed camera text and omits optional whole sentences that exceed a field budget. Omitted suggestions remain separate from actual written evidence. The source author text is retained.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
+            "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+            "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts"
+          ],
+          "status": "parked",
+          "ciSince": 1791359409167
+        }
+      },
+      "previous": "db894b287954e0194d6d7f43c6ba4611531f016160383449b4e152bebe2031b9",
+      "digest": "f316459941458b4d7a68d8dc9305cb3300fe6edc4c423f181d0115ef664c8ae3"
+    },
+    {
+      "sequence": 870,
+      "at": "2026-10-07T08:36:39.599Z",
+      "kind": "transaction",
+      "data": {
+        "id": "0010354e-518b-4db4-b014-2fdaa5ccd556"
+      },
+      "previous": "f316459941458b4d7a68d8dc9305cb3300fe6edc4c423f181d0115ef664c8ae3",
+      "digest": "05032adeffb0fa41693e9f25814f73cc636dfc753b11a99a54f0cfdf615fa80c"
     }
   ]
 }
