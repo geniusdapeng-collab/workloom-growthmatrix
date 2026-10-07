@@ -550,10 +550,10 @@ async function verifyUhdEvidence(clips, [width, height], bins) {
 }
 
 /**
- * 拼接（层 2）：三种转场口径，全部走"先归一化后拼接"，避免异构编码直接 concat 花屏。
+ * 拼接（层 2）：两种完整时长的转场口径，全部走"先归一化后拼接"，避免异构编码直接 concat 花屏。
  * - hard：concat demuxer 无损直拼（最快，适合快节奏信息流）；
  * - fade：逐镜淡入淡出后直拼（情绪连贯，适合叙事/文旅）；
- * - xfade：真交叉溶解（镜头之间重叠过渡，最"精致"但需重编码）。
+ * 转场必须保留每段画面的完整时长；会重叠原片首尾的 xfade 明确拒绝。
  */
 /**
  * 样点级拼接 + 拼完**实测**（音画对齐机制的平台侧落点）。
@@ -640,8 +640,11 @@ export async function assembleTimeline({
 }) {
   if (!Array.isArray(clips) || clips.length === 0) throw new PostError("拼接需要至少一个镜头", "bad_request");
   const mode = String(transitions.mode ?? "hard");
+  if (mode === "xfade") {
+    throw new PostError("交叉溶解会重叠已生成镜头的首尾；完整作品优先，使用 hard 或镜内 fade 保留原片时间线", "source_timeline_change_forbidden");
+  }
+  if (!["hard", "fade"].includes(mode)) throw new PostError(`未知转场模式：${mode}（可用：hard / fade）`, "bad_request");
   const fadeSec = Math.max(0.05, optionalNumber(transitions.fadeSec, 0.5));
-  const [width, height] = resolution ?? [1080, 1920];
   if (!["hd", "uhd"].includes(quality)) throw new PostError(`未知清晰度档位：${quality}`, "bad_request");
   const videoEncode = quality === "uhd"
     ? ["-c:v", "libx264", "-preset", "medium", "-crf", "16", "-threads", "2", "-pix_fmt", "yuv420p"]
@@ -703,76 +706,6 @@ export async function assembleTimeline({
     });
     return { output, mode, fadeSec: round(fadeSec, 3), shots: clips.length, avSync };
   }
-
-  if (mode !== "xfade") throw new PostError(`未知转场模式：${mode}（可用：hard / fade / xfade）`, "bad_request");
-
-  const durations = clips.map((clip) => Number(clip.duration ?? 0));
-  if (durations.some((value) => !(value > 0))) {
-    throw new PostError("xfade 需要每个镜头的时长（时长缺失无法算重叠点）", "bad_media");
-  }
-  const filters = [];
-  const videoInputs = clips.map((_, index) => (index === 0 ? "[0:v]" : null));
-  let lastVideo = "[0:v]";
-  let lastAudio = "[0:a]";
-  let offset = durations[0];
-  for (let index = 1; index < clips.length; index += 1) {
-    const fade = Math.min(fadeSec, Math.max(0.05, Math.min(durations[index], durations[index - 1]) / 2));
-    offset = round(offset - fade, 3);
-    const videoOut = index === clips.length - 1 ? "[vout]" : `[v${index}]`;
-    const audioOut = index === clips.length - 1 ? "[aout]" : `[a${index}]`;
-    filters.push(`${lastVideo}[${index}:v]xfade=transition=fade:duration=${fade}:offset=${offset}${videoOut}`);
-    filters.push(`${lastAudio}[${index}:a]acrossfade=d=${fade}:c1=tri:c2=tri${audioOut}`);
-    lastVideo = videoOut;
-    lastAudio = audioOut;
-    offset += durations[index];
-  }
-  void videoInputs;
-  const args = ["-hide_banner", "-v", "error", "-y"];
-  for (const clip of clips) args.push("-i", clip.path);
-  args.push(
-    "-filter_complex", filters.join(";"),
-    "-map", "[vout]", "-map", "[aout]",
-    ...videoEncode,
-    "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
-    "-s", `${width}x${height}`, "-r", String(fps), "-movflags", "+faststart", output,
-  );
-  await runBin(bins.ffmpeg, args, { label: "ffmpeg(xfade)", timeoutMs: 1_800_000 });
-  /**
-   * 交叉溶解路径同样要**实测**音画对齐（转场吃掉的重叠量与视频 xfade 的 offset 必须一致；
-   * 真机里"转场 + 时长补偿"叠加时最容易出偏差）。
-   */
-  let avSync = null;
-  if (transitions.verifyAvSync !== false) {
-    const starts = [];
-    let cursor = 0;
-    for (let index = 0; index < clips.length; index += 1) {
-      starts.push(cursor);
-      if (index < clips.length - 1) {
-        const fade = Math.min(fadeSec, Math.max(0.05, Math.min(durations[index], durations[index + 1]) / 2));
-        cursor += durations[index] - fade;
-      }
-    }
-    try {
-      avSync = await verifyAssembledAvSync({
-        ffmpeg: bins.ffmpeg, output,
-        clips: clips.map((clip, index) => ({ shotId: clip.shotId ?? `#${index + 1}`, path: clip.path, durationSec: durations[index] })),
-        starts,
-        policy: AV_SYNC_POLICY,
-        allowUnverified: transitions.allowUnverifiedAvSync === true,
-      });
-      await writeAvSyncReport(output, {
-        ok: avSync?.ok === true, degraded: Boolean(avSync?.degraded),
-        detail: avSync?.degraded ? `未验证：${avSync.reason}` : "实测完成", report: avSync,
-      });
-    } catch (error) {
-      await writeAvSyncReport(output, {
-        ok: false, degraded: false, error: error?.code ?? "av_sync_error",
-        detail: error?.message ?? String(error), report: error?.report ?? null,
-      });
-      throw error;
-    }
-  }
-  return { output, mode, fadeSec: round(fadeSec, 3), shots: clips.length, avSync };
 }
 
 /* ============================ 音频层（选曲 + 混音） ============================ */
@@ -1574,65 +1507,40 @@ export async function buildDeliveryPackage({
     },
     { kind: "bgm_layer", ok: audioFailures.length === 0, detail: { failed: audioFailures, note: "失败的变体已按原声降级交付，不冒充带配乐成片" } },
     { kind: "softsub_video_unchanged", ok: variantsOut.every((variant) => !variant.artifacts.softsub || variant.artifacts.softsub.checks.every((check) => check.ok === true)), detail: variantsOut.filter((variant) => variant.artifacts.softsub).map((variant) => ({ id: variant.id, checks: variant.artifacts.softsub.checks.map((check) => check.kind) })) },
-{
-kind: "duration_consistent",
-      // xfade 会在镜头之间做重叠过渡，成片比"母版"短 (镜数-1)×转场时长——这是设计使然，不是误差。
-      // 因此基准按每个变体自己的转场口径算期望时长，再比对实测（±0.4s 容差）。
-      ok: variantsOut.every((variant) => {
-        const transitions = variant.style.transitions ?? {};
-        const overlap = String(transitions.mode) === "xfade"
-          ? Math.max(0, normalised.length - 1) * Number(transitions.fadeSec ?? 0)
-          : 0;
-        const expected = Math.max(0, (masterProbe.duration ?? 0) - overlap);
-        return Math.abs((variant.artifacts.video.duration ?? 0) - expected) <= 0.4;
-      }),
+    {
+      kind: "duration_consistent",
+      ok: Math.abs((masterProbe.videoDuration ?? 0) - totalSeconds) <= 0.4
+        && variantsOut.every((variant) => Math.abs((variant.artifacts.video.duration ?? 0) - totalSeconds) <= 0.4),
       detail: {
-        master: masterProbe.duration,
-        variants: variantsOut.map((variant) => {
-          const transitions = variant.style.transitions ?? {};
-          const overlap = String(transitions.mode) === "xfade"
-            ? Math.max(0, normalised.length - 1) * Number(transitions.fadeSec ?? 0)
-            : 0;
-          return {
-            id: variant.id,
-            duration: variant.artifacts.video.duration,
-            expected: round(Math.max(0, (masterProbe.duration ?? 0) - overlap), 3),
-            transitions: `${transitions.mode}${transitions.fadeSec ? ` ${transitions.fadeSec}s` : ""}`,
-          };
-        }),
-},
-},
-{
-/**
- * 计划 vs 实际（T-2026-0925-0001）：
- * 镜头卡/PRD 给出的计划总时长（`project.targetDurationSec` / `target_duration_sec` / `briefDurationSec`）
- * 与本次实际素材总时长比对（±1s/镜，至少 ±2s）。
- * 计划缺失时**不静默通过**：ok=true 但 detail.note 明确写"计划时长未提供（未校验）"，
- * 报告与前端据此可区分"校验通过"与"未校验"。
- */
-kind: "duration_plan_consistent",
-ok: (() => {
-const planned = Number(project.targetDurationSec ?? project.target_duration_sec ?? project.briefDurationSec);
-if (!Number.isFinite(planned) || planned <= 0) return true;
-const tolerance = Math.max(2, normalised.length * 1);
-return Math.abs(totalSeconds - planned) <= tolerance;
-})(),
-detail: (() => {
-const plannedRaw = project.targetDurationSec ?? project.target_duration_sec ?? project.briefDurationSec;
-const planned = Number(plannedRaw);
-if (!Number.isFinite(planned) || planned <= 0) {
-return { plannedSeconds: null, actualSeconds: totalSeconds, note: "计划时长未提供（未校验）" };
-}
-const tolerance = Math.max(2, normalised.length * 1);
-return {
-plannedSeconds: planned,
-actualSeconds: totalSeconds,
-deltaSeconds: round(totalSeconds - planned, 2),
-toleranceSeconds: tolerance,
-note: "计划口径 = 镜头卡/PRD 的目标总时长；实际口径 = 逐镜素材净时长合计",
-};
-})(),
-},
+        expectedSeconds: totalSeconds,
+        master: masterProbe.videoDuration,
+        note: "原片视频轨净时长合计；转场不重叠、截短或拉长镜头",
+        variants: variantsOut.map((variant) => ({
+          id: variant.id,
+          duration: variant.artifacts.video.duration,
+          expected: round(totalSeconds, 3),
+          transitions: variant.style.transitions?.mode ?? "hard",
+        })),
+      },
+    },
+    {
+      kind: "duration_plan_consistent",
+      ok: null,
+      blocking: false,
+      detail: (() => {
+        const planned = Number(project.targetDurationSec ?? project.target_duration_sec ?? project.briefDurationSec);
+        const supplied = Number.isFinite(planned) && planned > 0;
+        return {
+          plannedSeconds: supplied ? planned : null,
+          actualSeconds: totalSeconds,
+          deltaSeconds: supplied ? round(totalSeconds - planned, 2) : null,
+          reviewed: false,
+          note: supplied
+            ? "目标时长用于创作参考；完整作品优先，保留已生成镜头的完整时间线"
+            : "计划时长未提供（未校验）",
+        };
+      })(),
+    },
   ];
   if (quality === "uhd") {
     const failedUhdChecks = packageChecks.filter((check) =>

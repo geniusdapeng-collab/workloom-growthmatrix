@@ -101,18 +101,35 @@ describe.skipIf(!hasMediaTools)("后期真实总装与连续返修（需 FFmpeg/
   });
 
   it("硬切与淡入淡出将 duration 送入样点拼接和实测，三镜均有有效窗口", async () => {
+    const sourceHashes = shots.map((shot) => hash(shot.path));
     for (const mode of ["hard", "fade"]) {
       const output = path.join(root, `assemble-${mode}`, "result.mp4");
       const result = await assembleTimeline({
         clips: shots.map((shot) => ({ ...shot, duration: 2.5 })),
-        transitions: { mode, fadeSec: 0.3 }, output, resolution: [320, 240], fps: 30, bins,
+        transitions: { mode, fadeSec: 0.3, verifyAvSync: true }, output, resolution: [320, 240], fps: 30, bins,
       });
+      const probe = JSON.parse(execFileSync(bins.ffprobe, ["-v", "error", "-select_streams", "v:0", "-count_frames",
+        "-show_entries", "stream=duration,nb_read_frames", "-of", "json", output], { encoding: "utf8" }));
+      expect(Number(probe.streams[0].nb_read_frames)).toBe(225);
+      expect(Math.abs(Number(probe.streams[0].duration) - 7.5)).toBeLessThan(1 / 30);
+      expect(shots.map((shot) => hash(shot.path))).toEqual(sourceHashes);
       expect(result.avSync.ok).toBe(true);
       expect(result.avSync.measured).toBe(3);
       expect(result.avSync.maxAbsLagMs).toBeLessThanOrEqual(40);
       expect(readJson(output.replace(/\.mp4$/, ".av-sync.json"))).toMatchObject({ ok: true, degraded: false });
     }
   }, 120_000);
+
+  it("交叉溶解在创建输出目录或调用编码器前拒绝，单镜也不静默绕过", async () => {
+    for (const clips of [shots.slice(0, 1), shots]) {
+      const output = path.join(root, `forbidden-${clips.length}`, "result.mp4");
+      await expect(assembleTimeline({
+        clips: clips.map((shot) => ({ ...shot, duration: 2.5 })), transitions: { mode: "xfade", fadeSec: 0.3 },
+        output, bins: { ffmpeg: "/missing-encoder", ffprobe: "/missing-probe" },
+      })).rejects.toMatchObject({ code: "source_timeline_change_forbidden" });
+      expect(fs.existsSync(path.dirname(output))).toBe(false);
+    }
+  });
 
   it("无效时长和空镜头明确拒绝，不能以未校验结果继续合流", async () => {
     for (const duration of [undefined, 0, -1, Number.NaN]) {
@@ -132,7 +149,7 @@ describe.skipIf(!hasMediaTools)("后期真实总装与连续返修（需 FFmpeg/
     });
     const duration = delivery.checks.find((check: { kind: string }) => check.kind === "duration_plan_consistent");
     const measured = delivery.normalised.reduce((sum: number, clip: { duration: number }) => sum + clip.duration, 0);
-    expect(duration.ok).toBe(true);
+    expect(duration).toMatchObject({ ok: null, blocking: false });
     expect(duration.detail.actualSeconds).toBeCloseTo(measured, 5);
     expect(duration.detail.plannedSeconds).toBe(7.5);
     expect(delivery.master.avSync.measured).toBe(3);
@@ -149,8 +166,10 @@ describe.skipIf(!hasMediaTools)("后期真实总装与连续返修（需 FFmpeg/
       project: { ...project, targetDurationSec: 20 }, shots, subtitles,
       variants: ["warm-story", "clean-tech"], outDir: path.join(root, "too-long"), bins, env,
     });
-    expect(tooLong.checks.find((check: { kind: string }) => check.kind === "duration_plan_consistent").ok).toBe(false);
-    expect(tooLong.passed).toBe(false);
+    expect(tooLong.checks.find((check: { kind: string }) => check.kind === "duration_plan_consistent"))
+      .toMatchObject({ ok: null, blocking: false, detail: { plannedSeconds: 20, actualSeconds: measured, deltaSeconds: -12.5 } });
+    expect(tooLong.checks.filter((check: { kind: string; ok: boolean | null }) => check.ok === false).some((check: { kind: string }) => check.kind === "duration_plan_consistent")).toBe(false);
+    expect(shots.map((shot) => hash(shot.path))).toEqual(sourceHashes);
     // 配乐质量是独立闸门；如音频合成样本不足以通过，必须在整包结果和报告中如实失败。
     const audioFailures = delivery.manifest.variants.filter((variant: { audio?: { failed?: boolean } }) => variant.audio?.failed);
     expect(delivery.checks.find((check: { kind: string }) => check.kind === "bgm_layer").ok).toBe(audioFailures.length === 0);

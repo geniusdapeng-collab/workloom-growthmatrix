@@ -73,6 +73,13 @@ post-cli triage   --feedback "配乐太吵，另外第 3 个镜头人物走形"
 
 退出码：`0` 成功；`2` 用法错误；`3` 工具错误（code 见 `PostError`）；`4` 需要人审（镜头重生成走 G8）。
 
+## 完整作品与素材时间线
+
+客户可观看的完整作品优先于精确的目标秒数。目标时长只用于创作参考；交付记录计划、实际与差值，
+不以偏离目标为理由截短、拉长、变速或叠加冻结帧。归一化保留原片视频轨全部时长。
+`hard` 硬切及 `fade` 镜内淡入淡出均保留完整时间线；`xfade` 会重叠首尾，在创建输出前返回
+`source_timeline_change_forbidden`。需要删镜时由编辑决策明确删除整镜，并重新计算字幕和独立音轨位置。
+
 ## 独立音轨来源合同（T-2026-0927-0037）
 
 新交付要求 `project.audioScope={tenantId,workspaceId,projectId,revision}` 和 `shots[].audioStems`。
@@ -145,7 +152,7 @@ node bundles/ai-video/connectors/post-bridge/cli.mjs health
 |---|---|---|
 | `warm-story` | 情感/文旅/民宿 | warm-film LUT 0.75 · fade 0.6s · acoustic-warm -23dB · 留白题签 · 温暖克制口吻 |
 | `clean-tech` | 产品/科技/知识 | cool-technical 0.7 · hard · corporate-clean -25dB · 参数卡封面 · 简洁理性口吻 |
-| `bold-promo` | 带货/本地生活 | high-contrast-social 0.9 · xfade 0.35s · sports-hype -21dB · 促销横幅 · 直接叫卖口吻 |
+| `bold-promo` | 带货/本地生活 | high-contrast-social 0.9 · hard · sports-hype -21dB · 促销横幅 · 直接叫卖口吻 |
 
 真机实测（3 镜 / 27s / 3 变体）：两两画面平均像素差 16.7 / 19.9 / 9.8（均判 `visible`），音轨曲目两两不同，
 封面两两像素差 25–35（`visible`）。**变体雷同一律拒绝交付**（围栏 G-DLV1）。
@@ -157,7 +164,7 @@ node bundles/ai-video/connectors/post-bridge/cli.mjs health
 | 母版零烧字 | 母版与软字幕轨版画面逐帧哈希一致；旁挂字幕文件存在且时间轴可回读 | 拒绝（G-DLV2/G-DLV3） |
 | 变体可辨 | 每对变体至少一个轴 measured visible（画面像素差或音轨不同） | 拒绝（G-DLV1） |
 | 封面可辨 | 两两封面像素差不为 negligible；标题墨迹必须真的检出 | 拒绝 |
-| 时长一致 | 按各变体转场口径算期望时长（xfade 会因重叠变短）±0.4s | 拒绝 |
+| 时长一致 | 按完整镜头视频轨净时长合计算期望时长 ±0.4s；hard / 镜内 fade 不重叠原片首尾 | 拒绝 |
 | 音频规格 | 配乐变体 −14 LUFS ±1.5、真峰值 ≤ −1dBTP（复检容差 0.2dB）、独立对白-音乐余量 ≥3dB、配乐可闻度 ≥3dB | 可重试的人声余量不足降 3dB 再测；仍不过保留不含旧配乐的节目草稿，整包失败 |
 | 复用证据 | 复用的层给出 sha256 与"未被重算"的说明；镜头层与工程文件逐镜比对 | 拒绝（G-DLV7） |
 
