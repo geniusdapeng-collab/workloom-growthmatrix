@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2264,
+  "revision": 2266,
   "tasks": {
     "132": {
       "number": 132,
@@ -3199,7 +3199,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791384610536,
+      "updatedAt": 1791385024507,
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 0,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
@@ -58774,6 +58774,46 @@
       },
       "previous": "ef39fc94ad1162be0e50d45b97e24b867ff5ab8f4fcb21b360a814e19bde3167",
       "digest": "642e9360ab0a76fc72032dea3fe0ab94a7f93abc93f9e29d12268f07f66bc172"
+    },
+    {
+      "sequence": 2265,
+      "at": "2026-10-07T14:57:04.507Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "67ded9576aaa0c7664a602b60bf83aad414f013d",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              143
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.6"
+              }
+            ]
+          },
+          "dependencies": [
+            143
+          ]
+        }
+      },
+      "previous": "642e9360ab0a76fc72032dea3fe0ab94a7f93abc93f9e29d12268f07f66bc172",
+      "digest": "cc32af4a623c2b4c03315c90ed544159b96cb6646cbdc243e733e0992475e126"
+    },
+    {
+      "sequence": 2266,
+      "at": "2026-10-07T14:58:32.295Z",
+      "kind": "transaction",
+      "data": {
+        "id": "aa22487e-1bb0-4149-9db3-6a4fd4b118b3"
+      },
+      "previous": "cc32af4a623c2b4c03315c90ed544159b96cb6646cbdc243e733e0992475e126",
+      "digest": "708531989597092fe281650b246a833b0fc9f0a94641bb3623b2bbc4b83e2657"
     }
   ]
 }
