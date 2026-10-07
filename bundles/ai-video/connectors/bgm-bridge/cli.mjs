@@ -15,6 +15,7 @@
  *                     # --declared-program-mix：源片是对白+环境混音成品、无可独立取证的干净分轨时，
  *                     # 旧声明开关可兼容；默认源片节目轨回执为 original-program-bytes（不冒充签章分轨）
  *                     [--music-level -22] [--ducking 12] [--lufs -14] [--evidence-dir dir]
+ *                     [--film-peak-at 20] # 创作计划声明的高潮秒数，不审源片
  *                     [--track-license cc-by-4.0] [--attribution-out CREDITS.md]
  *   bgm-cli separate  --in clip.mp4 --out-dir dir [--engine auto|demucs|ffmpeg]
  *   bgm-cli fetch     --prompt "国风古筝，中国古典" [--catalog chinese-classical]
@@ -68,6 +69,14 @@ function number(value, fallback = null) {
   if (value === undefined || value === true) return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function declaredPeak(value) {
+  if (value === undefined) return null;
+  if (typeof value !== "string" || !value.trim() || !Number.isFinite(Number(value)) || Number(value) < 0) {
+    throw new BgmError("--film-peak-at 需要非负有限秒数", "bad_request", false);
+  }
+  return Number(value);
 }
 
 function fmt(value, digits = 2) {
@@ -248,6 +257,7 @@ async function main() {
         section: typeof flags.section === "string" ? flags.section : "full",
         sectionStartSec: number(flags["section-start"]),
         sectionEndSec: number(flags["section-end"]),
+        filmPeakAt: declaredPeak(flags["film-peak-at"]),
       });
       line(`已配乐：${result.output.path}`);
       line(`  策略 ${result.policy} · 请求 BGM ${result.mix.musicLevelDb}dB · 让位参数 ${result.mix.duckingDbTarget} · 时间线 ${result.output.durationSeconds}s`);

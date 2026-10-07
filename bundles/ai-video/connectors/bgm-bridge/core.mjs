@@ -7,7 +7,7 @@
  * 纪律（与 color-bridge / visual-bridge 同构）：
  * - 原片只读：任何写入都落到新文件，覆盖原片直接拒绝（overwrite_source_forbidden）；
  * - 路径监狱：只允许访问白名单根目录内的路径（WORKLOOM_BGM_ALLOWED_ROOTS）；
- * - 无回执=未核实：产物必须给出 sha256 + 响度/人声余量/配乐可闻度的实测复检；
+ * - 无回执=未核实：产物给出 sha256 与实际加工记录；默认不做源片或成品品质审核；
  * - 不伪造：失败一律抛带稳定 code 的 BgmError，由上层决定重试或转人工；
  * - 不粗暴：默认不动原声（保留人声与现场声），BGM 只在人声让位的基础上铺底。
  *
@@ -1074,7 +1074,10 @@ export function filmClimaxTime({ arc, cuts = [], voice = null, durationSec = nul
 
 /** 把选中的片段裁成独立文件（后续按现有链路循环铺满；边界加 120ms 微淡避免爆音）。 */
 export async function renderSection({ input, output, startSec, endSec, bins = resolveBinaries(), fadeSec = 0.12 }) {
-  const length = Math.max(0.5, endSec - startSec);
+  if (!Number.isFinite(startSec) || !Number.isFinite(endSec) || startSec < 0 || endSec <= startSec) {
+    throw new BgmError("配乐选段范围无效", "bad_request", false);
+  }
+  const length = endSec - startSec;
   const fade = Math.min(fadeSec, length / 4);
   await fsp.mkdir(path.dirname(output), { recursive: true });
   await runBin(bins.ffmpeg, [
@@ -1083,7 +1086,11 @@ export async function renderSection({ input, output, startSec, endSec, bins = re
     "-af", `afade=t=in:st=0:d=${round(fade, 3)},afade=t=out:st=${round(Math.max(0, length - fade), 3)}:d=${round(fade, 3)}`,
     "-c:a", "pcm_s16le", "-ar", "48000", "-ac", "2", output,
   ], { label: "ffmpeg(section)", timeoutMs: 600_000 });
-  return { path: output, startSec: round(startSec, 3), endSec: round(endSec, 3), durationSec: round(length, 3), sha256: await sha256File(output) };
+  const actual = await probeMedia(output, { bins });
+  if (!actual.audio || !Number.isFinite(actual.duration) || actual.duration <= 0) {
+    throw new BgmError("配乐选段未产生有效音频时间线", "bad_media", false);
+  }
+  return { path: output, startSec: round(startSec, 3), endSec: round(endSec, 3), durationSec: actual.duration, sha256: await sha256File(output) };
 }
 
 /** 选段证据图：上=曲目波形（红框=选中片段），下=影片波形（红框=能量高点）。 */
@@ -1397,6 +1404,9 @@ async function declaredProgramStems({ input, nearDir, bins = resolveBinaries() }
 /** Frozen source bundle first; snapshot every consumed byte into an exclusive evidence directory. */
 export async function mix(options = {}) {
   const { audioStems, env = process.env, bins = resolveBinaries() } = options;
+  if (options.filmPeakAt != null && (!Number.isFinite(options.filmPeakAt) || options.filmPeakAt < 0)) {
+    throw new BgmError("filmPeakAt 必须是非负有限秒数", "bad_request", false);
+  }
   for (const [key, min, max] of [["musicLevelDb", -80, 0], ["duckingDb", 0, 40], ["targetLufs", -36, -5],
     ["truePeak", -12, 0], ["fadeInSec", 0, 120], ["fadeOutSec", 0, 120], ["bgmBpm", 20, 300], ["bpmOverride", 20, 300]]) {
     if (options[key] != null && (!Number.isFinite(options[key]) || options[key] < min || options[key] > max)) {
@@ -1477,7 +1487,7 @@ export async function mix(options = {}) {
  *   独立节目轨 ──────── 声音床（对白 + 环境 + 拟音，不含旧配乐）
  *    BGM（自算或曲库曲目）→ 音量/淡入淡出/卡点偏移 → sidechaincompress 让位 → 与声音床合流
  *      → 同一可追溯线性主增益（受真峰值余量约束）→ 与视频轨合流（视频轨 copy）
- *      → 复检：响度 / 让位深度 / 人声余量 / 配乐可闻度 / 卡点误差（无回执不算完成）
+ *      → 实际文件/时间线/摘要回执；未审核品质的指标如实为 null
  *
  * @returns {Promise<object>} 产物 + 指标 + 证据（不含任何客户原始数据的上行）
  */
@@ -1552,12 +1562,13 @@ export async function enforceMixChecks({ checks, output, details = [], retryable
 async function mixVerified({ input, output, bgmPath, policy = "keep-dialogue", bgmBpm = null,
   musicLevelDb = null, duckingDb = 10, targetLufs = -14, truePeak = -1,
   fadeInSec = 1.2, fadeOutSec = 1.6, bins = resolveBinaries(), workDir,
-  section = "full", sectionStartSec = null, sectionEndSec = null, cutTimes = null,
+  section = "full", sectionStartSec = null, sectionEndSec = null, filmPeakAt = null, cutTimes = null,
   bpmOverride = null, programPath, dialoguePath, dialogueStatus,
   licenseReviewed = true, commercialUse = true }) {
   const probe = await probeMedia(input, { bins });
   const duration = probe.duration;
   if (!(duration > 0)) throw new BgmError("输入缺有效时间线", "bad_media");
+  if (filmPeakAt != null && filmPeakAt >= duration) throw new BgmError("filmPeakAt 越出实际节目时间线", "bad_request", false);
   const bgmProbe = await probeMedia(bgmPath, { bins });
   if (!bgmProbe.audio || !(bgmProbe.duration > 0)) throw new BgmError("所请求配乐缺可处理音频流", "bad_media");
   if (!SECTION_MODES.includes(section)) throw new BgmError("未知配乐选段模式", "bad_request");
@@ -1568,22 +1579,66 @@ async function mixVerified({ input, output, bgmPath, policy = "keep-dialogue", b
     : { bpm, offsetSec: 0, cuts: [], meanAbsErrorMs: null, verdict: "not_requested", method: "explicit-grid-only" };
   let playPath = bgmPath;
   let sectionPlan = { mode: section, chosen: null, reason: "整曲循环，不分析源片" };
+  let structure = null;
+  // The author's cue is an editing instruction. Inspect only the requested
+  // music to locate its anchor; never infer a cue by reviewing rendered film.
+  const filmArc = filmPeakAt == null ? null : { peakTimeSec: filmPeakAt, climaxBasis: "declared", dynamicsDb: null };
   const explicit = sectionStartSec != null || sectionEndSec != null;
   if (explicit) {
     if (!Number.isFinite(sectionStartSec) || !Number.isFinite(sectionEndSec)
       || sectionStartSec < 0 || sectionEndSec <= sectionStartSec || sectionEndSec > bgmProbe.duration + 0.05) {
       throw new BgmError("配乐选段范围无效", "bad_request");
     }
-    sectionPlan = { mode: "explicit", chosen: { startSec: sectionStartSec, endSec: sectionEndSec }, reason: "用户请求选段" };
+    sectionPlan = { mode: "explicit", chosen: { type: "explicit", startSec: sectionStartSec, endSec: sectionEndSec }, reason: "用户请求选段" };
   } else if (section !== "full") {
-    const structure = await analyzeStructure({ input: bgmPath, bins });
-    const choice = chooseSection({ structure, mode: section, filmDurationSec: duration });
+    structure = await analyzeStructure({ input: bgmPath, bins });
+    const choice = chooseSection({ structure, filmArc, mode: section, filmDurationSec: duration });
     sectionPlan = { ...choice, reason: choice.reason ?? "仅依据请求的曲目选段模式；未分析源片" };
   }
+  let sectionArtifact = null;
   if (sectionPlan.chosen) {
     playPath = path.join(workDir, "music-section.wav");
-    await renderSection({ input: bgmPath, output: playPath, startSec: sectionPlan.chosen.startSec,
+    sectionArtifact = await renderSection({ input: bgmPath, output: playPath, startSec: sectionPlan.chosen.startSec,
       endSec: sectionPlan.chosen.endSec, bins });
+    sectionPlan.played = { ...sectionArtifact, loops: Math.ceil(duration / sectionArtifact.durationSec) };
+  }
+  sectionPlan.filmPeakAlign = { skipped: true, basis: "not_requested", reason: "未声明高潮落点；不扫描源片推断" };
+  if (filmPeakAt != null) {
+    structure ??= await analyzeStructure({ input: bgmPath, bins });
+    const fromSec = sectionPlan.chosen?.startSec ?? 0;
+    const endSec = sectionPlan.chosen?.endSec ?? bgmProbe.duration;
+    const from = Math.max(0, Math.floor(fromSec / structure.windowSec));
+    const to = Math.min(structure.envelope.db.length, Math.ceil(endSec / structure.windowSec));
+    let anchorIndex = from;
+    for (let index = from + 1; index < to; index++) {
+      if (structure.envelope.db[index] > structure.envelope.db[anchorIndex]) anchorIndex = index;
+    }
+    if (to <= from || !Number.isFinite(structure.envelope.db[anchorIndex])) {
+      throw new BgmError("请求选段缺可用音乐锚点", "bad_media", false);
+    }
+    const sectionProbe = await probeMedia(playPath, { bins });
+    const length = sectionProbe.duration;
+    if (!sectionProbe.audio || !Number.isFinite(length) || length <= 0) {
+      throw new BgmError("配乐选段缺有效音频时间线", "bad_media", false);
+    }
+    const anchorOffsetSec = Math.min(Math.max(0, length - 1 / 48000), Math.max(0, anchorIndex * structure.windowSec - fromSec));
+    const phase = Math.round(prerollPhaseSec({ sectionDurationSec: length, anchorOffsetSec, filmPeakSec: filmPeakAt }) * 48000) / 48000;
+    if (phase > 0 && phase < length) {
+      const rotated = path.join(workDir, "music-prerolled.wav");
+      await runBin(bins.ffmpeg, ["-hide_banner", "-v", "error", "-n", "-i", playPath,
+        "-filter_complex", `[0:a]asplit=2[h][t];[h]atrim=start=${phase},asetpts=N/SR/TB[head];`
+          + `[t]atrim=end=${phase},asetpts=N/SR/TB[tail];[head][tail]concat=n=2:v=0:a=1[out]`,
+        "-map", "[out]", "-c:a", "pcm_s16le", "-ar", "48000", "-ac", "2", rotated],
+      { label: "ffmpeg(requested-music-preroll)", timeoutMs: 300_000 });
+      playPath = rotated;
+    }
+    const firstPeak = ((anchorOffsetSec - phase) % length + length) % length;
+    const peakLandedAtSec = firstPeak + Math.round((filmPeakAt - firstPeak) / length) * length;
+    sectionPlan.preroll = { applied: phase > 0 && phase < length, phaseSec: phase, sectionDurationSec: length,
+      path: playPath, sha256: await sha256File(playPath) };
+    sectionPlan.filmPeakAlign = { mode: "preroll-loop", basis: "declared", filmPeakSec: filmPeakAt,
+      musicAnchorOffsetSec: anchorOffsetSec, placedAtSec: phase, peakLandedAtSec: round(peakLandedAtSec, 4),
+      note: `按声明落点 ${filmPeakAt}s 旋转音乐并从 0s 循环铺底；未审源片品质` };
   }
   const musicLevel = Number(musicLevelDb ?? -22);
   const musicSelf = await segmentMeanVolumeDb({ input: playPath, duration: Math.min(bgmProbe.duration, 10), bins });
@@ -1878,6 +1933,15 @@ export async function callTool(name, params = {}, { bins = resolveBinaries(), en
     return value;
   };
   const optionalNumber = (value) => (value === undefined || value === null || value === "" ? null : Number(value));
+  const declaredFilmPeak = () => {
+    const value = params.film_peak_at_sec;
+    if (value == null) return null;
+    if (!((typeof value === "number") || (typeof value === "string" && value.trim()))
+      || !Number.isFinite(Number(value)) || Number(value) < 0) {
+      throw new BgmError("film_peak_at_sec 必须是非负有限秒数", "bad_request", false);
+    }
+    return Number(value);
+  };
   const audioAuthority = () => {
     const hasStems = Object.hasOwn(params, "audio_stems");
     const hasDeclaration = Object.hasOwn(params, "declared_program_mix");
@@ -2122,6 +2186,7 @@ export async function callTool(name, params = {}, { bins = resolveBinaries(), en
         section: typeof params.section === "string" ? params.section : "full",
         sectionStartSec: optionalNumber(params.section_start_sec),
         sectionEndSec: optionalNumber(params.section_end_sec),
+        filmPeakAt: declaredFilmPeak(),
       });
       let attributionFile = null;
       if (params.attribution_out) {

@@ -6,14 +6,15 @@
  *  · 片子高潮：人造一条"前段安静、后段三连切+更响"的片子，看是否按剪辑密度定高潮（而不是按台词音量）；
  *  · 选段落点：把曲子高潮段的峰值对到片子高潮时刻，误差要在 1.5s 内，并且回执里要有依据。
  */
-import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, rmSync, readFileSync, realpathSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, rmSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { analyzeStructure, filmClimaxTime, filmEnergyArc, mix } from "./core.mjs";
+import { analyzeStructure, callTool, filmClimaxTime, filmEnergyArc, mix } from "./core.mjs";
 import { detectCuts, detectVoiceBandSegments, resolveBinaries, probeMedia } from "./measure.mjs";
 import { describeAudioStemSources, renderAudioStems } from "./audio-stems.mjs";
 import { audioStemReceiptPayload, createAudioStemReceiptVerifier } from "./audio-stems-trust.mjs";
@@ -54,6 +55,12 @@ function measureResidualRmsDb(reference: string, mixed: string, startSec: number
   for (let i = 0; i < n; i += 1) { const d = b[i]! - a[i]!; sum += d * d; }
   const rms = Math.sqrt(sum / Math.max(1, n));
   return rms > 0 ? 20 * Math.log10(rms) : -120;
+}
+function decodedAudio(file: string): Buffer {
+  return execFileSync(bins.ffmpeg, ["-v", "error", "-i", file, "-vn", "-f", "s16le", "-ac", "2", "-ar", "48000", "-"], { maxBuffer: 1 << 26 });
+}
+function videoPacketHash(file: string): string {
+  return execFileSync(bins.ffmpeg, ["-v", "error", "-i", file, "-map", "0:v:0", "-c:v", "copy", "-f", "hash", "-"], { encoding: "utf8" }).trim();
 }
 const filmPath = join(workDir, "film.mp4");
 const mixedPath = join(workDir, "film-scored.mp4");
@@ -157,7 +164,16 @@ describe.skipIf(!hasFfmpeg)("配乐结构识别与选段（真实 ffmpeg）", ()
     expect(climax.timeSec).toBeLessThanOrEqual(21.5);
   }, 30_000);
 
-  it("自动选段出片：用曲子高潮段对齐片子高潮时刻，误差 ≤1.5s 且复检全绿", async () => {
+  it("按声明的高潮落点选段出片，保持开头配乐且不分析源片品质", async () => {
+    const original = hash(filmPath);
+    const logPath = join(workDir, "requested-mix-calls.jsonl");
+    const guardPath = join(workDir, "requested-mix-ffmpeg.mjs");
+    writeFileSync(logPath, "");
+    writeFileSync(guardPath, `#!${process.execPath}\nimport fs from 'node:fs';import {spawnSync} from 'node:child_process';\n`
+      + `const args=process.argv.slice(2);fs.appendFileSync(${JSON.stringify(logPath)},JSON.stringify(args)+'\\n');\n`
+      + `const inputs=args.flatMap((a,i)=>a==='-i'?[args[i+1]]:[]);\n`
+      + `if(args.includes('null')&&inputs.some(p=>p.endsWith('.mp4'))){process.stderr.write('test-only: source-quality-review-forbidden');process.exit(73);}\n`
+      + `const r=spawnSync(${JSON.stringify(bins.ffmpeg)},args,{stdio:'inherit'});process.exit(r.status??74);\n`, { mode: 0o700 });
     const report = await mix({
       input: filmPath,
       output: mixedPath,
@@ -167,14 +183,22 @@ describe.skipIf(!hasFfmpeg)("配乐结构识别与选段（真实 ffmpeg）", ()
       musicLevelDb: -10,
       duckingDb: 10,
       section: "auto",
+      filmPeakAt: 20,
       evidenceDir: workDir,
-      bins,
+      bins: { ...bins, ffmpeg: guardPath },
     });
     expect(existsSync(mixedPath)).toBe(true);
     expect(report.section.mode).toBe("auto");
     expect(report.section.chosen!.type).toBe("drop");
     expect(report.section.filmPeakAlign).toBeTruthy();
     expect(report.section.played).toBeTruthy();
+    expect(report.section.filmPeakAlign.basis).toBe("declared");
+    expect(report.section.filmPeakAlign.filmPeakSec).toBe(20);
+    expect(report.section.played.sha256).toBe(hash(report.section.played.path));
+    expect(hash(filmPath)).toBe(original);
+    expect(report.qualityReviewed).toBe(false);
+    expect(report.loudness.before).toBeNull();
+    expect(report.loudness.after).toBeNull();
 
     /**
      * 落点校验（2026-09-24 语义更新）：
@@ -203,6 +227,66 @@ describe.skipIf(!hasFfmpeg)("配乐结构识别与选段（真实 ffmpeg）", ()
       expect(preroll.phaseSec!).toBeLessThan(align.filmPeakSec);
     }
     expect(Object.values(report.checks).every(Boolean)).toBe(true);
-    expect(report.evidence.sectionPicked).toBeTruthy();
+    expect(report.output.hash).toBe(hash(mixedPath));
+    expect(videoPacketHash(mixedPath)).toBe(videoPacketHash(filmPath));
+    const selected = decodedAudio(report.section.played.path);
+    const rotated = decodedAudio(report.section.preroll.path);
+    const splitByte = Math.round(report.section.preroll.phaseSec * 48000) * 4;
+    const expectedRotation = Buffer.concat([selected.subarray(splitByte), selected.subarray(0, splitByte)]);
+    expect(rotated.equals(expectedRotation)).toBe(true);
+    expect(report.section.preroll.sha256).toBe(hash(report.section.preroll.path));
+    const calls = readFileSync(logPath, "utf8").trim().split("\n").map(line => JSON.parse(line));
+    expect(calls.some(args => args.includes("null") && args.some(arg => String(arg).endsWith(".mp4")))).toBe(false);
+  }, 180_000);
+
+  it("未声明落点不推断源片，默认原节目混音可成功，非法落点不产生成功产物", async () => {
+    const options = { input: filmPath, bgmPath: musicPath, env, bins, section: "full", policy: "keep-all" };
+    const output = join(workDir, "default-original-program.mp4");
+    const report = await mix({ ...options, output });
+    expect(report.section.filmPeakAlign.skipped).toBe(true);
+    expect(report.section.filmPeakAlign.basis).toBe("not_requested");
+    expect(report.qualityReviewed).toBe(false);
+    expect(report.independentAudio.stemsVerified).toBe(false);
+    expect(report.independentAudio.sourceAuthority).toBe("original-program-bytes");
+    expect(report.output.hash).toBe(hash(output));
+    for (const [index, filmPeakAt] of [-1, NaN, Infinity, "20", 30, 31].entries()) {
+      const invalidOutput = join(workDir, `invalid-peak-${index}.mp4`);
+      await expect(mix({ ...options, output: invalidOutput, filmPeakAt })).rejects.toMatchObject({ code: "bad_request" });
+      expect(existsSync(invalidOutput)).toBe(false);
+    }
+  }, 180_000);
+
+  it("CLI 与工具入口执行声明落点；空值、布尔值、非数字与越界请求明确报错", async () => {
+    const parameters = { input_path: filmPath, bgm_path: musicPath, section: "auto", policy: "keep-all" };
+    const output = join(workDir, "tool-declared-peak.mp4");
+    const tool = await callTool("bgmwrite.mix", { ...parameters, output_path: output, film_peak_at_sec: "0" }, { bins, env });
+    expect(tool.receipt.synced).toBe(true);
+    expect(tool.receipt.sha256).toBe(hash(output));
+    expect(tool.result.section.filmPeakAlign.filmPeakSec).toBe(0);
+    expect(tool.result.section.filmPeakAlign.peakLandedAtSec).toBeCloseTo(0, 3);
+    expect(tool.result.qualityReviewed).toBe(false);
+    for (const [index, film_peak_at_sec] of ["", " ", true, [], "oops", -1, Infinity, 30].entries()) {
+      const invalid = join(workDir, `invalid-tool-cue-${index}.mp4`);
+      await expect(callTool("bgmwrite.mix", { ...parameters, output_path: invalid, film_peak_at_sec }, { bins, env }))
+        .rejects.toMatchObject({ code: "bad_request" });
+      expect(existsSync(invalid)).toBe(false);
+    }
+    const cli = fileURLToPath(new URL("./cli.mjs", import.meta.url));
+    const invoke = (out: string, cue: string[]) => spawnSync(process.execPath, [cli, "mix", "--in", filmPath, "--out", out,
+      "--bgm", musicPath, "--section", "auto", "--policy", "keep-all", "--film-peak-at", ...cue],
+    { encoding: "utf8", env, timeout: 60000 });
+    const cliOutput = join(workDir, "cli-declared-peak.mp4");
+    const success = invoke(cliOutput, ["20"]);
+    expect(success.status, success.stderr).toBe(0);
+    expect(success.stdout).toContain("按声明落点 20s");
+    expect(existsSync(cliOutput)).toBe(true);
+    expect(videoPacketHash(cliOutput)).toBe(videoPacketHash(filmPath));
+    for (const [index, cue] of [[], [""], ["NaN"], ["Infinity"], ["-1"], ["30"]].entries()) {
+      const invalid = join(workDir, `invalid-cli-cue-${index}.mp4`);
+      const result = invoke(invalid, cue);
+      expect(result.status).toBe(3);
+      expect(result.stderr).toContain("bad_request");
+      expect(existsSync(invalid)).toBe(false);
+    }
   }, 180_000);
 });

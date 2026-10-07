@@ -140,7 +140,13 @@ bgm-cli mix --in clip.mp4 --out scored.mp4 --bgm track.wav --section full
 bgm-cli mix ... --section climax                       # 强制取高潮段
 bgm-cli mix ... --section calm                         # 强制取铺垫段
 bgm-cli mix ... --section-start 62 --section-end 78    # 人工指定（秒）
+bgm-cli mix ... --section auto --film-peak-at 20       # 按创作计划的 20s 高潮落点旋转循环音乐
 ```
+
+`--film-peak-at`（工具参数 `film_peak_at_sec`，内核参数 `filmPeakAt`）只接受实际节目时间线内的非负有限秒数。
+混音按这个明确的创作指令寻找所选音乐的锚点、旋转相位并从 0s 循环铺满，不分析源片的剪辑密度、人声、音量或品质。
+回执记录实际选段 `section.played`、`section.preroll` 与 `section.filmPeakAlign`，其 `basis=declared`；
+未给落点时明确记 `skipped=true`。这些字段是编辑与加工记录，`qualityReviewed` 仍为 `false`，未测品质指标仍为 `null`。
 
 以下是显式结构诊断的历史决策说明。当前默认 `section=full` 不对源片扫描高潮、人声或能量。显式 `auto` 依据曲目结构选段，回执记实际所选时间；不把该选择称为源片品质通过。
 
