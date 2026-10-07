@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3777,
+  "revision": 3779,
   "tasks": {
     "132": {
       "number": 132,
@@ -5172,7 +5172,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791410399704,
+      "updatedAt": 1791411188927,
       "admission": {
         "number": 154,
         "headSha": "0c9e493cb0ab901f0bcdd58edccc5292782a02e1",
@@ -5183,7 +5183,6 @@
         "generation": {}
       },
       "dependencies": [
-        145,
         151
       ],
       "error": "Prerequisite #145 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/145 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
@@ -94047,6 +94046,48 @@
       },
       "previous": "f6e55fba2f3587af6371ba9507c8c89628eca9637cfccf34f717a63e6ecbae1f",
       "digest": "0435906f0a6665e06de6cf8c424323132178d7a14fc12c034c195f29529de6ae"
+    },
+    {
+      "sequence": 3778,
+      "at": "2026-10-07T22:13:08.927Z",
+      "kind": "task",
+      "data": {
+        "number": 154,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "0c9e493cb0ab901f0bcdd58edccc5292782a02e1",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              145,
+              148,
+              151
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.14"
+              }
+            ]
+          },
+          "dependencies": [
+            151
+          ]
+        }
+      },
+      "previous": "0435906f0a6665e06de6cf8c424323132178d7a14fc12c034c195f29529de6ae",
+      "digest": "9681d14fad92cf66da6ea4ea3fae825ad33a1fea11d0d1897fc3fbac710e14d5"
+    },
+    {
+      "sequence": 3779,
+      "at": "2026-10-07T22:15:48.075Z",
+      "kind": "transaction",
+      "data": {
+        "id": "b90555f2-5148-48bf-b913-ba2fae7ec0e3"
+      },
+      "previous": "9681d14fad92cf66da6ea4ea3fae825ad33a1fea11d0d1897fc3fbac710e14d5",
+      "digest": "d186373d63d7445f1acb42c1178121626c140e6c43db103dc95b11ea12c70ef8"
     }
   ]
 }
