@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1476,
+  "revision": 1479,
   "tasks": {
     "132": {
       "number": 132,
@@ -5900,6 +5900,126 @@
         "generation": {}
       },
       "updatedAt": 1791371045190
+    },
+    "167": {
+      "number": 167,
+      "status": "waiting_ci",
+      "firstSeen": 1791373275072,
+      "attempts": {},
+      "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+      "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+      "branch": "fix/T-2026-1007-0918-post-preserve-source-timeline",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [],
+        "releases": []
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 167,
+        "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "bundles/ai-video/connectors/post-bridge/README.md",
+          "bundles/ai-video/connectors/post-bridge/core.mjs",
+          "bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts",
+          "bundles/ai-video/library/style-variants/bold-promo.json"
+        ],
+        "filesHash": "2ba9450d91a881c9292608e37883fea9da265c9f83c0df6e28da5424cbeba7d7",
+        "dependsOn": [],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts bundles/ai-video/connectors/post-bridge/revision-concurrency.test.ts --maxWorkers=1",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T11:40:05.916889+00:00",
+            "result": "Actual FFmpeg integration and package concurrency tests pass, including full source frame counts, source hashes, advisory duration targets and pre-output rejection of overlap transitions."
+          },
+          {
+            "command": "node --check bundles/ai-video/connectors/post-bridge/core.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T11:40:06.060389+00:00",
+            "result": "Post bridge syntax check passes."
+          }
+        ],
+        "reviewedAt": "2026-10-07T11:41:09.742533+00:00",
+        "summary": "Fully read the post core, direct color/BGM/subtitle/audio-stem/AV dependencies, the complete real integration test, and all style recipes before editing. The change removes only overlap composition and creative target duration admission. Actual invalid input, missing media, engine failure, source lineage and signed independent audio checks remain. First local run passed four tests and exposed a too-strict timestamp assertion: all 225 frames were retained but AAC mux timestamps differed by 21ms. The final assertion retains exact frame-count protection and one-frame timing tolerance; committed real tests rerun below. No model review or paid call.",
+        "passed": true,
+        "id": "b003328506f16802b03ddcfc84bd7f72897368c55bb4e09b6418d6c743fad55b"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 167,
+        "pull": {
+          "number": 167,
+          "state": "open",
+          "title": "fix(growth): preserve complete source clips in post delivery [T-2026-1007-0918]",
+          "body": "The post delivery bridge shortened rendered clips by overlapping their heads and tails in xfade and failed packages when measured duration differed from the creative target. Preserve the complete clip timeline: reject xfade before creating output, use hard cuts in the bold-promo recipe, and record target/actual/delta without a duration admission gate. Hard cuts and fades inside each clip retain all frames; actual source duration and output consistency are still checked. Real FFmpeg regression proves all 225 frames of three source clips survive, source hashes remain unchanged, and forbidden transitions cannot call an encoder or create output. No paid generation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/fix/T-2026-1007-0918-post-preserve-source-timeline",
+            "sha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "files": [
+          "bundles/ai-video/connectors/post-bridge/README.md",
+          "bundles/ai-video/connectors/post-bridge/core.mjs",
+          "bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts",
+          "bundles/ai-video/library/style-variants/bold-promo.json"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [],
+          "releases": []
+        },
+        "headTime": 1791373074000,
+        "mergeBase": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": []
+      },
+      "updatedAt": 1791373275072
     }
   },
   "leases": {
@@ -37903,6 +38023,155 @@
       },
       "previous": "6b91f8e64281148345fa18837c888136d54aa42c82592378c7a8655834fd4e1a",
       "digest": "9e27650f50673fa0033c49c1a6eef532e2e80cd93220c326c7d1530b6712e359"
+    },
+    {
+      "sequence": 1477,
+      "at": "2026-10-07T11:41:15.067Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 167,
+        "id": "b003328506f16802b03ddcfc84bd7f72897368c55bb4e09b6418d6c743fad55b",
+        "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0"
+      },
+      "previous": "9e27650f50673fa0033c49c1a6eef532e2e80cd93220c326c7d1530b6712e359",
+      "digest": "4635b820a5b4f9f131832d02bcc9427ec7d0d0ea53ab431fc9d6bd790e5cffa4"
+    },
+    {
+      "sequence": 1478,
+      "at": "2026-10-07T11:41:15.072Z",
+      "kind": "task",
+      "data": {
+        "number": 167,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-post-preserve-source-timeline",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 167,
+            "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "bundles/ai-video/connectors/post-bridge/README.md",
+              "bundles/ai-video/connectors/post-bridge/core.mjs",
+              "bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts",
+              "bundles/ai-video/library/style-variants/bold-promo.json"
+            ],
+            "filesHash": "2ba9450d91a881c9292608e37883fea9da265c9f83c0df6e28da5424cbeba7d7",
+            "dependsOn": [],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts bundles/ai-video/connectors/post-bridge/revision-concurrency.test.ts --maxWorkers=1",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T11:40:05.916889+00:00",
+                "result": "Actual FFmpeg integration and package concurrency tests pass, including full source frame counts, source hashes, advisory duration targets and pre-output rejection of overlap transitions."
+              },
+              {
+                "command": "node --check bundles/ai-video/connectors/post-bridge/core.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T11:40:06.060389+00:00",
+                "result": "Post bridge syntax check passes."
+              }
+            ],
+            "reviewedAt": "2026-10-07T11:41:09.742533+00:00",
+            "summary": "Fully read the post core, direct color/BGM/subtitle/audio-stem/AV dependencies, the complete real integration test, and all style recipes before editing. The change removes only overlap composition and creative target duration admission. Actual invalid input, missing media, engine failure, source lineage and signed independent audio checks remain. First local run passed four tests and exposed a too-strict timestamp assertion: all 225 frames were retained but AAC mux timestamps differed by 21ms. The final assertion retains exact frame-count protection and one-frame timing tolerance; committed real tests rerun below. No model review or paid call.",
+            "passed": true,
+            "id": "b003328506f16802b03ddcfc84bd7f72897368c55bb4e09b6418d6c743fad55b"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 167,
+            "pull": {
+              "number": 167,
+              "state": "open",
+              "title": "fix(growth): preserve complete source clips in post delivery [T-2026-1007-0918]",
+              "body": "The post delivery bridge shortened rendered clips by overlapping their heads and tails in xfade and failed packages when measured duration differed from the creative target. Preserve the complete clip timeline: reject xfade before creating output, use hard cuts in the bold-promo recipe, and record target/actual/delta without a duration admission gate. Hard cuts and fades inside each clip retain all frames; actual source duration and output consistency are still checked. Real FFmpeg regression proves all 225 frames of three source clips survive, source hashes remain unchanged, and forbidden transitions cannot call an encoder or create output. No paid generation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-post-preserve-source-timeline",
+                "sha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "files": [
+              "bundles/ai-video/connectors/post-bridge/README.md",
+              "bundles/ai-video/connectors/post-bridge/core.mjs",
+              "bundles/ai-video/connectors/post-bridge/delivery-integration.test.ts",
+              "bundles/ai-video/library/style-variants/bold-promo.json"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791373074000,
+            "mergeBase": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "4635b820a5b4f9f131832d02bcc9427ec7d0d0ea53ab431fc9d6bd790e5cffa4",
+      "digest": "fa5dd39b983467d41d280dbe9c678010e249dfa71c216e57ea5ecf4ce9108a29"
+    },
+    {
+      "sequence": 1479,
+      "at": "2026-10-07T11:41:11.840Z",
+      "kind": "transaction",
+      "data": {
+        "id": "cb09151e-8723-4a39-a85a-82dd4f4b3ac3"
+      },
+      "previous": "fa5dd39b983467d41d280dbe9c678010e249dfa71c216e57ea5ecf4ce9108a29",
+      "digest": "eb49f8f0ece46a55724149062fcd0740cdf7247b2cffbe111c8911510bbf9c62"
     }
   ]
 }
