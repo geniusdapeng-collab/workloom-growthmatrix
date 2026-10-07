@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1987,
+  "revision": 1989,
   "tasks": {
     "132": {
       "number": 132,
@@ -6947,7 +6947,7 @@
           }
         ]
       },
-      "updatedAt": 1791379510199,
+      "updatedAt": 1791380029775,
       "admission": {
         "number": 170,
         "headSha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
@@ -52576,6 +52576,50 @@
       },
       "previous": "c591352ae0408a742bc54bc5a82a8c8764c5a0c7579d07974fb1ef6ef98dc37a",
       "digest": "76e7d7be970972e3701f99aa1756d95ddb2f7efe5f7a6c1fdb4ef49809441177"
+    },
+    {
+      "sequence": 1988,
+      "at": "2026-10-07T13:33:49.775Z",
+      "kind": "task",
+      "data": {
+        "number": 170,
+        "patch": {
+          "headSha": "dbfd95f2853df7a12530fcf775353b87ef634cc1",
+          "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+          "branch": "fix/T-2026-1007-0918-desktop-release-native-contract",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.3"
+              }
+            ]
+          },
+          "originalBody": "The delivery queue sent obsolete DESKTOP_RELEASE_VERSION and verified sourceSha/static installer names, while the native signed publisher requires RELEASE_TAG/RELEASE_SHA/PLATFORM_SIGNING and emits product/sha plus product/version installer prefixes. Match the actual native contract, create and read back an exact stable tag without replacing existing refs, retain fixed SHA and signed mode, and verify all three downloaded installer sizes and SHA512 bytes. Tag/create acknowledgement loss is recovered by readback; unknown or mismatched state cannot launch. Native CI identities are never overridden. No product rendering or paid model calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.3\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "scripts/delivery/queue-release-contract.test.mjs",
+            "scripts/delivery/queue-release.mjs",
+            "scripts/delivery/queue.test.mjs"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791379005941
+        }
+      },
+      "previous": "76e7d7be970972e3701f99aa1756d95ddb2f7efe5f7a6c1fdb4ef49809441177",
+      "digest": "88393332516444e791dca5154b19e945843fe900e2486a2951d82dfe34cced66"
+    },
+    {
+      "sequence": 1989,
+      "at": "2026-10-07T13:35:56.630Z",
+      "kind": "transaction",
+      "data": {
+        "id": "c4f04d01-927c-4673-9d51-16cb64910366"
+      },
+      "previous": "88393332516444e791dca5154b19e945843fe900e2486a2951d82dfe34cced66",
+      "digest": "15ce3d9444f65b11f71cacb5e9a6854933780321bcf8093ad77be8f73e7a832b"
     }
   ]
 }
