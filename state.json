@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2769,
+  "revision": 2771,
   "tasks": {
     "132": {
       "number": 132,
@@ -659,7 +659,7 @@
     },
     "134": {
       "number": 134,
-      "status": "aligning",
+      "status": "parked",
       "firstSeen": 1791310212615,
       "attempts": {},
       "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -688,8 +688,8 @@
         "at": 1791396312503
       },
       "developerReview": null,
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/134 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791396312459,
+      "error": "Command failed: git merge --no-ff --no-edit 703947eeca100eb2598c9bb25c914d4dad8c9a9b\n",
+      "blockedUntil": 1791396912503,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -71372,6 +71372,31 @@
       },
       "previous": "577ff90b9c3ce6314781ae3b4c8297d347a56d945b83f087d369883b0bb610a5",
       "digest": "3c4082b8cee206ad6824334f725850a4d39a2fa2fe3b9af20b9c1db4a20bf0b0"
+    },
+    {
+      "sequence": 2770,
+      "at": "2026-10-07T18:05:12.503Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "Command failed: git merge --no-ff --no-edit 703947eeca100eb2598c9bb25c914d4dad8c9a9b\n",
+          "blockedUntil": 1791396912503
+        }
+      },
+      "previous": "3c4082b8cee206ad6824334f725850a4d39a2fa2fe3b9af20b9c1db4a20bf0b0",
+      "digest": "53f27af6db5127ac5090160107a31b428cf51d4f2433732447fe58c320e6e10a"
+    },
+    {
+      "sequence": 2771,
+      "at": "2026-10-07T18:05:28.419Z",
+      "kind": "transaction",
+      "data": {
+        "id": "0e3f90ed-aed9-4c12-9c15-eec296f9060d"
+      },
+      "previous": "53f27af6db5127ac5090160107a31b428cf51d4f2433732447fe58c320e6e10a",
+      "digest": "e31f4a830091e0fa8992164b817cfa8250dbaa265d6a8b282dfd19518ea1a91a"
     }
   ]
 }
