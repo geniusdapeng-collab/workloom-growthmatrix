@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4048,
+  "revision": 4050,
   "tasks": {
     "132": {
       "number": 132,
@@ -4496,7 +4496,14 @@
       "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
-      "candidate": null,
+      "candidate": {
+        "number": 188,
+        "branch": "delivery/candidate/pr-149-26ee25b40cbf1286f5fc37b96eed8bea",
+        "headSha": "e23036b57b872777c3d0d9ff3f57ab5d40701613",
+        "mainSha": "6213c885ba4d5dd77981228d3ba0890092c297f9",
+        "marker": "delivery-origin:149:e23036b57b872777c3d0d9ff3f57ab5d40701613:6213c885ba4d5dd77981228d3ba0890092c297f9",
+        "at": 1791415517365
+      },
       "originalBody": "Video generation now freezes project/shot/provider/endpoint/full body in a private durable v2 journal before POST and saves ACK before all GETs. Complete v1 receipts can be imported without reissuing generation; unknown submissions stay pending reconciliation, and late legacy ACKs permit GET-only recovery. Conflicting task IDs, modified requests, corrupt identity and unknown dead locks reject without another payment. Existing postproduction consumers validate v2 identity while retaining v1 read support. The shared file journal matches PR148 byte for byte. A subsequent CLI integration connects stable project paths; this fix independently protects acknowledgement and legacy recovery in the existing journal scope. All fault tests inject providers, with no live paid generation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148,\n    146\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.9\"\n    }\n  ]\n}\n-->",
       "files": [
         "packages/video-studio/src/video-surface-repair.test.ts",
@@ -100300,6 +100307,36 @@
       },
       "previous": "75b0c9ea7a67dc301b33cf56d2081f43f81c5ff42f27ce5b70034601620f401f",
       "digest": "f37f6a0db462989504ac8945aebea4af9a53d10d782a521bbf0c35f4682e4d7d"
+    },
+    {
+      "sequence": 4049,
+      "at": "2026-10-07T23:25:17.365Z",
+      "kind": "task",
+      "data": {
+        "number": 149,
+        "patch": {
+          "candidate": {
+            "number": 188,
+            "branch": "delivery/candidate/pr-149-26ee25b40cbf1286f5fc37b96eed8bea",
+            "headSha": "e23036b57b872777c3d0d9ff3f57ab5d40701613",
+            "mainSha": "6213c885ba4d5dd77981228d3ba0890092c297f9",
+            "marker": "delivery-origin:149:e23036b57b872777c3d0d9ff3f57ab5d40701613:6213c885ba4d5dd77981228d3ba0890092c297f9",
+            "at": 1791415517365
+          }
+        }
+      },
+      "previous": "f37f6a0db462989504ac8945aebea4af9a53d10d782a521bbf0c35f4682e4d7d",
+      "digest": "43a3ac2b84bc01eef9d2c0c5dcdf6a6a6c1f375607f8653c5e1db3946a24fdae"
+    },
+    {
+      "sequence": 4050,
+      "at": "2026-10-07T23:27:45.635Z",
+      "kind": "transaction",
+      "data": {
+        "id": "cc60ae70-de3d-4b09-b306-27da403433a3"
+      },
+      "previous": "43a3ac2b84bc01eef9d2c0c5dcdf6a6a6c1f375607f8653c5e1db3946a24fdae",
+      "digest": "a5ddd476102a1f2e29da74fccd66a309d16adec9849b898049cbbe2fb877a55d"
     }
   ]
 }
