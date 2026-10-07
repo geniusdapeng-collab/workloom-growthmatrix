@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 916,
+  "revision": 919,
   "tasks": {
     "132": {
       "number": 132,
@@ -4084,6 +4084,166 @@
       ],
       "error": "Prerequisite #149 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/149 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "blockedUntil": 1791363011177
+    },
+    "157": {
+      "number": 157,
+      "status": "waiting_ci",
+      "firstSeen": 1791362963095,
+      "attempts": {},
+      "headSha": "7c59fcb1805defb3a9b588cce0817dc2e5618bd2",
+      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "branch": "fix/T-2026-1007-0918-studio-duration-run-context",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [
+          144,
+          148,
+          150
+        ],
+        "releases": []
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 157,
+        "headSha": "7c59fcb1805defb3a9b588cce0817dc2e5618bd2",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "packages/video-studio/src/creative-duration-policy.test.ts",
+          "packages/video-studio/src/creative-duration-policy.ts",
+          "packages/video-studio/src/duration-projection-bridge.test.ts",
+          "packages/video-studio/src/duration-projection.test.ts",
+          "packages/video-studio/src/duration-projection.ts",
+          "packages/video-studio/src/duration-run-context.ts",
+          "packages/video-studio/src/generation-file-store.ts",
+          "packages/video-studio/src/image-task-receipt.test.ts",
+          "packages/video-studio/src/image-task-receipt.ts",
+          "packages/video-studio/src/portrait-runtime.test.ts",
+          "packages/video-studio/src/portrait-runtime.ts",
+          "packages/video-studio/src/studio.test.ts",
+          "packages/video-studio/src/studio.ts",
+          "packages/video-studio/src/vendor-compat.ts",
+          "scripts/tools/duration-projection-e2e.mts"
+        ],
+        "filesHash": "d9682165f72d774cbc0bb39628b3f3fd92f00c261861127c5b89e53e278b4cdf",
+        "dependsOn": [
+          144,
+          148,
+          150
+        ],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/studio.test.ts packages/video-studio/src/duration-projection-bridge.test.ts packages/video-studio/src/creative-duration-policy.test.ts packages/video-studio/src/duration-projection.test.ts packages/video-studio/src/portrait-runtime.test.ts packages/video-studio/src/image-task-receipt.test.ts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T08:48:10.121342+00:00",
+            "result": "Studio concurrent policies, immutable authored metadata, invalid predispatch settings, actual shared vendor bridge, and image ACK fault regressions passed; Vitest optional ProductionEngine loader gap covered by actual tsx CJS test"
+          },
+          {
+            "command": "node --import tsx scripts/tools/duration-projection-e2e.mts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T08:48:10.530249+00:00",
+            "result": "Actual production CJS normalization preserves 28/32/35-second complete plans and concurrent creative/strict runs and routes distinct run events; explicit strict full planning chain passed"
+          },
+          {
+            "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T08:48:10.903171+00:00",
+            "result": "Video studio typecheck passed"
+          }
+        ],
+        "reviewedAt": "2026-10-07T08:49:19.082865+00:00",
+        "summary": "Current Codex fully read and reviewed all changed files and direct dependencies. Per-run settings are immutable, run scope surrounds awaited vendor create and resume, projection bounds cannot exceed the model catalog and each bridge invocation reads the current context. Concurrent policies and event callbacks cannot use the first run's closure. Authored metadata remains unchanged and invalid settings dispatch no vendor call. The actual production CJS loader verifies ProductionEngine, independent strict/creative interleaving and each event destination; optional Vitest CJS omission is explicitly covered by that runtime test. Dependency copies retain their prior reviewed journal semantics. Exact committed tests and types pass; no live paid calls and no unresolved finding.",
+        "passed": true,
+        "id": "7ead9822ab67199c1d749f4d9ffe12c01756d9c97fbec0845ee4db23522c5f15"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 157,
+        "pull": {
+          "number": 157,
+          "state": "open",
+          "title": "fix(growth): isolate creative duration settings by studio run [T-2026-1007-0918]",
+          "body": "The shared vendor prototype bridge kept the first Studio run's callbacks and planning settings for concurrent runs. Each asynchronous run now freezes its own creative-target or explicitly strict policy, bounds, event callback and log in AsyncLocalStorage. Authored metadata is cloned, the completeness principle travels with the brief, and malformed or conflicting settings fail before any vendor call. Default creative-target preserves complete 28/32/35-second plans around a 30-second target. Actual production CJS tests cover both the Vitest loader gap and asynchronous interleaving. Matching dependency files from PR144 and PR148 are included with identical contents for independent source compilation; PR150 owns the downstream requirement/prompt policy propagation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    144,\n    148,\n    150\n  ],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/fix/T-2026-1007-0918-studio-duration-run-context",
+            "sha": "7c59fcb1805defb3a9b588cce0817dc2e5618bd2",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "7c59fcb1805defb3a9b588cce0817dc2e5618bd2",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "files": [
+          "packages/video-studio/src/creative-duration-policy.test.ts",
+          "packages/video-studio/src/creative-duration-policy.ts",
+          "packages/video-studio/src/duration-projection-bridge.test.ts",
+          "packages/video-studio/src/duration-projection.test.ts",
+          "packages/video-studio/src/duration-projection.ts",
+          "packages/video-studio/src/duration-run-context.ts",
+          "packages/video-studio/src/generation-file-store.ts",
+          "packages/video-studio/src/image-task-receipt.test.ts",
+          "packages/video-studio/src/image-task-receipt.ts",
+          "packages/video-studio/src/portrait-runtime.test.ts",
+          "packages/video-studio/src/portrait-runtime.ts",
+          "packages/video-studio/src/studio.test.ts",
+          "packages/video-studio/src/studio.ts",
+          "packages/video-studio/src/vendor-compat.ts",
+          "scripts/tools/duration-projection-e2e.mts"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [
+            144,
+            148,
+            150
+          ],
+          "releases": []
+        },
+        "headTime": 1791362879000,
+        "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": []
+      },
+      "updatedAt": 1791362963095
     }
   },
   "leases": {
@@ -22793,6 +22953,195 @@
       },
       "previous": "6616ec98d14b83d61c32b67792e0276f109460c07f07685091a63034706b8550",
       "digest": "caec66efde2db1c69f67dc147a47eb6789ddf3acf8fa99bfb84acb1b3d4af0d1"
+    },
+    {
+      "sequence": 917,
+      "at": "2026-10-07T08:49:23.091Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 157,
+        "id": "7ead9822ab67199c1d749f4d9ffe12c01756d9c97fbec0845ee4db23522c5f15",
+        "headSha": "7c59fcb1805defb3a9b588cce0817dc2e5618bd2",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8"
+      },
+      "previous": "caec66efde2db1c69f67dc147a47eb6789ddf3acf8fa99bfb84acb1b3d4af0d1",
+      "digest": "1ca3d6c942a0c0c85a6a513817ec5feac9c792dcb3f4deb0987b61fae6f54148"
+    },
+    {
+      "sequence": 918,
+      "at": "2026-10-07T08:49:23.095Z",
+      "kind": "task",
+      "data": {
+        "number": 157,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "7c59fcb1805defb3a9b588cce0817dc2e5618bd2",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-studio-duration-run-context",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              148,
+              150
+            ],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 157,
+            "headSha": "7c59fcb1805defb3a9b588cce0817dc2e5618bd2",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/creative-duration-policy.test.ts",
+              "packages/video-studio/src/creative-duration-policy.ts",
+              "packages/video-studio/src/duration-projection-bridge.test.ts",
+              "packages/video-studio/src/duration-projection.test.ts",
+              "packages/video-studio/src/duration-projection.ts",
+              "packages/video-studio/src/duration-run-context.ts",
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.test.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/portrait-runtime.test.ts",
+              "packages/video-studio/src/portrait-runtime.ts",
+              "packages/video-studio/src/studio.test.ts",
+              "packages/video-studio/src/studio.ts",
+              "packages/video-studio/src/vendor-compat.ts",
+              "scripts/tools/duration-projection-e2e.mts"
+            ],
+            "filesHash": "d9682165f72d774cbc0bb39628b3f3fd92f00c261861127c5b89e53e278b4cdf",
+            "dependsOn": [
+              144,
+              148,
+              150
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/studio.test.ts packages/video-studio/src/duration-projection-bridge.test.ts packages/video-studio/src/creative-duration-policy.test.ts packages/video-studio/src/duration-projection.test.ts packages/video-studio/src/portrait-runtime.test.ts packages/video-studio/src/image-task-receipt.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T08:48:10.121342+00:00",
+                "result": "Studio concurrent policies, immutable authored metadata, invalid predispatch settings, actual shared vendor bridge, and image ACK fault regressions passed; Vitest optional ProductionEngine loader gap covered by actual tsx CJS test"
+              },
+              {
+                "command": "node --import tsx scripts/tools/duration-projection-e2e.mts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T08:48:10.530249+00:00",
+                "result": "Actual production CJS normalization preserves 28/32/35-second complete plans and concurrent creative/strict runs and routes distinct run events; explicit strict full planning chain passed"
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T08:48:10.903171+00:00",
+                "result": "Video studio typecheck passed"
+              }
+            ],
+            "reviewedAt": "2026-10-07T08:49:19.082865+00:00",
+            "summary": "Current Codex fully read and reviewed all changed files and direct dependencies. Per-run settings are immutable, run scope surrounds awaited vendor create and resume, projection bounds cannot exceed the model catalog and each bridge invocation reads the current context. Concurrent policies and event callbacks cannot use the first run's closure. Authored metadata remains unchanged and invalid settings dispatch no vendor call. The actual production CJS loader verifies ProductionEngine, independent strict/creative interleaving and each event destination; optional Vitest CJS omission is explicitly covered by that runtime test. Dependency copies retain their prior reviewed journal semantics. Exact committed tests and types pass; no live paid calls and no unresolved finding.",
+            "passed": true,
+            "id": "7ead9822ab67199c1d749f4d9ffe12c01756d9c97fbec0845ee4db23522c5f15"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 157,
+            "pull": {
+              "number": 157,
+              "state": "open",
+              "title": "fix(growth): isolate creative duration settings by studio run [T-2026-1007-0918]",
+              "body": "The shared vendor prototype bridge kept the first Studio run's callbacks and planning settings for concurrent runs. Each asynchronous run now freezes its own creative-target or explicitly strict policy, bounds, event callback and log in AsyncLocalStorage. Authored metadata is cloned, the completeness principle travels with the brief, and malformed or conflicting settings fail before any vendor call. Default creative-target preserves complete 28/32/35-second plans around a 30-second target. Actual production CJS tests cover both the Vitest loader gap and asynchronous interleaving. Matching dependency files from PR144 and PR148 are included with identical contents for independent source compilation; PR150 owns the downstream requirement/prompt policy propagation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    144,\n    148,\n    150\n  ],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-studio-duration-run-context",
+                "sha": "7c59fcb1805defb3a9b588cce0817dc2e5618bd2",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "7c59fcb1805defb3a9b588cce0817dc2e5618bd2",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "files": [
+              "packages/video-studio/src/creative-duration-policy.test.ts",
+              "packages/video-studio/src/creative-duration-policy.ts",
+              "packages/video-studio/src/duration-projection-bridge.test.ts",
+              "packages/video-studio/src/duration-projection.test.ts",
+              "packages/video-studio/src/duration-projection.ts",
+              "packages/video-studio/src/duration-run-context.ts",
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.test.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/portrait-runtime.test.ts",
+              "packages/video-studio/src/portrait-runtime.ts",
+              "packages/video-studio/src/studio.test.ts",
+              "packages/video-studio/src/studio.ts",
+              "packages/video-studio/src/vendor-compat.ts",
+              "scripts/tools/duration-projection-e2e.mts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                144,
+                148,
+                150
+              ],
+              "releases": []
+            },
+            "headTime": 1791362879000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "1ca3d6c942a0c0c85a6a513817ec5feac9c792dcb3f4deb0987b61fae6f54148",
+      "digest": "accdd655cbc46e7cac42dd13853ea7d8a798fc1c3856e6f3cb63156f72936b17"
+    },
+    {
+      "sequence": 919,
+      "at": "2026-10-07T08:49:21.282Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8c613bef-ccd4-4c6c-9026-c702012e062b"
+      },
+      "previous": "accdd655cbc46e7cac42dd13853ea7d8a798fc1c3856e6f3cb63156f72936b17",
+      "digest": "54832f887349250cdc678be4ec4d22888246c45ab7d7bcd7574d3ceca525dee4"
     }
   ]
 }
