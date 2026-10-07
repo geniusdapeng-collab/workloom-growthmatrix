@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 242,
+  "revision": 244,
   "tasks": {
     "132": {
       "number": 132,
@@ -680,7 +680,7 @@
         "scripts/tools/full-chain-film.mts"
       ],
       "ciSince": 1791310212615,
-      "updatedAt": 1791333611689,
+      "updatedAt": 1791334213829,
       "alignmentCount": 3,
       "alignmentIntent": {
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -688,8 +688,8 @@
         "at": 1791317717753
       },
       "developerReview": null,
-      "error": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
-      "blockedUntil": 1791334211689,
+      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/134 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791334813829,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -7779,6 +7779,31 @@
       },
       "previous": "af740fead3fe5b640e4acba35a3eb60c749f756656175d4e91214b063ebc4b6e",
       "digest": "5574340e0f3ad5fb530b7c7243ef7ff94c62a5ee08ab1ca2615854f0c07c53a3"
+    },
+    {
+      "sequence": 243,
+      "at": "2026-10-07T00:50:13.829Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/134 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791334813829
+        }
+      },
+      "previous": "5574340e0f3ad5fb530b7c7243ef7ff94c62a5ee08ab1ca2615854f0c07c53a3",
+      "digest": "55b9ba1fcc3f25275c6d59ffd8e918ea0b834845ae34a3a55231150986dd9247"
+    },
+    {
+      "sequence": 244,
+      "at": "2026-10-07T00:50:17.778Z",
+      "kind": "transaction",
+      "data": {
+        "id": "d7348041-9c8d-4913-adca-784dd06cccf1"
+      },
+      "previous": "55b9ba1fcc3f25275c6d59ffd8e918ea0b834845ae34a3a55231150986dd9247",
+      "digest": "6e320f0ba55fbd2659c6cd7b501c0f03db39a8dd4b987de1ee4fd94a59c7bb26"
     }
   ]
 }
