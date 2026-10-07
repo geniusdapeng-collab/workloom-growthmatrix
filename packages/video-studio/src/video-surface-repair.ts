@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fingerprintArtifact, productionHash, type LineageReceipt } from "./production-lineage.js";
 import type { ProducerVerdict } from "./producer-gate.js";
-import { verifyExistingSuccessfulVideoTask } from "./video-task-receipt.js";
+import { assertVideoTaskReceiptIdentity, verifyExistingSuccessfulVideoTask, type VideoTaskReceipt } from "./video-task-receipt.js";
 
 export interface SurfaceRect { x: number; y: number; width: number; height: number }
 interface MediaInfo { width: number; height: number; duration: number; frames: number; fps: string; audio: boolean }
@@ -23,7 +23,8 @@ export function assertSurfaceRepairOrigin(input: {
   projectId: string; shotId: string; sourceHash: string; clip: string; expectedRequestSha256: string;
   submission: LineageReceipt; promptFile: string;
   previous: { ok: boolean; degraded: boolean; verdict: ProducerVerdict | null; lineage?: LineageReceipt };
-  taskReceipt: { schemaVersion?: string; projectId?: string; shotId?: string; state?: string; taskId?: string; requestSha256?: string };
+  taskReceipt: { schemaVersion?: string; projectId?: string; shotId?: string; state?: string; taskId?: string; requestSha256?: string }
+    & Partial<Pick<VideoTaskReceipt, "identity" | "identitySha256" | "origin" | "result" | "legacy">>;
 }): string {
   const { previous: row, taskReceipt: task } = input, lineage = row.lineage;
   if (!lineage || lineage.schemaVersion !== "workloom.production-lineage/v1"
@@ -42,7 +43,8 @@ export function assertSurfaceRepairOrigin(input: {
     const actual = fingerprintArtifact(file.path);
     if (actual.sha256 !== file.sha256 || actual.bytes !== file.bytes || actual.realpath !== file.realpath) fail("原提交门的正文/参考已改变");
   }
-  if (task.schemaVersion !== "workloom.video-task-receipt/v1" || task.state !== "succeeded"
+  if (task.schemaVersion === "workloom.video-task-receipt/v2") assertVideoTaskReceiptIdentity(task);
+  if (!["workloom.video-task-receipt/v1", "workloom.video-task-receipt/v2"].includes(task.schemaVersion ?? "") || task.state !== "succeeded"
     || task.projectId !== input.projectId || task.shotId !== input.shotId || !task.taskId?.trim()
     || task.requestSha256 !== input.expectedRequestSha256) fail("必须复用同一受审正文的成功任务，不能重复提交");
   return task.taskId!;
@@ -73,11 +75,13 @@ type ReviewedSurfaceRow = { ok: boolean; degraded: boolean; artifact: string | n
   lineage?: LineageReceipt; evidence: Record<string, unknown> };
 /** 复用实际变换副本和原成功请求；无身份复评，也无供应商提交/轮询能力。 */
 export async function qualifyReviewedSurfacePost(input: { projectId: string; shotId: string; sourceHash: string; contractHash: string;
-  receiptRoot: string; body: Record<string, unknown>; repair: ReviewedSurfaceRow; identity: ReviewedSurfaceRow }): Promise<{
+  receiptRoot: string; body: Record<string, unknown>; provider?: string; endpoint?: string; legacyRoots?: string[];
+  repair: ReviewedSurfaceRow; identity: ReviewedSurfaceRow }): Promise<{
     clip: string; taskId: string; requestSha256: string; original: string; originalSha256: string;
   }> {
   const clip = assertReviewedSurfaceRepair({ ...input, row: input.repair });
-  const paid = await verifyExistingSuccessfulVideoTask({ root: input.receiptRoot, projectId: input.projectId, shotId: input.shotId, body: input.body });
+  const paid = await verifyExistingSuccessfulVideoTask({ root: input.receiptRoot, projectId: input.projectId, shotId: input.shotId, body: input.body,
+    provider: input.provider, endpoint: input.endpoint, legacyRoots: input.legacyRoots });
   const original = input.repair.evidence.original, originalSha256 = input.repair.evidence.originalSha256;
   if (input.repair.evidence.taskId !== paid.taskId
     || typeof original !== "string" || typeof originalSha256 !== "string" || original === clip

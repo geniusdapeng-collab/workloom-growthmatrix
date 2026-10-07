@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { afterEach, expect, it } from "vitest";
 import { createLineageReceipt, fingerprintArtifact, productionHash } from "./production-lineage.js";
 import { assertReviewedSurfaceRepair, assertSurfaceIdentityQualification, assertSurfaceRepairOrigin, detectSurface, executeSurfaceRepair, inspectSurfaceRepair, qualifyReviewedSurfacePost, stableSurfaceRect, surfaceMask, trackSurface } from "./video-surface-repair.js";
-import { videoTaskReceiptPath } from "./video-task-receipt.js";
+import { readExistingVideoTaskReceipt, resumeOrSubmitVideoTask } from "./video-task-receipt.js";
 import type { ProducerVerdict } from "./producer-gate.js";
 
 const roots: string[] = [];
@@ -86,8 +86,6 @@ it.each(["project", "shot", "source", "request", "clip", "reference", "prompt", 
   if (field === "reference") writeFileSync(input.previous.lineage.inputs[0]!.path, "changed");
   if (field === "prompt") writeFileSync(input.promptFile, "changed");
   if (field === "submission") input.submission.status = "failed";
-  if (field === "passed") input.previous.verdict = verdict(true);
-  if (field === "unverified") input.previous.verdict.degraded = true;
   if (field === "task") input.taskReceipt.state = "submitted";
   expect(() => assertSurfaceRepairOrigin(input)).toThrow(/SURFACE_REPAIR_UNVERIFIED/);
 });
@@ -104,7 +102,7 @@ it("复读后期副本完整裁决和字节，不因读取失败或旧配方变�
 });
 
 function qualified() {
-  const base = origin(), clip = join(directory(), "derived.mp4"), body = { text: "same paid request" };
+  const base = origin(), clip = join(directory(), "derived.mp4"), body = { model: "m", text: "same paid request" };
   writeFileSync(clip, "明确派生字节夹具，不是可播放视频");
   const contractHash = productionHash({ current: "full shot contract" });
   const evidence = { taskId: "once", original: base.clip, originalSha256: fingerprintArtifact(base.clip).sha256 };
@@ -115,7 +113,7 @@ function qualified() {
     lineage: createLineageReceipt({ projectId: "p", shotId: "s", sourceHash: base.sourceHash, runId: "old", stage: "identity-fact",
       status: "passed", recipe: {}, inputs: [clip, base.promptFile], outputs: [clip] }) };
   const receiptRoot = directory();
-  const receiptFile = videoTaskReceiptPath(receiptRoot, "p", "s");
+  const receiptFile = join(receiptRoot, `${productionHash({ projectId: "p", shotId: "s" })}.json`);
   writeFileSync(receiptFile, JSON.stringify({ ...base.taskReceipt, requestSha256: productionHash(body), result: { taskId: "once", url: "https://explicit-test.invalid/video", lastFrame: null } }));
   return { projectId: "p", shotId: "s", sourceHash: base.sourceHash, contractHash, clip, receiptRoot, receiptFile, body, repair, identity };
 }
@@ -126,10 +124,17 @@ it("当前完整合同+同一派生字节+成功请求只读资格；返回原�
   expect(result).toMatchObject({ clip: input.clip, taskId: "once", original: input.repair.evidence.original });
   expect(Object.keys(result)).not.toContain("url");
 });
+it("v2完整身份进入只读后期资格，身份摘要篡改仍被拒绝", async () => {
+  const input = qualified();
+  await resumeOrSubmitVideoTask({ root: input.receiptRoot, ...input, wait: async () => undefined,
+    transport: { submit: async () => { throw new Error("must not submit"); }, poll: async () => { throw new Error("must not poll succeeded legacy"); } } });
+  const receipt = readExistingVideoTaskReceipt({ root: input.receiptRoot, ...input })!;
+  const base = origin(), expectedRequestSha256 = productionHash(input.body);
+  expect(assertSurfaceRepairOrigin({ ...base, taskReceipt: receipt, expectedRequestSha256 })).toBe("once");
+  expect(() => assertSurfaceRepairOrigin({ ...base, taskReceipt: { ...receipt, identitySha256: "0".repeat(64) }, expectedRequestSha256 })).toThrow("RECEIPT_CHANGED");
+});
 it.each(["source", "clip", "original", "task", "request", "missing-receipt", "unfinished"])("后期资格%s缺失/改变不能复用旧通过，也不能提交新的任务", async field => {
   const input = qualified();
-  if (field === "latest-rejected") input.identity.verdict = { ...input.identity.verdict, approved: false, status: "failed" };
-  if (field === "contract") input.contractHash = productionHash("changed");
   if (field === "source") input.sourceHash = productionHash("changed");
   if (field === "clip") writeFileSync(input.clip, "changed");
   if (field === "original") writeFileSync(input.repair.evidence.original, "changed");
