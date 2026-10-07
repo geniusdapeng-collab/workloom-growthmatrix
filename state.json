@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 667,
+  "revision": 670,
   "tasks": {
     "132": {
       "number": 132,
@@ -3289,6 +3289,122 @@
         "owner": "admission/pr-151",
         "generation": {}
       }
+    },
+    "152": {
+      "number": 152,
+      "status": "waiting_ci",
+      "firstSeen": 1791358731486,
+      "attempts": {},
+      "headSha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
+      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "branch": "fix/T-2026-1007-0918-marketing-failure-feedback",
+      "intent": {
+        "taskId": "T-2026-1007-0918",
+        "ready": true,
+        "dependsOn": [],
+        "releases": []
+      },
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 152,
+        "headSha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "apps/server/src/video/marketing-authority.test.ts",
+          "apps/server/src/video/marketing-authority.ts"
+        ],
+        "filesHash": "9c065572255aacba96f4051b9cd46ce35cd36532b58e928c1f6b5234e097a97f",
+        "dependsOn": [],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/marketing-authority.test.ts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T07:19:05.072442+00:00",
+            "result": "Source-bound marketing authority recovery tests passed without paid calls"
+          },
+          {
+            "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T07:19:10.940839+00:00",
+            "result": "server typecheck passed"
+          }
+        ],
+        "reviewedAt": "2026-10-07T07:38:47.250340+00:00",
+        "summary": "Current Codex fully read the two changed files and direct implementation dependencies. Every output receipt binds scope, shot ID, exact complete review bytes and source images. Real model verdicts retain their evidence checks. Deterministic diagnostics are recomputed from the current complete environment contract and only accepted with exact failed reason and unverified zero-score/no-model/no-evidence flags. Original receipts are never rewritten and no facts approval is produced. Genuine rejection remains the returned primary verdict; deterministic-only repair remains explicitly unverified. Exact-source tests and server typecheck passed; no unresolved finding.",
+        "passed": true,
+        "id": "97037b702ab27812b34d7fcd8767fc5b027c45191b667830e86190165187a15b"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 152,
+        "pull": {
+          "number": 152,
+          "state": "open",
+          "title": "fix(growth): resume source-bound final fact repair [T-2026-1007-0918]",
+          "body": "Final fact repair could lose a genuine model rejection when a later shot failed deterministic contract compilation. Recovery now rereads each complete source-bound review, verifies real passed/rejected evidence and separately recomputes unverified contract diagnostics. A diagnostic retains its unverified deterministic status and never supplies model approval. Changed scope, content, evidence, error, fallback or forged approval is refused. Each corrected candidate still requires fresh final fact review. The actual six-shot production completed through this path; regression fixtures use no live paid calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/fix/T-2026-1007-0918-marketing-failure-feedback",
+            "sha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "status_check",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "files": [
+          "apps/server/src/video/marketing-authority.test.ts",
+          "apps/server/src/video/marketing-authority.ts"
+        ],
+        "intent": {
+          "taskId": "T-2026-1007-0918",
+          "ready": true,
+          "dependsOn": [],
+          "releases": []
+        },
+        "headTime": 1791357530000,
+        "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": []
+      },
+      "updatedAt": 1791358731486
     }
   },
   "leases": {
@@ -17222,6 +17338,151 @@
       },
       "previous": "773666d69053c8ca31b5c9cbeda5ff0556275e8c3220b2afd8cfa17753bc58d1",
       "digest": "c8a6f3412ab8cb0af492f29464f8c295dcf7a9c0a7854910f21bce9d0e96702e"
+    },
+    {
+      "sequence": 668,
+      "at": "2026-10-07T07:38:51.483Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 152,
+        "id": "97037b702ab27812b34d7fcd8767fc5b027c45191b667830e86190165187a15b",
+        "headSha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
+        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8"
+      },
+      "previous": "c8a6f3412ab8cb0af492f29464f8c295dcf7a9c0a7854910f21bce9d0e96702e",
+      "digest": "eebdbd45e2050891540f803f8cf5f52035e7d4df2c5c1dafaf876017dc4ddd2c"
+    },
+    {
+      "sequence": 669,
+      "at": "2026-10-07T07:38:51.486Z",
+      "kind": "task",
+      "data": {
+        "number": 152,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-marketing-failure-feedback",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 152,
+            "headSha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "apps/server/src/video/marketing-authority.test.ts",
+              "apps/server/src/video/marketing-authority.ts"
+            ],
+            "filesHash": "9c065572255aacba96f4051b9cd46ce35cd36532b58e928c1f6b5234e097a97f",
+            "dependsOn": [],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/marketing-authority.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T07:19:05.072442+00:00",
+                "result": "Source-bound marketing authority recovery tests passed without paid calls"
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T07:19:10.940839+00:00",
+                "result": "server typecheck passed"
+              }
+            ],
+            "reviewedAt": "2026-10-07T07:38:47.250340+00:00",
+            "summary": "Current Codex fully read the two changed files and direct implementation dependencies. Every output receipt binds scope, shot ID, exact complete review bytes and source images. Real model verdicts retain their evidence checks. Deterministic diagnostics are recomputed from the current complete environment contract and only accepted with exact failed reason and unverified zero-score/no-model/no-evidence flags. Original receipts are never rewritten and no facts approval is produced. Genuine rejection remains the returned primary verdict; deterministic-only repair remains explicitly unverified. Exact-source tests and server typecheck passed; no unresolved finding.",
+            "passed": true,
+            "id": "97037b702ab27812b34d7fcd8767fc5b027c45191b667830e86190165187a15b"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 152,
+            "pull": {
+              "number": 152,
+              "state": "open",
+              "title": "fix(growth): resume source-bound final fact repair [T-2026-1007-0918]",
+              "body": "Final fact repair could lose a genuine model rejection when a later shot failed deterministic contract compilation. Recovery now rereads each complete source-bound review, verifies real passed/rejected evidence and separately recomputes unverified contract diagnostics. A diagnostic retains its unverified deterministic status and never supplies model approval. Changed scope, content, evidence, error, fallback or forged approval is refused. Each corrected candidate still requires fresh final fact review. The actual six-shot production completed through this path; regression fixtures use no live paid calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-marketing-failure-feedback",
+                "sha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
+            "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "files": [
+              "apps/server/src/video/marketing-authority.test.ts",
+              "apps/server/src/video/marketing-authority.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791357530000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "eebdbd45e2050891540f803f8cf5f52035e7d4df2c5c1dafaf876017dc4ddd2c",
+      "digest": "ecf2c1248608c5a4069f73aa99d73092d064c8308887cf7d8624bf8de272209d"
+    },
+    {
+      "sequence": 670,
+      "at": "2026-10-07T07:38:49.586Z",
+      "kind": "transaction",
+      "data": {
+        "id": "110fe2b2-baa2-452c-9ae7-48802ff2745e"
+      },
+      "previous": "ecf2c1248608c5a4069f73aa99d73092d064c8308887cf7d8624bf8de272209d",
+      "digest": "cf1079cab41fdef7c9ec77dc6bbfceb50d9666e764c2d3cdea0c8e9d395c75db"
     }
   ]
 }
