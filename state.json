@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2529,
+  "revision": 2531,
   "tasks": {
     "132": {
       "number": 132,
@@ -4427,7 +4427,7 @@
       "status": "waiting_dependency",
       "firstSeen": 1791358616212,
       "attempts": {},
-      "headSha": "089771568cec09badd63d8d18754b7dcdd9a8750",
+      "headSha": "f1174cabbccc72b5c3e9b16fbe7baef0cbfe9308",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-portrait-agent-paid-once",
       "intent": {
@@ -4555,7 +4555,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791388536253,
+      "updatedAt": 1791390911806,
       "admission": {
         "number": 151,
         "headSha": "089771568cec09badd63d8d18754b7dcdd9a8750",
@@ -65703,6 +65703,47 @@
       },
       "previous": "89ac70ef1b6a9c8b1dd688deec2847094165756e2f2a17e97ff9b75175e5a312",
       "digest": "de666b4f205e64a7d994d8f516813e39cc992ec28d8c0e2c96ebdf5f536c9ce6"
+    },
+    {
+      "sequence": 2530,
+      "at": "2026-10-07T16:35:11.806Z",
+      "kind": "task",
+      "data": {
+        "number": 151,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "f1174cabbccc72b5c3e9b16fbe7baef0cbfe9308",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              153
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.13"
+              }
+            ]
+          },
+          "dependencies": [
+            153
+          ]
+        }
+      },
+      "previous": "de666b4f205e64a7d994d8f516813e39cc992ec28d8c0e2c96ebdf5f536c9ce6",
+      "digest": "bc003d44cf2a2a788a9b5c6198d25c7824b46a23d972114c69fafb4777f938aa"
+    },
+    {
+      "sequence": 2531,
+      "at": "2026-10-07T16:36:45.708Z",
+      "kind": "transaction",
+      "data": {
+        "id": "51089864-9308-423f-917d-b3a4ad19ebf9"
+      },
+      "previous": "bc003d44cf2a2a788a9b5c6198d25c7824b46a23d972114c69fafb4777f938aa",
+      "digest": "dc6ff27b8005e05492df6bc28a712fce87797586481f9d591a099de29f4442ef"
     }
   ]
 }
