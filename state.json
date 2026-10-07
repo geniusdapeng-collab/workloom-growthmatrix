@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2627,
+  "revision": 2629,
   "tasks": {
     "132": {
       "number": 132,
@@ -3181,7 +3181,7 @@
     },
     "144": {
       "number": 144,
-      "status": "waiting_ci",
+      "status": "parked",
       "firstSeen": 1791352089622,
       "attempts": {},
       "headSha": "a248bf621d885644e70ce55d0147cbf9449a2bb2",
@@ -3329,9 +3329,9 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791392115502,
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/144/commit-statuses :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 0,
+      "updatedAt": 1791392410728,
+      "error": "Prerequisite #143 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/143 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791393010728,
       "originalBody": "目标30秒的作品原先按总量重分配每镜，随后可能为凑秒数改变表演。现在默认使用 creative-target：模型单镜能力和可说完台词仍在生成前检查，28/32/35秒完整计划不会为了目标30秒被平均缩短或塞入尾镜；确需严格规划时必须明确 strict。生成后的时长观测永远不触发自动变速或新付费提交。媒体目录缺失能力、NaN/非整数及越界计划明确拒绝。\n\n当前 Codex 完整读取9个变更文件及直接依赖。准确提交后实际执行62项单元/正式引擎行为测试；Vitest原有一项CJS加载跳过由实际node+tsx端到端补测覆盖，并额外验证默认28/32/35秒实际ProductionEngine路径；类型检查通过。没有新增付费生成。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    143\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.6\"\n    }\n  ]\n}\n-->",
       "files": [
         "packages/video-studio/src/creative-duration-policy.test.ts",
@@ -67987,6 +67987,31 @@
       },
       "previous": "a2fda66479b1f76887ede89d2f02d901054a2fde86e26219662f7aad94223fc3",
       "digest": "a1090a9f70ca47e5721f0157d12ae0d1e8921a3d43aaa7e34664f4bdcec22be8"
+    },
+    {
+      "sequence": 2628,
+      "at": "2026-10-07T17:00:10.728Z",
+      "kind": "task",
+      "data": {
+        "number": 144,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #143 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/143 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791393010728
+        }
+      },
+      "previous": "a1090a9f70ca47e5721f0157d12ae0d1e8921a3d43aaa7e34664f4bdcec22be8",
+      "digest": "c3bb2209cc890d60d8488d2cab7305bc2c68998e52c9a397823feaa5f693956d"
+    },
+    {
+      "sequence": 2629,
+      "at": "2026-10-07T17:00:49.722Z",
+      "kind": "transaction",
+      "data": {
+        "id": "d7574375-220a-4d59-9645-caac2c247955"
+      },
+      "previous": "c3bb2209cc890d60d8488d2cab7305bc2c68998e52c9a397823feaa5f693956d",
+      "digest": "bd43495db95fdf01b000513f93a76e4c28c140d783047924778b94a2429919ae"
     }
   ]
 }
