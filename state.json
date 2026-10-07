@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1420,
+  "revision": 1423,
   "tasks": {
     "132": {
       "number": 132,
@@ -2521,7 +2521,7 @@
     },
     "145": {
       "number": 145,
-      "status": "parked",
+      "status": "waiting_ci",
       "firstSeen": 1791352245785,
       "attempts": {},
       "admission": {
@@ -2533,7 +2533,7 @@
         "owner": "admission/pr-145",
         "generation": {}
       },
-      "updatedAt": 1791371100874,
+      "updatedAt": 1791372107790,
       "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
       "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-rendered-acceptance",
@@ -2543,7 +2543,44 @@
         "dependsOn": [],
         "releases": []
       },
-      "developerReview": null,
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 145,
+        "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "packages/video-studio/src/film-worker-runtime.test.ts",
+          "packages/video-studio/src/film-worker-runtime.ts",
+          "packages/video-studio/src/producer-gate.ts",
+          "packages/video-studio/src/rendered-output-policy.test.ts",
+          "packages/video-studio/src/rendered-output-policy.ts"
+        ],
+        "filesHash": "2374662fadb9dd81f6685a285f5d833ff2fde0951120750e002472c5123aaa87",
+        "dependsOn": [],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/rendered-output-policy.test.ts packages/video-studio/src/film-worker-runtime.test.ts packages/video-studio/src/producer-gate.test.ts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T05:48:22.878292+00:00",
+            "result": "3files65passed,0skip"
+          },
+          {
+            "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T05:49:10.231171+00:00",
+            "result": "tsc noEmit passed"
+          }
+        ],
+        "reviewedAt": "2026-10-07T11:21:41.607908+00:00",
+        "summary": "当前Codex完整读取5个改动文件及直接静态依赖。工位review调用前按明确off策略返回实际产物接收，关键帧/镜头/后期质量测量保持信息性，score0表示未评分，不声明模型/身份/语音通过；缺文件或实际工具失败保持执行失败。原提交前规则不放松，显式blocking/advisory仍发父通道。SFX类型与已有CLI真实阶段一致。准确提交后的65个策略/工位/producer测试、类型检查通过，零新模型调用或付费生成；无DB/权限/CI变化。回滚普通revert本提交。未发现未解决问题。 Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+        "passed": true,
+        "id": "7875271b8287a314b735841c37944a4ee217fbbf5c255e7b54f0236ea977c566"
+      },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 145,
@@ -2562,7 +2599,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -2580,7 +2617,7 @@
               "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
             }
           },
-          "blocked_on": "status_check",
+          "blocked_on": "unblocked",
           "merged_by": {
             "is_npc": false
           },
@@ -2591,7 +2628,7 @@
           "statuses": {}
         },
         "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "files": [
           "packages/video-studio/src/film-worker-runtime.test.ts",
           "packages/video-studio/src/film-worker-runtime.ts",
@@ -33951,6 +33988,157 @@
       },
       "previous": "a3088048b832d9e4de6c686e579fb969153b59623bacd3a73ad59630fe3266b3",
       "digest": "503f30de7c3376f60265bc452ad4eb33aec01440419e39c94bdc9bfcfb7a2fe2"
+    },
+    {
+      "sequence": 1421,
+      "at": "2026-10-07T11:21:47.789Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 145,
+        "id": "7875271b8287a314b735841c37944a4ee217fbbf5c255e7b54f0236ea977c566",
+        "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0"
+      },
+      "previous": "503f30de7c3376f60265bc452ad4eb33aec01440419e39c94bdc9bfcfb7a2fe2",
+      "digest": "7df7ac4b7964df4ec929556d7e2801eeab1ac7628bac3d1176db049eadc53146"
+    },
+    {
+      "sequence": 1422,
+      "at": "2026-10-07T11:21:47.790Z",
+      "kind": "task",
+      "data": {
+        "number": 145,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-rendered-acceptance",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 145,
+            "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/film-worker-runtime.test.ts",
+              "packages/video-studio/src/film-worker-runtime.ts",
+              "packages/video-studio/src/producer-gate.ts",
+              "packages/video-studio/src/rendered-output-policy.test.ts",
+              "packages/video-studio/src/rendered-output-policy.ts"
+            ],
+            "filesHash": "2374662fadb9dd81f6685a285f5d833ff2fde0951120750e002472c5123aaa87",
+            "dependsOn": [],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/rendered-output-policy.test.ts packages/video-studio/src/film-worker-runtime.test.ts packages/video-studio/src/producer-gate.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T05:48:22.878292+00:00",
+                "result": "3files65passed,0skip"
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T05:49:10.231171+00:00",
+                "result": "tsc noEmit passed"
+              }
+            ],
+            "reviewedAt": "2026-10-07T11:21:41.607908+00:00",
+            "summary": "当前Codex完整读取5个改动文件及直接静态依赖。工位review调用前按明确off策略返回实际产物接收，关键帧/镜头/后期质量测量保持信息性，score0表示未评分，不声明模型/身份/语音通过；缺文件或实际工具失败保持执行失败。原提交前规则不放松，显式blocking/advisory仍发父通道。SFX类型与已有CLI真实阶段一致。准确提交后的65个策略/工位/producer测试、类型检查通过，零新模型调用或付费生成；无DB/权限/CI变化。回滚普通revert本提交。未发现未解决问题。 Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+            "passed": true,
+            "id": "7875271b8287a314b735841c37944a4ee217fbbf5c255e7b54f0236ea977c566"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 145,
+            "pull": {
+              "number": 145,
+              "state": "open",
+              "title": "fix(growth): accept rendered outputs without review [T-2026-1007-0918]",
+              "body": "固定影片子工位原先忽略review-policy=off，仍向服务发送gate.review请求。现在默认off在子工位调用模型/父通道前接收实际生成的关键帧、镜头和后期产物；静止、时长偏差、身份相似度等质量观察不会阻断或驱动重渲染。回执明示未进行模型、身份或语音审核，score=0为未评分。缺文件、空产物和工具实际失败仍按执行失败报告；生成前源稿确定性规则继续有效。\n\n当前Codex完整读取共享策略、worker、producer类型与完整回归；准确提交后65项通过、类型检查通过。通道测试证明off为零gate.review请求，blocking/advisory须显式选择。无新增依赖、权限或CI变更，无模型/新渲染调用。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-rendered-acceptance",
+                "sha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "unblocked",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "e7faf62651693d0e733c62d0df278150ec6b8ee0",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "files": [
+              "packages/video-studio/src/film-worker-runtime.test.ts",
+              "packages/video-studio/src/film-worker-runtime.ts",
+              "packages/video-studio/src/producer-gate.ts",
+              "packages/video-studio/src/rendered-output-policy.test.ts",
+              "packages/video-studio/src/rendered-output-policy.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791352101000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "7df7ac4b7964df4ec929556d7e2801eeab1ac7628bac3d1176db049eadc53146",
+      "digest": "6498886cb33caa1d7c1c238cd8f57a588f5104c93748a4335886f7d752aa891c"
+    },
+    {
+      "sequence": 1423,
+      "at": "2026-10-07T11:21:44.566Z",
+      "kind": "transaction",
+      "data": {
+        "id": "26e5d34b-9ff0-4367-8ffc-ecac53898469"
+      },
+      "previous": "6498886cb33caa1d7c1c238cd8f57a588f5104c93748a4335886f7d752aa891c",
+      "digest": "87f680608050ff56927f97c266464de68fee3face91dc982405cfdfb40da702f"
     }
   ]
 }
