@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3574,
+  "revision": 3577,
   "tasks": {
     "132": {
       "number": 132,
@@ -8912,7 +8912,7 @@
     },
     "184": {
       "number": 184,
-      "status": "merging",
+      "status": "integrated",
       "firstSeen": 1791405544313,
       "attempts": {},
       "admission": {
@@ -9137,8 +9137,8 @@
         "mainSha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
         "verifiedAt": "2026-10-07T21:13:17.922Z"
       },
-      "error": "Prerequisite #178 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/178 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "mergePhase": "merge_verified",
+      "error": null,
+      "mergePhase": null,
       "mergeSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 185,
@@ -9271,7 +9271,17 @@
         "checkSha": "02b6159092ca29292ac7a25e85afd4de3f9d07a6",
         "mergedBy": "cnb.dYiF05kxAGA",
         "verifiedAt": "2026-10-07T21:44:03.663Z"
-      }
+      },
+      "integrationHistory": [
+        {
+          "sha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+          "sourceSha": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+          "mainSha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+          "checkSha": "02b6159092ca29292ac7a25e85afd4de3f9d07a6",
+          "mergedBy": "cnb.dYiF05kxAGA",
+          "verifiedAt": "2026-10-07T21:44:03.663Z"
+        }
+      ]
     },
     "185": {
       "number": 185,
@@ -9296,10 +9306,10 @@
   },
   "leases": {
     "protocol": {
-      "owner": "integration/pr-184",
+      "owner": null,
       "generation": 76,
       "acquiredAt": 1791409327077,
-      "expiresAt": 1791410227077
+      "expiresAt": 1791409327077
     },
     "migrations": {
       "owner": null,
@@ -89722,6 +89732,65 @@
       },
       "previous": "d80a032d69be94fb856be9b1c2cb2a32d8c30b0351fb094b7fc104920eb6b50a",
       "digest": "ff0a0a5397bf08ae3b9e4c731296ae6be627d791e59d2743019ef06ead523d44"
+    },
+    {
+      "sequence": 3575,
+      "at": "2026-10-07T21:42:07.077Z",
+      "kind": "lease_release",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "integration/pr-184",
+        "generation": {
+          "protocol": 76
+        }
+      },
+      "previous": "ff0a0a5397bf08ae3b9e4c731296ae6be627d791e59d2743019ef06ead523d44",
+      "digest": "32d6e33e0208741df5fc1cae3460fc83da553d2c34a776749b2275f2d46dcf33"
+    },
+    {
+      "sequence": 3576,
+      "at": "2026-10-07T21:42:07.077Z",
+      "kind": "task",
+      "data": {
+        "number": 184,
+        "patch": {
+          "status": "integrated",
+          "merge": {
+            "sha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+            "sourceSha": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+            "mainSha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+            "checkSha": "02b6159092ca29292ac7a25e85afd4de3f9d07a6",
+            "mergedBy": "cnb.dYiF05kxAGA",
+            "verifiedAt": "2026-10-07T21:44:03.663Z"
+          },
+          "mergePhase": null,
+          "error": null,
+          "integrationHistory": [
+            {
+              "sha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+              "sourceSha": "0b5f8201919d83faadc2f94d91034d7b8e77e264",
+              "mainSha": "639ff83ade8ae1c116aae907d5489efd2093d32d",
+              "checkSha": "02b6159092ca29292ac7a25e85afd4de3f9d07a6",
+              "mergedBy": "cnb.dYiF05kxAGA",
+              "verifiedAt": "2026-10-07T21:44:03.663Z"
+            }
+          ]
+        }
+      },
+      "previous": "32d6e33e0208741df5fc1cae3460fc83da553d2c34a776749b2275f2d46dcf33",
+      "digest": "691f1d93817197028fd5758116193d24ea77de005a116189fa5b4cdde9c61e5a"
+    },
+    {
+      "sequence": 3577,
+      "at": "2026-10-07T21:44:09.040Z",
+      "kind": "transaction",
+      "data": {
+        "id": "1a54e9c6-2952-49a8-885e-50ea4bce2ed8"
+      },
+      "previous": "691f1d93817197028fd5758116193d24ea77de005a116189fa5b4cdde9c61e5a",
+      "digest": "625ce44c2decaa457df8d53abcb3810c6da53463d24b8b8654fab4dc7b6164e5"
     }
   ]
 }
