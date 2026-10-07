@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1426,
+  "revision": 1429,
   "tasks": {
     "132": {
       "number": 132,
@@ -3181,7 +3181,7 @@
     },
     "149": {
       "number": 149,
-      "status": "parked",
+      "status": "waiting_ci",
       "firstSeen": 1791356934499,
       "attempts": {},
       "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
@@ -3195,7 +3195,46 @@
         ],
         "releases": []
       },
-      "developerReview": null,
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 149,
+        "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "packages/video-studio/src/generation-file-store.ts",
+          "packages/video-studio/src/video-surface-repair.test.ts",
+          "packages/video-studio/src/video-surface-repair.ts",
+          "packages/video-studio/src/video-task-receipt.test.ts",
+          "packages/video-studio/src/video-task-receipt.ts"
+        ],
+        "filesHash": "c0839309d5c27185a2b1f4f564ad31c6705ffc5a6d7cbb7b3b4c139ed40632d3",
+        "dependsOn": [
+          148
+        ],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/video-task-receipt.test.ts packages/video-studio/src/video-surface-repair.test.ts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T07:08:06.710645+00:00",
+            "result": "58 tests passed, zero skips, including actual local media and independent-process concurrency"
+          },
+          {
+            "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+            "exitCode": 0,
+            "finishedAt": "2026-10-07T07:08:07.075494+00:00",
+            "result": "video-studio typecheck passed"
+          }
+        ],
+        "reviewedAt": "2026-10-07T11:23:06.251035+00:00",
+        "summary": "Current Codex fully read and reviewed all five changed files and their direct dependencies. The journal saves complete compiled identity before one POST and taskId before polling; frozen input prevents mutations. Provider/endpoint/model/body changes cannot reuse a shot identity to pay again. Legacy v1 evidence retains its explicit endpoint verification gap and allows only original task queries, never a new POST. Multiple original task IDs fail safely. Known dead-owner recovery is GET-only; unknown and live owners are retained. Read-only postproduction validates v2 scope and hash. 58 exact-source tests include real media, independent child processes, timeout, late ACK, tampering and unknown-response cases; typecheck passes. Main CLI stable-root wiring remains a separately declared integration task. No unresolved finding within this fix; no database/CI/permission change or live paid call. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+        "passed": true,
+        "id": "94947934d4684ec60c6d9bd28c2a3fab9fd3b36b910fea4efe612774fbc4ef54"
+      },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 149,
@@ -3214,7 +3253,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -3232,7 +3271,7 @@
               "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
             }
           },
-          "blocked_on": "status_check",
+          "blocked_on": "unblocked",
           "merged_by": {
             "is_npc": false
           },
@@ -3243,7 +3282,7 @@
           "statuses": {}
         },
         "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "files": [
           "packages/video-studio/src/generation-file-store.ts",
           "packages/video-studio/src/video-surface-repair.test.ts",
@@ -3266,7 +3305,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791371100874,
+      "updatedAt": 1791372192631,
       "admission": {
         "number": 149,
         "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
@@ -34345,6 +34384,163 @@
       },
       "previous": "e4c778e58811f2c30dd2b8ef267019aa1018b96f94aa781e5d7d443b55e304ce",
       "digest": "f861d8d60c5bff21423d57e33f11bd548e7ebb8d6c15304b55309af25b431d16"
+    },
+    {
+      "sequence": 1427,
+      "at": "2026-10-07T11:23:12.630Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 149,
+        "id": "94947934d4684ec60c6d9bd28c2a3fab9fd3b36b910fea4efe612774fbc4ef54",
+        "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0"
+      },
+      "previous": "f861d8d60c5bff21423d57e33f11bd548e7ebb8d6c15304b55309af25b431d16",
+      "digest": "8403da8df4d677f16c756541a2ed7af80e85c47f398f8c4c5aa04a1f66e6d2db"
+    },
+    {
+      "sequence": 1428,
+      "at": "2026-10-07T11:23:12.631Z",
+      "kind": "task",
+      "data": {
+        "number": 149,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-video-ack-recovery",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148
+            ],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 149,
+            "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/video-surface-repair.test.ts",
+              "packages/video-studio/src/video-surface-repair.ts",
+              "packages/video-studio/src/video-task-receipt.test.ts",
+              "packages/video-studio/src/video-task-receipt.ts"
+            ],
+            "filesHash": "c0839309d5c27185a2b1f4f564ad31c6705ffc5a6d7cbb7b3b4c139ed40632d3",
+            "dependsOn": [
+              148
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/video-task-receipt.test.ts packages/video-studio/src/video-surface-repair.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T07:08:06.710645+00:00",
+                "result": "58 tests passed, zero skips, including actual local media and independent-process concurrency"
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T07:08:07.075494+00:00",
+                "result": "video-studio typecheck passed"
+              }
+            ],
+            "reviewedAt": "2026-10-07T11:23:06.251035+00:00",
+            "summary": "Current Codex fully read and reviewed all five changed files and their direct dependencies. The journal saves complete compiled identity before one POST and taskId before polling; frozen input prevents mutations. Provider/endpoint/model/body changes cannot reuse a shot identity to pay again. Legacy v1 evidence retains its explicit endpoint verification gap and allows only original task queries, never a new POST. Multiple original task IDs fail safely. Known dead-owner recovery is GET-only; unknown and live owners are retained. Read-only postproduction validates v2 scope and hash. 58 exact-source tests include real media, independent child processes, timeout, late ACK, tampering and unknown-response cases; typecheck passes. Main CLI stable-root wiring remains a separately declared integration task. No unresolved finding within this fix; no database/CI/permission change or live paid call. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+            "passed": true,
+            "id": "94947934d4684ec60c6d9bd28c2a3fab9fd3b36b910fea4efe612774fbc4ef54"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 149,
+            "pull": {
+              "number": 149,
+              "state": "open",
+              "title": "fix(growth): recover video ACKs without resubmission [T-2026-1007-0918]",
+              "body": "Video generation now freezes project/shot/provider/endpoint/full body in a private durable v2 journal before POST and saves ACK before all GETs. Complete v1 receipts can be imported without reissuing generation; unknown submissions stay pending reconciliation, and late legacy ACKs permit GET-only recovery. Conflicting task IDs, modified requests, corrupt identity and unknown dead locks reject without another payment. Existing postproduction consumers validate v2 identity while retaining v1 read support. The shared file journal matches PR148 byte for byte. A subsequent CLI integration connects stable project paths; this fix independently protects acknowledgement and legacy recovery in the existing journal scope. All fault tests inject providers, with no live paid generation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148\n  ],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-video-ack-recovery",
+                "sha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "unblocked",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "files": [
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/video-surface-repair.test.ts",
+              "packages/video-studio/src/video-surface-repair.ts",
+              "packages/video-studio/src/video-task-receipt.test.ts",
+              "packages/video-studio/src/video-task-receipt.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                148
+              ],
+              "releases": []
+            },
+            "headTime": 1791356878000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "8403da8df4d677f16c756541a2ed7af80e85c47f398f8c4c5aa04a1f66e6d2db",
+      "digest": "fcbeffb9299a554fa800f45cd02521e155b9d0104942fb46cee739c747afda39"
+    },
+    {
+      "sequence": 1429,
+      "at": "2026-10-07T11:23:09.387Z",
+      "kind": "transaction",
+      "data": {
+        "id": "39385340-efd5-44b6-a0d0-69c2524ff89d"
+      },
+      "previous": "fcbeffb9299a554fa800f45cd02521e155b9d0104942fb46cee739c747afda39",
+      "digest": "c26244780d975180c700dd85dd5f10cef1702e2cb4716a4f70f0e0176ced518d"
     }
   ]
 }
