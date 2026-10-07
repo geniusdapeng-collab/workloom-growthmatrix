@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1461,
+  "revision": 1464,
   "tasks": {
     "132": {
       "number": 132,
@@ -4786,11 +4786,11 @@
     },
     "160": {
       "number": 160,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791367142457,
       "attempts": {},
       "headSha": "be29dda375e54653969941d7a2e552ce57159d25",
-      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-stable-film-generation-roots",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -4807,7 +4807,7 @@
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 160,
         "headSha": "be29dda375e54653969941d7a2e552ce57159d25",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "packages/video-studio/src/film-generation-receipts.test.ts",
@@ -4841,10 +4841,10 @@
             "result": "Video studio typecheck passed."
           }
         ],
-        "reviewedAt": "2026-10-07T09:58:58.459065+00:00",
-        "summary": "Current Codex fully read the changed helpers, tests and their direct dependencies. Stable image/video roots do not depend on delivery or attempt paths. Prior evidence matches the exact project and shot boundary, distinguishes S1 from S10, and corrupt dispatch history refuses a fresh paid request. Accepted image URLs and original video task IDs survive fresh work directories. Shared journal dependencies match PR148 and PR149. Exact committed tests exercise response loss, restart, independent processes, legacy adoption and actual local media; typecheck passes. CLI integration is explicitly separate; no unresolved issue within this helper, no paid requests and no CI policy change.",
+        "reviewedAt": "2026-10-07T11:24:55.727848+00:00",
+        "summary": "Current Codex fully read the changed helpers, tests and their direct dependencies. Stable image/video roots do not depend on delivery or attempt paths. Prior evidence matches the exact project and shot boundary, distinguishes S1 from S10, and corrupt dispatch history refuses a fresh paid request. Accepted image URLs and original video task IDs survive fresh work directories. Shared journal dependencies match PR148 and PR149. Exact committed tests exercise response loss, restart, independent processes, legacy adoption and actual local media; typecheck passes. CLI integration is explicitly separate; no unresolved issue within this helper, no paid requests and no CI policy change. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
         "passed": true,
-        "id": "568b198fc5789150cf5d2592c89e685f119b7a1776ce4ed927bb4571c460040f"
+        "id": "7932a0f3667138b5e1d2bbc355b523211e21d9a6a5999cf6ef57ba10cc458e9b"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -4864,7 +4864,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4893,7 +4893,7 @@
           "statuses": {}
         },
         "headSha": "be29dda375e54653969941d7a2e552ce57159d25",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "files": [
           "packages/video-studio/src/film-generation-receipts.test.ts",
           "packages/video-studio/src/film-generation-receipts.ts",
@@ -4921,7 +4921,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791371100874,
+      "updatedAt": 1791372301098,
       "admission": {
         "number": 160,
         "headSha": "be29dda375e54653969941d7a2e552ce57159d25",
@@ -36232,6 +36232,174 @@
       },
       "previous": "67cca7d226e05dbf5c51f54fc37d278dc1a865c26f97a8a449fa31a091e73ba1",
       "digest": "11e67151054fe048b50b92e3472e8c0d893b08005911426a7cb168b994eb1f26"
+    },
+    {
+      "sequence": 1462,
+      "at": "2026-10-07T11:25:01.097Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 160,
+        "id": "7932a0f3667138b5e1d2bbc355b523211e21d9a6a5999cf6ef57ba10cc458e9b",
+        "headSha": "be29dda375e54653969941d7a2e552ce57159d25",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0"
+      },
+      "previous": "11e67151054fe048b50b92e3472e8c0d893b08005911426a7cb168b994eb1f26",
+      "digest": "fef72dbd9c092b5f1fb8950ea16ce9c29cf95006164f4a4384d0f34decde18d7"
+    },
+    {
+      "sequence": 1463,
+      "at": "2026-10-07T11:25:01.098Z",
+      "kind": "task",
+      "data": {
+        "number": 160,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "be29dda375e54653969941d7a2e552ce57159d25",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-stable-film-generation-roots",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              149
+            ],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 160,
+            "headSha": "be29dda375e54653969941d7a2e552ce57159d25",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/film-generation-receipts.test.ts",
+              "packages/video-studio/src/film-generation-receipts.ts",
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.test.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/video-surface-repair.test.ts",
+              "packages/video-studio/src/video-surface-repair.ts",
+              "packages/video-studio/src/video-task-receipt.test.ts",
+              "packages/video-studio/src/video-task-receipt.ts"
+            ],
+            "filesHash": "02cadfaf05b564dcb1195ded72cd5deb516f43ebf1747d9fd63a4774795a7940",
+            "dependsOn": [
+              148,
+              149
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/film-generation-receipts.test.ts packages/video-studio/src/image-task-receipt.test.ts packages/video-studio/src/video-task-receipt.test.ts packages/video-studio/src/video-surface-repair.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T09:57:15.721174+00:00",
+                "result": "Exact committed receipt, restart, independent-process, legacy-import and actual local media tests passed; no paid calls."
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T09:57:16.142512+00:00",
+                "result": "Video studio typecheck passed."
+              }
+            ],
+            "reviewedAt": "2026-10-07T11:24:55.727848+00:00",
+            "summary": "Current Codex fully read the changed helpers, tests and their direct dependencies. Stable image/video roots do not depend on delivery or attempt paths. Prior evidence matches the exact project and shot boundary, distinguishes S1 from S10, and corrupt dispatch history refuses a fresh paid request. Accepted image URLs and original video task IDs survive fresh work directories. Shared journal dependencies match PR148 and PR149. Exact committed tests exercise response loss, restart, independent processes, legacy adoption and actual local media; typecheck passes. CLI integration is explicitly separate; no unresolved issue within this helper, no paid requests and no CI policy change. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+            "passed": true,
+            "id": "7932a0f3667138b5e1d2bbc355b523211e21d9a6a5999cf6ef57ba10cc458e9b"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 160,
+            "pull": {
+              "number": 160,
+              "state": "open",
+              "title": "fix(growth): retain film generation receipts across run folders [T-2026-1007-0918]",
+              "body": "Changing a film run folder could detach the original paid acknowledgement journal. Introduce one stable artifact or repository generation root and explicit legacy roots. Before a new submission, recognize prior artifacts and dispatch history for the exact project and shot, preserving ambiguous evidence instead of submitting again. The helper is independently verified; CLI wiring follows in a separate integration change. Included image/video journal and postproduction copies match the previously reviewed PR148 and PR149.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148,\n    149\n  ],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-stable-film-generation-roots",
+                "sha": "be29dda375e54653969941d7a2e552ce57159d25",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "be29dda375e54653969941d7a2e552ce57159d25",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "files": [
+              "packages/video-studio/src/film-generation-receipts.test.ts",
+              "packages/video-studio/src/film-generation-receipts.ts",
+              "packages/video-studio/src/generation-file-store.ts",
+              "packages/video-studio/src/image-task-receipt.test.ts",
+              "packages/video-studio/src/image-task-receipt.ts",
+              "packages/video-studio/src/video-surface-repair.test.ts",
+              "packages/video-studio/src/video-surface-repair.ts",
+              "packages/video-studio/src/video-task-receipt.test.ts",
+              "packages/video-studio/src/video-task-receipt.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                148,
+                149
+              ],
+              "releases": []
+            },
+            "headTime": 1791367025000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "fef72dbd9c092b5f1fb8950ea16ce9c29cf95006164f4a4384d0f34decde18d7",
+      "digest": "eb0f0c850314ea6853204795d01a657617c2c2c724d8034f67d9fddbea54eff9"
+    },
+    {
+      "sequence": 1464,
+      "at": "2026-10-07T11:24:58.178Z",
+      "kind": "transaction",
+      "data": {
+        "id": "7d85f425-b9a6-40c8-b1a9-0f69d002b066"
+      },
+      "previous": "eb0f0c850314ea6853204795d01a657617c2c2c724d8034f67d9fddbea54eff9",
+      "digest": "a24834bda8c81caf19c3774e90f610ede73c489e3906c6452acb8ee6aafc14d1"
     }
   ]
 }
