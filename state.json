@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3297,
+  "revision": 3299,
   "tasks": {
     "132": {
       "number": 132,
@@ -6271,7 +6271,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791403215350,
+      "updatedAt": 1791403507903,
       "admission": {
         "number": 164,
         "headSha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
@@ -83051,6 +83051,52 @@
       },
       "previous": "5ea54294e1dd04f829fde702c2737f0f0fd83cf496f197069092b739a9d97fe1",
       "digest": "47d6a576c190c9d89c5ad0214e82ff7a351fadfab361a4e90c8a4ab4dbc76c30"
+    },
+    {
+      "sequence": 3298,
+      "at": "2026-10-07T20:05:07.903Z",
+      "kind": "task",
+      "data": {
+        "number": 164,
+        "patch": {
+          "headSha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
+          "mainSha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
+          "branch": "fix/T-2026-1007-0918-generation-atomic-lock",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              180
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.21"
+              }
+            ]
+          },
+          "originalBody": "A competing process could open a generation lock between O_EXCL creation and writing its owner JSON, producing a false corruption error while safely refusing a duplicate paid request. Fsync a private owner file and atomically link it to the final lock name without replacing any existing owner. Apply the same publication to recovery fences. A deterministic child-process test pauses the owner halfway through writing and proves the competing process still completes exactly one journaled operation. Genuine corrupt, unknown, alive and unacknowledged owners remain protected. No paid provider call.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148,\n    180\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.21\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "packages/video-studio/src/generation-file-store.test.ts",
+            "packages/video-studio/src/generation-file-store.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791402317791
+        }
+      },
+      "previous": "47d6a576c190c9d89c5ad0214e82ff7a351fadfab361a4e90c8a4ab4dbc76c30",
+      "digest": "84b80f4b9a8a3eba6e5d8c8b088ff75366030753c0484f05fb6e770b9bf0e5c7"
+    },
+    {
+      "sequence": 3299,
+      "at": "2026-10-07T20:07:22.599Z",
+      "kind": "transaction",
+      "data": {
+        "id": "74546a3e-df48-48cf-8975-07f5265cc479"
+      },
+      "previous": "84b80f4b9a8a3eba6e5d8c8b088ff75366030753c0484f05fb6e770b9bf0e5c7",
+      "digest": "c0c5bdcd045425ef1efb1694bb91d9bc154add8f277134a087ba210f431e4ad9"
     }
   ]
 }
