@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3170,
+  "revision": 3172,
   "tasks": {
     "132": {
       "number": 132,
@@ -6271,7 +6271,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791402264904,
+      "updatedAt": 1791402317791,
       "admission": {
         "number": 164,
         "headSha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
@@ -6287,7 +6287,13 @@
         149,
         160,
         161
-      ]
+      ],
+      "originalBody": "A competing process could open a generation lock between O_EXCL creation and writing its owner JSON, producing a false corruption error while safely refusing a duplicate paid request. Fsync a private owner file and atomically link it to the final lock name without replacing any existing owner. Apply the same publication to recovery fences. A deterministic child-process test pauses the owner halfway through writing and proves the competing process still completes exactly one journaled operation. Genuine corrupt, unknown, alive and unacknowledged owners remain protected. No paid provider call.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148,\n    180\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.21\"\n    }\n  ]\n}\n-->",
+      "files": [
+        "packages/video-studio/src/generation-file-store.test.ts",
+        "packages/video-studio/src/generation-file-store.ts"
+      ],
+      "ciSince": 1791402317791
     },
     "165": {
       "number": 165,
@@ -80396,6 +80402,52 @@
       },
       "previous": "ce76420fc8174769a4f434ad2551b65c3b8c2c3066e618b6bcd915a72db23b5b",
       "digest": "5e1251f8a057a816c67cd92ac080f9b1eb99c760dda37edf93c3c3b215b13d73"
+    },
+    {
+      "sequence": 3171,
+      "at": "2026-10-07T19:45:17.791Z",
+      "kind": "task",
+      "data": {
+        "number": 164,
+        "patch": {
+          "headSha": "6400242db4b1feaf91a5e52b7603bdf6dc646af0",
+          "mainSha": "c25132f245ca9158fb6b372e36b9cdbcae1572dd",
+          "branch": "fix/T-2026-1007-0918-generation-atomic-lock",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              180
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.21"
+              }
+            ]
+          },
+          "originalBody": "A competing process could open a generation lock between O_EXCL creation and writing its owner JSON, producing a false corruption error while safely refusing a duplicate paid request. Fsync a private owner file and atomically link it to the final lock name without replacing any existing owner. Apply the same publication to recovery fences. A deterministic child-process test pauses the owner halfway through writing and proves the competing process still completes exactly one journaled operation. Genuine corrupt, unknown, alive and unacknowledged owners remain protected. No paid provider call.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148,\n    180\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.21\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "packages/video-studio/src/generation-file-store.test.ts",
+            "packages/video-studio/src/generation-file-store.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791402317791
+        }
+      },
+      "previous": "5e1251f8a057a816c67cd92ac080f9b1eb99c760dda37edf93c3c3b215b13d73",
+      "digest": "5d498035ae91aa127806cdeec3b8ae6bbddb0aecfaf95e2e433ad7040d73c11f"
+    },
+    {
+      "sequence": 3172,
+      "at": "2026-10-07T19:48:13.317Z",
+      "kind": "transaction",
+      "data": {
+        "id": "4d2356fd-54b8-43df-bdd3-274d2f9871aa"
+      },
+      "previous": "5d498035ae91aa127806cdeec3b8ae6bbddb0aecfaf95e2e433ad7040d73c11f",
+      "digest": "f684d684072993230133de65675f1cd05f9a50a798358042981aed82f92a13b3"
     }
   ]
 }
