@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1743,
+  "revision": 1745,
   "tasks": {
     "132": {
       "number": 132,
@@ -4314,7 +4314,7 @@
     },
     "152": {
       "number": 152,
-      "status": "waiting_ci",
+      "status": "waiting_dependency",
       "firstSeen": 1791358731486,
       "attempts": {},
       "headSha": "0671a7047756644ed83b85e647a1be3261be133f",
@@ -4323,8 +4323,15 @@
       "intent": {
         "taskId": "T-2026-1007-0918",
         "ready": true,
-        "dependsOn": [],
-        "releases": []
+        "dependsOn": [
+          150
+        ],
+        "releases": [
+          {
+            "kind": "desktop",
+            "version": "0.1.10"
+          }
+        ]
       },
       "developerReview": {
         "schemaVersion": 1,
@@ -4426,7 +4433,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791376973384,
+      "updatedAt": 1791378611870,
       "admission": {
         "number": 152,
         "headSha": "0671a7047756644ed83b85e647a1be3261be133f",
@@ -4447,7 +4454,10 @@
       "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
-      "candidate": null
+      "candidate": null,
+      "dependencies": [
+        150
+      ]
     },
     "153": {
       "number": 153,
@@ -45518,6 +45528,46 @@
       },
       "previous": "8e6a191b5ce9cff86e5226ecccd15dd62439c7eccb03c3ea4f0338b9b8085a55",
       "digest": "012dc5d7dd2bb6bb24498458b83fdfe0ced0e846e8f3358f0aa8de6bafa7e0e0"
+    },
+    {
+      "sequence": 1744,
+      "at": "2026-10-07T13:10:11.870Z",
+      "kind": "task",
+      "data": {
+        "number": 152,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "0671a7047756644ed83b85e647a1be3261be133f",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              150
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.10"
+              }
+            ]
+          },
+          "dependencies": [
+            150
+          ]
+        }
+      },
+      "previous": "012dc5d7dd2bb6bb24498458b83fdfe0ced0e846e8f3358f0aa8de6bafa7e0e0",
+      "digest": "43446e1c65f97492e441bbe59c40081239c484e245573eb3c847f4ae227e8147"
+    },
+    {
+      "sequence": 1745,
+      "at": "2026-10-07T13:11:22.350Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8236a706-10a9-477a-9176-91ea5f8aadc4"
+      },
+      "previous": "43446e1c65f97492e441bbe59c40081239c484e245573eb3c847f4ae227e8147",
+      "digest": "8d4a9e5c79cca25bd95ce3c9ef5ca8c2ca7521153623d50f55669841f33bc636"
     }
   ]
 }
