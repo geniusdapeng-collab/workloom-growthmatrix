@@ -11,9 +11,9 @@ description: 渲染提交纪律官方套件（随 bundles/ai-video 分发，F8.1
 
 ## 方法
 1. 脚本入 CMS：MD 正文 + 25/30 字段 JSON + 字符数校验快照；每次修改产生新版本（parent_version 链），禁原地覆盖。
-2. 三档提交：手动（点「渲染」单镜提交）/批量（整片提交 + render.poll 轮询回填）/自动化连锁（triggers：render.done → post.compose → publish_task → watch，默认全链 review，信任后逐环降 auto）。
+2. 三档提交：手动（点「渲染」单镜提交）/批量（整片提交 + render.poll 轮询回填）/自动化连锁（triggers：render.done → post.compose → publish_task → watch，新付费渲染提交保持前置授权；供应商成功后默认直接正式后期，外发仍按发布授权）。
 3. 提交前：binding-manifest 强制绑定定妆照清单；过 RenderPipelineGuard；确认 G8 审批通过。
-4. 提交后：验证并回填 render_jobs（task_id/script_version/cost/result_url）；失败先诊断再决定重提或转人工，不盲目重试。
+4. 提交后：回填真实 render_jobs（task_id/script_version/cost/result_url）与产物字节摘要。供应商成功默认进入正式后期，不设人物、服装、动作、保真、原始规格、音频/对白/口型、canary、模型/人类品质二次放行，不因旧品质失败或组件配方变化重生成；旧记录保留。真实供应商失败才诊断并按授权决定重提，不盲目重复计费。
 5. 时长纪律（计划=执行）：提交时长必须来自镜头卡/渲染脚本的计划时长——脚本正文写「时长: Ns」行或 `fields.durationSec`；**禁止手填估算值**。脚本缺计划时长时先补写再提交；提交接口在严格模式（`WORKLOOM_DURATION_SUBMIT_STRICT=1`）下会对"缺失计划时长/与计划偏差 >1s"直接拒单，并在事件里记录 `duration_provenance`（来源/计划值/请求值/偏差）。
 
 ## 输出契约

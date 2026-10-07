@@ -4,6 +4,7 @@ import { constants, copyFileSync, existsSync, mkdirSync, readFileSync, realpathS
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { FilmChannelError, FilmWorkerChannel, parseFilmWorkerJobContext, processIpcTransport,
   type FilmChannelTransport, type FilmWorkerJobContext } from "./film-worker-channel.js";
+import { POST_RENDER_STAGES } from "./post-render-acceptance.js";
 import type { ProducerGateOptions, ProducerVerdict } from "./producer-gate.js";
 
 export const FILM_CLI_STAGES = Object.freeze(["cine-kb", "continuity", "micromotion", "spec", "plates", "material-gen", "videos", "voice", "compose", "color", "subtitle", "danmaku", "bgm", "sfx", "cover", "mux", "master", "deliver", "revise"]);
@@ -73,7 +74,6 @@ export function normalizeFilmJobRequest(stages: string[], options: Record<string
   }
   const effective = [...new Set(stages)];
   if (effective.includes("deliver") && !effective.includes("master")) effective.push("master");
-  if (normalized["assembly-mode"] === "post-only" && !effective.includes("spec")) effective.push("spec");
   return { stages: effective, options: normalized };
 }
 const within = (root: string, file: string): boolean => file === root || file.startsWith(`${root}${sep}`);
@@ -178,10 +178,13 @@ export class FullChainFilmWorker {
     }
     const shotId = typeof options.context?.shotId === "string" ? options.context.shotId : null;
     const params = { stage: options.stage, projectId: options.projectId, artifacts: options.artifacts.map((artifact) => ({ ref: this.ref(artifact.path), kind: artifact.kind, note: artifact.note, probe: artifact.probe })),
-      referenceImages: options.referenceImages?.map((file) => this.reference(file)), deterministic: options.deterministic,
+      referenceImages: POST_RENDER_STAGES.has(options.stage) ? undefined : options.referenceImages?.map((file) => this.reference(file)), deterministic: options.deterministic,
       requiredCheckIds: options.requiredCheckIds, minScore: options.minScore, rubric: options.rubric, context: options.context };
     const verdict = await this.call("gate.review", stage, shotId, params) as ProducerVerdict;
-    if (!verdict || verdict.stage !== options.stage || typeof verdict.approved !== "boolean" || !verdict.contractHash) throw new FilmChannelError("REVIEW_UNVERIFIED", "父服务裁决未绑定作者合同");
+    if (!verdict || verdict.stage !== options.stage || typeof verdict.approved !== "boolean"
+      || (!POST_RENDER_STAGES.has(options.stage) && !verdict.contractHash)) {
+      throw new FilmChannelError("REVIEW_UNVERIFIED", "父服务未返回当前阶段的有效裁决；生成前评审须绑定作者合同");
+    }
     return verdict;
   }
   async design(prompt: string): Promise<string> {

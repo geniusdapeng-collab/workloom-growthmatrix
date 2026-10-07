@@ -93,10 +93,13 @@ describe("配音围栏（G-VOICE0..G-VOICE6）语义", () => {
     expect(evaluate("G-VOICE2", { out: "/out.mp4", video: "/in.mp4" })).toBe(false);
   });
 
-  it("G-VOICE3：关闭校验禁止执行", () => {
-    expect(evaluate("G-VOICE3", { skip_verify: true })).toBe(true);
-    expect(evaluate("G-VOICE3", { verify: false })).toBe(true);
+  it("G-VOICE3：无默认声学品质复检；缺实际产物或改动源字节仍失败", () => {
+    expect(evaluate("G-VOICE3", { skip_verify: true })).toBe(false);
+    expect(evaluate("G-VOICE3", { verify: false })).toBe(false);
     expect(evaluate("G-VOICE3", { verify: true })).toBe(false);
+    expect(evaluate("G-VOICE3", {})).toBe(false);
+    expect(evaluate("G-VOICE3", { output_missing: true })).toBe(true);
+    expect(evaluate("G-VOICE3", { source_bytes_changed: true })).toBe(true);
   });
 
   it("G-VOICE4：单租户日配额熔断（1 小时音频）", () => {
