@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1859,
+  "revision": 1862,
   "tasks": {
     "132": {
       "number": 132,
@@ -4705,11 +4705,11 @@
     },
     "154": {
       "number": 154,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791359195321,
       "attempts": {},
       "headSha": "0c9e493cb0ab901f0bcdd58edccc5292782a02e1",
-      "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+      "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-whiteboard-paid-once",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -4722,7 +4722,7 @@
         "releases": [
           {
             "kind": "desktop",
-            "version": "0.1.13"
+            "version": "0.1.14"
           }
         ]
       },
@@ -4731,22 +4731,20 @@
         "provider": "codex",
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 154,
-        "headSha": "124c3d903f5d5df5c2eb455e7c8d7b551eb64ca3",
-        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "headSha": "0c9e493cb0ab901f0bcdd58edccc5292782a02e1",
+        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "apps/server/src/video/whiteboard/lineart.test.ts",
           "apps/server/src/video/whiteboard/lineart.ts",
           "packages/video-studio/package.json",
-          "packages/video-studio/src/generation-file-store.ts",
-          "packages/video-studio/src/image-task-receipt.ts",
-          "packages/video-studio/src/producer-gate.ts",
           "packages/video-studio/src/rendered-output-policy.ts"
         ],
-        "filesHash": "f07d49df0036c994952c404746a3a544985fab4c5935d00fdfa95af310f73a40",
+        "filesHash": "e5a0de3dab3ae8754105aae76884045abe4af3bae131b77f4de5ef331373bc46",
         "dependsOn": [
           145,
-          148
+          148,
+          151
         ],
         "ciPolicyChanges": [],
         "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
@@ -4754,20 +4752,20 @@
           {
             "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/whiteboard/lineart.test.ts apps/server/src/video/whiteboard/engine.test.ts packages/video-studio/src/image-task-receipt.test.ts packages/video-studio/src/rendered-output-policy.test.ts",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T07:45:37.901544+00:00",
-            "result": "Durable lineart acceptance, faults, concurrent runs, original URL recovery and existing whiteboard engine tests passed with no paid calls"
+            "finishedAt": "2026-10-07T12:47:49.126856+00:00",
+            "result": "Actual corresponding recorded checks rerun at this source head; see exact output and counts."
           },
           {
             "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T07:45:39.155501+00:00",
-            "result": "Server typecheck passed"
+            "finishedAt": "2026-10-07T12:47:50.338561+00:00",
+            "result": "Actual corresponding recorded checks rerun at this source head; see exact output and counts."
           }
         ],
-        "reviewedAt": "2026-10-07T11:24:02.508556+00:00",
-        "summary": "Current Codex fully read all seven changed files and direct catalog, compiled request, provider, ingest and whiteboard engine dependencies. The journal binds workspace, stable business project, scene, provider, endpoint and complete compiled body. Exactly one POST callback exists, with sync URL decoded and persisted before GET. Request changes are separately identified; repeated requests, corrupt images, download failures and concurrent runs use only the original URL. Unknown ACK remains blocked. Default review is explicitly skipped, with no fabricated quality metrics; advisory failures remain diagnostic and blocking review never regenerates. File size/readability and path protections remain execution checks. Twelve fault tests and existing engine/helper tests, exact-source types and staged secret check pass. No unresolved finding or live paid test call. ProducerStage includes the already-reviewed SFX type from PR145 as a compile dependency. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+        "reviewedAt": "2026-10-07T13:21:17.208490+00:00",
+        "summary": "Current Codex fully read all seven changed files and direct catalog, compiled request, provider, ingest and whiteboard engine dependencies. The journal binds workspace, stable business project, scene, provider, endpoint and complete compiled body. Exactly one POST callback exists, with sync URL decoded and persisted before GET. Request changes are separately identified; repeated requests, corrupt images, download failures and concurrent runs use only the original URL. Unknown ACK remains blocked. Default review is explicitly skipped, with no fabricated quality metrics; advisory failures remain diagnostic and blocking review never regenerates. File size/readability and path protections remain execution checks. Twelve fault tests and existing engine/helper tests, exact-source types and staged secret check pass. No unresolved finding or live paid test call. ProducerStage includes the already-reviewed SFX type from PR145 as a compile dependency. This is a current Codex review of the normal semantic source merge at the exact head shown. Preserves main 3a78 provider-success direct postprocessing and source audio. Complete current producer/post-acceptance code and changed worker files were read. Where a worker local off adapter overlaps the new parent post path, post stages now retain the zero-cost parent technical receipt with score=null and no reference images or model calls. The default keyframe acceptance test remains, actual parent technical failures remain failures, and the native direct-post regression remains intact. Source scope, byte hashes, original paid requests and authored timing options retain their actual checks. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either.",
         "passed": true,
-        "id": "b2938f6bf6a2d8cbe3a83e702c776480114358d1b6feca9752a8519e540a5fdf"
+        "id": "cc850238277b5d26293b7218a1a041b3588c02669d5957e4acdb5e45be5602e6"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -4776,7 +4774,7 @@
           "number": 154,
           "state": "open",
           "title": "fix(growth): accept lineart and recover paid image once [T-2026-1007-0918]",
-          "body": "Whiteboard lineart previously regenerated paid images after style checks failed and lost the accepted URL when downloads failed. Its default now accepts the produced image, records the exact provider request before POST and saves the accepted URL before download. Restarts and different run directories for the same project restore that URL. Explicit style checks preserve diagnostics and never submit a replacement automatically. Unknown acceptance and legacy output without its acceptance journal refuse another POST. Package subpath exports provide the same helpers from PR148/145 without crossing server rootDir.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    145,\n    148\n  ],\n  \"releases\": []\n}\n-->",
+          "body": "Whiteboard lineart previously regenerated paid images after style checks failed and lost the accepted URL when downloads failed. Its default now accepts the produced image, records the exact provider request before POST and saves the accepted URL before download. Restarts and different run directories for the same project restore that URL. Explicit style checks preserve diagnostics and never submit a replacement automatically. Unknown acceptance and legacy output without its acceptance journal refuse another POST. Package subpath exports provide the same helpers from PR148/145 without crossing server rootDir.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    145,\n    148,\n    151\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.14\"\n    }\n  ]\n}\n-->",
           "author": {
             "username": "cnb.dYiF05kxAGA",
             "nickname": "Genius",
@@ -4787,7 +4785,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "sha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4797,7 +4795,7 @@
           },
           "head": {
             "ref": "refs/heads/fix/T-2026-1007-0918-whiteboard-paid-once",
-            "sha": "124c3d903f5d5df5c2eb455e7c8d7b551eb64ca3",
+            "sha": "0c9e493cb0ab901f0bcdd58edccc5292782a02e1",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4815,15 +4813,12 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "124c3d903f5d5df5c2eb455e7c8d7b551eb64ca3",
-        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+        "headSha": "0c9e493cb0ab901f0bcdd58edccc5292782a02e1",
+        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
         "files": [
           "apps/server/src/video/whiteboard/lineart.test.ts",
           "apps/server/src/video/whiteboard/lineart.ts",
           "packages/video-studio/package.json",
-          "packages/video-studio/src/generation-file-store.ts",
-          "packages/video-studio/src/image-task-receipt.ts",
-          "packages/video-studio/src/producer-gate.ts",
           "packages/video-studio/src/rendered-output-policy.ts"
         ],
         "intent": {
@@ -4831,18 +4826,24 @@
           "ready": true,
           "dependsOn": [
             145,
-            148
+            148,
+            151
           ],
-          "releases": []
+          "releases": [
+            {
+              "kind": "desktop",
+              "version": "0.1.14"
+            }
+          ]
         },
-        "headTime": 1791359132000,
-        "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "headTime": 1791377151000,
+        "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
         "checkErrors": [],
         "checkSha": null,
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791379005941,
+      "updatedAt": 1791379282359,
       "admission": {
         "number": 154,
         "headSha": "0c9e493cb0ab901f0bcdd58edccc5292782a02e1",
@@ -48272,6 +48273,177 @@
       },
       "previous": "0cd7d30d8af0497ff1b64d0086410c2df5ed0fbf71c05f16cb4dba23dcf74258",
       "digest": "ce8b53e545f9d496c5ccfd83dffae6b56ede5496f139c956b85411b098670563"
+    },
+    {
+      "sequence": 1860,
+      "at": "2026-10-07T13:21:22.359Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 154,
+        "id": "cc850238277b5d26293b7218a1a041b3588c02669d5957e4acdb5e45be5602e6",
+        "headSha": "0c9e493cb0ab901f0bcdd58edccc5292782a02e1",
+        "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b"
+      },
+      "previous": "ce8b53e545f9d496c5ccfd83dffae6b56ede5496f139c956b85411b098670563",
+      "digest": "df2702e6050877119aef69c2d5ccecd4c68c976ad07405e8ca957eeaaa914cea"
+    },
+    {
+      "sequence": 1861,
+      "at": "2026-10-07T13:21:22.359Z",
+      "kind": "task",
+      "data": {
+        "number": 154,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "0c9e493cb0ab901f0bcdd58edccc5292782a02e1",
+          "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+          "branch": "fix/T-2026-1007-0918-whiteboard-paid-once",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              145,
+              148,
+              151
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.14"
+              }
+            ]
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 154,
+            "headSha": "0c9e493cb0ab901f0bcdd58edccc5292782a02e1",
+            "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "apps/server/src/video/whiteboard/lineart.test.ts",
+              "apps/server/src/video/whiteboard/lineart.ts",
+              "packages/video-studio/package.json",
+              "packages/video-studio/src/rendered-output-policy.ts"
+            ],
+            "filesHash": "e5a0de3dab3ae8754105aae76884045abe4af3bae131b77f4de5ef331373bc46",
+            "dependsOn": [
+              145,
+              148,
+              151
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/whiteboard/lineart.test.ts apps/server/src/video/whiteboard/engine.test.ts packages/video-studio/src/image-task-receipt.test.ts packages/video-studio/src/rendered-output-policy.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T12:47:49.126856+00:00",
+                "result": "Actual corresponding recorded checks rerun at this source head; see exact output and counts."
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T12:47:50.338561+00:00",
+                "result": "Actual corresponding recorded checks rerun at this source head; see exact output and counts."
+              }
+            ],
+            "reviewedAt": "2026-10-07T13:21:17.208490+00:00",
+            "summary": "Current Codex fully read all seven changed files and direct catalog, compiled request, provider, ingest and whiteboard engine dependencies. The journal binds workspace, stable business project, scene, provider, endpoint and complete compiled body. Exactly one POST callback exists, with sync URL decoded and persisted before GET. Request changes are separately identified; repeated requests, corrupt images, download failures and concurrent runs use only the original URL. Unknown ACK remains blocked. Default review is explicitly skipped, with no fabricated quality metrics; advisory failures remain diagnostic and blocking review never regenerates. File size/readability and path protections remain execution checks. Twelve fault tests and existing engine/helper tests, exact-source types and staged secret check pass. No unresolved finding or live paid test call. ProducerStage includes the already-reviewed SFX type from PR145 as a compile dependency. This is a current Codex review of the normal semantic source merge at the exact head shown. Preserves main 3a78 provider-success direct postprocessing and source audio. Complete current producer/post-acceptance code and changed worker files were read. Where a worker local off adapter overlaps the new parent post path, post stages now retain the zero-cost parent technical receipt with score=null and no reference images or model calls. The default keyframe acceptance test remains, actual parent technical failures remain failures, and the native direct-post regression remains intact. Source scope, byte hashes, original paid requests and authored timing options retain their actual checks. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either.",
+            "passed": true,
+            "id": "cc850238277b5d26293b7218a1a041b3588c02669d5957e4acdb5e45be5602e6"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 154,
+            "pull": {
+              "number": 154,
+              "state": "open",
+              "title": "fix(growth): accept lineart and recover paid image once [T-2026-1007-0918]",
+              "body": "Whiteboard lineart previously regenerated paid images after style checks failed and lost the accepted URL when downloads failed. Its default now accepts the produced image, records the exact provider request before POST and saves the accepted URL before download. Restarts and different run directories for the same project restore that URL. Explicit style checks preserve diagnostics and never submit a replacement automatically. Unknown acceptance and legacy output without its acceptance journal refuse another POST. Package subpath exports provide the same helpers from PR148/145 without crossing server rootDir.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    145,\n    148,\n    151\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.14\"\n    }\n  ]\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-whiteboard-paid-once",
+                "sha": "0c9e493cb0ab901f0bcdd58edccc5292782a02e1",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "0c9e493cb0ab901f0bcdd58edccc5292782a02e1",
+            "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "files": [
+              "apps/server/src/video/whiteboard/lineart.test.ts",
+              "apps/server/src/video/whiteboard/lineart.ts",
+              "packages/video-studio/package.json",
+              "packages/video-studio/src/rendered-output-policy.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                145,
+                148,
+                151
+              ],
+              "releases": [
+                {
+                  "kind": "desktop",
+                  "version": "0.1.14"
+                }
+              ]
+            },
+            "headTime": 1791377151000,
+            "mergeBase": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "df2702e6050877119aef69c2d5ccecd4c68c976ad07405e8ca957eeaaa914cea",
+      "digest": "b4894a02a4f1efe77dd6c90540aab2f7311250e9e60384dcfecfb480779bc716"
+    },
+    {
+      "sequence": 1862,
+      "at": "2026-10-07T13:21:19.302Z",
+      "kind": "transaction",
+      "data": {
+        "id": "06d84b7e-9c16-4137-9c19-ced36afefaf4"
+      },
+      "previous": "b4894a02a4f1efe77dd6c90540aab2f7311250e9e60384dcfecfb480779bc716",
+      "digest": "95d88e6ad473a8a2110145c410ec0e781b2d5462e2ac2fe7dd2793eb25434fcf"
     }
   ]
 }
