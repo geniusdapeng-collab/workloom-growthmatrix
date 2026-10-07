@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 898,
+  "revision": 900,
   "tasks": {
     "132": {
       "number": 132,
@@ -3765,7 +3765,7 @@
     },
     "155": {
       "number": 155,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791360181033,
       "attempts": {},
       "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
@@ -3900,7 +3900,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791362108120,
+      "updatedAt": 1791362411177,
       "admission": {
         "number": 155,
         "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
@@ -3913,7 +3913,9 @@
       "dependencies": [
         145,
         154
-      ]
+      ],
+      "error": "Prerequisite #145 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/145 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791363011177
     },
     "156": {
       "number": 156,
@@ -22431,6 +22433,31 @@
       },
       "previous": "73487685ad3b5881fc51b79d1453efdf18406dc9667d8722ded585994fa15d4e",
       "digest": "2efae8dbb7dcd158aff1c7539282f939f2d89ea70c15385c63e14daf8bddf5f2"
+    },
+    {
+      "sequence": 899,
+      "at": "2026-10-07T08:40:11.177Z",
+      "kind": "task",
+      "data": {
+        "number": 155,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #145 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/145 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791363011177
+        }
+      },
+      "previous": "2efae8dbb7dcd158aff1c7539282f939f2d89ea70c15385c63e14daf8bddf5f2",
+      "digest": "510c5ff613dcb5eccce0ba876583613df95465ed5013884ea3ef5c13696601eb"
+    },
+    {
+      "sequence": 900,
+      "at": "2026-10-07T08:41:20.535Z",
+      "kind": "transaction",
+      "data": {
+        "id": "cefaa871-c04c-4983-b15b-d6500345a3c6"
+      },
+      "previous": "510c5ff613dcb5eccce0ba876583613df95465ed5013884ea3ef5c13696601eb",
+      "digest": "9fb66a5d6df20200544caa7300d0c36055290bad7fe5571059d98d75d82698e4"
     }
   ]
 }
