@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2604,
+  "revision": 2606,
   "tasks": {
     "132": {
       "number": 132,
@@ -5628,7 +5628,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791390911806,
+      "updatedAt": 1791392115502,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -67491,6 +67491,52 @@
       },
       "previous": "7df49325e89a63c1e1aafc830a57103fc3b3890bbaad6cd992a6eb309af81179",
       "digest": "5b9a7b59869232269c7ec7f41de66d95d02269dd1f185ed5edfb18cbffebdc2f"
+    },
+    {
+      "sequence": 2605,
+      "at": "2026-10-07T16:55:15.502Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "5b9a7b59869232269c7ec7f41de66d95d02269dd1f185ed5edfb18cbffebdc2f",
+      "digest": "a57b51f081dda1adb8083c1e2a0aed11950be3dd803d59861275417888b7d445"
+    },
+    {
+      "sequence": 2606,
+      "at": "2026-10-07T16:57:51.629Z",
+      "kind": "transaction",
+      "data": {
+        "id": "a1657d09-3adf-4d45-99d5-4f6edcf622dc"
+      },
+      "previous": "a57b51f081dda1adb8083c1e2a0aed11950be3dd803d59861275417888b7d445",
+      "digest": "ec3defbab3d2ba1f9d5358ccb54d939b67d7a280cdc0174f572c352c5b234015"
     }
   ]
 }
