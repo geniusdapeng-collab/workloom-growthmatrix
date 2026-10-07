@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1621,
+  "revision": 1623,
   "tasks": {
     "132": {
       "number": 132,
@@ -3685,7 +3685,7 @@
       "firstSeen": 1791356934499,
       "attempts": {},
       "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
-      "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+      "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-video-ack-recovery",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -3695,46 +3695,7 @@
         ],
         "releases": []
       },
-      "developerReview": {
-        "schemaVersion": 1,
-        "provider": "codex",
-        "repo": "workloom-ai/workloom-growthmatrix",
-        "number": 149,
-        "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
-        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
-        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
-        "reviewedFiles": [
-          "packages/video-studio/src/generation-file-store.ts",
-          "packages/video-studio/src/video-surface-repair.test.ts",
-          "packages/video-studio/src/video-surface-repair.ts",
-          "packages/video-studio/src/video-task-receipt.test.ts",
-          "packages/video-studio/src/video-task-receipt.ts"
-        ],
-        "filesHash": "c0839309d5c27185a2b1f4f564ad31c6705ffc5a6d7cbb7b3b4c139ed40632d3",
-        "dependsOn": [
-          148
-        ],
-        "ciPolicyChanges": [],
-        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-        "tests": [
-          {
-            "command": "node node_modules/vitest/vitest.mjs run packages/video-studio/src/video-task-receipt.test.ts packages/video-studio/src/video-surface-repair.test.ts",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T07:08:06.710645+00:00",
-            "result": "58 tests passed, zero skips, including actual local media and independent-process concurrency"
-          },
-          {
-            "command": "node node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
-            "exitCode": 0,
-            "finishedAt": "2026-10-07T07:08:07.075494+00:00",
-            "result": "video-studio typecheck passed"
-          }
-        ],
-        "reviewedAt": "2026-10-07T11:23:06.251035+00:00",
-        "summary": "Current Codex fully read and reviewed all five changed files and their direct dependencies. The journal saves complete compiled identity before one POST and taskId before polling; frozen input prevents mutations. Provider/endpoint/model/body changes cannot reuse a shot identity to pay again. Legacy v1 evidence retains its explicit endpoint verification gap and allows only original task queries, never a new POST. Multiple original task IDs fail safely. Known dead-owner recovery is GET-only; unknown and live owners are retained. Read-only postproduction validates v2 scope and hash. 58 exact-source tests include real media, independent child processes, timeout, late ACK, tampering and unknown-response cases; typecheck passes. Main CLI stable-root wiring remains a separately declared integration task. No unresolved finding within this fix; no database/CI/permission change or live paid call. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
-        "passed": true,
-        "id": "94947934d4684ec60c6d9bd28c2a3fab9fd3b36b910fea4efe612774fbc4ef54"
-      },
+      "developerReview": null,
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 149,
@@ -3805,7 +3766,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791374342093,
+      "updatedAt": 1791375289156,
       "admission": {
         "number": 149,
         "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
@@ -41458,6 +41419,55 @@
       },
       "previous": "7eb69bf70bc0f6edc1b8bd6ff42df1a0b74731028e80659b6d06845cb6da4317",
       "digest": "b9c6988f498ff4575871341445ae7761343ee8dac7358057cd8c1f3e8976e08d"
+    },
+    {
+      "sequence": 1622,
+      "at": "2026-10-07T12:14:49.156Z",
+      "kind": "task",
+      "data": {
+        "number": 149,
+        "patch": {
+          "alignmentCount": 0,
+          "recoveryCount": 0,
+          "reviewFailures": null,
+          "blockedUntil": 0,
+          "developerReview": null,
+          "candidate": null,
+          "headSha": "2e12cd7d8e15da149ddd04c1ba2f148c54ac27d8",
+          "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
+          "branch": "fix/T-2026-1007-0918-video-ack-recovery",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148
+            ],
+            "releases": []
+          },
+          "originalBody": "Video generation now freezes project/shot/provider/endpoint/full body in a private durable v2 journal before POST and saves ACK before all GETs. Complete v1 receipts can be imported without reissuing generation; unknown submissions stay pending reconciliation, and late legacy ACKs permit GET-only recovery. Conflicting task IDs, modified requests, corrupt identity and unknown dead locks reject without another payment. Existing postproduction consumers validate v2 identity while retaining v1 read support. The shared file journal matches PR148 byte for byte. A subsequent CLI integration connects stable project paths; this fix independently protects acknowledgement and legacy recovery in the existing journal scope. All fault tests inject providers, with no live paid generation.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    148\n  ],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/generation-file-store.ts",
+            "packages/video-studio/src/video-surface-repair.test.ts",
+            "packages/video-studio/src/video-surface-repair.ts",
+            "packages/video-studio/src/video-task-receipt.test.ts",
+            "packages/video-studio/src/video-task-receipt.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791371100874
+        }
+      },
+      "previous": "b9c6988f498ff4575871341445ae7761343ee8dac7358057cd8c1f3e8976e08d",
+      "digest": "586ac8458a19ab563172156197c89b56f7d7d9a717b73bae174e6af7b78d8800"
+    },
+    {
+      "sequence": 1623,
+      "at": "2026-10-07T12:16:29.237Z",
+      "kind": "transaction",
+      "data": {
+        "id": "2bc87997-1efe-42ac-9587-cb21d7a4e5ca"
+      },
+      "previous": "586ac8458a19ab563172156197c89b56f7d7d9a717b73bae174e6af7b78d8800",
+      "digest": "946a42fbe74556d3251eb74990a68a0560b1c54137389d03ba7280e8ce0388c8"
     }
   ]
 }
