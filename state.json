@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2217,
+  "revision": 2219,
   "tasks": {
     "132": {
       "number": 132,
@@ -5502,7 +5502,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791384312588,
+      "updatedAt": 1791384610536,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -57907,6 +57907,52 @@
       },
       "previous": "b27f644872eaafa03c748a2aa716cfa87ef68efe435f5c84da34e70e9212a05f",
       "digest": "7a58c7d680bbe4fd0fddb7b84d1227d60d0dbad786b791263540c00264ce73df"
+    },
+    {
+      "sequence": 2218,
+      "at": "2026-10-07T14:50:10.536Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "7a58c7d680bbe4fd0fddb7b84d1227d60d0dbad786b791263540c00264ce73df",
+      "digest": "273848ba69cbd21bc04afeead257f2f09b83bbf91272f229ff08c700b669f046"
+    },
+    {
+      "sequence": 2219,
+      "at": "2026-10-07T14:51:43.167Z",
+      "kind": "transaction",
+      "data": {
+        "id": "ac7cd3f0-8934-4a78-bd8f-e5f9c1cdb85e"
+      },
+      "previous": "273848ba69cbd21bc04afeead257f2f09b83bbf91272f229ff08c700b669f046",
+      "digest": "0d2af8bc3dc95bf45308e1b726c4aa26978c906baad3c471ad592cb72d5d7435"
     }
   ]
 }
