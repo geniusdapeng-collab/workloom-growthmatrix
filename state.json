@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 691,
+  "revision": 693,
   "tasks": {
     "132": {
       "number": 132,
@@ -3428,7 +3428,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791358734332,
+      "updatedAt": 1791358810413,
       "admission": {
         "number": 152,
         "headSha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
@@ -3437,7 +3437,13 @@
         "scopes": [],
         "owner": "admission/pr-152",
         "generation": {}
-      }
+      },
+      "originalBody": "Final fact repair could lose a genuine model rejection when a later shot failed deterministic contract compilation. Recovery now rereads each complete source-bound review, verifies real passed/rejected evidence and separately recomputes unverified contract diagnostics. A diagnostic retains its unverified deterministic status and never supplies model approval. Changed scope, content, evidence, error, fallback or forged approval is refused. Each corrected candidate still requires fresh final fact review. The actual six-shot production completed through this path; regression fixtures use no live paid calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+      "files": [
+        "apps/server/src/video/marketing-authority.test.ts",
+        "apps/server/src/video/marketing-authority.ts"
+      ],
+      "ciSince": 1791358810413
     }
   },
   "leases": {
@@ -17876,6 +17882,44 @@
       },
       "previous": "45004ce9e86fa60b92ea74f30f3454698f4f81d388173278c1c0b614ccd5e109",
       "digest": "b80a8f75dcf1d03681d16e0e2f43725afa8b57615017f47f4432b0eadd2e9749"
+    },
+    {
+      "sequence": 692,
+      "at": "2026-10-07T07:40:10.413Z",
+      "kind": "task",
+      "data": {
+        "number": 152,
+        "patch": {
+          "headSha": "2606f42bae4804da08bd39aa0697ee8e78d50cff",
+          "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+          "branch": "fix/T-2026-1007-0918-marketing-failure-feedback",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "Final fact repair could lose a genuine model rejection when a later shot failed deterministic contract compilation. Recovery now rereads each complete source-bound review, verifies real passed/rejected evidence and separately recomputes unverified contract diagnostics. A diagnostic retains its unverified deterministic status and never supplies model approval. Changed scope, content, evidence, error, fallback or forged approval is refused. Each corrected candidate still requires fresh final fact review. The actual six-shot production completed through this path; regression fixtures use no live paid calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "apps/server/src/video/marketing-authority.test.ts",
+            "apps/server/src/video/marketing-authority.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791358810413
+        }
+      },
+      "previous": "b80a8f75dcf1d03681d16e0e2f43725afa8b57615017f47f4432b0eadd2e9749",
+      "digest": "98ab0a0350f3bf10c71cd76d848ea5d43452540dc05e2bee57a2be703b50843c"
+    },
+    {
+      "sequence": 693,
+      "at": "2026-10-07T07:40:57.026Z",
+      "kind": "transaction",
+      "data": {
+        "id": "23b1b2e5-2e19-4735-8a99-26e7cd2916bd"
+      },
+      "previous": "98ab0a0350f3bf10c71cd76d848ea5d43452540dc05e2bee57a2be703b50843c",
+      "digest": "07ca040dce2b3349b0951ec030e7fd482f95195393fcf9f660173587f5751216"
     }
   ]
 }
