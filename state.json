@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 1444,
+  "revision": 1447,
   "tasks": {
     "132": {
       "number": 132,
@@ -4102,11 +4102,11 @@
     },
     "155": {
       "number": 155,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791360181033,
       "attempts": {},
       "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
-      "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+      "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
       "branch": "fix/T-2026-1007-0918-explainer-rendered-acceptance",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -4123,7 +4123,7 @@
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 155,
         "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "apps/server/src/video/explainer/pipeline-policy.test.ts",
@@ -4157,10 +4157,10 @@
             "result": "Server typecheck passed"
           }
         ],
-        "reviewedAt": "2026-10-07T08:02:57.888102+00:00",
-        "summary": "Current Codex fully read all nine changed files and direct implementation dependencies: explainer ASR/timing, semantics, engine, card registry, shotbook, project builder, voice, delivery, database, Remotion provider, server video routing, local registration, tRPC scope, rendered policy and ProducerStage. Default off verifies a real nonempty readable movie then skips all six quality scripts without fake measured approval. Unavailable explicit checks preserve their actual failure and existing movie; advisory admits and blocking refuses. Resume mismatched dimensions emits a diagnostic and keeps the original, unreadable output fails without a submit call. Asset provenance separates accepted from measured pass. Exact-source real ffmpeg/ffprobe fixtures and injected preparation/provider seams prove no render after resume, corruption or failed postproduction. Existing scoped API immutability tests and server types pass. The existing optional vendor/talkcraft integration remains skipped because that vendor is not installed; no claim of full native engine certification. No live paid test calls or unresolved finding.",
+        "reviewedAt": "2026-10-07T11:24:11.410315+00:00",
+        "summary": "Current Codex fully read all nine changed files and direct implementation dependencies: explainer ASR/timing, semantics, engine, card registry, shotbook, project builder, voice, delivery, database, Remotion provider, server video routing, local registration, tRPC scope, rendered policy and ProducerStage. Default off verifies a real nonempty readable movie then skips all six quality scripts without fake measured approval. Unavailable explicit checks preserve their actual failure and existing movie; advisory admits and blocking refuses. Resume mismatched dimensions emits a diagnostic and keeps the original, unreadable output fails without a submit call. Asset provenance separates accepted from measured pass. Exact-source real ffmpeg/ffprobe fixtures and injected preparation/provider seams prove no render after resume, corruption or failed postproduction. Existing scoped API immutability tests and server types pass. The existing optional vendor/talkcraft integration remains skipped because that vendor is not installed; no claim of full native engine certification. No live paid test calls or unresolved finding. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
         "passed": true,
-        "id": "c4946b09a3546d9fdf09030b9cda5bedd98932adc8adfdaabd3a76672052edce"
+        "id": "760176e408b8f8906bc605df0e21a290ec739baf240373148ff3418acf95a18c"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -4180,7 +4180,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4209,7 +4209,7 @@
           "statuses": {}
         },
         "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
-        "mainSha": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
         "files": [
           "apps/server/src/video/explainer/pipeline-policy.test.ts",
           "apps/server/src/video/explainer/pipeline.ts",
@@ -4237,7 +4237,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791371100874,
+      "updatedAt": 1791372262924,
       "admission": {
         "number": 155,
         "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
@@ -35421,6 +35421,174 @@
       },
       "previous": "152b0ea791998c8e04925df599640c8dd07558eb06c387fe964b3b27c24611b3",
       "digest": "eaec54b3eea36e8ec59c5b2faaf89fef9a9af9c30ff45921c66c680cb66eceb6"
+    },
+    {
+      "sequence": 1445,
+      "at": "2026-10-07T11:24:22.920Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 155,
+        "id": "760176e408b8f8906bc605df0e21a290ec739baf240373148ff3418acf95a18c",
+        "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
+        "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0"
+      },
+      "previous": "eaec54b3eea36e8ec59c5b2faaf89fef9a9af9c30ff45921c66c680cb66eceb6",
+      "digest": "b30d6dbcd968bb5e17315f7c129fd8c96ef1ceab5a6f7c763af3a86d12b7a8e4"
+    },
+    {
+      "sequence": 1446,
+      "at": "2026-10-07T11:24:22.924Z",
+      "kind": "task",
+      "data": {
+        "number": 155,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
+          "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+          "branch": "fix/T-2026-1007-0918-explainer-rendered-acceptance",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              145,
+              154
+            ],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 155,
+            "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "apps/server/src/video/explainer/pipeline-policy.test.ts",
+              "apps/server/src/video/explainer/pipeline.ts",
+              "apps/server/src/video/explainer/qa-gates.test.ts",
+              "apps/server/src/video/explainer/qa-gates.ts",
+              "apps/server/src/video/explainer/router.ts",
+              "apps/server/src/video/explainer/types.ts",
+              "packages/video-studio/package.json",
+              "packages/video-studio/src/producer-gate.ts",
+              "packages/video-studio/src/rendered-output-policy.ts"
+            ],
+            "filesHash": "99ee78445a14cd803c3367e04b2013fd03af858dfe21bfe70e13250f261e7398",
+            "dependsOn": [
+              145,
+              154
+            ],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run apps/server/src/video/explainer/qa-gates.test.ts apps/server/src/video/explainer/pipeline-policy.test.ts apps/server/src/video/explainer/explainer.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T08:01:50.345876+00:00",
+                "result": "Explainer default acceptance, unavailable/failed explicit checks, real-media resume and existing preparation/router contracts passed; only existing absent vendor-engine integration is skipped"
+              },
+              {
+                "command": "node node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T08:01:52.059872+00:00",
+                "result": "Server typecheck passed"
+              }
+            ],
+            "reviewedAt": "2026-10-07T11:24:11.410315+00:00",
+            "summary": "Current Codex fully read all nine changed files and direct implementation dependencies: explainer ASR/timing, semantics, engine, card registry, shotbook, project builder, voice, delivery, database, Remotion provider, server video routing, local registration, tRPC scope, rendered policy and ProducerStage. Default off verifies a real nonempty readable movie then skips all six quality scripts without fake measured approval. Unavailable explicit checks preserve their actual failure and existing movie; advisory admits and blocking refuses. Resume mismatched dimensions emits a diagnostic and keeps the original, unreadable output fails without a submit call. Asset provenance separates accepted from measured pass. Exact-source real ffmpeg/ffprobe fixtures and injected preparation/provider seams prove no render after resume, corruption or failed postproduction. Existing scoped API immutability tests and server types pass. The existing optional vendor/talkcraft integration remains skipped because that vendor is not installed; no claim of full native engine certification. No live paid test calls or unresolved finding. Current main advancement is native PR148 image acceptance journals and portrait recovery, source SHA56852023485bdf45912eaddd8347efa5a8aadbf0. Those exact six files and their changed call paths were fully read during this task. Immutable source and its actual recorded tests are unchanged. The candidate must still pass native CI against the new main; no CI result or release approval is substituted.",
+            "passed": true,
+            "id": "760176e408b8f8906bc605df0e21a290ec739baf240373148ff3418acf95a18c"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 155,
+            "pull": {
+              "number": 155,
+              "state": "open",
+              "title": "fix(growth): deliver rendered explainers without quality reruns [T-2026-1007-0918]",
+              "body": "The explainer pipeline blocked delivered movies on post-render motion, audio, card and beat quality gates, and its resume path silently rendered again when existing dimensions differed. Default now accepts readable generated movies and continues postproduction with six explicit skipped records. Measured pass remains false when no quality review ran; policy acceptance, review mode and qualityReviewed are stored separately in the QA report and asset provenance. Advisory reviews preserve failures; only explicitly blocking reviews refuse admission. Existing unreadable movies and postproduction failures retain their output and never trigger automatic re-render. API finalize and shared pipeline use the same acceptance contract.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    145,\n    154\n  ],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-explainer-rendered-acceptance",
+                "sha": "8024bcc6936e01b382069e7311d2c32205e91c65",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "8024bcc6936e01b382069e7311d2c32205e91c65",
+            "mainSha": "56852023485bdf45912eaddd8347efa5a8aadbf0",
+            "files": [
+              "apps/server/src/video/explainer/pipeline-policy.test.ts",
+              "apps/server/src/video/explainer/pipeline.ts",
+              "apps/server/src/video/explainer/qa-gates.test.ts",
+              "apps/server/src/video/explainer/qa-gates.ts",
+              "apps/server/src/video/explainer/router.ts",
+              "apps/server/src/video/explainer/types.ts",
+              "packages/video-studio/package.json",
+              "packages/video-studio/src/producer-gate.ts",
+              "packages/video-studio/src/rendered-output-policy.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                145,
+                154
+              ],
+              "releases": []
+            },
+            "headTime": 1791360102000,
+            "mergeBase": "6e7bb78749a4ade1955cf03476ed249f630aa3f8",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "b30d6dbcd968bb5e17315f7c129fd8c96ef1ceab5a6f7c763af3a86d12b7a8e4",
+      "digest": "b470391817f4d0a2308eff1b2e9cf44b80c9d4a21a9e8666ecdde6cfa785f223"
+    },
+    {
+      "sequence": 1447,
+      "at": "2026-10-07T11:24:19.660Z",
+      "kind": "transaction",
+      "data": {
+        "id": "903351d7-40d8-41f4-b02a-2f3faba44fc6"
+      },
+      "previous": "b470391817f4d0a2308eff1b2e9cf44b80c9d4a21a9e8666ecdde6cfa785f223",
+      "digest": "b998d49dcf09df28a840691c2d2e488235b32835bd90a0ce0205b86d20d6653a"
     }
   ]
 }
