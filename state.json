@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2504,
+  "revision": 2509,
   "tasks": {
     "132": {
       "number": 132,
@@ -7483,18 +7483,18 @@
           }
         ]
       },
-      "updatedAt": 1791390695182,
+      "updatedAt": 1791390701278,
       "admission": {
         "number": 172,
-        "headSha": "83a487e5895ad05474bae491a2f8ba6abec2b609",
-        "mainSha": "e58d356e51c8c4f26851141972d54a4081da563c",
+        "headSha": "3b21163ad2529d41d6aef29e24f6eb5487ec980b",
+        "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
         "filesHash": "35f00b7cd9259aa2c118c42c6bca9dcf098e9165e7adcd1d6945271431db35e5",
         "scopes": [
           "protocol"
         ],
         "owner": "admission/pr-172",
         "generation": {
-          "protocol": 44
+          "protocol": 50
         }
       },
       "originalBody": "The real v0.1.3 release stopped before build dispatch because CNB serializes the build-history total as a canonical decimal string. Accept documented integer and actual string counts, then require a complete bounded history with unique build IDs before any launch. Recover only the recorded never-dispatched history-format park after strict readback; attempts, ACKs, launch intents, foreign parks and concurrent recovery cannot authorize another POST. The native main scheduler runs this delivery infrastructure after integration. The already declared frozen desktop versions retain their separate production intents.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    170\n  ],\n  \"releases\": []\n}\n-->",
@@ -7553,9 +7553,9 @@
   "leases": {
     "protocol": {
       "owner": null,
-      "generation": 49,
-      "acquiredAt": 1791390064078,
-      "expiresAt": 1791390064078
+      "generation": 50,
+      "acquiredAt": 1791390701278,
+      "expiresAt": 1791390701278
     },
     "migrations": {
       "owner": null,
@@ -65228,6 +65228,93 @@
       },
       "previous": "c14a5f031a167633110620aa3d2ed1dfd3de712ac4e8368ff22b5632c7b7fdde",
       "digest": "1d7da058e10b17e71c0b7dbaf5bf0f6c2c0516328a725c66c12d153cc4d11f56"
+    },
+    {
+      "sequence": 2505,
+      "at": "2026-10-07T16:31:41.278Z",
+      "kind": "lease_acquire",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-172",
+        "generation": {
+          "protocol": 50
+        }
+      },
+      "previous": "1d7da058e10b17e71c0b7dbaf5bf0f6c2c0516328a725c66c12d153cc4d11f56",
+      "digest": "53686c2f60c840bd8de15788792f3994b1d25b451eab1de08fde4f5f8a8f7df5"
+    },
+    {
+      "sequence": 2506,
+      "at": "2026-10-07T16:31:41.278Z",
+      "kind": "lease_release",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-172",
+        "generation": {
+          "protocol": 50
+        }
+      },
+      "previous": "53686c2f60c840bd8de15788792f3994b1d25b451eab1de08fde4f5f8a8f7df5",
+      "digest": "92c79dba92aa3b926e31a6e60599ad68501e62f768cd19e367b4996493634a7a"
+    },
+    {
+      "sequence": 2507,
+      "at": "2026-10-07T16:31:41.278Z",
+      "kind": "source_admitted",
+      "data": {
+        "number": 172,
+        "headSha": "3b21163ad2529d41d6aef29e24f6eb5487ec980b",
+        "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+        "filesHash": "35f00b7cd9259aa2c118c42c6bca9dcf098e9165e7adcd1d6945271431db35e5",
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "admission/pr-172",
+        "generation": {
+          "protocol": 50
+        }
+      },
+      "previous": "92c79dba92aa3b926e31a6e60599ad68501e62f768cd19e367b4996493634a7a",
+      "digest": "2a2250e4b2fc3be5fc4dbe2b4568900d84bbe85ba505f11707746d2bf09d7a4c"
+    },
+    {
+      "sequence": 2508,
+      "at": "2026-10-07T16:31:41.278Z",
+      "kind": "task",
+      "data": {
+        "number": 172,
+        "patch": {
+          "admission": {
+            "number": 172,
+            "headSha": "3b21163ad2529d41d6aef29e24f6eb5487ec980b",
+            "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+            "filesHash": "35f00b7cd9259aa2c118c42c6bca9dcf098e9165e7adcd1d6945271431db35e5",
+            "scopes": [
+              "protocol"
+            ],
+            "owner": "admission/pr-172",
+            "generation": {
+              "protocol": 50
+            }
+          }
+        }
+      },
+      "previous": "2a2250e4b2fc3be5fc4dbe2b4568900d84bbe85ba505f11707746d2bf09d7a4c",
+      "digest": "aaddac338e1673b9206036e9a480018dc2d1f6c999c1bf5cc87d7f396912deff"
+    },
+    {
+      "sequence": 2509,
+      "at": "2026-10-07T16:31:37.544Z",
+      "kind": "transaction",
+      "data": {
+        "id": "source-admit:172:3b21163ad2529d41d6aef29e24f6eb5487ec980b:97d3d26cd046d74d94a24386be4b41fa8c059c17"
+      },
+      "previous": "aaddac338e1673b9206036e9a480018dc2d1f6c999c1bf5cc87d7f396912deff",
+      "digest": "cae918f841910952f9c9716ab32b954ef45b08012d885d095518ef25dc523f2b"
     }
   ]
 }
