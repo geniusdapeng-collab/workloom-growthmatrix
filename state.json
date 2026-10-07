@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3348,
+  "revision": 3350,
   "tasks": {
     "132": {
       "number": 132,
@@ -5576,7 +5576,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791403507903,
+      "updatedAt": 1791403724050,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -84185,6 +84185,52 @@
       },
       "previous": "d2bd07105383f1208a0ac06eb1668e351be1755d539ec24dae161e2638f19163",
       "digest": "f207c647ddf4c63f7a70ee9a77f4b03b15825e6ce0d072326ca5ac9cb18954b7"
+    },
+    {
+      "sequence": 3349,
+      "at": "2026-10-07T20:08:44.050Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              144,
+              145,
+              146,
+              157
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.18"
+              }
+            ]
+          },
+          "dependencies": [
+            144,
+            145,
+            146,
+            157
+          ]
+        }
+      },
+      "previous": "f207c647ddf4c63f7a70ee9a77f4b03b15825e6ce0d072326ca5ac9cb18954b7",
+      "digest": "747570e9b1991ac5bb204f6668583dc043305329ec3cece346803e84bda24577"
+    },
+    {
+      "sequence": 3350,
+      "at": "2026-10-07T20:11:21.706Z",
+      "kind": "transaction",
+      "data": {
+        "id": "590360ee-19df-4ad1-baf1-dcf3636bc315"
+      },
+      "previous": "747570e9b1991ac5bb204f6668583dc043305329ec3cece346803e84bda24577",
+      "digest": "c9340d45bd9d040063a84d1c00dc465e41d5f38702fad10f055764469a561ebe"
     }
   ]
 }
