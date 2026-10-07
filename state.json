@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2718,
+  "revision": 2721,
   "tasks": {
     "132": {
       "number": 132,
@@ -7331,7 +7331,7 @@
     },
     "172": {
       "number": 172,
-      "status": "merging",
+      "status": "integrated",
       "firstSeen": 1791381463175,
       "attempts": {},
       "headSha": "3b21163ad2529d41d6aef29e24f6eb5487ec980b",
@@ -7509,7 +7509,7 @@
         "scripts/delivery/queue-release.mjs"
       ],
       "ciSince": 1791385024507,
-      "error": "检查/评审阻断：Required check static-gate missing/failed/ambiguous; Required check test-gate missing/failed/ambiguous",
+      "error": null,
       "blockedUntil": 1791391511806,
       "alignmentCount": 1,
       "recoveryCount": 0,
@@ -7537,7 +7537,7 @@
         "at": 1791390911806
       },
       "recoveryIntent": null,
-      "mergePhase": "merge_verified",
+      "mergePhase": null,
       "mergeSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 177,
@@ -7654,7 +7654,17 @@
         "checkSha": "6f64b95cfd09646f064acaa54e555ce335601f01",
         "mergedBy": "cnb.dYiF05kxAGA",
         "verifiedAt": "2026-10-07T17:49:48.343Z"
-      }
+      },
+      "integrationHistory": [
+        {
+          "sha": "703947eeca100eb2598c9bb25c914d4dad8c9a9b",
+          "sourceSha": "3b21163ad2529d41d6aef29e24f6eb5487ec980b",
+          "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+          "checkSha": "6f64b95cfd09646f064acaa54e555ce335601f01",
+          "mergedBy": "cnb.dYiF05kxAGA",
+          "verifiedAt": "2026-10-07T17:49:48.343Z"
+        }
+      ]
     },
     "173": {
       "number": 173,
@@ -8095,10 +8105,10 @@
   },
   "leases": {
     "protocol": {
-      "owner": "integration/pr-172",
+      "owner": null,
       "generation": 57,
       "acquiredAt": 1791395352083,
-      "expiresAt": 1791396252083
+      "expiresAt": 1791395352083
     },
     "migrations": {
       "owner": null,
@@ -70462,6 +70472,65 @@
       },
       "previous": "ffae1b51852614f06caf32b700cd96d2f3f05715499e492016a3d1cb479d53bf",
       "digest": "f5b7a143a275fc8ba74c7291d85bd59fdd7b5bc0bf21d4e14a98f02597a63893"
+    },
+    {
+      "sequence": 2719,
+      "at": "2026-10-07T17:49:12.083Z",
+      "kind": "lease_release",
+      "data": {
+        "scopes": [
+          "protocol"
+        ],
+        "owner": "integration/pr-172",
+        "generation": {
+          "protocol": 57
+        }
+      },
+      "previous": "f5b7a143a275fc8ba74c7291d85bd59fdd7b5bc0bf21d4e14a98f02597a63893",
+      "digest": "d0a5124b23bdaf0793232d810c715ef75a62c450dc4756a3c1e8f14babf0c784"
+    },
+    {
+      "sequence": 2720,
+      "at": "2026-10-07T17:49:12.083Z",
+      "kind": "task",
+      "data": {
+        "number": 172,
+        "patch": {
+          "status": "integrated",
+          "merge": {
+            "sha": "703947eeca100eb2598c9bb25c914d4dad8c9a9b",
+            "sourceSha": "3b21163ad2529d41d6aef29e24f6eb5487ec980b",
+            "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+            "checkSha": "6f64b95cfd09646f064acaa54e555ce335601f01",
+            "mergedBy": "cnb.dYiF05kxAGA",
+            "verifiedAt": "2026-10-07T17:49:48.343Z"
+          },
+          "mergePhase": null,
+          "error": null,
+          "integrationHistory": [
+            {
+              "sha": "703947eeca100eb2598c9bb25c914d4dad8c9a9b",
+              "sourceSha": "3b21163ad2529d41d6aef29e24f6eb5487ec980b",
+              "mainSha": "97d3d26cd046d74d94a24386be4b41fa8c059c17",
+              "checkSha": "6f64b95cfd09646f064acaa54e555ce335601f01",
+              "mergedBy": "cnb.dYiF05kxAGA",
+              "verifiedAt": "2026-10-07T17:49:48.343Z"
+            }
+          ]
+        }
+      },
+      "previous": "d0a5124b23bdaf0793232d810c715ef75a62c450dc4756a3c1e8f14babf0c784",
+      "digest": "6fb7dc16f5ba583fce5797358bc272040f76b7762ec74257931ddc42e0887387"
+    },
+    {
+      "sequence": 2721,
+      "at": "2026-10-07T17:49:52.500Z",
+      "kind": "transaction",
+      "data": {
+        "id": "91980b54-5428-458f-b569-cff9bddf8ed5"
+      },
+      "previous": "6fb7dc16f5ba583fce5797358bc272040f76b7762ec74257931ddc42e0887387",
+      "digest": "0ab16d7f5ebef22f92bd3a656225f26fbf8c602038460909eb9569dae07f50ef"
     }
   ]
 }
