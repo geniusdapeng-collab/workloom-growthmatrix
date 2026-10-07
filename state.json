@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 3840,
+  "revision": 3843,
   "tasks": {
     "132": {
       "number": 132,
@@ -4877,11 +4877,11 @@
     },
     "153": {
       "number": 153,
-      "status": "waiting_dependency",
+      "status": "waiting_ci",
       "firstSeen": 1791359178476,
       "attempts": {},
-      "headSha": "9a5c9deacc7e2d8b6ab0690d338a496f1d18d73a",
-      "mainSha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+      "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+      "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
       "branch": "fix/T-2026-1007-0918-cine-kb-preserve-intent",
       "intent": {
         "taskId": "T-2026-1007-0918",
@@ -4901,8 +4901,8 @@
         "provider": "codex",
         "repo": "workloom-ai/workloom-growthmatrix",
         "number": 153,
-        "headSha": "9a5c9deacc7e2d8b6ab0690d338a496f1d18d73a",
-        "mainSha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+        "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
         "reviewedFiles": [
           "bundles/ai-video/bundle.json",
@@ -4921,31 +4921,31 @@
             "rationale": "Read the exact main and source test blobs and KB/shot-intent/CLI consumer dependencies. Replace the obsolete rejection assertion for optional over-budget lighting suggestions with stronger positive assertions: source and downstream retain the complete authored lighting, omitted records contain the whole dropped suggestion with zero written characters, applied/injected fields never falsely claim lighting, and the actual CLI completes downstream micromotion. Unknown subjects, missing KB data, corrupt traces and actual unwritten required contributions still fail existing tests. No test removed, skipped or timeout relaxed. Real media and exact CLI regressions passed. Rollback reverts the connector and its contract assertion together, keeping existing source artifacts."
           }
         ],
-        "ciPolicyChangesHash": "af80101de15edd0fed5b49742ff64fd18d8617c04aa43cdb804201d59f770d24",
+        "ciPolicyChangesHash": "d00d88bcf0d3814a44e63c920323ccc2ce88b38575d220f2ab2ffce2158a47a8",
         "tests": [
           {
             "command": "node node_modules/vitest/vitest.mjs run bundles/ai-video/connectors/cine-kb-bridge",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T22:04:34.962451+00:00",
+            "finishedAt": "2026-10-07T22:23:27.950323+00:00",
             "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           },
           {
             "command": "node --import tsx scripts/bundle-governance.mts",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T22:04:35.542871+00:00",
+            "finishedAt": "2026-10-07T22:23:28.480027+00:00",
             "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           },
           {
             "command": "node node_modules/vitest/vitest.mjs run scripts/tools/video-request-regression.test.ts",
             "exitCode": 0,
-            "finishedAt": "2026-10-07T22:04:52.959814+00:00",
+            "finishedAt": "2026-10-07T22:23:45.468011+00:00",
             "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
           }
         ],
-        "reviewedAt": "2026-10-07T22:07:38.115602+00:00",
-        "summary": "Current Codex fully read the three changed files and shot-intent implementation. Water reflection now requires an actual water-surface context. Window direction is derived from window clauses only, with ambiguous directions omitted. Authored timed camera contracts bypass generic KB movement insertion. Optional dropped contributions are recorded in omitted rather than applied, while missing required knowledge still stays unverified. Source hash and KB hash binding remain intact. All exact-source cine-KB tests passed; no unresolved finding. No live paid calls or governance edits. The complete bundle manifest and governance canonical digest implementation were read; only the changed cine core hash and its canonical enclosing digest are updated. The actual native bundle governance check passed against committed bytes. The current native test-gate failure was reproduced from its obsolete assertion. The complete CLI regression file and direct dependencies were read. The exact CI migration rationale preserves error/unknown/missing-knowledge checks and adds positive proof of complete authored fields, honest omissions and actual downstream continuation. No test or required gate is removed. This is a current Codex review of the normal semantic source merge at the exact head shown. Fully read the current main bundle manifest to its end and the complete merged 422-line CLI regression plus prior exact connector/shot-intent review. The normal merge preserves the new main direct-post/source-audio changes. Native bundle governance regenerated the canonical digest from actual current-main assets and the reviewed cine core; diff against main changes only the cine core asset hash and enclosing digest. Authored timing/light/context fixes and additive connector tests retain their previous complete review; real committed cine/CLI/media tests and native bundle governance were rerun and passed. The original CI migration rationale retains the same complete-sentence optional KB omission contract and new main assertions. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
+        "reviewedAt": "2026-10-07T22:35:42.590508+00:00",
+        "summary": "Current Codex fully read the three changed files and shot-intent implementation. Water reflection now requires an actual water-surface context. Window direction is derived from window clauses only, with ambiguous directions omitted. Authored timed camera contracts bypass generic KB movement insertion. Optional dropped contributions are recorded in omitted rather than applied, while missing required knowledge still stays unverified. Source hash and KB hash binding remain intact. All exact-source cine-KB tests passed; no unresolved finding. No live paid calls or governance edits. The complete bundle manifest and governance canonical digest implementation were read; only the changed cine core hash and its canonical enclosing digest are updated. The actual native bundle governance check passed against committed bytes. The current native test-gate failure was reproduced from its obsolete assertion. The complete CLI regression file and direct dependencies were read. The exact CI migration rationale preserves error/unknown/missing-knowledge checks and adds positive proof of complete authored fields, honest omissions and actual downstream continuation. No test or required gate is removed. This is a current Codex review of the normal semantic source merge at the exact head shown. Fully read the current main bundle manifest to its end and the complete merged 422-line CLI regression plus prior exact connector/shot-intent review. The normal merge preserves the new main direct-post/source-audio changes. Native bundle governance regenerated the canonical digest from actual current-main assets and the reviewed cine core; diff against main changes only the cine core asset hash and enclosing digest. Authored timing/light/context fixes and additive connector tests retain their previous complete review; real committed cine/CLI/media tests and native bundle governance were rerun and passed. The original CI migration rationale retains the same complete-sentence optional KB omission contract and new main assertions. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main 5e148fc1ae3ad097bce2fcecf5d724fee9075219. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
         "passed": true,
-        "id": "2a5c2610e21bd0b952d7daa777ed199fcd6f1bef12f6953ed0891f0033e90e62"
+        "id": "8d36931ae3887e621ed50ee341b79f319507ff9698167f6910aed44a7653accc"
       },
       "reviewSnapshot": {
         "repo": "workloom-ai/workloom-growthmatrix",
@@ -4965,7 +4965,7 @@
           "labels": [],
           "base": {
             "ref": "refs/heads/main",
-            "sha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+            "sha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4975,7 +4975,7 @@
           },
           "head": {
             "ref": "refs/heads/fix/T-2026-1007-0918-cine-kb-preserve-intent",
-            "sha": "9a5c9deacc7e2d8b6ab0690d338a496f1d18d73a",
+            "sha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
             "repo": {
               "id": "2101835392181194752",
               "name": "workloom-growthmatrix",
@@ -4993,8 +4993,8 @@
           "is_force_merged": false,
           "statuses": {}
         },
-        "headSha": "9a5c9deacc7e2d8b6ab0690d338a496f1d18d73a",
-        "mainSha": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+        "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "files": [
           "bundles/ai-video/bundle.json",
           "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
@@ -5015,8 +5015,8 @@
             }
           ]
         },
-        "headTime": 1791410674000,
-        "mergeBase": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+        "headTime": 1791411807000,
+        "mergeBase": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
         "checkErrors": [],
         "checkSha": null,
         "hasFailedChecks": false,
@@ -5025,20 +5025,20 @@
             "id": "CI-001",
             "file": "scripts/tools/video-request-regression.test.ts",
             "before": {
-              "ref": "d3de94895b1cbfbefadac6be45aca806f59feb88",
+              "ref": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
               "path": "scripts/tools/video-request-regression.test.ts",
               "absent": false
             },
             "after": {
-              "ref": "9a5c9deacc7e2d8b6ab0690d338a496f1d18d73a",
+              "ref": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
               "path": "scripts/tools/video-request-regression.test.ts",
               "absent": false
             },
-            "digest": "dca489d917a184869f31421c0411f7053de57d6ae04a53d9f31da3436af7a6ee"
+            "digest": "3f5af1459f7e66b29b4e6af2ae2402ca47d3edbe268ef48fb041f1fcbb9fa322"
           }
         ]
       },
-      "updatedAt": 1791412560799,
+      "updatedAt": 1791412583112,
       "admission": {
         "number": 153,
         "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -95703,6 +95703,200 @@
       },
       "previous": "732c545f3e90a63ca6e8dbc7475722741777016f2ee1df1d4b45228fbf790b1b",
       "digest": "9c20ed2f43ffcf674600f2521433eb0ee9fa0b5d6f26d9fbdc26cf8ee55fe618"
+    },
+    {
+      "sequence": 3841,
+      "at": "2026-10-07T22:36:23.111Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 153,
+        "id": "8d36931ae3887e621ed50ee341b79f319507ff9698167f6910aed44a7653accc",
+        "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+        "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219"
+      },
+      "previous": "9c20ed2f43ffcf674600f2521433eb0ee9fa0b5d6f26d9fbdc26cf8ee55fe618",
+      "digest": "30c9b20abaf82a81759c91393d06352e3096d536b4205742d1d49b6873e58c22"
+    },
+    {
+      "sequence": 3842,
+      "at": "2026-10-07T22:36:23.112Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+          "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+          "branch": "fix/T-2026-1007-0918-cine-kb-preserve-intent",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              152
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.12"
+              }
+            ]
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 153,
+            "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "bundles/ai-video/bundle.json",
+              "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
+              "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+              "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts",
+              "scripts/tools/video-request-regression.test.ts"
+            ],
+            "filesHash": "4008f5258d6cde8f64a10077ccaa9c50a2696235124d7f1ec5f921a6965d0ed8",
+            "dependsOn": [
+              152
+            ],
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "rationale": "Read the exact main and source test blobs and KB/shot-intent/CLI consumer dependencies. Replace the obsolete rejection assertion for optional over-budget lighting suggestions with stronger positive assertions: source and downstream retain the complete authored lighting, omitted records contain the whole dropped suggestion with zero written characters, applied/injected fields never falsely claim lighting, and the actual CLI completes downstream micromotion. Unknown subjects, missing KB data, corrupt traces and actual unwritten required contributions still fail existing tests. No test removed, skipped or timeout relaxed. Real media and exact CLI regressions passed. Rollback reverts the connector and its contract assertion together, keeping existing source artifacts."
+              }
+            ],
+            "ciPolicyChangesHash": "d00d88bcf0d3814a44e63c920323ccc2ce88b38575d220f2ab2ffce2158a47a8",
+            "tests": [
+              {
+                "command": "node node_modules/vitest/vitest.mjs run bundles/ai-video/connectors/cine-kb-bridge",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T22:23:27.950323+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              },
+              {
+                "command": "node --import tsx scripts/bundle-governance.mts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T22:23:28.480027+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              },
+              {
+                "command": "node node_modules/vitest/vitest.mjs run scripts/tools/video-request-regression.test.ts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-07T22:23:45.468011+00:00",
+                "result": "Actual previously reviewed check rerun at this exact source head; output gives results and counts."
+              }
+            ],
+            "reviewedAt": "2026-10-07T22:35:42.590508+00:00",
+            "summary": "Current Codex fully read the three changed files and shot-intent implementation. Water reflection now requires an actual water-surface context. Window direction is derived from window clauses only, with ambiguous directions omitted. Authored timed camera contracts bypass generic KB movement insertion. Optional dropped contributions are recorded in omitted rather than applied, while missing required knowledge still stays unverified. Source hash and KB hash binding remain intact. All exact-source cine-KB tests passed; no unresolved finding. No live paid calls or governance edits. The complete bundle manifest and governance canonical digest implementation were read; only the changed cine core hash and its canonical enclosing digest are updated. The actual native bundle governance check passed against committed bytes. The current native test-gate failure was reproduced from its obsolete assertion. The complete CLI regression file and direct dependencies were read. The exact CI migration rationale preserves error/unknown/missing-knowledge checks and adds positive proof of complete authored fields, honest omissions and actual downstream continuation. No test or required gate is removed. This is a current Codex review of the normal semantic source merge at the exact head shown. Fully read the current main bundle manifest to its end and the complete merged 422-line CLI regression plus prior exact connector/shot-intent review. The normal merge preserves the new main direct-post/source-audio changes. Native bundle governance regenerated the canonical digest from actual current-main assets and the reviewed cine core; diff against main changes only the cine core asset hash and enclosing digest. Authored timing/light/context fixes and additive connector tests retain their previous complete review; real committed cine/CLI/media tests and native bundle governance were rerun and passed. The original CI migration rationale retains the same complete-sentence optional KB omission contract and new main assertions. All changed source files and their relevant direct dependencies have actual code evidence; unchanged owned blobs retain their earlier complete review. Tests were actually rerun at this exact committed head. Required cloud CI and the real production release are still mandatory; this receipt does not assert either. The native source alignment is an ordinary fast-forward or merge with current main e58d356e51c8c4f26851141972d54a4081da563c. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main d3de94895b1cbfbefadac6be45aca806f59feb88. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory. The native source alignment is an ordinary fast-forward or merge with current main 5e148fc1ae3ad097bce2fcecf5d724fee9075219. Owned paths unchanged from the earlier complete review retain that evidence; changed paths use the exact current-read attestation below. The main-only prompt-redline and native delivery changes were fully read in this task. Every recorded test was actually rerun at this exact source head. This session receipt leaves native required CI, positive merge readback and real declared production bytes mandatory.",
+            "passed": true,
+            "id": "8d36931ae3887e621ed50ee341b79f319507ff9698167f6910aed44a7653accc"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 153,
+            "pull": {
+              "number": 153,
+              "state": "open",
+              "title": "fix(growth): preserve authored camera and lighting intent [T-2026-1007-0918]",
+              "body": "Knowledge enrichment could interpret indoor marble reflection as water, replace a left window direction with an unrelated right fill light, and append an unbounded camera movement over an authored timed end hold. Version 3 only applies context-supported instructions, preserves complete timed camera text and omits optional whole sentences that exceed a field budget. Omitted suggestions remain separate from actual written evidence. The source author text is retained.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    152\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.12\"\n    }\n  ]\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/fix/T-2026-1007-0918-cine-kb-preserve-intent",
+                "sha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "status_check",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+            "mainSha": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "files": [
+              "bundles/ai-video/bundle.json",
+              "bundles/ai-video/connectors/cine-kb-bridge/audit-round5.test.ts",
+              "bundles/ai-video/connectors/cine-kb-bridge/core.mjs",
+              "bundles/ai-video/connectors/cine-kb-bridge/intent-regression.test.ts",
+              "scripts/tools/video-request-regression.test.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1007-0918",
+              "ready": true,
+              "dependsOn": [
+                152
+              ],
+              "releases": [
+                {
+                  "kind": "desktop",
+                  "version": "0.1.12"
+                }
+              ]
+            },
+            "headTime": 1791411807000,
+            "mergeBase": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [
+              {
+                "id": "CI-001",
+                "file": "scripts/tools/video-request-regression.test.ts",
+                "before": {
+                  "ref": "5e148fc1ae3ad097bce2fcecf5d724fee9075219",
+                  "path": "scripts/tools/video-request-regression.test.ts",
+                  "absent": false
+                },
+                "after": {
+                  "ref": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+                  "path": "scripts/tools/video-request-regression.test.ts",
+                  "absent": false
+                },
+                "digest": "3f5af1459f7e66b29b4e6af2ae2402ca47d3edbe268ef48fb041f1fcbb9fa322"
+              }
+            ]
+          }
+        }
+      },
+      "previous": "30c9b20abaf82a81759c91393d06352e3096d536b4205742d1d49b6873e58c22",
+      "digest": "bfc8a98619ca48a95dbfd3e84c2314c3e144b61472777260de63e2eecaa15dc3"
+    },
+    {
+      "sequence": 3843,
+      "at": "2026-10-07T22:36:00.469Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8d811f5d-9bb6-48ea-864b-8d6c3b4376b0"
+      },
+      "previous": "bfc8a98619ca48a95dbfd3e84c2314c3e144b61472777260de63e2eecaa15dc3",
+      "digest": "df934687905fe73609998301c3a7112ee00ef0f94e15ac25e0613545b0cb8d6d"
     }
   ]
 }
