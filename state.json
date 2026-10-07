@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2138,
+  "revision": 2140,
   "tasks": {
     "132": {
       "number": 132,
@@ -2679,7 +2679,7 @@
         "owner": "admission/pr-142",
         "generation": {}
       },
-      "updatedAt": 1791381753355,
+      "updatedAt": 1791384312588,
       "headSha": "bbc1e45a38a23615380fa157296dc0699f0e2c77",
       "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
       "branch": "fix/T-2026-1007-0918-prompt-redlines",
@@ -56266,6 +56266,51 @@
       },
       "previous": "98a67f270dc4e612dad8b6df27724b3bd52739c01b07e623304d2f2b143b9cde",
       "digest": "4cf001cff7cc5203035768fbfc45a53564672b7daaf06c57962688f7f11f50dd"
+    },
+    {
+      "sequence": 2139,
+      "at": "2026-10-07T14:45:12.588Z",
+      "kind": "task",
+      "data": {
+        "number": 142,
+        "patch": {
+          "headSha": "bbc1e45a38a23615380fa157296dc0699f0e2c77",
+          "mainSha": "8fd04b0a045ae4623c0c4dc822a475645b142baf",
+          "branch": "fix/T-2026-1007-0918-prompt-redlines",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              170
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.4"
+              }
+            ]
+          },
+          "originalBody": "画面字段明确写“不出现房卡、单据、证件”时，原红线检查将顿号后的名词误判为可见道具，阻断合法前期并触发修订。现在否定范围保持到同一名词清单末尾，遇到明确肯定动作或新分句重新检查；后续可见屏幕、手持证件和肯定枚举仍按原规则处理。\n\n当前 Codex 完整读取两个改动文件，复核否定范围、字段边界和肯定重启分支。准确提交后实际运行 prompt-redlines.test.ts，正常、否定清单、肯定恢复、证件与屏幕红线回归均通过。没有模型调用或新付费渲染。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    170\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.4\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "packages/video-studio/src/prompt-redlines.test.ts",
+            "packages/video-studio/src/prompt-redlines.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791380198087
+        }
+      },
+      "previous": "4cf001cff7cc5203035768fbfc45a53564672b7daaf06c57962688f7f11f50dd",
+      "digest": "e2be3084b3531d4eb4e4fc91b7b3d48ff75c01441a42188350cddf408871f4b0"
+    },
+    {
+      "sequence": 2140,
+      "at": "2026-10-07T14:46:17.027Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8385fc02-6671-430b-835c-50668696fc03"
+      },
+      "previous": "e2be3084b3531d4eb4e4fc91b7b3d48ff75c01441a42188350cddf408871f4b0",
+      "digest": "f2f39121fbaf0b93cbcceabca5cdcc67cc73df0517a80b8492acab38189ec586"
     }
   ]
 }
