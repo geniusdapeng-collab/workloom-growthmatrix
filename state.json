@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 2016,
+  "revision": 2018,
   "tasks": {
     "132": {
       "number": 132,
@@ -2879,7 +2879,7 @@
         "owner": "admission/pr-143",
         "generation": {}
       },
-      "updatedAt": 1791380029775,
+      "updatedAt": 1791380198087,
       "headSha": "49140ddd6e6283998fb1522397c9b28abe55d347",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-first-pass-camera",
@@ -53313,6 +53313,46 @@
       },
       "previous": "27ba5ea77fb6c8b0dcbe0b8d529a9ef0941052722c99f31550edab1f372bd3fb",
       "digest": "6bdd75771fca396464e5797ee523caa07ba505aec9165774c382563d85ca2f61"
+    },
+    {
+      "sequence": 2017,
+      "at": "2026-10-07T13:36:38.087Z",
+      "kind": "task",
+      "data": {
+        "number": 143,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "49140ddd6e6283998fb1522397c9b28abe55d347",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              142
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.5"
+              }
+            ]
+          },
+          "dependencies": [
+            142
+          ]
+        }
+      },
+      "previous": "6bdd75771fca396464e5797ee523caa07ba505aec9165774c382563d85ca2f61",
+      "digest": "db3ab0557c306b575aa907d74b8207a716acb9b225f260d0b457c8d54dea3001"
+    },
+    {
+      "sequence": 2018,
+      "at": "2026-10-07T13:37:18.073Z",
+      "kind": "transaction",
+      "data": {
+        "id": "58c7cc6c-4c59-4db2-ab64-8060b2ce7001"
+      },
+      "previous": "db3ab0557c306b575aa907d74b8207a716acb9b225f260d0b457c8d54dea3001",
+      "digest": "67310c9b19ee56cb3caed91672e27ef2515b507b67a7f22f3c4d89d0c63801e1"
     }
   ]
 }
