@@ -1,15 +1,10 @@
 /**
  * deliver —— 多风格交付包（管线 step_key `deliver`，gate `G-DLV1`）
  *
- * 管线 yml 的口径：**干净母版 + 旁挂字幕 + 2–3 个风格变体（封面/文案/BGM/调色/转场）+ 软字幕轨版 +
- * 交付清单 + 工程文件；镜头只生成一次，变体零 token**（只做后期层派生，绝不重跑渲染）。
- * gate `G-DLV1`：**变体雷同（画面与音轨都测不出差别）一票否决**。
- *
- * 本模块只做"决定 + 判定"的纯逻辑（可单测），真正的 ffmpeg/工位调用在 runner 里：
- *   · `DELIVERY_VARIANTS`   变体配方（调色档 + 文案后缀 + 音乐电平偏移）
- *   · `buildVariantPlan()`  把母版派生成变体的执行计划（含 ffmpeg/工位参数）
- *   · `assessVariantDistinctness()` 画面/音轨双维度差异判定 → G-DLV1 的判据
- *   · `buildDeliveryManifest()`     交付清单（哪支母版、哪些变体、字幕与软轨在哪、各自的指纹）
+ * 当前默认：成功源片直接后期，按请求产出母版、字幕、变体、软轨、清单与工程。
+ * 显式单变体可交付，G-DLV1 只保留所请求变体缺产物；没有像素/音轨/封面品质二检。
+ * assessVariant* 仅保留为显式历史诊断 API，默认全链不调用、不触发重生成。
+ * buildVariantPlan 生成真实请求配方；buildDeliveryManifest 记录文件摘要与未做品质复评的事实。
  */
 
 export interface DeliveryVariant {
@@ -47,7 +42,7 @@ export const DELIVERY_VARIANTS: DeliveryVariant[] = [
   { id: "punchy-social", label: "社交高对比", gradeProfile: "high-contrast-social", gradeIntensity: 0.45, musicLevelDeltaDb: 0.5, copySuffix: "｜高对比", coverAccent: "#FF6A5A", bgmGenre: "轻快|卡点", bgmMood: "律动兴奋|明快愉悦", note: "信息流跳脱，适合小红书/抖音封面流" }
 ];
 
-/** 交付包最少变体数（产品口径：一次产出 3 个不同风格的后期版本让用户选） */
+/** 历史显式三轴诊断的数量参数；默认交付使用本次请求数量，可为一支。 */
 export const VARIANT_MIN_COUNT = 3;
 
 export interface VariantAxesEntry {
@@ -67,7 +62,7 @@ export interface VariantAxesReport {
 }
 
 /**
- * 三轴判据：数量 ≥3，且 **调色 / 封面 / 配乐** 三个维度上都不能出现"两支一样"。
+ * 显式历史三轴诊断：数量 ≥3，调色/封面/配乐相异；不被默认交付调用。
  * 为什么是硬判据：2026-09-26 产品所有者点名"我看系统里有一次产出几个版本的约束，为什么没执行"——
  * 除了"阶段没被调用"这个执行问题，约束本身也只有"≥2 且画面/音轨可测差异"，
  * 允许"三支只有滤镜不同、封面与配乐完全一样"混过去。这里把口径收紧到产品意图。
@@ -179,7 +174,7 @@ const meanColor = (frames: Array<{ r: number; g: number; b: number }>): { r: num
 };
 
 /**
- * G-DLV1 判定（阈值口径写在参数里，便于审计复核）：
+ * 显式历史差异诊断（阈值写在参数里；不是当前默认交付门）：
  *   · 画面差异 = 平均色差的欧氏距离（0–441）。**< 6 视为"画面测不出差别"**（≈肉眼同色）；
  *   · 音轨差异 = |LUFS 差| + |真峰值差|。**< 1.0 视为"音轨测不出差别"**；
  *   · 两者同时低于阈值 → `identical = true` → 该对变体雷同，交付包 **不放行**（要真的做出风格差异）。
@@ -312,12 +307,13 @@ export interface DeliveryManifest {
     /** 该变体自己的配乐（曲库曲目 + 实测 BPM/卡点偏差） */
     bgm?: { track: string; sha256: string; measuredBpm?: number; gridErrorMs?: number } | null;
   }>;
-  /** G-DLV1 判定结果（雷同一票否决） */
-  distinctness: DistinctnessReport;
-  /** 三轴判据（数量 ≥3 且 调色/封面/配乐 两两不同） */
-  variantAxes?: VariantAxesReport;
+  /** 显式历史差异诊断；默认交付为 null，不以此放行或触发返工。 */
+  distinctness: DistinctnessReport | null;
+  /** 显式历史三轴诊断；当前默认不调用。 */
+  variantAxes?: VariantAxesReport | null;
   /** 证据：变体测量原始值（审计可复核） */
   samples: VariantSample[];
+  qualityReviewed: boolean;
   reuseDiscipline: string;
 }
 
@@ -328,8 +324,8 @@ export function buildDeliveryManifest(input: {
   subtitles: { sidecarDir: string | null; softsub: string | null; burned: boolean };
   cover: { path: string | null; hook: string };
   variants: DeliveryManifest["variants"];
-  distinctness: DistinctnessReport;
-  variantAxes?: VariantAxesReport;
+  distinctness: DistinctnessReport | null;
+  variantAxes?: VariantAxesReport | null;
   samples: VariantSample[];
   at?: string;
 }): DeliveryManifest {
@@ -344,6 +340,7 @@ export function buildDeliveryManifest(input: {
     distinctness: input.distinctness,
     ...(input.variantAxes ? { variantAxes: input.variantAxes } : {}),
     samples: input.samples,
+    qualityReviewed: input.distinctness !== null,
     reuseDiscipline: "变体只做后期层派生（调色/混音/文案），镜头不重新生成（零 token）；每支变体带 sha256 便于发布方核对"
   };
 }

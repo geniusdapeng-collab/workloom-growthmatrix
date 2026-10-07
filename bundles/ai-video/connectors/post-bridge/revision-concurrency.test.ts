@@ -82,6 +82,32 @@ describe("revision compare-and-swap and exclusive ownership", () => {
     expect(fs.existsSync(path.join(root, "versions"))).toBe(false);
     expect(fs.existsSync(path.join(root, ".revision.lock"))).toBe(false);
   });
+  it("explicit malformed replacement audio sources fail in core/tool/CLI before claiming any version", async () => {
+    const before = fs.readFileSync(projectPath);
+    const patchFile = path.join(root, "replace.json");
+    const patch = { shots: { replace: [{ shotId: "SC-01" }] } };
+    writeJson(patchFile, patch);
+    for (const [index, invalid] of [null, false, 0, "", [], {}].entries()) {
+      for (const audioStemsByShot of [invalid, { "SC-01": invalid }]) {
+        await expect(revise({ patch, shotPaths: { "SC-01": fixture }, audioStemsByShot }))
+          .rejects.toMatchObject({ code: "audio_stems_source_unverified" });
+        await expect(callTool("postwrite.reedit", { project_path: projectPath, patch,
+          expected_version: expectBase().expectedVersion, expected_project_sha256: expectBase().expectedProjectSha256,
+          shot_paths: { "SC-01": path.join(root, "norm.mp4") }, audio_stems_by_shot: audioStemsByShot }, { bins,
+          env: { ...process.env, WORKLOOM_POST_ALLOWED_ROOTS: root } }))
+          .rejects.toMatchObject({ code: "audio_stems_source_unverified" });
+      }
+      const sourcesFile = path.join(root, `invalid-replacement-${index}.json`);
+      writeJson(sourcesFile, { "SC-01": invalid });
+      const result = await child(["reedit", "--project", projectPath, "--patch", patchFile,
+        "--shot", `SC-01=${path.join(root, "norm.mp4")}`, "--audio-stems-by-shot", sourcesFile]);
+      expect(result.code).toBe(3);
+      expect(result.output).toContain("audio_stems_source_unverified");
+      expect(fs.existsSync(path.join(root, "versions"))).toBe(false);
+      expect(fs.existsSync(path.join(root, ".revision.lock"))).toBe(false);
+    }
+    expect(fs.readFileSync(projectPath)).toEqual(before);
+  }, 30000);
   it("one of two simultaneous real revisions wins; old bytes and the winner remain unchanged", async () => {
     const before = fs.readFileSync(projectPath);
     const results = await Promise.allSettled([revise(), revise()]);

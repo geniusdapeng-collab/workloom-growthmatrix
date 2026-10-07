@@ -69,7 +69,7 @@ function readShots(value) {
       shotId: String(shot.shotId ?? shot.shot_id ?? `SC-${String(index + 1).padStart(2, "0")}`),
       path: String(shot.path ?? shot.localPath ?? ""),
       ...(shot.kind ? { kind: String(shot.kind) } : {}),
-      ...(shot.audioStems ? { audioStems: shot.audioStems } : {}),
+      ...(Object.hasOwn(shot, "audioStems") ? { audioStems: shot.audioStems } : {}),
     }));
   }
   return value.split(",").map((file, index) => ({
@@ -135,7 +135,7 @@ async function main() {
       }
       line("  变体差异（实测）：");
       for (const row of outcome.manifest.divergence) {
-        line(`    ${row.a} × ${row.b}：画面平均像素差 ${row.visual.meanAbsDiff}/255（${row.visual.verdict}）· 音频 ${row.audio.differs ? "不同" : "相同"}`);
+        line(`    ${row.a} × ${row.b}：请求配方 ${row.recipeDiffers ? "不同" : "相同"}；产物 SHA 已记录（不进行质量评分）`);
       }
       line(`  清单：${outcome.manifestPath}`);
       line(`  工程文件：${outcome.projectPath}（返修入口）`);
@@ -177,7 +177,8 @@ async function main() {
         patch,
         outDir: typeof flags["out-dir"] === "string" ? flags["out-dir"] : null,
         shotPaths: Object.keys(shotPaths).length ? shotPaths : null,
-        audioStemsByShot: flags["audio-stems-by-shot"] ? readJson(flags["audio-stems-by-shot"], "--audio-stems-by-shot") : null,
+        ...(Object.hasOwn(flags, "audio-stems-by-shot")
+          ? { audioStemsByShot: readJson(flags["audio-stems-by-shot"], "--audio-stems-by-shot") } : {}),
         dryRun: flags["dry-run"] === true,
       });
       if (!outcome.executed) {
