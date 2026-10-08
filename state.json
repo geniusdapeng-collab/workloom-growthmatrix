@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5381,
+  "revision": 5383,
   "tasks": {
     "132": {
       "number": 132,
@@ -9876,7 +9876,7 @@
         "owner": "admission/pr-193",
         "generation": {}
       },
-      "updatedAt": 1791457517454,
+      "updatedAt": 1791457816633,
       "headSha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
       "intent": {
         "taskId": "T-2026-1008-0002",
@@ -124213,6 +124213,46 @@
       },
       "previous": "02bf3233eda40ec29bf0a9136f8ca2a3775ccad27929493d51154113ade1d3ed",
       "digest": "b49c91b22a524d27ca4622c38ffc6c83b2d2b8dd66887c3f3db2a7f069a89504"
+    },
+    {
+      "sequence": 5382,
+      "at": "2026-10-08T11:10:16.633Z",
+      "kind": "task",
+      "data": {
+        "number": 193,
+        "patch": {
+          "headSha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
+          "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+          "branch": "task/T-2026-1008-0002",
+          "intent": {
+            "taskId": "T-2026-1008-0002",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "共享任务回执读取器此前用 String 转换检查 state/origin，数组字段会通过枚举校验，并可能跳过成功结果检查或进入旧任务查询。现在要求实际合法字符串，在导入、锁、提交或轮询前拒绝非法记录；合法历史 v1、当前 v2、晚到 ACK 和原任务恢复保留。只修改共享校验器及三个测试文件，两个后期消费者实现字节未改。\n\n验证：精确提交 `73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57` 的直接三套离线用例 162/162 通过，当前完整 video-studio、邻近消费者、video-studio/server 类型检查、包完整性、提交协议、硬闸政策、CLI/MCP 指南及运行依赖九项提交后检查均通过。原始 RED 22 条失败和本地首次依赖/类型夹具诊断保留；原记录、锁、任务身份、完整媒体和无额外 POST/GET 的行为均有实际断言。\n\n边界：无供应商、模型、ASR/TTS、新影片或付费调用；不改变品质政策或素材时钟。独立审查未完成前 ready=false；审查完成后通过正常原生队列和当前候选 CI 发布，回滚为 revert 本任务提交。\n\n任务卡：#192（T-2026-1008-0002）。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1008-0002\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/post-render-acceptance.test.ts",
+            "packages/video-studio/src/video-surface-repair.test.ts",
+            "packages/video-studio/src/video-task-receipt.test.ts",
+            "packages/video-studio/src/video-task-receipt.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791457517454
+        }
+      },
+      "previous": "b49c91b22a524d27ca4622c38ffc6c83b2d2b8dd66887c3f3db2a7f069a89504",
+      "digest": "1c9c28e26b79a981762107d0698d611d77e67ee126b76f0a2f44391b31a86e5c"
+    },
+    {
+      "sequence": 5383,
+      "at": "2026-10-08T11:12:15.869Z",
+      "kind": "transaction",
+      "data": {
+        "id": "697d4063-c9c4-43a7-a367-f523109bacc0"
+      },
+      "previous": "1c9c28e26b79a981762107d0698d611d77e67ee126b76f0a2f44391b31a86e5c",
+      "digest": "44949a569a88d4c103801ea5a65bf1277cd6edbc931ea57ab5dde3be1b7de2ea"
     }
   ]
 }
