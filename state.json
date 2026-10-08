@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 6588,
+  "revision": 6590,
   "tasks": {
     "132": {
       "number": 132,
@@ -5075,7 +5075,7 @@
     },
     "153": {
       "number": 153,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791359178476,
       "attempts": {},
       "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -5236,7 +5236,7 @@
           }
         ]
       },
-      "updatedAt": 1791502809831,
+      "updatedAt": 1791503112918,
       "admission": {
         "number": 153,
         "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -145762,6 +145762,46 @@
       },
       "previous": "48c7df329f8d44e987e785a05e7670b31981cb2e110ce667de5c34c1ce412606",
       "digest": "04d939d17e27a3bdb2d0e9750482bf909f69a4a4053fea820b199caaf794a47a"
+    },
+    {
+      "sequence": 6589,
+      "at": "2026-10-08T23:45:12.918Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              152
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.12"
+              }
+            ]
+          },
+          "dependencies": [
+            152
+          ]
+        }
+      },
+      "previous": "04d939d17e27a3bdb2d0e9750482bf909f69a4a4053fea820b199caaf794a47a",
+      "digest": "9517815efe833b176b419ed50a6cee2e5e3b4694213260b6661a35111c82ebd1"
+    },
+    {
+      "sequence": 6590,
+      "at": "2026-10-08T23:46:27.902Z",
+      "kind": "transaction",
+      "data": {
+        "id": "6224c097-be51-43a8-b11a-46f09eb00a9e"
+      },
+      "previous": "9517815efe833b176b419ed50a6cee2e5e3b4694213260b6661a35111c82ebd1",
+      "digest": "e5b1f4de32f6a7ab059f8ffd419d0477182d648f8d557e4e71672638bf0b449f"
     }
   ]
 }
