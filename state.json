@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4164,
+  "revision": 4166,
   "tasks": {
     "132": {
       "number": 132,
@@ -7144,7 +7144,7 @@
     },
     "167": {
       "number": 167,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791373275072,
       "attempts": {},
       "headSha": "a3ae5995629bcecc7f2417412fbe90758a25143c",
@@ -7284,7 +7284,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791418815631,
+      "updatedAt": 1791419113866,
       "admission": {
         "number": 167,
         "headSha": "a3ae5995629bcecc7f2417412fbe90758a25143c",
@@ -7302,7 +7302,7 @@
         "bundles/ai-video/library/style-variants/bold-promo.json"
       ],
       "ciSince": 1791374342093,
-      "error": "Prerequisite #165 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/165 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/167 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "repairRequired": {
         "provider": "codex",
         "headSha": "b2fee21aaca848005c4c419eada8a10526dee62d",
@@ -7311,7 +7311,7 @@
         "at": 1791378611870
       },
       "recoveryIntent": null,
-      "blockedUntil": 1791419113092,
+      "blockedUntil": 1791419713866,
       "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -102631,6 +102631,31 @@
       },
       "previous": "4e86f440241e50dd9a567ac539f164894738de93082958e2ae70cdb3501f53d5",
       "digest": "28adff70591a13c728a1cd93c3e755fd807518df58c75a78fbf505aaa4615002"
+    },
+    {
+      "sequence": 4165,
+      "at": "2026-10-08T00:25:13.866Z",
+      "kind": "task",
+      "data": {
+        "number": 167,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/167 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791419713866
+        }
+      },
+      "previous": "28adff70591a13c728a1cd93c3e755fd807518df58c75a78fbf505aaa4615002",
+      "digest": "3bdcd60b31e2f68e02b17899fe6976dfd47bd16f97b206d50e832ccb07b77997"
+    },
+    {
+      "sequence": 4166,
+      "at": "2026-10-08T00:25:37.800Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8ac7923b-81a9-42ef-91e6-6a522a48923e"
+      },
+      "previous": "3bdcd60b31e2f68e02b17899fe6976dfd47bd16f97b206d50e832ccb07b77997",
+      "digest": "0b618d2a72acf9a28a7058fade78fb2ec458a85806707c342db6606266a3ea71"
     }
   ]
 }
