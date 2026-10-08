@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 6290,
+  "revision": 6292,
   "tasks": {
     "132": {
       "number": 132,
@@ -6302,7 +6302,7 @@
     },
     "161": {
       "number": 161,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791368515129,
       "attempts": {},
       "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
@@ -6470,7 +6470,7 @@
           }
         ]
       },
-      "updatedAt": 1791490218030,
+      "updatedAt": 1791491415139,
       "admission": {
         "number": 161,
         "headSha": "fd1089d472ec538c5cdd64a32b8d926261d81135",
@@ -6493,12 +6493,12 @@
       "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
-      "blockedUntil": 1791490515203,
+      "blockedUntil": 1791492015139,
       "candidate": null,
       "dependencies": [
         160
       ],
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/161 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n"
+      "error": "Prerequisite #160 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/160 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n"
     },
     "162": {
       "number": 162,
@@ -140534,6 +140534,31 @@
       },
       "previous": "e264ba842e030529eee3a5862275d4674c7e7b49bbd349d97d4c56f20bec473d",
       "digest": "da1fa536e8c1f495d64ddd2a80fb502ca87b9dabcd053b2916a7b5395d03bd73"
+    },
+    {
+      "sequence": 6291,
+      "at": "2026-10-08T20:30:15.139Z",
+      "kind": "task",
+      "data": {
+        "number": 161,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #160 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/160 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791492015139
+        }
+      },
+      "previous": "da1fa536e8c1f495d64ddd2a80fb502ca87b9dabcd053b2916a7b5395d03bd73",
+      "digest": "88946dea151c87bd63b549c3c9579b41110fe97de26c8e98f65cf540ff86cd91"
+    },
+    {
+      "sequence": 6292,
+      "at": "2026-10-08T20:32:32.864Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8cec2ce2-279c-4708-bfb4-613d2204ad81"
+      },
+      "previous": "88946dea151c87bd63b549c3c9579b41110fe97de26c8e98f65cf540ff86cd91",
+      "digest": "24648d1e65026c7248cbfde56ff58f46c2c072c4cfb9df691a0f81972f9a0fc5"
     }
   ]
 }
