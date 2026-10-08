@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5547,
+  "revision": 5549,
   "tasks": {
     "132": {
       "number": 132,
@@ -4611,7 +4611,7 @@
     },
     "150": {
       "number": 150,
-      "status": "waiting_ci",
+      "status": "parked",
       "firstSeen": 1791357138520,
       "attempts": {},
       "headSha": "e2d487faa52fcf556951035016d0ddbc66ccbd63",
@@ -4724,8 +4724,8 @@
       "dependencies": [
         149
       ],
-      "error": "检查/评审阻断：Required check static-gate missing/failed/ambiguous; Codex review identity differs from the exact repository/source/main/policy",
-      "blockedUntil": 0,
+      "error": "检查/评审阻断：Codex review identity differs from the exact repository/source/main/policy",
+      "blockedUntil": 1791463220741,
       "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -4749,10 +4749,10 @@
       },
       "repairRequired": {
         "provider": "codex",
-        "headSha": "2d2e6f03d04b7a534d6a5c13c898f5b1bad2e320",
-        "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
-        "reason": "检查/评审阻断：Required check static-gate missing/failed/ambiguous; Codex review identity differs from the exact repository/source/main/policy",
-        "at": 1791458712865
+        "headSha": "e2d487faa52fcf556951035016d0ddbc66ccbd63",
+        "mainSha": "514838d14319a5492a9c26a143b20359f49e62b0",
+        "reason": "检查/评审阻断：Codex review identity differs from the exact repository/source/main/policy",
+        "at": 1791462620741
       },
       "recoveryIntent": null
     },
@@ -127572,6 +127572,39 @@
       },
       "previous": "c960268e1b494ea35e0df7ab4d24764146bd6ad2f928f0ef3210fe6631e87daf",
       "digest": "f1ba8bea5904b7d3d22609a8178c22974b97f6a1a23bf2fadf4380eb7ab9458c"
+    },
+    {
+      "sequence": 5548,
+      "at": "2026-10-08T12:30:20.741Z",
+      "kind": "task",
+      "data": {
+        "number": 150,
+        "patch": {
+          "status": "parked",
+          "error": "检查/评审阻断：Codex review identity differs from the exact repository/source/main/policy",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "e2d487faa52fcf556951035016d0ddbc66ccbd63",
+            "mainSha": "514838d14319a5492a9c26a143b20359f49e62b0",
+            "reason": "检查/评审阻断：Codex review identity differs from the exact repository/source/main/policy",
+            "at": 1791462620741
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791463220741
+        }
+      },
+      "previous": "f1ba8bea5904b7d3d22609a8178c22974b97f6a1a23bf2fadf4380eb7ab9458c",
+      "digest": "e78847bf2dc8e991c8bb627435ffabd443df0ec3c9b0ffd6b01011f4734720c9"
+    },
+    {
+      "sequence": 5549,
+      "at": "2026-10-08T12:31:27.357Z",
+      "kind": "transaction",
+      "data": {
+        "id": "bbf0052e-b7ab-47f7-9047-0c612f9c34b3"
+      },
+      "previous": "e78847bf2dc8e991c8bb627435ffabd443df0ec3c9b0ffd6b01011f4734720c9",
+      "digest": "92f1b519e766267973d03953a6011bc2a066a613e980a36cf23ba25b53a70fb0"
     }
   ]
 }
