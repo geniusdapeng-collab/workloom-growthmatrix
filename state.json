@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5696,
+  "revision": 5698,
   "tasks": {
     "132": {
       "number": 132,
@@ -6302,7 +6302,7 @@
     },
     "161": {
       "number": 161,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791368515129,
       "attempts": {},
       "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
@@ -6470,7 +6470,7 @@
           }
         ]
       },
-      "updatedAt": 1791467711962,
+      "updatedAt": 1791468015032,
       "admission": {
         "number": 161,
         "headSha": "fd1089d472ec538c5cdd64a32b8d926261d81135",
@@ -130112,6 +130112,46 @@
       },
       "previous": "b385f1e535fab38537ccab9b42b20bf4caf8396bbe085adc4da0d51837501617",
       "digest": "44374c38d304ba2b670a904f42b0403bf08de2065dfdd342ed73378ab6f55ce6"
+    },
+    {
+      "sequence": 5697,
+      "at": "2026-10-08T14:00:15.032Z",
+      "kind": "task",
+      "data": {
+        "number": 161,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              160
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.20"
+              }
+            ]
+          },
+          "dependencies": [
+            160
+          ]
+        }
+      },
+      "previous": "44374c38d304ba2b670a904f42b0403bf08de2065dfdd342ed73378ab6f55ce6",
+      "digest": "f21ea85284bd00d05c74f25ca4ebeecdc9ab46af2e20c3e5ebb2d306fa8ee065"
+    },
+    {
+      "sequence": 5698,
+      "at": "2026-10-08T14:01:41.503Z",
+      "kind": "transaction",
+      "data": {
+        "id": "b2709c14-abb7-41b6-ac43-06dcfde7108b"
+      },
+      "previous": "f21ea85284bd00d05c74f25ca4ebeecdc9ab46af2e20c3e5ebb2d306fa8ee065",
+      "digest": "355aed76606e53766c31a08061a095255d011713425decbb6e2434293e3d68ef"
     }
   ]
 }
