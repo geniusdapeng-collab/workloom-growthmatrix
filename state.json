@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4743,
+  "revision": 4745,
   "tasks": {
     "132": {
       "number": 132,
@@ -5592,7 +5592,7 @@
     },
     "156": {
       "number": 156,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791361029790,
       "attempts": {},
       "headSha": "3ca871b90d7bb63718c672e4b21322482817819a",
@@ -5738,7 +5738,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791436511156,
+      "updatedAt": 1791436819052,
       "admission": {
         "number": 156,
         "headSha": "3ca871b90d7bb63718c672e4b21322482817819a",
@@ -112502,6 +112502,48 @@
       },
       "previous": "cecf4040812040d8bcfe4dbb7eca1e91bc19d2ca58652ea54224b48da4931b01",
       "digest": "afa4dbda700dca8315e94e584ca149ac7a219a6cf396e72a0b487a881ec84cfd"
+    },
+    {
+      "sequence": 4744,
+      "at": "2026-10-08T05:20:19.052Z",
+      "kind": "task",
+      "data": {
+        "number": 156,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "3ca871b90d7bb63718c672e4b21322482817819a",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              148,
+              149,
+              155
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.16"
+              }
+            ]
+          },
+          "dependencies": [
+            155
+          ]
+        }
+      },
+      "previous": "afa4dbda700dca8315e94e584ca149ac7a219a6cf396e72a0b487a881ec84cfd",
+      "digest": "17cd4cae2f21fc9ef76ed65da31add78a1c902a8935d155cb6fb516f1b8f9f96"
+    },
+    {
+      "sequence": 4745,
+      "at": "2026-10-08T05:21:16.735Z",
+      "kind": "transaction",
+      "data": {
+        "id": "97654624-315c-4d94-aefe-9b1024c21de0"
+      },
+      "previous": "17cd4cae2f21fc9ef76ed65da31add78a1c902a8935d155cb6fb516f1b8f9f96",
+      "digest": "9ce900e3c81f7f3c4490e401aa73a829a21f08aa623afc75fa19752948c6c527"
     }
   ]
 }
