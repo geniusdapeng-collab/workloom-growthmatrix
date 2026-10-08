@@ -180,7 +180,7 @@ describe("current v2 supplier task enters the same read-only post adopter", () =
     expect(adopted).toMatchObject({ file: video, taskId: "paid-task-1", sha256: before.sha256, requestSha256: receipt.requestSha256 });
     const verdict = await reviewStage({ stage: "shot", projectId: "P", artifacts: [{ path: adopted!.file, kind: "video" }],
       deterministic: [{ id: "identity", pass: false, hard: true, detail: "旧品质打回不能替代供应商成功事实" }],
-      env: {}, fetchImpl: network });
+      env: {}, fetchImpl: globalThis.fetch });
     expect(verdict).toMatchObject({ approved: true, score: null, rerun: false });
     expect(inspectPostInput({ file: adopted!.file })).toMatchObject({ hasAudio: true, qualityReviewed: false, durationSec: 2 });
     expect(frames()).toBe(beforeFrames); expect(audio()).toEqual(beforeAudio);
@@ -211,6 +211,8 @@ describe("current v2 supplier task enters the same read-only post adopter", () =
     ["missing schema", value => { delete value.schemaVersion; }],
     ["null schema", value => { value.schemaVersion = null; }],
     ["invalid origin", value => { value.origin = "untrusted"; }],
+    ["array submitted origin", value => { value.origin = ["submitted-here"]; }],
+    ["array legacy origin", value => { value.origin = ["legacy-resume-only"]; }],
     ["submitting", value => { value.state = "submitting"; }],
     ["submitted", value => { value.state = "submitted"; }],
     ["rejected", value => { value.state = "rejected"; }],
@@ -298,7 +300,7 @@ describe("current v2 supplier task enters the same read-only post adopter", () =
     vi.stubEnv("WL_FFPROBE", join(root, "missing-ffprobe"));
     const network = vi.spyOn(globalThis, "fetch").mockImplementation(async () => { throw new Error("NO_POST_NETWORK_ALLOWED"); });
     const result = await reviewStage({ stage: "shot", projectId: "P", artifacts: [{ path: adopted!.file, kind: "video" }],
-      deterministic: [], env: {}, fetchImpl: network });
+      deterministic: [], env: {}, fetchImpl: globalThis.fetch });
     expect(result).toMatchObject({ approved: false, score: null, rerun: false }); expect(result.reason).toContain("POST_INPUT_NOT_OPENABLE");
     expect([fingerprintArtifact(source), fingerprintArtifact(video)]).toEqual(before); expect(JSON.stringify(row)).toBe(historyBefore);
     expect(submit).toHaveBeenCalledTimes(1); expect(poll).toHaveBeenCalledTimes(1); expect(network).not.toHaveBeenCalled();

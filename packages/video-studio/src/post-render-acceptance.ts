@@ -63,6 +63,9 @@ export function findProviderClip(input: {
     throw new Error("POST_PROVIDER_RECEIPT_INVALID: 原供应商回执结构无效，禁止重交");
   }
   if (task?.schemaVersion === "workloom.video-task-receipt/v2") {
+    if (task.origin !== "submitted-here" && task.origin !== "legacy-resume-only") {
+      throw new Error("POST_PROVIDER_RECEIPT_INVALID: 原供应商任务来源字段无效，禁止重交");
+    }
     // A current writer freezes the full paid request identity. Validate it rather
     // than downgrade v2 to a legacy receipt or create another provider task.
     try { assertVideoTaskReceiptIdentity(task); }
