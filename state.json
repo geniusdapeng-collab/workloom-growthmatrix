@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 6558,
+  "revision": 6560,
   "tasks": {
     "132": {
       "number": 132,
@@ -5760,7 +5760,7 @@
     },
     "157": {
       "number": 157,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791362963095,
       "attempts": {},
       "headSha": "f529cff789367fc50cc35f2e377f0b6d58941793",
@@ -5919,7 +5919,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791501612561,
+      "updatedAt": 1791502509440,
       "admission": {
         "number": 157,
         "headSha": "f529cff789367fc50cc35f2e377f0b6d58941793",
@@ -5934,7 +5934,7 @@
         }
       },
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/157 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791501911139,
+      "blockedUntil": 1791503109440,
       "dependencies": [
         150,
         156
@@ -145273,6 +145273,31 @@
       },
       "previous": "68be1be041c9d79eae6d7add03f861c80404fbfe14f319ba85cebb77ae8ef0d2",
       "digest": "00fbb8b861f109130007ddade9c05f3ad98b4f5bade9e50d47e172c3cf8c8b67"
+    },
+    {
+      "sequence": 6559,
+      "at": "2026-10-08T23:35:09.440Z",
+      "kind": "task",
+      "data": {
+        "number": 157,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/157 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791503109440
+        }
+      },
+      "previous": "00fbb8b861f109130007ddade9c05f3ad98b4f5bade9e50d47e172c3cf8c8b67",
+      "digest": "7f3da9074e55cb4b82f5ae325b274e78f9d7fcf2efbc77d10008720da5ce85f3"
+    },
+    {
+      "sequence": 6560,
+      "at": "2026-10-08T23:35:33.256Z",
+      "kind": "transaction",
+      "data": {
+        "id": "0cdc5888-9b33-446a-b58c-35af4e16a3e3"
+      },
+      "previous": "7f3da9074e55cb4b82f5ae325b274e78f9d7fcf2efbc77d10008720da5ce85f3",
+      "digest": "9cbadf8ae65c38bd23d28ab32bc4cc2f65b57abde9f718715c904a7f898f82df"
     }
   ]
 }
