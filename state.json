@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 6514,
+  "revision": 6516,
   "tasks": {
     "132": {
       "number": 132,
@@ -4711,7 +4711,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791500415684,
+      "updatedAt": 1791501311139,
       "admission": {
         "number": 150,
         "headSha": "e2d487faa52fcf556951035016d0ddbc66ccbd63",
@@ -144443,6 +144443,57 @@
       },
       "previous": "af52e0365fca813c34690998f950386d335cf0a174cb0f7606b2cb99e2002c5c",
       "digest": "1ce650471f893c21bdfdad5b81f505bd139a4d933fdcf8f2747c7e9ce11d089a"
+    },
+    {
+      "sequence": 6515,
+      "at": "2026-10-08T23:15:11.139Z",
+      "kind": "task",
+      "data": {
+        "number": 150,
+        "patch": {
+          "headSha": "e2d487faa52fcf556951035016d0ddbc66ccbd63",
+          "mainSha": "514838d14319a5492a9c26a143b20359f49e62b0",
+          "branch": "fix/T-2026-1007-0918-formal-preproduction-recovery",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              142,
+              144,
+              149
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.10"
+              }
+            ]
+          },
+          "originalBody": "Failed audience JSON was silently replaced by vendor defaults, and unsuccessful prompt repair lost the original rejection needed for same-stage recovery. The host now awaits the real requirement conversion, validates nested model output before fallback, retains the real rejected verdict and repair response, and reuses checkpoints only after exact source/contract/error verification. Legal candidates still undergo fresh G6/G7 approval; no old approval is reused. Environment errors collect every shot and first-hook mismatch. Explicit no-person shots retain no-person metadata and reject contradictory human declarations. The completeness principle is fed to requirement and prompt workstations; default overall seconds are a creative target while already planned individual shot durations stay frozen during repair. PR144 owns the matching duration core and PR142 its render redline correctness. The actual task completed real G1-G7 and six render tasks after this repair; test fixtures make no live paid calls.\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1007-0918\",\n  \"ready\": true,\n  \"depends_on\": [\n    142,\n    144,\n    149\n  ],\n  \"releases\": [\n    {\n      \"kind\": \"desktop\",\n      \"version\": \"0.1.10\"\n    }\n  ]\n}\n-->",
+          "files": [
+            "packages/video-studio/src/film-shotlist.test.ts",
+            "packages/video-studio/src/film-shotlist.ts",
+            "packages/video-studio/src/prompt-review-bridge.test.ts",
+            "packages/video-studio/src/prompt-review-bridge.ts",
+            "packages/video-studio/src/requirement-bridge.test.ts",
+            "packages/video-studio/src/requirement-bridge.ts"
+          ],
+          "status": "parked",
+          "ciSince": 1791458974627
+        }
+      },
+      "previous": "1ce650471f893c21bdfdad5b81f505bd139a4d933fdcf8f2747c7e9ce11d089a",
+      "digest": "09a377f4238f8644c2374cdb560e913e54f66e9c0f0b18b449d129670a4da1a5"
+    },
+    {
+      "sequence": 6516,
+      "at": "2026-10-08T23:17:02.600Z",
+      "kind": "transaction",
+      "data": {
+        "id": "197350e8-69a4-4f7f-9a3e-b69d4c2e0e4f"
+      },
+      "previous": "09a377f4238f8644c2374cdb560e913e54f66e9c0f0b18b449d129670a4da1a5",
+      "digest": "7be6ea61bba34c299f12560cd84a26545b40a7dc79d60ec8314146f78ede8932"
     }
   ]
 }
