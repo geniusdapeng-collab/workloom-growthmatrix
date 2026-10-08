@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4190,
+  "revision": 4192,
   "tasks": {
     "132": {
       "number": 132,
@@ -4611,7 +4611,7 @@
     },
     "150": {
       "number": 150,
-      "status": "waiting_ci",
+      "status": "parked",
       "firstSeen": 1791357138520,
       "attempts": {},
       "headSha": "fac83eb139bd23ad9f3f0d4475c2cce902e08223",
@@ -4724,8 +4724,8 @@
       "dependencies": [
         149
       ],
-      "error": "Prerequisite #149 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/149 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 0,
+      "error": "检查/评审阻断：Codex review identity differs from the exact repository/source/main/policy",
+      "blockedUntil": 1791420911019,
       "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -4746,7 +4746,15 @@
         "previousHead": "f409347e11fb6066e013c83b0fea98e19cf3d340",
         "mainSha": "d11f3ce08333142102ef89a1760453cdff4aa581",
         "verifiedAt": "2026-10-07T23:41:06.769Z"
-      }
+      },
+      "repairRequired": {
+        "provider": "codex",
+        "headSha": "fac83eb139bd23ad9f3f0d4475c2cce902e08223",
+        "mainSha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+        "reason": "检查/评审阻断：Codex review identity differs from the exact repository/source/main/policy",
+        "at": 1791420311019
+      },
+      "recoveryIntent": null
     },
     "151": {
       "number": 151,
@@ -103080,6 +103088,39 @@
       },
       "previous": "c78a50ff52bc7c55118b2419bdce01ab7803762bf306d7bacdf3db370a058b63",
       "digest": "cfe464dc5c71d0c50a337b442f7c3b3261bd6fdd9f96c3d8659e3fac11dfed66"
+    },
+    {
+      "sequence": 4191,
+      "at": "2026-10-08T00:45:11.019Z",
+      "kind": "task",
+      "data": {
+        "number": 150,
+        "patch": {
+          "status": "parked",
+          "error": "检查/评审阻断：Codex review identity differs from the exact repository/source/main/policy",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "fac83eb139bd23ad9f3f0d4475c2cce902e08223",
+            "mainSha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+            "reason": "检查/评审阻断：Codex review identity differs from the exact repository/source/main/policy",
+            "at": 1791420311019
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791420911019
+        }
+      },
+      "previous": "cfe464dc5c71d0c50a337b442f7c3b3261bd6fdd9f96c3d8659e3fac11dfed66",
+      "digest": "24d7b0f8ec5528006eb74a6563779f69210bccb09a9cf68751713ba5a62b1e32"
+    },
+    {
+      "sequence": 4192,
+      "at": "2026-10-08T00:47:10.725Z",
+      "kind": "transaction",
+      "data": {
+        "id": "69a3774a-e721-4e5a-8c33-4c63d7995269"
+      },
+      "previous": "24d7b0f8ec5528006eb74a6563779f69210bccb09a9cf68751713ba5a62b1e32",
+      "digest": "698735252c22f705860403108cbbad6535d4a0ae0ed51a87fbd0217a8fbd9a11"
     }
   ]
 }
