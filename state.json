@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5399,
+  "revision": 5401,
   "tasks": {
     "132": {
       "number": 132,
@@ -10036,7 +10036,14 @@
       "recoveryCount": 0,
       "reviewFailures": null,
       "blockedUntil": 0,
-      "candidate": null,
+      "candidate": {
+        "number": 194,
+        "branch": "delivery/candidate/pr-193-ba0fb198c3813b1df4d374541c72d859",
+        "headSha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
+        "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+        "marker": "delivery-origin:193:73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57:496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+        "at": 1791458113271
+      },
       "originalBody": "共享任务回执读取器此前用 String 转换检查 state/origin，数组字段会通过枚举校验，并可能跳过成功结果检查或进入旧任务查询。现在要求实际合法字符串，在导入、锁、提交或轮询前拒绝非法记录；合法历史 v1、当前 v2、晚到 ACK 和原任务恢复保留。只修改共享校验器及三个测试文件，两个后期消费者实现字节未改。\n\n验证：精确提交 `73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57` 的直接三套离线用例 162/162 通过，当前完整 video-studio、邻近消费者、video-studio/server 类型检查、包完整性、提交协议、硬闸政策、CLI/MCP 指南及运行依赖九项提交后检查均通过。原始 RED 22 条失败和本地首次依赖/类型夹具诊断保留；原记录、锁、任务身份、完整媒体和无额外 POST/GET 的行为均有实际断言。\n\n边界：无供应商、模型、ASR/TTS、新影片或付费调用；不改变品质政策或素材时钟。独立审查未完成前 ready=false；审查完成后通过正常原生队列和当前候选 CI 发布，回滚为 revert 本任务提交。\n\n任务卡：#192（T-2026-1008-0002）。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1008-0002\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
       "files": [
         "packages/video-studio/src/post-render-acceptance.test.ts",
@@ -124720,6 +124727,36 @@
       },
       "previous": "31095656c6290cfa4976b878be379fa91e9296e3c5c84c0475a228cc549d2a1e",
       "digest": "3e2a57f4465fec005cf0c91065cb40f3277e2506e78437358847191025e0926f"
+    },
+    {
+      "sequence": 5400,
+      "at": "2026-10-08T11:15:13.271Z",
+      "kind": "task",
+      "data": {
+        "number": 193,
+        "patch": {
+          "candidate": {
+            "number": 194,
+            "branch": "delivery/candidate/pr-193-ba0fb198c3813b1df4d374541c72d859",
+            "headSha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
+            "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+            "marker": "delivery-origin:193:73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57:496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+            "at": 1791458113271
+          }
+        }
+      },
+      "previous": "3e2a57f4465fec005cf0c91065cb40f3277e2506e78437358847191025e0926f",
+      "digest": "a5918e777ba944d042fd6a2f1c02b229936987d83483d7a20ad3ecf233a7296d"
+    },
+    {
+      "sequence": 5401,
+      "at": "2026-10-08T11:17:27.418Z",
+      "kind": "transaction",
+      "data": {
+        "id": "98f79842-8868-44cf-b644-a3b4fcccc385"
+      },
+      "previous": "a5918e777ba944d042fd6a2f1c02b229936987d83483d7a20ad3ecf233a7296d",
+      "digest": "557074435ff2ed848e51a5fc7b9a5f565e1eb089cf1bb0494e0982207faf6ae2"
     }
   ]
 }
