@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5879,
+  "revision": 5881,
   "tasks": {
     "132": {
       "number": 132,
@@ -5075,7 +5075,7 @@
     },
     "153": {
       "number": 153,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791359178476,
       "attempts": {},
       "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -5236,7 +5236,7 @@
           }
         ]
       },
-      "updatedAt": 1791469514054,
+      "updatedAt": 1791474909273,
       "admission": {
         "number": 153,
         "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -5259,7 +5259,7 @@
         "scripts/tools/video-request-regression.test.ts"
       ],
       "ciSince": 1791359409167,
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/153 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "error": "Prerequisite #152 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/152 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "repairRequired": {
         "provider": "codex",
         "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
@@ -5268,7 +5268,7 @@
         "at": 1791366610602
       },
       "recoveryIntent": null,
-      "blockedUntil": 1791469814039,
+      "blockedUntil": 1791475509273,
       "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -133347,6 +133347,31 @@
       },
       "previous": "e2c6333c125caf6da5ff7c4a1484f178cfc565b102c3a471e02ed388a16f67e0",
       "digest": "83e4c7883f4c47d0dca94a68c0561b3b0eadf11f020655bda1a97a17589c87a7"
+    },
+    {
+      "sequence": 5880,
+      "at": "2026-10-08T15:55:09.273Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #152 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/152 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791475509273
+        }
+      },
+      "previous": "83e4c7883f4c47d0dca94a68c0561b3b0eadf11f020655bda1a97a17589c87a7",
+      "digest": "40d16cdc3ed7852cf874f8c511258042a0aef3436e54598a8966139ced340a5c"
+    },
+    {
+      "sequence": 5881,
+      "at": "2026-10-08T15:56:23.899Z",
+      "kind": "transaction",
+      "data": {
+        "id": "67be1225-faf0-467d-aea7-2fbdad8b3cd9"
+      },
+      "previous": "40d16cdc3ed7852cf874f8c511258042a0aef3436e54598a8966139ced340a5c",
+      "digest": "d7f7177525bd389ed0693b57372f95b10cee333cb3a9be8ce9ba2de57f3c4b3c"
     }
   ]
 }
