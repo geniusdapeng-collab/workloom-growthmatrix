@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5362,
+  "revision": 5365,
   "tasks": {
     "132": {
       "number": 132,
@@ -9864,7 +9864,7 @@
     },
     "193": {
       "number": 193,
-      "status": "developing",
+      "status": "waiting_ci",
       "firstSeen": 1791456726225,
       "attempts": {},
       "admission": {
@@ -9876,13 +9876,161 @@
         "owner": "admission/pr-193",
         "generation": {}
       },
-      "updatedAt": 1791457215281,
+      "updatedAt": 1791457572897,
       "headSha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
       "intent": {
         "taskId": "T-2026-1008-0002",
-        "ready": false,
+        "ready": true,
         "dependsOn": [],
         "releases": []
+      },
+      "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+      "branch": "task/T-2026-1008-0002",
+      "developerReview": {
+        "schemaVersion": 1,
+        "provider": "codex",
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 193,
+        "headSha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
+        "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+        "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+        "reviewedFiles": [
+          "packages/video-studio/src/post-render-acceptance.test.ts",
+          "packages/video-studio/src/video-surface-repair.test.ts",
+          "packages/video-studio/src/video-task-receipt.test.ts",
+          "packages/video-studio/src/video-task-receipt.ts"
+        ],
+        "filesHash": "f5a88d92aa6dc624c558a206bd13828124cd34bf030496a6bda8c80ec808967a",
+        "dependsOn": [],
+        "ciPolicyChanges": [],
+        "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "tests": [
+          {
+            "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/bundle-governance.mts",
+            "exitCode": 0,
+            "finishedAt": "2026-10-08T10:49:21.036141+00:00",
+            "result": "✅ 行业包契约、兼容范围、资产、导航与完整性门禁通过（base 0.1.0 / ui 0.1.19）"
+          },
+          {
+            "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/ci/verify-commit-msg.mjs --range 496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3..HEAD",
+            "exitCode": 0,
+            "finishedAt": "2026-10-08T10:49:21.115407+00:00",
+            "result": "✓ 73f0c043ca3a fix(video): reject coerced task receipt enum values [T-2026-1008-0002]\n\n✓ 提交信息校验通过（1 条，范围 496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3..HEAD）"
+          },
+          {
+            "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/ci/verify-hard-gate-policy.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-08T10:49:21.206682+00:00",
+            "result": "[hard-gate-policy] 通过：扫描 123 个文件，未发现\"创作口径写成硬闸\"。"
+          },
+          {
+            "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node packages/video-studio/node_modules/vitest/vitest.mjs run packages/video-studio/src/video-surface-repair.test.ts packages/video-studio/src/post-render-acceptance.test.ts packages/video-studio/src/video-task-receipt.test.ts packages/video-studio/src/generation-file-store.test.ts packages/video-studio/src/producer-gate.test.ts --maxWorkers=1 --no-file-parallelism",
+            "exitCode": 0,
+            "finishedAt": "2026-10-08T10:49:27.979561+00:00",
+            "result": "RUN  v3.2.7 /Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/repo\n\n ✓ packages/video-studio/src/post-render-acceptance.test.ts (72 tests) 3157ms\n   ✓ current v2 supplier task enters the same read-only post adopter > current v2 writer preserves every real source frame, the red tail, original audio and failed quality history  560ms\n ✓ packages/video-studio/src/video-task-receipt.test.ts (52 tests) 1672ms\n ✓ packages/video-studio/src/video-surface-repair.test.ts (38 tests) 603ms\n   ✓ 真实媒体：局部虚化保持帧数/原音频/区域外，拒绝未经实际定位审批或覆盖原片  410ms\n ✓ packages/video-studio/src/generation-file-store.test.ts (2 tests) 157ms\n ✓ packages/video-studio/src/producer-gate.test.ts (40 tests) 56ms\n\n Test Files  5 passed (5)\n      Tests  204 passed (204)\n   Start at  18:49:21\n   Duration  6.42s (transform 117ms, setup 0ms, collect 193ms, tests 5.64s, environment 0ms, prepare 153ms)\n\n[mov,mp4,m4a,3gp,3g2,mj2 @ 0x121804c30] moov atom not found\n/private/var/folders/dj/mkh6fwbd4mb6ycp933xfty4h0000gn/T/pr-m-s1ys2kev/direct-post-XLeTqQ/corrupt.mp4: Invalid data found when processing input"
+          },
+          {
+            "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vitest/vitest.mjs run --maxWorkers=1 --no-file-parallelism",
+            "exitCode": 0,
+            "finishedAt": "2026-10-08T10:49:54.758092+00:00",
+            "result": "RUN  v3.2.7 /Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/repo/packages/video-studio\n\n ✓ src/vendor-compat.test.ts (31 tests) 4823ms\n   ✓ 当前定妆照版本的真实消费链 > 真实runtime两版四角度→manifest→provider payload只消费索引最新字节，历史目录顺序无效  346ms\n   ✓ 当前定妆照版本的真实消费链 > 篡改、缺收据、symlink、越界和重复角度均不能进入vendor提交  308ms\n   ✓ 当前定妆照版本的真实消费链 > 清单生成后改索引/产物/清单均阻断，最终payload字节也再次核对  312ms\n   ✓ VideoStudio 的 C1 实际安装入口 > runPreproduction 经现有兼容入口安装并消费 Phase3，失败与成功均卸载还原  355ms\n ✓ src/post-render-acceptance.test.ts (72 tests) 2766ms\n   ✓ current v2 supplier task enters the same read-only post adopter > current v2 writer preserves every real source frame, the red tail, original audio and failed quality history  514ms\n ✓ src/character-archive.test.ts (28 tests) 1517ms\n   ✓ 激活、pin与文件版本的真实消费 > 真实CLI bind --pin和activate使用指定版本，并创建准确项目文件  576ms\n   ✓ 激活、pin与文件版本的真实消费 > 真实生成CLI plan消费指定服装和锚点，缺失锚点或参数拒绝规划  481ms\n   ✓ 激活、pin与文件版本的真实消费 > 真实绑定CLI拒绝目录别名、档案身份错配及保留项目标识  438ms\n ✓ src/portrait-runtime.test.ts (35 tests) 1438ms\n ✓ src/video-task-receipt.test.ts (52 tests) 1646ms\n ✓ src/image-task-receipt.test.ts (15 tests) 832ms\n ✓ src/av-sync.test.ts (16 tests) 545ms\n ✓ src/production-client.test.ts (29 tests) 555ms\n   ✓ real render-project CLI over authenticated HTTP > normal service entry uses only token submit, saves safe receipt, and never creates CMS or calls a provider  543ms\n ✓ src/video-surface-repair.test.ts (38 tests) 603ms\n   ✓ 真实媒体：局部虚化保持帧数/原音频/区域外，拒绝未经实际定位审批或覆盖原片  397ms\n ✓ src/film-contracts.test.ts (15 tests) 394ms\n   ✓ first-authored frozen film context > independent first-author processes observe one complete frozen context  325ms\n ✓ src/duration-rules.test.ts (17 tests) 314ms\n ✓ src/portrait-agent.test.ts (20 tests) 210ms\n ✓ src/generation-file-store.test.ts (2 tests) 167ms\n ✓ src/llm-engine-bridge.test.ts (9 tests) 126ms\n ✓ src/requirement-bridge.test.ts (20 tests) 113ms\n ✓ src/studio.test.ts (40 tests) 86ms\n ✓ src/theme-bridge.test.ts (2 tests) 64ms\n ✓ src/confirmation.test.ts (13 tests) 62ms\n ✓ src/producer-gate.test.ts (40 tests) 53ms\n ✓ src/archive/stage-runner.test.ts (17 tests) 50ms\n ✓ src/uhd-delivery.test.ts (5 tests) 39ms\n ✓ src/builtin-character-library.test.ts (3 tests) 27ms\n ✓ src/scene-policy.test.ts (37 tests) 27ms\n ✓ src/film-worker-channel.test.ts (8 tests) 27ms\n ✓ src/duration-projection.test.ts (11 tests) 25ms\n ✓ src/archive/store.test.ts (12 tests) 23ms\n ✓ src/shot-spec.test.ts (29 tests) 21ms\n ✓ src/film-worker-runtime.test.ts (12 tests) 19ms\n ✓ src/production-lineage.test.ts (20 tests) 16ms\n ✓ src/marketing-dossier-bridge.test.ts (12 tests) 17ms\n ✓ src/prompt-review-bridge.test.ts (18 tests) 16ms\n ✓ src/film-shotlist.test.ts (18 tests) 13ms\n ✓ src/revision-executor.test.ts (12 tests) 16ms\n ✓ src/duration-projection-bridge.test.ts (10 tests | 1 skipped) 13ms\n ✓ src/data-mining-engine.test.ts (5 tests) 13ms\n ✓ src/portrait-binding.test.ts (18 tests) 13ms\n ✓ src/micromotion.test.ts (23 tests) 12ms\n ✓ src/routed-adapter.test.ts (5 tests) 12ms\n ✓ src/product-archive.test.ts (7 tests) 10ms\n ✓ src/archive/stage-log.test.ts (4 tests) 12ms\n ✓ src/plate-prompt.test.ts (19 tests) 11ms\n ✓ src/beat-verify.test.ts (7 tests) 10ms\n ✓ src/scene-bible.test.ts (21 tests) 9ms\n ✓ src/revise.test.ts (52 tests) 10ms\n ✓ src/cinematic-skill-policy.test.ts (31 tests) 9ms\n ✓ src/shot-intent.test.ts (45 tests) 8ms\n ✓ src/archive/context-bundle.test.ts (3 tests) 8ms\n ✓ src/film-service-client.test.ts (6 tests) 8ms\n ✓ src/rendered-output-policy.test.ts (14 tests) 7ms\n ✓ src/prd-bridge.test.ts (8 tests) 7ms\n ✓ src/device-policy.test.ts (19 tests) 8ms\n ✓ src/product-archive.multitype.test.ts (5 tests) 7ms\n ✓ src/gate-ledger.test.ts (6 tests) 3ms\n ✓ src/pipeline-router.test.ts (25 tests) 5ms\n ✓ src/deliver-revise.test.ts (8 tests) 5ms\n ✓ src/cover-design.test.ts (24 tests) 4ms\n ✓ src/material-policy.test.ts (36 tests) 4ms\n ✓ src/cover-platforms.test.ts (9 tests) 4ms\n ✓ src/prompt-language.test.ts (11 tests) 4ms\n ✓ src/continuity.test.ts (9 tests) 3ms\n ✓ src/first-pass.test.ts (14 tests) 4ms\n ✓ src/sfx-synth.test.ts (15 tests) 3ms\n ✓ src/platform-intent.test.ts (13 tests) 3ms\n ✓ src/era-profile.test.ts (29 tests) 3ms\n ✓ src/real-person-asset-sync.test.ts (8 tests) 3ms\n ✓ src/prompt-redlines.test.ts (13 tests) 3ms\n ✓ src/creative-duration-policy.test.ts (25 tests) 3ms\n ✓ src/character-consistency.test.ts (8 tests) 3ms\n ✓ src/real-person-asset.test.ts (7 tests) 3ms\n ✓ src/pronunciation.test.ts (10 tests) 2ms\n ✓ src/opening-hook.test.ts (13 tests) 2ms\n ✓ src/library-bpm.test.ts (11 tests) 2ms\n ✓ src/render-reference.test.ts (7 tests) 2ms\n ✓ src/gate-ledger-marketing.test.ts (4 tests) 2ms\n ✓ src/plate-cache.test.ts (16 tests) 2ms\n ✓ src/portrait-decision.test.ts (7 tests) 2ms\n ✓ src/route-preflight.test.ts (11 tests) 2ms\n ✓ src/deliver-validation.test.ts (15 tests) 2ms\n ✓ src/variant-axes.test.ts (5 tests) 2ms\n ✓ src/gate-ledger-audit.test.ts (5 tests) 2ms\n ✓ src/deliverable-naming.test.ts (5 tests) 1ms\n ✓ src/narration.test.ts (10 tests) 2ms\n ✓ src/shot-order.test.ts (4 tests) 1ms\n ✓ src/likeness-policy.test.ts (3 tests) 1ms\n ✓ src/quality-evidence.test.ts (2 tests) 1ms\n\n Test Files  85 passed (85)\n      Tests  1397 passed | 1 skipped (1398)\n   Start at  18:49:28\n   Duration  26.39s (transform 661ms, setup 0ms, collect 1.41s, tests 16.92s, environment 5ms, prepare 2.15s)\n\n[PromptFusionAgent] ⚠️ 镜头 S1 精炼后仅 557 字符，低于精炼后下限 1200，请检查上游字段是否过薄\n[PromptFusionAgent] ⚠️ 镜头 S1 中文占比过低(28.5%), 尝试修正为中文输出\n[PromptFusionAgent] ⚠️ 镜头 S1 精炼后仅 596 字符，低于精炼后下限 1200，请检查上游字段是否过薄\n[PromptFusionAgent] ⚠️ 镜头 S1 精炼后仅 557 字符，低于精炼后下限 1200，请检查上游字段是否过薄\n[PromptFusionAgent] ⚠️ 镜头 S1 中文占比过低(28.5%), 尝试修正为中文输出\n[PromptFusionAgent] 尝试 1/3 失败: [BudgetExhausted] LLM引擎返回失败: offline-budget-fixture | type=NETWORK | retryable=false\n[PromptFusionAgent] 🔴 不可重试错误(NETWORK)，停止重试: 底层判定不可重试\n[PromptFusionAgent] 所有 1 次尝试均失败，最后错误: [BudgetExhausted] LLM引擎返回失败: offline-budget-fixture\n[PromptFusionAgent] 备用模型也失败: PHASE3_BUDGET_EXHAUSTED: 提供商调用前剩余预算不足 5 秒\n[PromptFusionAgent] 极限重试失败: PHASE3_BUDGET_EXHAUSTED: 提供商调用前剩余预算不足 5 秒\n[PromptFusionAgent] 降级结果为null/undefined: LLM failed after 1 attempts: [BudgetExhausted] LLM引擎返回失败: offline-budget-fixture\n[PromptFusionAgent] 尝试 1/3 失败: [BudgetExhausted] LLM引擎返回失败: offline-budget-fixture | type=NETWORK | retryable=false\n[PromptFusionAgent] 🔴 不可重试错误(NETWORK)，停止重试: 底层判定不可重试\n[PromptFusionAgent] 所有 1 次尝试均失败，最后错误: [BudgetExhausted] LLM引擎返回失败: offline-budget-fixture\n[PromptFusionAgent] 备用模型也失败: PHASE3_BUDGET_EXHAUSTED: 提供商调用前剩余预算不足 5 秒\n[PromptFusionAgent] 极限重试失败: PHASE3_BUDGET_EXHAUSTED: 提供商调用前剩余预算不足 5 秒\n[PromptFusionAgent] 降级结果为null/undefined: LLM failed after 1 attempts: [BudgetExhausted] LLM引擎返回失败: offline-budget-fixture\n⚠️ [confirmation-crypto] HUMAN_CONFIRMATION_SECRET 未设置\n 人工确认环节将不可用（无法生成/验证签名），但系统其余功能正常\n 配置方法: export HUMAN_CONFIRMATION_SECRET=$(openssl rand -hex 32)，或写入 .env\n[mov,mp4,m4a,3gp,3g2,mj2 @ 0x123805a10] moov atom not found\n/private/var/folders/dj/mkh6fwbd4mb6ycp933xfty4h0000gn/T/pr-m-_2bg1poi/direct-post-qEJU7d/corrupt.mp4: Invalid data found when processing input\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n参数缺少值：--pin\nstderr | src/llm-engine-bridge.test.ts\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n[LLMEngine] ❌ 未检测到 API Key，请确认环境变量 KIMI_API_KEY / MOONSHOT_API_KEY / KIMI_PLUGIN_API_KEY\n⚠️ [confirmation-crypto] HUMAN_CONFIRMATION_SECRET 未设置\n 人工确认环节将不可用（无法生成/验证签名），但系统其余功能正常\n 配置方法: export HUMAN_CONFIRMATION_SECRET=$(openssl rand -hex 32)，或写入 .env\nstderr | src/studio.test.ts\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n\n[ScriptGenerator] 无法加载LLMEngine: Cannot find module './llm-output-normalizer'\nRequire stack:\n- /Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/repo/packages/video-studio/[eval]\n[RenderingEngine] 无法加载现有渲染核心: Cannot find module './prompt-guardian'\nRequire stack:\n- /Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/repo/packages/video-studio/[eval]\n[RenderingEngine] 将使用内置模拟模式\n⚠️ [confirmation-crypto] HUMAN_CONFIRMATION_SECRET 未设置\n 人工确认环节将不可用（无法生成/验证签名），但系统其余功能正常\n 配置方法: export HUMAN_CONFIRMATION_SECRET=$(openssl rand -hex 32)，或写入 .env\n⚠️ [confirmation-crypto] HUMAN_CONFIRMATION_SECRET 未设置\n 人工确认环节将不可用（无法生成/验证签名），但系统其余功能正常\n 配置方法: export HUMAN_CONFIRMATION_SECRET=$(openssl rand -hex 32)，或写入 .env\nstderr | src/scene-policy.test.ts > T1 商业真人出镜知识条目 > 提示注入保留台词、构图、机位和时长，并进入关键帧与视频共用的 sceneDescription\n[PromptFusionAgent] ⚠️ 镜头 CZ-01 精炼后仅 962 字符，低于精炼后下限 1200，请检查上游字段是否过薄\n\nstderr | src/archive/store.test.ts > ArchiveStore > ensure(identity)：档案夹被另一代 DB 的同名 projectId 复用时留痕并校正 kind（D1 修复）\n[archive] 档案身份漂移 ws-test/VID-001：pipelineKind narrative→marketing（项目身份指纹不一致：档案夹可能被另一代数据库的同名 ID 复用）\n\nstderr | src/shot-spec.test.ts > 【场景】写实校验替换检测 > 真机链路：卡片场景含「霓虹」→ 报告显式标记 sceneSubstituted，并保留前后文本\n[PromptFusionAgent] ⚠️ 镜头 S9 场景含禁止词汇(校验强度=realistic): \"打烊后的店铺前厅，柜台、玻璃门与门外虚化的街道霓虹...\",强制替换为写实场景\n\nstderr | src/duration-projection-bridge.test.ts\n[ScriptGenerator] 无法加载LLMEngine: require is not defined in ES module scope, you can use import instead\nThis file is being treated as an ES module because it has a '.js' file extension and '/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/repo/package.json' contains \"type\": \"module\". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.\n\nstderr | src/routed-adapter.test.ts\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n\nstderr | src/cover-platforms.test.ts > 封面平台规格：抖音回归基线 > 缺省/未知平台落 douyin 且不抛错（旧调用零影响）\n[cover-platforms] 未知平台 \"某不存在的平台\"，按 douyin 口径处理"
+          },
+          {
+            "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node packages/video-studio/node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+            "exitCode": 0,
+            "finishedAt": "2026-10-08T10:49:56.600504+00:00",
+            "result": "Exit code 0; command produced no stdout/stderr. Actual empty execution log SHA-256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855."
+          },
+          {
+            "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node apps/server/node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
+            "exitCode": 0,
+            "finishedAt": "2026-10-08T10:49:57.727081+00:00",
+            "result": "Exit code 0; command produced no stdout/stderr. Actual empty execution log SHA-256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855."
+          },
+          {
+            "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test scripts/ai-video-workbench-guide.test.mjs bundles/geo-growthmatrix/capabilities/workbench-guide.test.mjs",
+            "exitCode": 0,
+            "finishedAt": "2026-10-08T10:49:58.601340+00:00",
+            "result": "WorkLoom agent MCP 已启动（stdio）\n✔ empty-input capability returns full canonical UTF-8, identity, version and digest with no network (5.765625ms)\n✔ CLI list, describe and invoke use the same canonical guide from an unrelated cwd (148.505958ms)\n✔ real stdio MCP initialize, list, call and invalid arguments preserve the same guide (39.733333ms)\n✔ direct module rejects arrays, primitives, null and every client-selected field (0.253ms)\n✔ production plan points to the discoverable fixed guide before any execution (1.08825ms)\n✔ copied module and doc still work with spaces, Unicode and unrelated cwd (37.374542ms)\n✔ maximum-sized valid guide is returned fully rather than truncated (41.875292ms)\n✔ concurrent guide invocations retain independent identical receipts without service calls (3.246958ms)\n✔ missing guide fails explicitly without a partial success (37.352708ms)\n✔ directory instead of file fails explicitly without a partial success (35.773ms)\n✔ oversized guide fails explicitly without a partial success (36.379625ms)\n✔ empty guide fails explicitly without a partial success (36.476833ms)\n✔ invalid UTF-8 fails explicitly without a partial success (36.837625ms)\n✔ wrong guide version fails explicitly without a partial success (38.657167ms)\n✔ wrong product fails explicitly without a partial success (37.134042ms)\n✔ invalid product JSON fails explicitly without a partial success (36.462834ms)\n✔ missing product manifest fails explicitly without a partial success (35.677125ms)\n✔ file and directory symlinks cannot expose arbitrary outside text (74.0265ms)\n✔ old payload reports absent capability; new incomplete payload reports missing guide (77.687917ms)\nℹ tests 19\nℹ suites 0\nℹ pass 19\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 810.094541"
+          },
+          {
+            "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/runtime-deps-lock.mjs verify",
+            "exitCode": 0,
+            "finishedAt": "2026-10-08T10:49:58.685098+00:00",
+            "result": "✅ runtime 依赖锁有效：workloom-ai-growthmatrix · 12 个直接依赖"
+          }
+        ],
+        "reviewedAt": "2026-10-08T11:04:13.440Z",
+        "summary": "Shared v2 receipt origin/state and legacy v1 state previously accepted arrays through String coercion, permitting a malformed record to pass shared identity/read checks or reach original-task GET recovery. This four-file unit requires actual supported string enum values before import/lock/transport; preserves valid submitted/succeeded/unknown/rejected behavior, complete task/result/body/identity/source hashes, original evidence/locks, late legacy ACK and concurrency. Two surface/post consumer implementations are byte-unchanged; direct and linked tests cover malformed types and result-guard composition. Nearest162 cases and package typecheck pass; historical baseline22 failures and initial local missing dependency/type fixture failures are preserved without presenting them as product success. No provider/model/media generation/ASRTTS, no quality-policy or source clock change. Root authored this guard; independent review must come from a distinct actor.",
+        "passed": true,
+        "id": "b54c01b7e8b29fb670fa82ce7b159fa17c111de093ac664493c5cadb4d1c4f70"
+      },
+      "reviewSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 193,
+        "pull": {
+          "number": 193,
+          "state": "open",
+          "title": "fix(video): 严格校验任务回执状态和来源类型 [T-2026-1008-0002]",
+          "body": "共享任务回执读取器此前用 String 转换检查 state/origin，数组字段会通过枚举校验，并可能跳过成功结果检查或进入旧任务查询。现在要求实际合法字符串，在导入、锁、提交或轮询前拒绝非法记录；合法历史 v1、当前 v2、晚到 ACK 和原任务恢复保留。只修改共享校验器及三个测试文件，两个后期消费者实现字节未改。\n\n验证：精确提交 `73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57` 的直接三套离线用例 162/162 通过，当前完整 video-studio、邻近消费者、video-studio/server 类型检查、包完整性、提交协议、硬闸政策、CLI/MCP 指南及运行依赖九项提交后检查均通过。原始 RED 22 条失败和本地首次依赖/类型夹具诊断保留；原记录、锁、任务身份、完整媒体和无额外 POST/GET 的行为均有实际断言。\n\n边界：无供应商、模型、ASR/TTS、新影片或付费调用；不改变品质政策或素材时钟。独立审查未完成前 ready=false；审查完成后通过正常原生队列和当前候选 CI 发布，回滚为 revert 本任务提交。\n\n任务卡：#192（T-2026-1008-0002）。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1008-0002\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "author": {
+            "username": "cnb.dYiF05kxAGA",
+            "nickname": "Genius",
+            "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+            "is_npc": false
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/task/T-2026-1008-0002",
+            "sha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "unblocked",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
+        "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+        "files": [
+          "packages/video-studio/src/post-render-acceptance.test.ts",
+          "packages/video-studio/src/video-surface-repair.test.ts",
+          "packages/video-studio/src/video-task-receipt.test.ts",
+          "packages/video-studio/src/video-task-receipt.ts"
+        ],
+        "intent": {
+          "taskId": "T-2026-1008-0002",
+          "ready": true,
+          "dependsOn": [],
+          "releases": []
+        },
+        "headTime": 1791456538000,
+        "mergeBase": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+        "checkErrors": [],
+        "checkSha": null,
+        "hasFailedChecks": false,
+        "ciPolicyChanges": []
       }
     }
   },
@@ -123677,6 +123825,197 @@
       },
       "previous": "a48e9085ff4054a17bfa070e793682f3575df5d6d4e26e56e897b7e769fd9af3",
       "digest": "5c745f2c1b312abb110cc8756e08419dd8c933292c2d9bf6c09cd9dc829ce8e3"
+    },
+    {
+      "sequence": 5363,
+      "at": "2026-10-08T11:06:12.897Z",
+      "kind": "developer_review",
+      "data": {
+        "number": 193,
+        "id": "b54c01b7e8b29fb670fa82ce7b159fa17c111de093ac664493c5cadb4d1c4f70",
+        "headSha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
+        "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3"
+      },
+      "previous": "5c745f2c1b312abb110cc8756e08419dd8c933292c2d9bf6c09cd9dc829ce8e3",
+      "digest": "68c231cb5d97dee1808a493741df939edfea2a6541ae077117cceb1db546fa3a"
+    },
+    {
+      "sequence": 5364,
+      "at": "2026-10-08T11:06:12.897Z",
+      "kind": "task",
+      "data": {
+        "number": 193,
+        "patch": {
+          "status": "waiting_ci",
+          "headSha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
+          "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+          "branch": "task/T-2026-1008-0002",
+          "intent": {
+            "taskId": "T-2026-1008-0002",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "developerReview": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 193,
+            "headSha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
+            "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+            "policyHash": "006639899302b3664b38d52ea40e6fb65d11095c451ce1b8d58a860a399a4aac",
+            "reviewedFiles": [
+              "packages/video-studio/src/post-render-acceptance.test.ts",
+              "packages/video-studio/src/video-surface-repair.test.ts",
+              "packages/video-studio/src/video-task-receipt.test.ts",
+              "packages/video-studio/src/video-task-receipt.ts"
+            ],
+            "filesHash": "f5a88d92aa6dc624c558a206bd13828124cd34bf030496a6bda8c80ec808967a",
+            "dependsOn": [],
+            "ciPolicyChanges": [],
+            "ciPolicyChangesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "tests": [
+              {
+                "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/bundle-governance.mts",
+                "exitCode": 0,
+                "finishedAt": "2026-10-08T10:49:21.036141+00:00",
+                "result": "✅ 行业包契约、兼容范围、资产、导航与完整性门禁通过（base 0.1.0 / ui 0.1.19）"
+              },
+              {
+                "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/ci/verify-commit-msg.mjs --range 496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3..HEAD",
+                "exitCode": 0,
+                "finishedAt": "2026-10-08T10:49:21.115407+00:00",
+                "result": "✓ 73f0c043ca3a fix(video): reject coerced task receipt enum values [T-2026-1008-0002]\n\n✓ 提交信息校验通过（1 条，范围 496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3..HEAD）"
+              },
+              {
+                "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/ci/verify-hard-gate-policy.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-08T10:49:21.206682+00:00",
+                "result": "[hard-gate-policy] 通过：扫描 123 个文件，未发现\"创作口径写成硬闸\"。"
+              },
+              {
+                "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node packages/video-studio/node_modules/vitest/vitest.mjs run packages/video-studio/src/video-surface-repair.test.ts packages/video-studio/src/post-render-acceptance.test.ts packages/video-studio/src/video-task-receipt.test.ts packages/video-studio/src/generation-file-store.test.ts packages/video-studio/src/producer-gate.test.ts --maxWorkers=1 --no-file-parallelism",
+                "exitCode": 0,
+                "finishedAt": "2026-10-08T10:49:27.979561+00:00",
+                "result": "RUN  v3.2.7 /Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/repo\n\n ✓ packages/video-studio/src/post-render-acceptance.test.ts (72 tests) 3157ms\n   ✓ current v2 supplier task enters the same read-only post adopter > current v2 writer preserves every real source frame, the red tail, original audio and failed quality history  560ms\n ✓ packages/video-studio/src/video-task-receipt.test.ts (52 tests) 1672ms\n ✓ packages/video-studio/src/video-surface-repair.test.ts (38 tests) 603ms\n   ✓ 真实媒体：局部虚化保持帧数/原音频/区域外，拒绝未经实际定位审批或覆盖原片  410ms\n ✓ packages/video-studio/src/generation-file-store.test.ts (2 tests) 157ms\n ✓ packages/video-studio/src/producer-gate.test.ts (40 tests) 56ms\n\n Test Files  5 passed (5)\n      Tests  204 passed (204)\n   Start at  18:49:21\n   Duration  6.42s (transform 117ms, setup 0ms, collect 193ms, tests 5.64s, environment 0ms, prepare 153ms)\n\n[mov,mp4,m4a,3gp,3g2,mj2 @ 0x121804c30] moov atom not found\n/private/var/folders/dj/mkh6fwbd4mb6ycp933xfty4h0000gn/T/pr-m-s1ys2kev/direct-post-XLeTqQ/corrupt.mp4: Invalid data found when processing input"
+              },
+              {
+                "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vitest/vitest.mjs run --maxWorkers=1 --no-file-parallelism",
+                "exitCode": 0,
+                "finishedAt": "2026-10-08T10:49:54.758092+00:00",
+                "result": "RUN  v3.2.7 /Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/repo/packages/video-studio\n\n ✓ src/vendor-compat.test.ts (31 tests) 4823ms\n   ✓ 当前定妆照版本的真实消费链 > 真实runtime两版四角度→manifest→provider payload只消费索引最新字节，历史目录顺序无效  346ms\n   ✓ 当前定妆照版本的真实消费链 > 篡改、缺收据、symlink、越界和重复角度均不能进入vendor提交  308ms\n   ✓ 当前定妆照版本的真实消费链 > 清单生成后改索引/产物/清单均阻断，最终payload字节也再次核对  312ms\n   ✓ VideoStudio 的 C1 实际安装入口 > runPreproduction 经现有兼容入口安装并消费 Phase3，失败与成功均卸载还原  355ms\n ✓ src/post-render-acceptance.test.ts (72 tests) 2766ms\n   ✓ current v2 supplier task enters the same read-only post adopter > current v2 writer preserves every real source frame, the red tail, original audio and failed quality history  514ms\n ✓ src/character-archive.test.ts (28 tests) 1517ms\n   ✓ 激活、pin与文件版本的真实消费 > 真实CLI bind --pin和activate使用指定版本，并创建准确项目文件  576ms\n   ✓ 激活、pin与文件版本的真实消费 > 真实生成CLI plan消费指定服装和锚点，缺失锚点或参数拒绝规划  481ms\n   ✓ 激活、pin与文件版本的真实消费 > 真实绑定CLI拒绝目录别名、档案身份错配及保留项目标识  438ms\n ✓ src/portrait-runtime.test.ts (35 tests) 1438ms\n ✓ src/video-task-receipt.test.ts (52 tests) 1646ms\n ✓ src/image-task-receipt.test.ts (15 tests) 832ms\n ✓ src/av-sync.test.ts (16 tests) 545ms\n ✓ src/production-client.test.ts (29 tests) 555ms\n   ✓ real render-project CLI over authenticated HTTP > normal service entry uses only token submit, saves safe receipt, and never creates CMS or calls a provider  543ms\n ✓ src/video-surface-repair.test.ts (38 tests) 603ms\n   ✓ 真实媒体：局部虚化保持帧数/原音频/区域外，拒绝未经实际定位审批或覆盖原片  397ms\n ✓ src/film-contracts.test.ts (15 tests) 394ms\n   ✓ first-authored frozen film context > independent first-author processes observe one complete frozen context  325ms\n ✓ src/duration-rules.test.ts (17 tests) 314ms\n ✓ src/portrait-agent.test.ts (20 tests) 210ms\n ✓ src/generation-file-store.test.ts (2 tests) 167ms\n ✓ src/llm-engine-bridge.test.ts (9 tests) 126ms\n ✓ src/requirement-bridge.test.ts (20 tests) 113ms\n ✓ src/studio.test.ts (40 tests) 86ms\n ✓ src/theme-bridge.test.ts (2 tests) 64ms\n ✓ src/confirmation.test.ts (13 tests) 62ms\n ✓ src/producer-gate.test.ts (40 tests) 53ms\n ✓ src/archive/stage-runner.test.ts (17 tests) 50ms\n ✓ src/uhd-delivery.test.ts (5 tests) 39ms\n ✓ src/builtin-character-library.test.ts (3 tests) 27ms\n ✓ src/scene-policy.test.ts (37 tests) 27ms\n ✓ src/film-worker-channel.test.ts (8 tests) 27ms\n ✓ src/duration-projection.test.ts (11 tests) 25ms\n ✓ src/archive/store.test.ts (12 tests) 23ms\n ✓ src/shot-spec.test.ts (29 tests) 21ms\n ✓ src/film-worker-runtime.test.ts (12 tests) 19ms\n ✓ src/production-lineage.test.ts (20 tests) 16ms\n ✓ src/marketing-dossier-bridge.test.ts (12 tests) 17ms\n ✓ src/prompt-review-bridge.test.ts (18 tests) 16ms\n ✓ src/film-shotlist.test.ts (18 tests) 13ms\n ✓ src/revision-executor.test.ts (12 tests) 16ms\n ✓ src/duration-projection-bridge.test.ts (10 tests | 1 skipped) 13ms\n ✓ src/data-mining-engine.test.ts (5 tests) 13ms\n ✓ src/portrait-binding.test.ts (18 tests) 13ms\n ✓ src/micromotion.test.ts (23 tests) 12ms\n ✓ src/routed-adapter.test.ts (5 tests) 12ms\n ✓ src/product-archive.test.ts (7 tests) 10ms\n ✓ src/archive/stage-log.test.ts (4 tests) 12ms\n ✓ src/plate-prompt.test.ts (19 tests) 11ms\n ✓ src/beat-verify.test.ts (7 tests) 10ms\n ✓ src/scene-bible.test.ts (21 tests) 9ms\n ✓ src/revise.test.ts (52 tests) 10ms\n ✓ src/cinematic-skill-policy.test.ts (31 tests) 9ms\n ✓ src/shot-intent.test.ts (45 tests) 8ms\n ✓ src/archive/context-bundle.test.ts (3 tests) 8ms\n ✓ src/film-service-client.test.ts (6 tests) 8ms\n ✓ src/rendered-output-policy.test.ts (14 tests) 7ms\n ✓ src/prd-bridge.test.ts (8 tests) 7ms\n ✓ src/device-policy.test.ts (19 tests) 8ms\n ✓ src/product-archive.multitype.test.ts (5 tests) 7ms\n ✓ src/gate-ledger.test.ts (6 tests) 3ms\n ✓ src/pipeline-router.test.ts (25 tests) 5ms\n ✓ src/deliver-revise.test.ts (8 tests) 5ms\n ✓ src/cover-design.test.ts (24 tests) 4ms\n ✓ src/material-policy.test.ts (36 tests) 4ms\n ✓ src/cover-platforms.test.ts (9 tests) 4ms\n ✓ src/prompt-language.test.ts (11 tests) 4ms\n ✓ src/continuity.test.ts (9 tests) 3ms\n ✓ src/first-pass.test.ts (14 tests) 4ms\n ✓ src/sfx-synth.test.ts (15 tests) 3ms\n ✓ src/platform-intent.test.ts (13 tests) 3ms\n ✓ src/era-profile.test.ts (29 tests) 3ms\n ✓ src/real-person-asset-sync.test.ts (8 tests) 3ms\n ✓ src/prompt-redlines.test.ts (13 tests) 3ms\n ✓ src/creative-duration-policy.test.ts (25 tests) 3ms\n ✓ src/character-consistency.test.ts (8 tests) 3ms\n ✓ src/real-person-asset.test.ts (7 tests) 3ms\n ✓ src/pronunciation.test.ts (10 tests) 2ms\n ✓ src/opening-hook.test.ts (13 tests) 2ms\n ✓ src/library-bpm.test.ts (11 tests) 2ms\n ✓ src/render-reference.test.ts (7 tests) 2ms\n ✓ src/gate-ledger-marketing.test.ts (4 tests) 2ms\n ✓ src/plate-cache.test.ts (16 tests) 2ms\n ✓ src/portrait-decision.test.ts (7 tests) 2ms\n ✓ src/route-preflight.test.ts (11 tests) 2ms\n ✓ src/deliver-validation.test.ts (15 tests) 2ms\n ✓ src/variant-axes.test.ts (5 tests) 2ms\n ✓ src/gate-ledger-audit.test.ts (5 tests) 2ms\n ✓ src/deliverable-naming.test.ts (5 tests) 1ms\n ✓ src/narration.test.ts (10 tests) 2ms\n ✓ src/shot-order.test.ts (4 tests) 1ms\n ✓ src/likeness-policy.test.ts (3 tests) 1ms\n ✓ src/quality-evidence.test.ts (2 tests) 1ms\n\n Test Files  85 passed (85)\n      Tests  1397 passed | 1 skipped (1398)\n   Start at  18:49:28\n   Duration  26.39s (transform 661ms, setup 0ms, collect 1.41s, tests 16.92s, environment 5ms, prepare 2.15s)\n\n[PromptFusionAgent] ⚠️ 镜头 S1 精炼后仅 557 字符，低于精炼后下限 1200，请检查上游字段是否过薄\n[PromptFusionAgent] ⚠️ 镜头 S1 中文占比过低(28.5%), 尝试修正为中文输出\n[PromptFusionAgent] ⚠️ 镜头 S1 精炼后仅 596 字符，低于精炼后下限 1200，请检查上游字段是否过薄\n[PromptFusionAgent] ⚠️ 镜头 S1 精炼后仅 557 字符，低于精炼后下限 1200，请检查上游字段是否过薄\n[PromptFusionAgent] ⚠️ 镜头 S1 中文占比过低(28.5%), 尝试修正为中文输出\n[PromptFusionAgent] 尝试 1/3 失败: [BudgetExhausted] LLM引擎返回失败: offline-budget-fixture | type=NETWORK | retryable=false\n[PromptFusionAgent] 🔴 不可重试错误(NETWORK)，停止重试: 底层判定不可重试\n[PromptFusionAgent] 所有 1 次尝试均失败，最后错误: [BudgetExhausted] LLM引擎返回失败: offline-budget-fixture\n[PromptFusionAgent] 备用模型也失败: PHASE3_BUDGET_EXHAUSTED: 提供商调用前剩余预算不足 5 秒\n[PromptFusionAgent] 极限重试失败: PHASE3_BUDGET_EXHAUSTED: 提供商调用前剩余预算不足 5 秒\n[PromptFusionAgent] 降级结果为null/undefined: LLM failed after 1 attempts: [BudgetExhausted] LLM引擎返回失败: offline-budget-fixture\n[PromptFusionAgent] 尝试 1/3 失败: [BudgetExhausted] LLM引擎返回失败: offline-budget-fixture | type=NETWORK | retryable=false\n[PromptFusionAgent] 🔴 不可重试错误(NETWORK)，停止重试: 底层判定不可重试\n[PromptFusionAgent] 所有 1 次尝试均失败，最后错误: [BudgetExhausted] LLM引擎返回失败: offline-budget-fixture\n[PromptFusionAgent] 备用模型也失败: PHASE3_BUDGET_EXHAUSTED: 提供商调用前剩余预算不足 5 秒\n[PromptFusionAgent] 极限重试失败: PHASE3_BUDGET_EXHAUSTED: 提供商调用前剩余预算不足 5 秒\n[PromptFusionAgent] 降级结果为null/undefined: LLM failed after 1 attempts: [BudgetExhausted] LLM引擎返回失败: offline-budget-fixture\n⚠️ [confirmation-crypto] HUMAN_CONFIRMATION_SECRET 未设置\n 人工确认环节将不可用（无法生成/验证签名），但系统其余功能正常\n 配置方法: export HUMAN_CONFIRMATION_SECRET=$(openssl rand -hex 32)，或写入 .env\n[mov,mp4,m4a,3gp,3g2,mj2 @ 0x123805a10] moov atom not found\n/private/var/folders/dj/mkh6fwbd4mb6ycp933xfty4h0000gn/T/pr-m-_2bg1poi/direct-post-qEJU7d/corrupt.mp4: Invalid data found when processing input\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n参数缺少值：--pin\nstderr | src/llm-engine-bridge.test.ts\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n[LLMEngine] ❌ 未检测到 API Key，请确认环境变量 KIMI_API_KEY / MOONSHOT_API_KEY / KIMI_PLUGIN_API_KEY\n⚠️ [confirmation-crypto] HUMAN_CONFIRMATION_SECRET 未设置\n 人工确认环节将不可用（无法生成/验证签名），但系统其余功能正常\n 配置方法: export HUMAN_CONFIRMATION_SECRET=$(openssl rand -hex 32)，或写入 .env\nstderr | src/studio.test.ts\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n\n[ScriptGenerator] 无法加载LLMEngine: Cannot find module './llm-output-normalizer'\nRequire stack:\n- /Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/repo/packages/video-studio/[eval]\n[RenderingEngine] 无法加载现有渲染核心: Cannot find module './prompt-guardian'\nRequire stack:\n- /Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/repo/packages/video-studio/[eval]\n[RenderingEngine] 将使用内置模拟模式\n⚠️ [confirmation-crypto] HUMAN_CONFIRMATION_SECRET 未设置\n 人工确认环节将不可用（无法生成/验证签名），但系统其余功能正常\n 配置方法: export HUMAN_CONFIRMATION_SECRET=$(openssl rand -hex 32)，或写入 .env\n⚠️ [confirmation-crypto] HUMAN_CONFIRMATION_SECRET 未设置\n 人工确认环节将不可用（无法生成/验证签名），但系统其余功能正常\n 配置方法: export HUMAN_CONFIRMATION_SECRET=$(openssl rand -hex 32)，或写入 .env\nstderr | src/scene-policy.test.ts > T1 商业真人出镜知识条目 > 提示注入保留台词、构图、机位和时长，并进入关键帧与视频共用的 sceneDescription\n[PromptFusionAgent] ⚠️ 镜头 CZ-01 精炼后仅 962 字符，低于精炼后下限 1200，请检查上游字段是否过薄\n\nstderr | src/archive/store.test.ts > ArchiveStore > ensure(identity)：档案夹被另一代 DB 的同名 projectId 复用时留痕并校正 kind（D1 修复）\n[archive] 档案身份漂移 ws-test/VID-001：pipelineKind narrative→marketing（项目身份指纹不一致：档案夹可能被另一代数据库的同名 ID 复用）\n\nstderr | src/shot-spec.test.ts > 【场景】写实校验替换检测 > 真机链路：卡片场景含「霓虹」→ 报告显式标记 sceneSubstituted，并保留前后文本\n[PromptFusionAgent] ⚠️ 镜头 S9 场景含禁止词汇(校验强度=realistic): \"打烊后的店铺前厅，柜台、玻璃门与门外虚化的街道霓虹...\",强制替换为写实场景\n\nstderr | src/duration-projection-bridge.test.ts\n[ScriptGenerator] 无法加载LLMEngine: require is not defined in ES module scope, you can use import instead\nThis file is being treated as an ES module because it has a '.js' file extension and '/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/repo/package.json' contains \"type\": \"module\". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.\n\nstderr | src/routed-adapter.test.ts\n[pii] PII_SALT 未配置，使用 dev 占位盐（仅限开发/测试，生产必须注入 PII_SALT）\n\nstderr | src/cover-platforms.test.ts > 封面平台规格：抖音回归基线 > 缺省/未知平台落 douyin 且不抛错（旧调用零影响）\n[cover-platforms] 未知平台 \"某不存在的平台\"，按 douyin 口径处理"
+              },
+              {
+                "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node packages/video-studio/node_modules/typescript/bin/tsc --noEmit -p packages/video-studio/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-08T10:49:56.600504+00:00",
+                "result": "Exit code 0; command produced no stdout/stderr. Actual empty execution log SHA-256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855."
+              },
+              {
+                "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node apps/server/node_modules/typescript/bin/tsc --noEmit -p apps/server/tsconfig.json",
+                "exitCode": 0,
+                "finishedAt": "2026-10-08T10:49:57.727081+00:00",
+                "result": "Exit code 0; command produced no stdout/stderr. Actual empty execution log SHA-256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855."
+              },
+              {
+                "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test scripts/ai-video-workbench-guide.test.mjs bundles/geo-growthmatrix/capabilities/workbench-guide.test.mjs",
+                "exitCode": 0,
+                "finishedAt": "2026-10-08T10:49:58.601340+00:00",
+                "result": "WorkLoom agent MCP 已启动（stdio）\n✔ empty-input capability returns full canonical UTF-8, identity, version and digest with no network (5.765625ms)\n✔ CLI list, describe and invoke use the same canonical guide from an unrelated cwd (148.505958ms)\n✔ real stdio MCP initialize, list, call and invalid arguments preserve the same guide (39.733333ms)\n✔ direct module rejects arrays, primitives, null and every client-selected field (0.253ms)\n✔ production plan points to the discoverable fixed guide before any execution (1.08825ms)\n✔ copied module and doc still work with spaces, Unicode and unrelated cwd (37.374542ms)\n✔ maximum-sized valid guide is returned fully rather than truncated (41.875292ms)\n✔ concurrent guide invocations retain independent identical receipts without service calls (3.246958ms)\n✔ missing guide fails explicitly without a partial success (37.352708ms)\n✔ directory instead of file fails explicitly without a partial success (35.773ms)\n✔ oversized guide fails explicitly without a partial success (36.379625ms)\n✔ empty guide fails explicitly without a partial success (36.476833ms)\n✔ invalid UTF-8 fails explicitly without a partial success (36.837625ms)\n✔ wrong guide version fails explicitly without a partial success (38.657167ms)\n✔ wrong product fails explicitly without a partial success (37.134042ms)\n✔ invalid product JSON fails explicitly without a partial success (36.462834ms)\n✔ missing product manifest fails explicitly without a partial success (35.677125ms)\n✔ file and directory symlinks cannot expose arbitrary outside text (74.0265ms)\n✔ old payload reports absent capability; new incomplete payload reports missing guide (77.687917ms)\nℹ tests 19\nℹ suites 0\nℹ pass 19\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 810.094541"
+              },
+              {
+                "command": "/usr/bin/env NODE_OPTIONS=--import=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/offline-network-guard.mjs MATRIX_DRIFT_NETWORK_LOG=/Users/mac/Documents/Codex/2026-10-05/growthtest-codex-growthtest-growthtest-ceo-30/work/post-render-default-acceptance/incremental/matrix-enum/root-postcommit-network.jsonl /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node scripts/runtime-deps-lock.mjs verify",
+                "exitCode": 0,
+                "finishedAt": "2026-10-08T10:49:58.685098+00:00",
+                "result": "✅ runtime 依赖锁有效：workloom-ai-growthmatrix · 12 个直接依赖"
+              }
+            ],
+            "reviewedAt": "2026-10-08T11:04:13.440Z",
+            "summary": "Shared v2 receipt origin/state and legacy v1 state previously accepted arrays through String coercion, permitting a malformed record to pass shared identity/read checks or reach original-task GET recovery. This four-file unit requires actual supported string enum values before import/lock/transport; preserves valid submitted/succeeded/unknown/rejected behavior, complete task/result/body/identity/source hashes, original evidence/locks, late legacy ACK and concurrency. Two surface/post consumer implementations are byte-unchanged; direct and linked tests cover malformed types and result-guard composition. Nearest162 cases and package typecheck pass; historical baseline22 failures and initial local missing dependency/type fixture failures are preserved without presenting them as product success. No provider/model/media generation/ASRTTS, no quality-policy or source clock change. Root authored this guard; independent review must come from a distinct actor.",
+            "passed": true,
+            "id": "b54c01b7e8b29fb670fa82ce7b159fa17c111de093ac664493c5cadb4d1c4f70"
+          },
+          "reviewSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 193,
+            "pull": {
+              "number": 193,
+              "state": "open",
+              "title": "fix(video): 严格校验任务回执状态和来源类型 [T-2026-1008-0002]",
+              "body": "共享任务回执读取器此前用 String 转换检查 state/origin，数组字段会通过枚举校验，并可能跳过成功结果检查或进入旧任务查询。现在要求实际合法字符串，在导入、锁、提交或轮询前拒绝非法记录；合法历史 v1、当前 v2、晚到 ACK 和原任务恢复保留。只修改共享校验器及三个测试文件，两个后期消费者实现字节未改。\n\n验证：精确提交 `73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57` 的直接三套离线用例 162/162 通过，当前完整 video-studio、邻近消费者、video-studio/server 类型检查、包完整性、提交协议、硬闸政策、CLI/MCP 指南及运行依赖九项提交后检查均通过。原始 RED 22 条失败和本地首次依赖/类型夹具诊断保留；原记录、锁、任务身份、完整媒体和无额外 POST/GET 的行为均有实际断言。\n\n边界：无供应商、模型、ASR/TTS、新影片或付费调用；不改变品质政策或素材时钟。独立审查未完成前 ready=false；审查完成后通过正常原生队列和当前候选 CI 发布，回滚为 revert 本任务提交。\n\n任务卡：#192（T-2026-1008-0002）。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1008-0002\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+              "author": {
+                "username": "cnb.dYiF05kxAGA",
+                "nickname": "Genius",
+                "email": "XYpmztfpCvez6l8z5BBAvJ+cnb.dYiF05kxAGA@noreply.cnb.cool",
+                "is_npc": false
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/task/T-2026-1008-0002",
+                "sha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "unblocked",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57",
+            "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+            "files": [
+              "packages/video-studio/src/post-render-acceptance.test.ts",
+              "packages/video-studio/src/video-surface-repair.test.ts",
+              "packages/video-studio/src/video-task-receipt.test.ts",
+              "packages/video-studio/src/video-task-receipt.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1008-0002",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791456538000,
+            "mergeBase": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+            "checkErrors": [],
+            "checkSha": null,
+            "hasFailedChecks": false,
+            "ciPolicyChanges": []
+          }
+        }
+      },
+      "previous": "68c231cb5d97dee1808a493741df939edfea2a6541ae077117cceb1db546fa3a",
+      "digest": "63331289dba06da00e79fba6753394c66c9cd596ae250d8ebbcee749fe6899a9"
+    },
+    {
+      "sequence": 5365,
+      "at": "2026-10-08T11:06:07.517Z",
+      "kind": "transaction",
+      "data": {
+        "id": "trusted-handoff:workloom-ai/workloom-growthmatrix:193:73f0c043ca3a5b616e426a4c36d6b7f6d0e00c57:496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3:b54c01b7e8b29fb670fa82ce7b159fa17c111de093ac664493c5cadb4d1c4f70"
+      },
+      "previous": "63331289dba06da00e79fba6753394c66c9cd596ae250d8ebbcee749fe6899a9",
+      "digest": "8fc58bf4afd84963c63731d1d98daa73b2cd5306f003f62d272f4dcc8e02d08e"
     }
   ]
 }
