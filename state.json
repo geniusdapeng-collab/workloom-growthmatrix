@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5235,
+  "revision": 5237,
   "tasks": {
     "132": {
       "number": 132,
@@ -9570,7 +9570,7 @@
     },
     "190": {
       "number": 190,
-      "status": "waiting_ci",
+      "status": "merging",
       "firstSeen": 1791450950631,
       "attempts": {},
       "admission": {
@@ -9747,6 +9747,78 @@
         "mainSha": "d11f3ce08333142102ef89a1760453cdff4aa581",
         "marker": "delivery-origin:190:947611428ad32c5f968d974eb822985f10aaa3f4:d11f3ce08333142102ef89a1760453cdff4aa581",
         "at": 1791453315210
+      },
+      "mergePhase": "prepared",
+      "mergeSnapshot": {
+        "repo": "workloom-ai/workloom-growthmatrix",
+        "number": 191,
+        "pull": {
+          "number": 191,
+          "state": "open",
+          "title": "chore(ci): deliver #190 fix(video): 兼容当前 v2 渲染任务回执进入后期 [T-2026-1008-0001]",
+          "body": "Immutable delivery candidate for #190. Exact source 947611428ad32c5f968d974eb822985f10aaa3f4; tested main d11f3ce08333142102ef89a1760453cdff4aa581.\n\n<!-- delivery-origin:190:947611428ad32c5f968d974eb822985f10aaa3f4:d11f3ce08333142102ef89a1760453cdff4aa581 -->\n\n<!-- workloom-delivery\n{\"ready\":true,\"depends_on\":[],\"releases\":[]}\n-->",
+          "author": {
+            "username": "OCI",
+            "nickname": "Cloud Native Build",
+            "is_npc": true
+          },
+          "reviewers": [],
+          "labels": [],
+          "base": {
+            "ref": "refs/heads/main",
+            "sha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "head": {
+            "ref": "refs/heads/delivery/candidate/pr-190-6efba6331c668acbd934381bf0d04bb1",
+            "sha": "947611428ad32c5f968d974eb822985f10aaa3f4",
+            "repo": {
+              "id": "2101835392181194752",
+              "name": "workloom-growthmatrix",
+              "path": "workloom-ai/workloom-growthmatrix",
+              "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+            }
+          },
+          "blocked_on": "unblocked",
+          "merged_by": {
+            "is_npc": false
+          },
+          "mergeable_state": "mergeable",
+          "is_wip": false,
+          "is_merged": false,
+          "is_force_merged": false,
+          "statuses": {}
+        },
+        "headSha": "947611428ad32c5f968d974eb822985f10aaa3f4",
+        "mainSha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+        "files": [
+          "packages/video-studio/src/post-render-acceptance.test.ts",
+          "packages/video-studio/src/post-render-acceptance.ts"
+        ],
+        "intent": {
+          "taskId": "T-2026-1008-0001",
+          "ready": true,
+          "dependsOn": [],
+          "releases": []
+        },
+        "headTime": 1791450196000,
+        "mergeBase": "d11f3ce08333142102ef89a1760453cdff4aa581",
+        "checkErrors": [],
+        "checkSha": "2baa8c72bc8a1ab0c0ca426eb647bf2c7523f2f6",
+        "hasFailedChecks": false,
+        "ciPolicyChanges": [],
+        "originNumber": 190,
+        "pendingDependencies": []
+      },
+      "integrationLease": {
+        "owner": "integration/pr-190",
+        "scopes": [],
+        "generation": {}
       }
     },
     "191": {
@@ -121302,6 +121374,101 @@
       },
       "previous": "eb4850c31de71c4d898294f4f0d1391f7fd061b0f85b7d71fd9e8b9d61c18543",
       "digest": "6982c76d07ae46ddcd228c8f73670febb94e93eeac62639507e7f2d9a04ba6e7"
+    },
+    {
+      "sequence": 5236,
+      "at": "2026-10-08T10:10:19.183Z",
+      "kind": "task",
+      "data": {
+        "number": 190,
+        "patch": {
+          "status": "merging",
+          "mergePhase": "prepared",
+          "mergeSnapshot": {
+            "repo": "workloom-ai/workloom-growthmatrix",
+            "number": 191,
+            "pull": {
+              "number": 191,
+              "state": "open",
+              "title": "chore(ci): deliver #190 fix(video): 兼容当前 v2 渲染任务回执进入后期 [T-2026-1008-0001]",
+              "body": "Immutable delivery candidate for #190. Exact source 947611428ad32c5f968d974eb822985f10aaa3f4; tested main d11f3ce08333142102ef89a1760453cdff4aa581.\n\n<!-- delivery-origin:190:947611428ad32c5f968d974eb822985f10aaa3f4:d11f3ce08333142102ef89a1760453cdff4aa581 -->\n\n<!-- workloom-delivery\n{\"ready\":true,\"depends_on\":[],\"releases\":[]}\n-->",
+              "author": {
+                "username": "OCI",
+                "nickname": "Cloud Native Build",
+                "is_npc": true
+              },
+              "reviewers": [],
+              "labels": [],
+              "base": {
+                "ref": "refs/heads/main",
+                "sha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "head": {
+                "ref": "refs/heads/delivery/candidate/pr-190-6efba6331c668acbd934381bf0d04bb1",
+                "sha": "947611428ad32c5f968d974eb822985f10aaa3f4",
+                "repo": {
+                  "id": "2101835392181194752",
+                  "name": "workloom-growthmatrix",
+                  "path": "workloom-ai/workloom-growthmatrix",
+                  "web_url": "https://cnb.cool/workloom-ai/workloom-growthmatrix"
+                }
+              },
+              "blocked_on": "unblocked",
+              "merged_by": {
+                "is_npc": false
+              },
+              "mergeable_state": "mergeable",
+              "is_wip": false,
+              "is_merged": false,
+              "is_force_merged": false,
+              "statuses": {}
+            },
+            "headSha": "947611428ad32c5f968d974eb822985f10aaa3f4",
+            "mainSha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+            "files": [
+              "packages/video-studio/src/post-render-acceptance.test.ts",
+              "packages/video-studio/src/post-render-acceptance.ts"
+            ],
+            "intent": {
+              "taskId": "T-2026-1008-0001",
+              "ready": true,
+              "dependsOn": [],
+              "releases": []
+            },
+            "headTime": 1791450196000,
+            "mergeBase": "d11f3ce08333142102ef89a1760453cdff4aa581",
+            "checkErrors": [],
+            "checkSha": "2baa8c72bc8a1ab0c0ca426eb647bf2c7523f2f6",
+            "hasFailedChecks": false,
+            "ciPolicyChanges": [],
+            "originNumber": 190,
+            "pendingDependencies": []
+          },
+          "integrationLease": {
+            "owner": "integration/pr-190",
+            "scopes": [],
+            "generation": {}
+          }
+        }
+      },
+      "previous": "6982c76d07ae46ddcd228c8f73670febb94e93eeac62639507e7f2d9a04ba6e7",
+      "digest": "396cf78a243ab6c66accaade46aaff394afb3d9a4d537d4e814abf7ebaa857b5"
+    },
+    {
+      "sequence": 5237,
+      "at": "2026-10-08T10:13:38.256Z",
+      "kind": "transaction",
+      "data": {
+        "id": "a6732636-8aeb-4c2f-af8f-3a4eb3cac110"
+      },
+      "previous": "396cf78a243ab6c66accaade46aaff394afb3d9a4d537d4e814abf7ebaa857b5",
+      "digest": "bac4a2a06fb93a3eebff3691fc232d8250966f39a06d6ee5161a5e717f934d9c"
     }
   ]
 }
