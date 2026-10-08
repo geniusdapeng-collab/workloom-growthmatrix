@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5255,
+  "revision": 5257,
   "tasks": {
     "132": {
       "number": 132,
@@ -4611,7 +4611,7 @@
     },
     "150": {
       "number": 150,
-      "status": "parked",
+      "status": "aligning",
       "firstSeen": 1791357138520,
       "attempts": {},
       "headSha": "fac83eb139bd23ad9f3f0d4475c2cce902e08223",
@@ -4726,7 +4726,7 @@
       ],
       "error": "检查/评审阻断：Codex review identity differs from the exact repository/source/main/policy",
       "blockedUntil": 0,
-      "alignmentCount": 0,
+      "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
       "candidate": null,
@@ -4740,7 +4740,11 @@
         "packages/video-studio/src/requirement-bridge.ts"
       ],
       "ciSince": 1791416314852,
-      "alignmentIntent": null,
+      "alignmentIntent": {
+        "headSha": "fac83eb139bd23ad9f3f0d4475c2cce902e08223",
+        "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+        "at": 1791454537182
+      },
       "alignment": {
         "sha": "fac83eb139bd23ad9f3f0d4475c2cce902e08223",
         "previousHead": "f409347e11fb6066e013c83b0fea98e19cf3d340",
@@ -121811,6 +121815,36 @@
       },
       "previous": "507727691ba4236aae89e44236fd47ea5c50d2d8b74c25f90905cb75c683bb1d",
       "digest": "9bef625dd1bb0983b55b5e873fbd0002866a7402f9135d5fbbf608d020791263"
+    },
+    {
+      "sequence": 5256,
+      "at": "2026-10-08T10:15:37.182Z",
+      "kind": "task",
+      "data": {
+        "number": 150,
+        "patch": {
+          "status": "aligning",
+          "alignmentCount": 1,
+          "alignmentIntent": {
+            "headSha": "fac83eb139bd23ad9f3f0d4475c2cce902e08223",
+            "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+            "at": 1791454537182
+          },
+          "developerReview": null
+        }
+      },
+      "previous": "9bef625dd1bb0983b55b5e873fbd0002866a7402f9135d5fbbf608d020791263",
+      "digest": "49caf58db3e66667301798d374b1aabecc2d128a90649a2e922140ebc5953c4b"
+    },
+    {
+      "sequence": 5257,
+      "at": "2026-10-08T10:17:36.473Z",
+      "kind": "transaction",
+      "data": {
+        "id": "06028e60-fda2-4375-8836-8653a5b9636f"
+      },
+      "previous": "49caf58db3e66667301798d374b1aabecc2d128a90649a2e922140ebc5953c4b",
+      "digest": "fddc8f7b0576df04eb168985d3cbbc5ba029f5dc17b5e9a1fa03023262204ce0"
     }
   ]
 }
