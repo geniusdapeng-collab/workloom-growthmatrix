@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5209,
+  "revision": 5211,
   "tasks": {
     "132": {
       "number": 132,
@@ -9582,7 +9582,7 @@
         "owner": "admission/pr-190",
         "generation": {}
       },
-      "updatedAt": 1791453315210,
+      "updatedAt": 1791453626599,
       "headSha": "947611428ad32c5f968d974eb822985f10aaa3f4",
       "intent": {
         "taskId": "T-2026-1008-0001",
@@ -120825,6 +120825,44 @@
       },
       "previous": "d82e2c77d62864d2b123cffab0b99cd90957d176fee882f9d23758dd652301d0",
       "digest": "f8ed9585e181c0b94ed6ff4e4482c1a83e6f2256d07db36c7d66729e0b6f84cc"
+    },
+    {
+      "sequence": 5210,
+      "at": "2026-10-08T10:00:26.599Z",
+      "kind": "task",
+      "data": {
+        "number": 190,
+        "patch": {
+          "headSha": "947611428ad32c5f968d974eb822985f10aaa3f4",
+          "mainSha": "d11f3ce08333142102ef89a1760453cdff4aa581",
+          "branch": "task/T-2026-1008-0001",
+          "intent": {
+            "taskId": "T-2026-1008-0001",
+            "ready": true,
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "当前任务写入器已使用 v2 回执，后期采用器仍仅解析历史格式，导致已有成功渲染无法恢复进入后期。本次只修改采用器和对应测试两个文件：复用现有任务身份、输入与文件摘要校验，让当前 v2 和合法历史 v1 回执进入同一只读采用路径；错误或数组形式的 origin、失败/未知任务、不匹配作用域和篡改字节继续拒绝。既有质量审查失败历史保留，不触发重新生成。\n\n验证：精确提交 `947611428ad32c5f968d974eb822985f10aaa3f4` 已通过当前包依赖下的 133 条邻近用例、完整 video-studio 测试、video-studio/server 类型检查、官方包完整性、提交协议、硬闸政策、真实 CLI/MCP 指南和运行依赖检查。实际媒体夹具检查完整帧、尾部画面和原声。独立语义复核正在进行，完成前 ready=false。\n\n边界：没有供应商、模型、ASR/TTS、新影片或付费任务调用；完整作品与自然时长政策仍属后续任务。本单元通过原生队列、当前源检查和候选 CI 发布，回滚为 revert 本任务提交。\n\n任务卡：#189（T-2026-1008-0001）。\n\n<!-- workloom-delivery\n{\n  \"task_id\": \"T-2026-1008-0001\",\n  \"ready\": true,\n  \"depends_on\": [],\n  \"releases\": []\n}\n-->",
+          "files": [
+            "packages/video-studio/src/post-render-acceptance.test.ts",
+            "packages/video-studio/src/post-render-acceptance.ts"
+          ],
+          "status": "waiting_ci",
+          "ciSince": 1791453315210
+        }
+      },
+      "previous": "f8ed9585e181c0b94ed6ff4e4482c1a83e6f2256d07db36c7d66729e0b6f84cc",
+      "digest": "04aa8810d9567fb1fe1ce18601697bbe2d7729f6c2c4f372ed1ca4f61ac205a6"
+    },
+    {
+      "sequence": 5211,
+      "at": "2026-10-08T10:02:05.267Z",
+      "kind": "transaction",
+      "data": {
+        "id": "7ca0ca88-79f0-4560-a7ab-50e68eb1aaf4"
+      },
+      "previous": "04aa8810d9567fb1fe1ce18601697bbe2d7729f6c2c4f372ed1ca4f61ac205a6",
+      "digest": "eada3a92b0a920cd8030d0e9703bf833a3fa986a833b4f4a13a75bd2d0960034"
     }
   ]
 }
