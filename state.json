@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5736,
+  "revision": 5738,
   "tasks": {
     "132": {
       "number": 132,
@@ -5075,7 +5075,7 @@
     },
     "153": {
       "number": 153,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791359178476,
       "attempts": {},
       "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -5236,7 +5236,7 @@
           }
         ]
       },
-      "updatedAt": 1791469214039,
+      "updatedAt": 1791469514054,
       "admission": {
         "number": 153,
         "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -130801,6 +130801,46 @@
       },
       "previous": "20f6c3e2263425cf37bb8d1fe3ec58eba544ca4c508a8158b29298dde23dd8dd",
       "digest": "346a56124f8989c132f322d845d9623858faf53f05ef8e280b010a3dbf0a8a34"
+    },
+    {
+      "sequence": 5737,
+      "at": "2026-10-08T14:25:14.054Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              152
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.12"
+              }
+            ]
+          },
+          "dependencies": [
+            152
+          ]
+        }
+      },
+      "previous": "346a56124f8989c132f322d845d9623858faf53f05ef8e280b010a3dbf0a8a34",
+      "digest": "34c54e5202cfa162ab1a81688336c0c3ee808da6a6edb10bd71ed7e2f5ae6f74"
+    },
+    {
+      "sequence": 5738,
+      "at": "2026-10-08T14:26:54.276Z",
+      "kind": "transaction",
+      "data": {
+        "id": "b79b802f-73a4-4a52-86b8-6af0017ea326"
+      },
+      "previous": "34c54e5202cfa162ab1a81688336c0c3ee808da6a6edb10bd71ed7e2f5ae6f74",
+      "digest": "74eda8cf022f6c6562da763837bd9434130df08f70e018ff97d3790c2e3c3ce0"
     }
   ]
 }
