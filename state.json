@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4700,
+  "revision": 4702,
   "tasks": {
     "132": {
       "number": 132,
@@ -5738,7 +5738,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791435309256,
+      "updatedAt": 1791435611189,
       "admission": {
         "number": 156,
         "headSha": "3ca871b90d7bb63718c672e4b21322482817819a",
@@ -5755,8 +5755,8 @@
       "dependencies": [
         155
       ],
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/156 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791435909256
+      "error": "Prerequisite #155 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/155 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791436211189
     },
     "157": {
       "number": 157,
@@ -111753,6 +111753,31 @@
       },
       "previous": "ab56939e37c1b83e2e79fc70b2be2e39f7b0a15b5f696577825fcc296b83c531",
       "digest": "39d4b61e8fea7fa0a4c8ebd2681771088ed9e54a132ee93781ebb92d5b52b3de"
+    },
+    {
+      "sequence": 4701,
+      "at": "2026-10-08T05:00:11.189Z",
+      "kind": "task",
+      "data": {
+        "number": 156,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #155 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/155 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791436211189
+        }
+      },
+      "previous": "39d4b61e8fea7fa0a4c8ebd2681771088ed9e54a132ee93781ebb92d5b52b3de",
+      "digest": "0926f88a6207e7044ddea2ee2ecbaa2c2b0a0f41800c0fa898a2604b17e9b442"
+    },
+    {
+      "sequence": 4702,
+      "at": "2026-10-08T05:01:46.671Z",
+      "kind": "transaction",
+      "data": {
+        "id": "915df0e4-3086-4cb4-b815-6fcfad002e12"
+      },
+      "previous": "0926f88a6207e7044ddea2ee2ecbaa2c2b0a0f41800c0fa898a2604b17e9b442",
+      "digest": "5a15790054b61c1da151b27bf79fe90554d49e69bd6185961e8dbdde0c337859"
     }
   ]
 }
