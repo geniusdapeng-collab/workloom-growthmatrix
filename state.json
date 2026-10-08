@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 6420,
+  "revision": 6422,
   "tasks": {
     "132": {
       "number": 132,
@@ -680,7 +680,7 @@
         "scripts/tools/full-chain-film.mts"
       ],
       "ciSince": 1791310212615,
-      "updatedAt": 1791497115996,
+      "updatedAt": 1791497718425,
       "alignmentCount": 3,
       "alignmentIntent": {
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
@@ -142852,6 +142852,47 @@
       },
       "previous": "6685f2cd6ef59855ce1c4adeb71c6206f8dbbb817e5181843199282923d680db",
       "digest": "eb77f3cc664fb31db1968e0770088b3391ec650695ccbdaef011cd8ba67cc508"
+    },
+    {
+      "sequence": 6421,
+      "at": "2026-10-08T22:15:18.425Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
+          "mainSha": "514838d14319a5492a9c26a143b20359f49e62b0",
+          "branch": "task/T-2026-1006-0850",
+          "intent": {
+            "taskId": "T-2026-1006-0850",
+            "dependsOn": [],
+            "releases": []
+          },
+          "originalBody": "正式 v0.1.2 签名发行误拒 CNB 返回的受保护 main 完整引用，真实成功视频任务又因下载超时中断；S3屏幕UI事实拒绝后的正式局部后期在黑边与人物黑衣连通时找不到唯一候选。\n\n精确兼容 main/refs/heads/main 并保持原保护/SHA/tag/Release/签名校验；媒体组件只重试已成功任务的GET。补充局部定位候选路径，仍以完整逐帧像素、真实定位/修复结果/完整合同身份审核决定能否接入后期，不重复生成，不把局部修复等同完整合格。保留原片、原请求摘要及所有拒绝。\n\n已有产品所有者修复合入发布授权，影响发布信任项显式review；正常平台三门禁与精确合并树通过后合入，普通Revert回滚。本隔离仓不回流公共基座。原生Mac/Windows Runner及签名配置仍缺，不能把代码/tag或只读预检称为签名安装包已发布。\n\n声明路径：\n- `scripts/ci/cnb-desktop-release.mjs`\n- `scripts/ci/cnb-desktop-release.test.mjs`\n- `packages/video-studio/src/media-download.ts`\n- `packages/video-studio/src/media-download.test.ts`\n- `packages/video-studio/src/video-surface-repair.ts`\n- `packages/video-studio/src/video-surface-repair.test.ts`\n- `scripts/tools/full-chain-film.mts`\n- `docs/tasks/T-2026-1006-0850.md`\n\n当前已通过发行/finalizer21项、媒体/成功回执/正式CLI51项和视频TSC，实际CNB main+v0.1.2只读绑定通过；局部定位追加验收完成后补最终真实回执。测试替身不冒充实际签名发行。\n\nCloses #133",
+          "files": [
+            "docs/tasks/T-2026-1006-0850.md",
+            "packages/video-studio/src/media-download.test.ts",
+            "packages/video-studio/src/media-download.ts",
+            "scripts/ci/cnb-desktop-release.mjs",
+            "scripts/ci/cnb-desktop-release.test.mjs",
+            "scripts/tools/full-chain-film.mts"
+          ],
+          "status": "parked",
+          "ciSince": 1791310212615
+        }
+      },
+      "previous": "eb77f3cc664fb31db1968e0770088b3391ec650695ccbdaef011cd8ba67cc508",
+      "digest": "5052bc3c17ad015708cbe27e6f55a71657af8d108080253e4c92d4d3450d99c2"
+    },
+    {
+      "sequence": 6422,
+      "at": "2026-10-08T22:16:01.073Z",
+      "kind": "transaction",
+      "data": {
+        "id": "3387ef1f-ef36-4a87-b8eb-5e3160d4e1b4"
+      },
+      "previous": "5052bc3c17ad015708cbe27e6f55a71657af8d108080253e4c92d4d3450d99c2",
+      "digest": "4b395f418fe8114f64338b4029c2c23d235d05dd2026e2c9f75f29c48991ad93"
     }
   ]
 }
