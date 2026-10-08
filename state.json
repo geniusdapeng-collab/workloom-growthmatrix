@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4708,
+  "revision": 4710,
   "tasks": {
     "132": {
       "number": 132,
@@ -6777,7 +6777,7 @@
     },
     "165": {
       "number": 165,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791370361439,
       "attempts": {},
       "headSha": "bbba1d0a1eea8a5d90db6c54327dd3fa91acca14",
@@ -7111,7 +7111,7 @@
           }
         ]
       },
-      "updatedAt": 1791435309256,
+      "updatedAt": 1791435611189,
       "admission": {
         "number": 165,
         "headSha": "bbba1d0a1eea8a5d90db6c54327dd3fa91acca14",
@@ -111904,6 +111904,57 @@
       },
       "previous": "adc715157665dc09d5169f33d2b68ab33c1f9de3c0e1274049a0e6a3f7f26765",
       "digest": "972a1b66e53af090a91514cba6c382621b91ef7deedd1f1ba7f3d81846b32bca"
+    },
+    {
+      "sequence": 4709,
+      "at": "2026-10-08T05:00:11.189Z",
+      "kind": "task",
+      "data": {
+        "number": 165,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "bbba1d0a1eea8a5d90db6c54327dd3fa91acca14",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              143,
+              144,
+              145,
+              149,
+              150,
+              153,
+              158,
+              160,
+              164
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.22"
+              }
+            ]
+          },
+          "dependencies": [
+            150,
+            153,
+            158,
+            160
+          ]
+        }
+      },
+      "previous": "972a1b66e53af090a91514cba6c382621b91ef7deedd1f1ba7f3d81846b32bca",
+      "digest": "5336be18039fc606486a16c2652be7d1486793474fbadd5d6fc644bcb1744361"
+    },
+    {
+      "sequence": 4710,
+      "at": "2026-10-08T05:02:13.770Z",
+      "kind": "transaction",
+      "data": {
+        "id": "ccb58dba-8ea2-4345-9e41-de921a65c352"
+      },
+      "previous": "5336be18039fc606486a16c2652be7d1486793474fbadd5d6fc644bcb1744361",
+      "digest": "7198e61e60b7c965293b2923cc60ccad9fba911dd7976ea85e483e516e1aaa49"
     }
   ]
 }
