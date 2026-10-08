@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5590,
+  "revision": 5592,
   "tasks": {
     "132": {
       "number": 132,
@@ -8140,7 +8140,7 @@
     },
     "176": {
       "number": 176,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791391664418,
       "attempts": {},
       "headSha": "8f655f80b9683ec0dfe2008ed7b45375c2c3938c",
@@ -8292,7 +8292,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791464715488,
+      "updatedAt": 1791465012612,
       "admission": {
         "number": 176,
         "headSha": "8f655f80b9683ec0dfe2008ed7b45375c2c3938c",
@@ -128298,6 +128298,46 @@
       },
       "previous": "9c7018cac69dfd011fdf7c07df25bbdd7773685f216f4761bb4b4e78a4c1ad68",
       "digest": "7ccadb764e52b07f9f53d931314b16216f94ff0366e7d5419c2d97df24df50e3"
+    },
+    {
+      "sequence": 5591,
+      "at": "2026-10-08T13:10:12.612Z",
+      "kind": "task",
+      "data": {
+        "number": 176,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "8f655f80b9683ec0dfe2008ed7b45375c2c3938c",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              167
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.24"
+              }
+            ]
+          },
+          "dependencies": [
+            167
+          ]
+        }
+      },
+      "previous": "7ccadb764e52b07f9f53d931314b16216f94ff0366e7d5419c2d97df24df50e3",
+      "digest": "317ad76ebc92e4f2848c7b357a4e8a6eb109f58a95986686b28c21775b9a9fdf"
+    },
+    {
+      "sequence": 5592,
+      "at": "2026-10-08T13:11:58.544Z",
+      "kind": "transaction",
+      "data": {
+        "id": "edee0a52-5634-4059-924e-64d8dde5b955"
+      },
+      "previous": "317ad76ebc92e4f2848c7b357a4e8a6eb109f58a95986686b28c21775b9a9fdf",
+      "digest": "465b97f262647b3295a9713f13cadc1f1027007abc67f80f91bd0d716ed2fd13"
     }
   ]
 }
