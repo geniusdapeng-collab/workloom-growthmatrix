@@ -1,11 +1,11 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, it } from "vitest";
 import { createLineageReceipt, fingerprintArtifact, productionHash } from "./production-lineage.js";
 import { assertReviewedSurfaceRepair, assertSurfaceIdentityQualification, assertSurfaceRepairOrigin, detectSurface, executeSurfaceRepair, inspectSurfaceRepair, qualifyReviewedSurfacePost, stableSurfaceRect, surfaceMask, trackSurface } from "./video-surface-repair.js";
-import { readExistingVideoTaskReceipt, resumeOrSubmitVideoTask } from "./video-task-receipt.js";
+import { readExistingVideoTaskReceipt, resumeOrSubmitVideoTask, videoTaskReceiptPath } from "./video-task-receipt.js";
 import type { ProducerVerdict } from "./producer-gate.js";
 
 const roots: string[] = [];
@@ -132,6 +132,30 @@ it("v2完整身份进入只读后期资格，身份摘要篡改仍被拒绝", as
   const base = origin(), expectedRequestSha256 = productionHash(input.body);
   expect(assertSurfaceRepairOrigin({ ...base, taskReceipt: receipt, expectedRequestSha256 })).toBe("once");
   expect(() => assertSurfaceRepairOrigin({ ...base, taskReceipt: { ...receipt, identitySha256: "0".repeat(64) }, expectedRequestSha256 })).toThrow("RECEIPT_CHANGED");
+});
+const malformedSurfaceEnums: Array<[string, unknown]> = [
+  ["origin", ["submitted-here"]], ["origin", ["legacy-resume-only"]],
+  ...["submitting", "submitted", "succeeded", "rejected"].map(state => ["state", [state]] as [string, unknown]),
+  ["origin", null], ["origin", {}], ["state", null], ["state", {}],
+];
+it.each(malformedSurfaceEnums)("v2非字符串%s=%j不能取得两类屏幕后期资格且所有原证据字节不变", async (field, value) => {
+  const input = qualified();
+  const deny = () => { throw new Error("NO_SUBMIT_OR_POLL_FOR_SUCCESSFUL_LEGACY"); };
+  await resumeOrSubmitVideoTask({ root: input.receiptRoot, ...input, wait: async () => undefined,
+    transport: { submit: async () => deny(), poll: async () => deny() } });
+  const valid = readExistingVideoTaskReceipt({ root: input.receiptRoot, ...input })!;
+  const receipt = { ...valid, [String(field)]: value };
+  const journal = videoTaskReceiptPath(input.receiptRoot, input.projectId, input.shotId);
+  const malformed = JSON.stringify(receipt); writeFileSync(journal, malformed);
+  const base = origin(), expectedRequestSha256 = productionHash(input.body);
+  const paths = [input.clip, input.repair.evidence.original, input.receiptFile, base.clip, base.promptFile,
+    ...base.submission.inputs.map(file => file.path)];
+  const before = paths.map(file => readFileSync(file)), files = readdirSync(join(input.receiptRoot, "v2"));
+  expect(() => assertSurfaceRepairOrigin({ ...base, taskReceipt: receipt as typeof valid, expectedRequestSha256 }))
+    .toThrow(/VIDEO_TASK_RECEIPT/);
+  await expect(qualifyReviewedSurfacePost(input)).rejects.toThrow(/VIDEO_TASK_RECEIPT/);
+  expect(paths.map(file => readFileSync(file))).toEqual(before); expect(readFileSync(journal, "utf8")).toBe(malformed);
+  expect(readdirSync(join(input.receiptRoot, "v2"))).toEqual(files); expect(existsSync(`${journal}.lock`)).toBe(false);
 });
 it.each(["source", "clip", "original", "task", "request", "missing-receipt", "unfinished"])("后期资格%s缺失/改变不能复用旧通过，也不能提交新的任务", async field => {
   const input = qualified();

@@ -217,6 +217,12 @@ describe("current v2 supplier task enters the same read-only post adopter", () =
     ["submitted", value => { value.state = "submitted"; }],
     ["rejected", value => { value.state = "rejected"; }],
     ["unknown state", value => { value.state = "unknown"; }],
+    ...["submitting", "submitted", "succeeded", "rejected"].map(state =>
+      [`array ${state} state`, (value: Record<string, unknown>) => { value.state = [state]; }] as [string, (value: Record<string, unknown>) => void]),
+    ["object state", value => { value.state = {}; }],
+    ["null state", value => { value.state = null; }],
+    ["numeric state", value => { value.state = 1; }],
+    ["boolean origin", value => { value.origin = true; }],
     ["invalid task", value => { value.taskId = "../different-task"; }],
     ["missing task", value => { delete value.taskId; }],
     ["wrong result task", value => { (value.result as Record<string, unknown>).taskId = "different-task"; }],

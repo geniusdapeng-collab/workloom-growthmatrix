@@ -1,5 +1,5 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
-import { resumeOrSubmitVideoTask, verifyExistingSuccessfulVideoTask, videoTaskReceiptPath } from "./video-task-receipt.js";
+import { assertVideoTaskReceiptIdentity, readExistingVideoTaskReceipt, resumeOrSubmitVideoTask, verifyExistingSuccessfulVideoTask, videoTaskReceiptPath } from "./video-task-receipt.js";
 import { filmCanonicalJson } from "./film-worker-channel.js";
 const roots: string[] = [];
 afterEach(async () => { for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true }); });
@@ -155,4 +155,57 @@ it("独立进程并发通过持久身份和磁盘锁只提交一次；其余进�
   const code = `import {resumeOrSubmitVideoTask} from ${JSON.stringify(module)}; import {appendFileSync} from 'node:fs'; const value=${settings}; console.log((await resumeOrSubmitVideoTask({...value,wait:async()=>{},transport:{submit:async()=>{appendFileSync(${JSON.stringify(count)},'1');await new Promise(r=>setTimeout(r,80));return {ok:true,status:200,text:'{"id":"paid-1"}'};},poll:async()=>({ok:true,status:200,text:'{"status":"succeeded","content":{"video_url":"https://video.invalid/one"}}'})}})).taskId);`;
   const execute = promisify(execFile), results = await Promise.all(Array.from({ length: 3 }, () => execute(process.execPath, ["--import", "tsx", "--input-type=module", "-e", code], { timeout: 30_000 })));
   expect(new Set(results.map(v => v.stdout.trim())).size).toBe(1); expect(readFileSync(count, "utf8")).toBe("1");
+});
+
+const malformedEnums: Array<[string, string, unknown]> = [
+  ["origin", "submitted array", ["submitted-here"]], ["origin", "legacy array", ["legacy-resume-only"]],
+  ...["submitting", "submitted", "succeeded", "rejected"].map(state => ["state", `${state} array`, [state]] as [string, string, unknown]),
+  ...["origin", "state"].flatMap(field => [[field, "empty array", []], [field, "object", {}],
+    [field, "null", null], [field, "number", 1], [field, "boolean", true]] as Array<[string, string, unknown]>),
+];
+it.each(malformedEnums)("v2 %s %s在读取/采用/恢复前拒绝；原journal和锁不改，无额外POST/GET", async (field, _name, value) => {
+  const input = await setup(); await resumeOrSubmitVideoTask(input);
+  const file = videoTaskReceiptPath(input.root, input.projectId, input.shotId), receipt = JSON.parse(await readFile(file, "utf8"));
+  receipt[field] = value;
+  const bytes = JSON.stringify(receipt); await writeFile(file, bytes);
+  const lock = `${file}.lock`, lockBytes = JSON.stringify({ pid: process.pid, token: "test-only-live-enum-lock" });
+  await writeFile(lock, lockBytes);
+  const files = readdirSync(path.dirname(file));
+  input.transport.submit.mockClear(); input.transport.poll.mockClear();
+  expect(() => assertVideoTaskReceiptIdentity(receipt)).toThrow(/VIDEO_TASK_RECEIPT/);
+  expect(() => readExistingVideoTaskReceipt(input)).toThrow(/VIDEO_TASK_RECEIPT/);
+  await expect(verifyExistingSuccessfulVideoTask(input)).rejects.toThrow(/VIDEO_TASK_RECEIPT/);
+  await expect(resumeOrSubmitVideoTask(input)).rejects.toThrow(/VIDEO_TASK_RECEIPT/);
+  expect(await readFile(file, "utf8")).toBe(bytes); expect(await readFile(lock, "utf8")).toBe(lockBytes);
+  expect(readdirSync(path.dirname(file))).toEqual(files);
+  expect(input.transport.submit).not.toHaveBeenCalled(); expect(input.transport.poll).not.toHaveBeenCalled();
+});
+it.each(["submitting", "submitted", "succeeded", "rejected"])("v1数组%s在导入持久journal前拒绝且保留原记录/锁", async state => {
+  const input = await setup(), old = await setup();
+  const file = await legacy(input, { state: [state], result: { taskId: "paid-1", url: "https://video.invalid/old", lastFrame: null } }, old.root);
+  const lock = `${file}.lock`; await writeFile(lock, "");
+  const bytes = await readFile(file, "utf8"), scope = { ...input, legacyRoots: [old.root] };
+  const stable = videoTaskReceiptPath(input.root, input.projectId, input.shotId);
+  expect(() => readExistingVideoTaskReceipt(scope)).toThrow(/VIDEO_TASK_RECEIPT/);
+  await expect(verifyExistingSuccessfulVideoTask(scope)).rejects.toThrow(/VIDEO_TASK_RECEIPT/);
+  await expect(resumeOrSubmitVideoTask(scope)).rejects.toThrow(/VIDEO_TASK_RECEIPT/);
+  expect(await readFile(file, "utf8")).toBe(bytes); expect(await readFile(lock, "utf8")).toBe("");
+  expect(existsSync(stable)).toBe(false); expect(existsSync(`${stable}.lock`)).toBe(false);
+  expect(input.transport.submit).not.toHaveBeenCalled(); expect(input.transport.poll).not.toHaveBeenCalled();
+});
+it.each(["task", "url", "credentials", "missing", "array"])("数组succeeded不能绕开%s结果校验并污染已成功任务", async failure => {
+  const input = await setup(); await resumeOrSubmitVideoTask(input);
+  const file = videoTaskReceiptPath(input.root, input.projectId, input.shotId), receipt = JSON.parse(await readFile(file, "utf8"));
+  receipt.state = ["succeeded"];
+  if (failure === "task") receipt.result.taskId = "other-task";
+  if (failure === "url") receipt.result.url = "file:///not-provider";
+  if (failure === "credentials") receipt.result.url = "https://x:x@video.invalid/clip";
+  if (failure === "missing") delete receipt.result;
+  if (failure === "array") receipt.result = [];
+  const bytes = JSON.stringify(receipt); await writeFile(file, bytes);
+  input.transport.submit.mockClear(); input.transport.poll.mockClear();
+  expect(() => assertVideoTaskReceiptIdentity(receipt)).toThrow(/VIDEO_TASK_RECEIPT/);
+  await expect(resumeOrSubmitVideoTask(input)).rejects.toThrow(/VIDEO_TASK_RECEIPT/);
+  expect(await readFile(file, "utf8")).toBe(bytes); expect(existsSync(`${file}.lock`)).toBe(false);
+  expect(input.transport.submit).not.toHaveBeenCalled(); expect(input.transport.poll).not.toHaveBeenCalled();
 });

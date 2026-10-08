@@ -60,9 +60,9 @@ export function videoTaskReceiptPath(root: string, projectId: string, shotId: st
 }
 function stateFields(value: Record<string, unknown>, expected: VideoIdentity): void {
   if (value.projectId !== expected.projectId || value.shotId !== expected.shotId || value.requestSha256 !== hash(filmCanonicalJson(expected.body))
-    || !["submitting", "submitted", "succeeded", "rejected"].includes(String(value.state))) throw new Error("VIDEO_TASK_RECEIPT_CHANGED: request or scope changed; no new POST");
+    || typeof value.state !== "string" || !["submitting", "submitted", "succeeded", "rejected"].includes(value.state)) throw new Error("VIDEO_TASK_RECEIPT_CHANGED: request or scope changed; no new POST");
   if (value.taskId !== undefined && !taskIdValid(value.taskId)) throw new Error("VIDEO_TASK_RECEIPT_INVALID: invalid taskId");
-  if (["submitted", "succeeded"].includes(String(value.state)) && !taskIdValid(value.taskId)) throw new Error("VIDEO_TASK_RECEIPT_INVALID: missing original taskId");
+  if (["submitted", "succeeded"].includes(value.state) && !taskIdValid(value.taskId)) throw new Error("VIDEO_TASK_RECEIPT_INVALID: missing original taskId");
   if (value.state === "succeeded" && (!object(value.result) || value.result.taskId !== value.taskId || !remoteUrl(value.result.url)
     || value.result.lastFrame !== null && !remoteUrl(value.result.lastFrame))) throw new Error("VIDEO_TASK_RECEIPT_INVALID: result not bound to taskId");
 }
@@ -72,7 +72,7 @@ export function assertVideoTaskReceiptIdentity(value: unknown): void {
   const id = value.identity as unknown as VideoIdentity;
   const expected = compiled({ root: "", projectId: id.projectId, shotId: id.shotId, provider: id.provider, endpoint: id.endpoint, body: id.body });
   if (id.method !== "POST" || filmCanonicalJson(expected) !== filmCanonicalJson(id) || value.identitySha256 !== hash(filmCanonicalJson(id))
-    || !["submitted-here", "legacy-resume-only"].includes(String(value.origin))) throw new Error("VIDEO_TASK_RECEIPT_CHANGED: identity changed");
+    || typeof value.origin !== "string" || !["submitted-here", "legacy-resume-only"].includes(value.origin)) throw new Error("VIDEO_TASK_RECEIPT_CHANGED: identity changed");
   stateFields(value, id);
 }
 function current(value: unknown, expected: VideoIdentity): VideoTaskReceipt | null {
