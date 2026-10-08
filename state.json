@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4207,
+  "revision": 4209,
   "tasks": {
     "132": {
       "number": 132,
@@ -7111,7 +7111,7 @@
           }
         ]
       },
-      "updatedAt": 1791420618104,
+      "updatedAt": 1791420909680,
       "admission": {
         "number": 165,
         "headSha": "bbba1d0a1eea8a5d90db6c54327dd3fa91acca14",
@@ -7125,8 +7125,8 @@
           "protocol": 64
         }
       },
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/165 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791421218104,
+      "error": "Prerequisite #158 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/158 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791421509680,
       "dependencies": [
         150,
         153,
@@ -103346,6 +103346,31 @@
       },
       "previous": "2c9ec0d7420dfd97f89905de1dded5e946e5f7a725ad03dc88f41ff0d031a7cd",
       "digest": "a822b25bfe31e8797351a65c47394789df4f7d066e07dd70badec7f27a50c2a1"
+    },
+    {
+      "sequence": 4208,
+      "at": "2026-10-08T00:55:09.680Z",
+      "kind": "task",
+      "data": {
+        "number": 165,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #158 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/158 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791421509680
+        }
+      },
+      "previous": "a822b25bfe31e8797351a65c47394789df4f7d066e07dd70badec7f27a50c2a1",
+      "digest": "478d9d276c6f87bfb6ee4230fd2bd0132d390133b9587de506d7c2b2649831cd"
+    },
+    {
+      "sequence": 4209,
+      "at": "2026-10-08T00:56:43.899Z",
+      "kind": "transaction",
+      "data": {
+        "id": "c7578cfc-97b2-4b3d-81cf-9186eec3b47a"
+      },
+      "previous": "478d9d276c6f87bfb6ee4230fd2bd0132d390133b9587de506d7c2b2649831cd",
+      "digest": "5ba8962e8df7746e19ceb5aab16511339afe71df34d4df21b3a7d0cff26d9594"
     }
   ]
 }
