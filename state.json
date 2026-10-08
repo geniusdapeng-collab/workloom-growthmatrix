@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4680,
+  "revision": 4682,
   "tasks": {
     "132": {
       "number": 132,
@@ -5919,7 +5919,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791435010618,
+      "updatedAt": 1791435309256,
       "admission": {
         "number": 157,
         "headSha": "f529cff789367fc50cc35f2e377f0b6d58941793",
@@ -5933,8 +5933,8 @@
           "protocol": 81
         }
       },
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/157 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791435610618,
+      "error": "Prerequisite #156 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/156 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791435909256,
       "dependencies": [
         150,
         156
@@ -111428,6 +111428,31 @@
       },
       "previous": "5843b8ffd7fd19bce968f5bb9a0b49841248443979b17b5476ce560a9e615b4e",
       "digest": "b1d3ecc302a82d582e42e78a7b37fb8e16d7ef873ada720a710afe072d00fa62"
+    },
+    {
+      "sequence": 4681,
+      "at": "2026-10-08T04:55:09.256Z",
+      "kind": "task",
+      "data": {
+        "number": 157,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #156 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/156 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791435909256
+        }
+      },
+      "previous": "b1d3ecc302a82d582e42e78a7b37fb8e16d7ef873ada720a710afe072d00fa62",
+      "digest": "a885ebe2010825ca69aa66c6d26400a8995a11113b5fe453fbff769dcf17293a"
+    },
+    {
+      "sequence": 4682,
+      "at": "2026-10-08T04:56:15.329Z",
+      "kind": "transaction",
+      "data": {
+        "id": "964e0a0f-a8d0-4aa5-9739-f70ba31e67fc"
+      },
+      "previous": "a885ebe2010825ca69aa66c6d26400a8995a11113b5fe453fbff769dcf17293a",
+      "digest": "f64f9ddee49fc36cceb51e1139dc2aa5919d8cd9fdce365b0a2ff40987c38d11"
     }
   ]
 }
