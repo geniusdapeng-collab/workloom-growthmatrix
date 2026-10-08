@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4572,
+  "revision": 4574,
   "tasks": {
     "132": {
       "number": 132,
@@ -5760,7 +5760,7 @@
     },
     "157": {
       "number": 157,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791362963095,
       "attempts": {},
       "headSha": "f529cff789367fc50cc35f2e377f0b6d58941793",
@@ -5919,7 +5919,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791430217648,
+      "updatedAt": 1791432908794,
       "admission": {
         "number": 157,
         "headSha": "f529cff789367fc50cc35f2e377f0b6d58941793",
@@ -5934,7 +5934,7 @@
         }
       },
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/157 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791430511207,
+      "blockedUntil": 1791433508794,
       "dependencies": [
         150,
         156
@@ -109675,6 +109675,31 @@
       },
       "previous": "8cbb0dfaaa2228b860d4b46e32f9b869358b18d0d6fb09b52c169ac83ec62c0f",
       "digest": "504fa00415495746226a81aed5995048e797f9413c92c1a8aaac168a0cc5b381"
+    },
+    {
+      "sequence": 4573,
+      "at": "2026-10-08T04:15:08.794Z",
+      "kind": "task",
+      "data": {
+        "number": 157,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/157 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791433508794
+        }
+      },
+      "previous": "504fa00415495746226a81aed5995048e797f9413c92c1a8aaac168a0cc5b381",
+      "digest": "808e2d5d0f2608c872a42905828994caef5c56644ccc89bfb2169e90bd09ba1e"
+    },
+    {
+      "sequence": 4574,
+      "at": "2026-10-08T04:15:31.678Z",
+      "kind": "transaction",
+      "data": {
+        "id": "d05d823e-af0a-4c9b-b529-a25fb3e8678e"
+      },
+      "previous": "808e2d5d0f2608c872a42905828994caef5c56644ccc89bfb2169e90bd09ba1e",
+      "digest": "e6de92f0348ce9e843a514beb7852776b4192d20eb672e7d4edded8d39231810"
     }
   ]
 }
