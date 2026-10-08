@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fingerprintArtifact, type LineageReceipt } from "./production-lineage.js";
 import type { ProducerGateOptions, ProducerVerdict } from "./producer-gate.js";
+import { assertVideoTaskReceiptIdentity } from "./video-task-receipt.js";
 
 export const POST_RENDER_ACCEPTANCE_POLICY = "workloom.provider-success-direct-post/v1" as const;
 export const POST_RENDER_STAGES = new Set(["shot", "compose", "color", "subtitle", "mux", "danmaku", "bgm", "sfx", "cover", "master"]);
@@ -58,7 +59,21 @@ export function findProviderClip(input: {
 }): { file: string; taskId: string; sha256: string; requestSha256?: string } | null {
   const raw = input.taskReceipt;
   const task = raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : null;
-  if (task && (task.schemaVersion !== "workloom.video-task-receipt/v1" || task.projectId !== input.projectId
+  if (raw !== undefined && raw !== null && !task) {
+    throw new Error("POST_PROVIDER_RECEIPT_INVALID: 原供应商回执结构无效，禁止重交");
+  }
+  if (task?.schemaVersion === "workloom.video-task-receipt/v2") {
+    if (task.origin !== "submitted-here" && task.origin !== "legacy-resume-only") {
+      throw new Error("POST_PROVIDER_RECEIPT_INVALID: 原供应商任务来源字段无效，禁止重交");
+    }
+    // A current writer freezes the full paid request identity. Validate it rather
+    // than downgrade v2 to a legacy receipt or create another provider task.
+    try { assertVideoTaskReceiptIdentity(task); }
+    catch (error) {
+      throw new Error("POST_PROVIDER_RECEIPT_INVALID: 原供应商任务身份无效，禁止重交", { cause: error });
+    }
+  }
+  if (task && (task.schemaVersion !== "workloom.video-task-receipt/v1" && task.schemaVersion !== "workloom.video-task-receipt/v2" || task.projectId !== input.projectId
     || task.shotId !== input.shotId || task.state !== "succeeded" || typeof task.taskId !== "string" || !task.taskId.trim()
     || typeof task.requestSha256 !== "string" || !/^[a-f0-9]{64}$/.test(task.requestSha256)
     || !task.result || typeof task.result !== "object" || Array.isArray(task.result)
