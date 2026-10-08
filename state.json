@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4669,
+  "revision": 4671,
   "tasks": {
     "132": {
       "number": 132,
@@ -5760,7 +5760,7 @@
     },
     "157": {
       "number": 157,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791362963095,
       "attempts": {},
       "headSha": "f529cff789367fc50cc35f2e377f0b6d58941793",
@@ -5919,7 +5919,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791433507125,
+      "updatedAt": 1791435010618,
       "admission": {
         "number": 157,
         "headSha": "f529cff789367fc50cc35f2e377f0b6d58941793",
@@ -5934,7 +5934,7 @@
         }
       },
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/157 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791433809816,
+      "blockedUntil": 1791435610618,
       "dependencies": [
         150,
         156
@@ -111245,6 +111245,31 @@
       },
       "previous": "d3011855067f57c1f996f5ecd63f308418fdcd6b19fe058a84feae720f5eec82",
       "digest": "2d73b0a73de09347bd81ad274d15cfbad2fcd567641c1ea3026bc203ef0878d4"
+    },
+    {
+      "sequence": 4670,
+      "at": "2026-10-08T04:50:10.618Z",
+      "kind": "task",
+      "data": {
+        "number": 157,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/157 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791435610618
+        }
+      },
+      "previous": "2d73b0a73de09347bd81ad274d15cfbad2fcd567641c1ea3026bc203ef0878d4",
+      "digest": "13df802728bc674dbf1a500865724d39352f28780811e965e4becbfc10b29a9e"
+    },
+    {
+      "sequence": 4671,
+      "at": "2026-10-08T04:50:31.851Z",
+      "kind": "transaction",
+      "data": {
+        "id": "f6f07061-3843-45c1-bd35-4de93ac2fd54"
+      },
+      "previous": "13df802728bc674dbf1a500865724d39352f28780811e965e4becbfc10b29a9e",
+      "digest": "ad721005363f94aed227734308eec0e7490e05c442d5cef300d96e3b76e3c8bf"
     }
   ]
 }
