@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 4536,
+  "revision": 4538,
   "tasks": {
     "132": {
       "number": 132,
@@ -6284,7 +6284,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791430513333,
+      "updatedAt": 1791430815162,
       "admission": {
         "number": 160,
         "headSha": "39bce071a4fd7653292591ae29a4bb9bbb19a685",
@@ -6297,8 +6297,8 @@
       "dependencies": [
         158
       ],
-      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/160 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791431113333
+      "error": "Prerequisite #158 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/158 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791431415162
     },
     "161": {
       "number": 161,
@@ -109035,6 +109035,31 @@
       },
       "previous": "d59a197fd9ac26a0fdf17cbeb6eddcb2883dbf4dca72f5069a26c4e1392e9f7b",
       "digest": "0bd7dc67d56ed6eb68de728e3a814bdd415facca7f671d08ea62f03bd1f7be0e"
+    },
+    {
+      "sequence": 4537,
+      "at": "2026-10-08T03:40:15.162Z",
+      "kind": "task",
+      "data": {
+        "number": 160,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #158 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/158 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791431415162
+        }
+      },
+      "previous": "0bd7dc67d56ed6eb68de728e3a814bdd415facca7f671d08ea62f03bd1f7be0e",
+      "digest": "f33ae69e4ea9bb6be7775a6354591ce2ffcd8a9ddcc5a697a5be891ed3d82575"
+    },
+    {
+      "sequence": 4538,
+      "at": "2026-10-08T03:41:23.259Z",
+      "kind": "transaction",
+      "data": {
+        "id": "a37ce991-a9cb-4813-a92c-0be62030f27f"
+      },
+      "previous": "f33ae69e4ea9bb6be7775a6354591ce2ffcd8a9ddcc5a697a5be891ed3d82575",
+      "digest": "341a2d6d3a8f7011fbcc69bcd574cf2c4c90674520981c5eed4130975c29e9c9"
     }
   ]
 }
