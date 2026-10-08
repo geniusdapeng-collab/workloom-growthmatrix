@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5420,
+  "revision": 5422,
   "tasks": {
     "132": {
       "number": 132,
@@ -6302,7 +6302,7 @@
     },
     "161": {
       "number": 161,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791368515129,
       "attempts": {},
       "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
@@ -6470,7 +6470,7 @@
           }
         ]
       },
-      "updatedAt": 1791458113271,
+      "updatedAt": 1791458411755,
       "admission": {
         "number": 161,
         "headSha": "fd1089d472ec538c5cdd64a32b8d926261d81135",
@@ -125096,6 +125096,46 @@
       },
       "previous": "de2f2a313780c1a9d6ed203101e70ee0c4d81cd21cd81b24982e2df15c569d31",
       "digest": "8f2dc57481be83625df6616960b7c00cf1c12c3b18c2e494708b260ab3c64e81"
+    },
+    {
+      "sequence": 5421,
+      "at": "2026-10-08T11:20:11.755Z",
+      "kind": "task",
+      "data": {
+        "number": 161,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              160
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.20"
+              }
+            ]
+          },
+          "dependencies": [
+            160
+          ]
+        }
+      },
+      "previous": "8f2dc57481be83625df6616960b7c00cf1c12c3b18c2e494708b260ab3c64e81",
+      "digest": "2c8fb092fde982ab0a3a45e06aa76fcaeefcd1a7f7e3f1b39319a71ed0140bda"
+    },
+    {
+      "sequence": 5422,
+      "at": "2026-10-08T11:22:27.922Z",
+      "kind": "transaction",
+      "data": {
+        "id": "56fefa7b-b6b1-4c64-aa15-56a52fe70ba0"
+      },
+      "previous": "2c8fb092fde982ab0a3a45e06aa76fcaeefcd1a7f7e3f1b39319a71ed0140bda",
+      "digest": "3250509652f99379d4c9d234b955081ec1a9025797d8341af63f1a568a276b20"
     }
   ]
 }
