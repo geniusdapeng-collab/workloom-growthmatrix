@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 5367,
+  "revision": 5369,
   "tasks": {
     "132": {
       "number": 132,
@@ -688,14 +688,14 @@
         "at": 1791456911658
       },
       "developerReview": null,
-      "error": "Alignment retry budget exhausted",
-      "blockedUntil": 1791457511658,
+      "error": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+      "blockedUntil": 1791458117454,
       "repairRequired": {
         "provider": "codex",
         "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
         "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
-        "reason": "主干对齐失败：Command failed: git merge --no-ff --no-edit 496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3\n",
-        "at": 1791456911658
+        "reason": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+        "at": 1791457517454
       },
       "recoveryIntent": null,
       "recoveryCount": 0,
@@ -124040,6 +124040,39 @@
       },
       "previous": "73d2372fc993d7d9b1d84c1ab2afa5e8f6b4fa4823744ca20b1fc9449cbc3a37",
       "digest": "c40c543c8e7cdadd363ac64e347650bab6a2c5762dc11c92e5fdfd0181dccc0d"
+    },
+    {
+      "sequence": 5368,
+      "at": "2026-10-08T11:05:17.454Z",
+      "kind": "task",
+      "data": {
+        "number": 134,
+        "patch": {
+          "status": "parked",
+          "error": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+          "repairRequired": {
+            "provider": "codex",
+            "headSha": "3313fd8f63f1867dbc42ee40e0a080600b95c507",
+            "mainSha": "496f0bfb7a3303fd8d9b5b8d0bbc59e5ab92afb3",
+            "reason": "需按实际代码语义更新 main 并解决冲突；自动主干对齐预算已耗尽",
+            "at": 1791457517454
+          },
+          "recoveryIntent": null,
+          "blockedUntil": 1791458117454
+        }
+      },
+      "previous": "c40c543c8e7cdadd363ac64e347650bab6a2c5762dc11c92e5fdfd0181dccc0d",
+      "digest": "85d1652f39b9939c9d46634b526c7922e29742694c8059da5cc127c83b7fdc2d"
+    },
+    {
+      "sequence": 5369,
+      "at": "2026-10-08T11:06:39.163Z",
+      "kind": "transaction",
+      "data": {
+        "id": "e1a0587d-6c49-446d-b3f3-22ead99044b7"
+      },
+      "previous": "85d1652f39b9939c9d46634b526c7922e29742694c8059da5cc127c83b7fdc2d",
+      "digest": "1cd85742d13ca3d041ba05e65b9f11b9946cad9d29a08b670b99acaaad77a917"
     }
   ]
 }
