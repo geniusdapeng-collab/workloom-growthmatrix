@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 6252,
+  "revision": 6254,
   "tasks": {
     "132": {
       "number": 132,
@@ -6302,7 +6302,7 @@
     },
     "161": {
       "number": 161,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791368515129,
       "attempts": {},
       "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
@@ -6470,7 +6470,7 @@
           }
         ]
       },
-      "updatedAt": 1791489915203,
+      "updatedAt": 1791490218030,
       "admission": {
         "number": 161,
         "headSha": "fd1089d472ec538c5cdd64a32b8d926261d81135",
@@ -139869,6 +139869,46 @@
       },
       "previous": "8cc133d1bd495b4281f93e3dcdc4828b97dd49e6ce69466eec949b43e5da7051",
       "digest": "c16f985f07d745cf71ab9683f94e7d937d5aaf20ecce61b46c154d7e92dbf63b"
+    },
+    {
+      "sequence": 6253,
+      "at": "2026-10-08T20:10:18.030Z",
+      "kind": "task",
+      "data": {
+        "number": 161,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              160
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.20"
+              }
+            ]
+          },
+          "dependencies": [
+            160
+          ]
+        }
+      },
+      "previous": "c16f985f07d745cf71ab9683f94e7d937d5aaf20ecce61b46c154d7e92dbf63b",
+      "digest": "3043e66378d71b7a8fa00e227380dcbe9f2964c9c0cf975da1c0982904ef11dc"
+    },
+    {
+      "sequence": 6254,
+      "at": "2026-10-08T20:11:27.861Z",
+      "kind": "transaction",
+      "data": {
+        "id": "860988c1-618a-4c98-b961-e69a8edd6bc9"
+      },
+      "previous": "3043e66378d71b7a8fa00e227380dcbe9f2964c9c0cf975da1c0982904ef11dc",
+      "digest": "000dc606807f2ffb1789f5275351e2665e31d289799e942c256e54c3211405a6"
     }
   ]
 }
