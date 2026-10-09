@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 6999,
+  "revision": 7001,
   "tasks": {
     "132": {
       "number": 132,
@@ -5075,7 +5075,7 @@
     },
     "153": {
       "number": 153,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791359178476,
       "attempts": {},
       "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -5236,7 +5236,7 @@
           }
         ]
       },
-      "updatedAt": 1791512115202,
+      "updatedAt": 1791516918907,
       "admission": {
         "number": 153,
         "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -5268,7 +5268,7 @@
         "at": 1791366610602
       },
       "recoveryIntent": null,
-      "blockedUntil": 1791512416686,
+      "blockedUntil": 1791517518907,
       "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -152952,6 +152952,31 @@
       },
       "previous": "6d6ea94a39312c335990bc183df40fd9311cebc3c36ac8ba4b9c27f12f821965",
       "digest": "c78fa3c403ae26e9e370a9a4ab122387b8123e13f93891f2766fbe67b129ed25"
+    },
+    {
+      "sequence": 7000,
+      "at": "2026-10-09T03:35:18.907Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/153 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791517518907
+        }
+      },
+      "previous": "c78fa3c403ae26e9e370a9a4ab122387b8123e13f93891f2766fbe67b129ed25",
+      "digest": "524151b6ab693a09a3790533adb3327d147a9ca1ddae61e5f60c11371473d143"
+    },
+    {
+      "sequence": 7001,
+      "at": "2026-10-09T03:35:42.623Z",
+      "kind": "transaction",
+      "data": {
+        "id": "941d5144-fce6-41cc-ad89-52c4fd4fb421"
+      },
+      "previous": "524151b6ab693a09a3790533adb3327d147a9ca1ddae61e5f60c11371473d143",
+      "digest": "dba9c7532326f7469f94bbbbae71c91ef965023e1ddb32e8764938ca5ebc8df6"
     }
   ]
 }
