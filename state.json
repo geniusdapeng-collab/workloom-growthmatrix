@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7737,
+  "revision": 7739,
   "tasks": {
     "132": {
       "number": 132,
@@ -4758,7 +4758,7 @@
     },
     "151": {
       "number": 151,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791358616212,
       "attempts": {},
       "headSha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
@@ -4889,7 +4889,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791532821892,
+      "updatedAt": 1791537925954,
       "admission": {
         "number": 151,
         "headSha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
@@ -4903,7 +4903,7 @@
         153
       ],
       "error": "Prerequisite #153 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/153 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791533113758,
+      "blockedUntil": 1791538525954,
       "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -165633,6 +165633,31 @@
       },
       "previous": "720b7ece188a4970c12b9b21e629dc7f6bb5280e7c5853a71c2ba7cee072d419",
       "digest": "2f1e635b6f4be707eb9b5bb5983d318b8c54da1acd96a7ee0083577805a0e371"
+    },
+    {
+      "sequence": 7738,
+      "at": "2026-10-09T09:25:25.954Z",
+      "kind": "task",
+      "data": {
+        "number": 151,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #153 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/153 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791538525954
+        }
+      },
+      "previous": "2f1e635b6f4be707eb9b5bb5983d318b8c54da1acd96a7ee0083577805a0e371",
+      "digest": "723fe1de6248d812089ecde11e6b81a9606689204045c3d6563e8465af170417"
+    },
+    {
+      "sequence": 7739,
+      "at": "2026-10-09T09:26:42.566Z",
+      "kind": "transaction",
+      "data": {
+        "id": "ec50e762-9e0f-41b9-834a-526526687203"
+      },
+      "previous": "723fe1de6248d812089ecde11e6b81a9606689204045c3d6563e8465af170417",
+      "digest": "81fe22c565531edb905c3dd366ed50787cb608e49d6dfb8c4cfbb03c2700c634"
     }
   ]
 }
