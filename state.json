@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7011,
+  "revision": 7013,
   "tasks": {
     "132": {
       "number": 132,
@@ -4758,7 +4758,7 @@
     },
     "151": {
       "number": 151,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791358616212,
       "attempts": {},
       "headSha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
@@ -4889,7 +4889,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791512115202,
+      "updatedAt": 1791516918907,
       "admission": {
         "number": 151,
         "headSha": "2f8c403d5a4702e280eef16474f92ec0c5fbe299",
@@ -4903,7 +4903,7 @@
         153
       ],
       "error": "Prerequisite #153 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/153 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791512416686,
+      "blockedUntil": 1791517518907,
       "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -153159,6 +153159,31 @@
       },
       "previous": "7547b9055de10ca707f48b2b3964dd4f300acffbdf6e217c1b075e29a97496ef",
       "digest": "22c94ad54f1b2bf90ef8145a3b556588f9e2f8d4fb31192267af75e6a346e495"
+    },
+    {
+      "sequence": 7012,
+      "at": "2026-10-09T03:35:18.907Z",
+      "kind": "task",
+      "data": {
+        "number": 151,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #153 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/153 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791517518907
+        }
+      },
+      "previous": "22c94ad54f1b2bf90ef8145a3b556588f9e2f8d4fb31192267af75e6a346e495",
+      "digest": "bc93c7a84e654718e758dacb715a404b07c3a30d0977ae19808c9b4b0d46390d"
+    },
+    {
+      "sequence": 7013,
+      "at": "2026-10-09T03:38:53.514Z",
+      "kind": "transaction",
+      "data": {
+        "id": "2be4db8f-67f7-4c36-babe-7c576be6b341"
+      },
+      "previous": "bc93c7a84e654718e758dacb715a404b07c3a30d0977ae19808c9b4b0d46390d",
+      "digest": "0dd4d0d997735ed447bbd1f9c07537910404467ba1c613e2d1792ba7bc58cc34"
     }
   ]
 }
