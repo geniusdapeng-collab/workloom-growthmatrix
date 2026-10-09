@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7571,
+  "revision": 7573,
   "tasks": {
     "132": {
       "number": 132,
@@ -5075,7 +5075,7 @@
     },
     "153": {
       "number": 153,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791359178476,
       "attempts": {},
       "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -5236,7 +5236,7 @@
           }
         ]
       },
-      "updatedAt": 1791531026566,
+      "updatedAt": 1791532513758,
       "admission": {
         "number": 153,
         "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -5259,7 +5259,7 @@
         "scripts/tools/video-request-regression.test.ts"
       ],
       "ciSince": 1791359409167,
-      "error": "Prerequisite #152 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/152 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/153 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
       "repairRequired": {
         "provider": "codex",
         "headSha": "996eb06f88d1d9a82a13a111c9a5b6f8b1470c88",
@@ -5268,7 +5268,7 @@
         "at": 1791366610602
       },
       "recoveryIntent": null,
-      "blockedUntil": 1791531313201,
+      "blockedUntil": 1791533113758,
       "alignmentCount": 0,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -162799,6 +162799,31 @@
       },
       "previous": "31bf54004812078dbdc0f54de97f7aafa2e38967ca738352af2caac48d9121aa",
       "digest": "31304e2128e8389e62cfd1091c11eceb5e9159c6aca39a0fab5945b1bd3c4f8e"
+    },
+    {
+      "sequence": 7572,
+      "at": "2026-10-09T07:55:13.758Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/153 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791533113758
+        }
+      },
+      "previous": "31304e2128e8389e62cfd1091c11eceb5e9159c6aca39a0fab5945b1bd3c4f8e",
+      "digest": "dc061d7cb97ba130a7b16bb22c603d259c7651e25be491c1d8991f962ab035b6"
+    },
+    {
+      "sequence": 7573,
+      "at": "2026-10-09T07:55:35.828Z",
+      "kind": "transaction",
+      "data": {
+        "id": "399c16b2-576a-45bc-adc7-5cd1760464cf"
+      },
+      "previous": "dc061d7cb97ba130a7b16bb22c603d259c7651e25be491c1d8991f962ab035b6",
+      "digest": "9db53a479e3b223d051cd907f28144df6b372fd623b11c948eaad862a3752aae"
     }
   ]
 }
