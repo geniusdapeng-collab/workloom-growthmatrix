@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7553,
+  "revision": 7555,
   "tasks": {
     "132": {
       "number": 132,
@@ -5760,7 +5760,7 @@
     },
     "157": {
       "number": 157,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791362963095,
       "attempts": {},
       "headSha": "f529cff789367fc50cc35f2e377f0b6d58941793",
@@ -5919,7 +5919,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791531026566,
+      "updatedAt": 1791532218089,
       "admission": {
         "number": 157,
         "headSha": "f529cff789367fc50cc35f2e377f0b6d58941793",
@@ -5934,7 +5934,7 @@
         }
       },
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/157 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791531313201,
+      "blockedUntil": 1791532818089,
       "dependencies": [
         150,
         156
@@ -162488,6 +162488,31 @@
       },
       "previous": "47a83cea9c73603edf3396d849a2eb5e65675dab73a428c7b950774274fae21c",
       "digest": "6e289c6fed992da409123d778fa7b9d55c03f51f681f8ed98cffa90b2320a66b"
+    },
+    {
+      "sequence": 7554,
+      "at": "2026-10-09T07:50:18.089Z",
+      "kind": "task",
+      "data": {
+        "number": 157,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/157 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791532818089
+        }
+      },
+      "previous": "6e289c6fed992da409123d778fa7b9d55c03f51f681f8ed98cffa90b2320a66b",
+      "digest": "8ef5e18f85439edc30daf62a336909dbc8b593156626457c94260af84e40e40b"
+    },
+    {
+      "sequence": 7555,
+      "at": "2026-10-09T07:50:42.231Z",
+      "kind": "transaction",
+      "data": {
+        "id": "8620a05b-9156-4a3c-9522-0900544609c9"
+      },
+      "previous": "8ef5e18f85439edc30daf62a336909dbc8b593156626457c94260af84e40e40b",
+      "digest": "30595a0d40ac7e83adf0e08c19b3e68f684f6fe92c0fa4802739c28b5d8aa2b7"
     }
   ]
 }
