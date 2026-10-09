@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 6708,
+  "revision": 6710,
   "tasks": {
     "132": {
       "number": 132,
@@ -5592,7 +5592,7 @@
     },
     "156": {
       "number": 156,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791361029790,
       "attempts": {},
       "headSha": "3ca871b90d7bb63718c672e4b21322482817819a",
@@ -5738,7 +5738,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791506413003,
+      "updatedAt": 1791507012136,
       "admission": {
         "number": 156,
         "headSha": "3ca871b90d7bb63718c672e4b21322482817819a",
@@ -5756,7 +5756,7 @@
         155
       ],
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/156 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791506710278
+      "blockedUntil": 1791507612136
     },
     "157": {
       "number": 157,
@@ -147864,6 +147864,31 @@
       },
       "previous": "03c9170eff2320754aad5e424aa3fcdde6e7806fbde894ab1f8c824c7214d9f8",
       "digest": "e9838cfbaf96fc687fa0bf01da070fb8ecad37d1206325e8f48ba1366b7bfbd5"
+    },
+    {
+      "sequence": 6709,
+      "at": "2026-10-09T00:50:12.136Z",
+      "kind": "task",
+      "data": {
+        "number": 156,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/156 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791507612136
+        }
+      },
+      "previous": "e9838cfbaf96fc687fa0bf01da070fb8ecad37d1206325e8f48ba1366b7bfbd5",
+      "digest": "605067319fd29193f08afb1d17db8f9ac0efb06098c2ab895c6fcd3501a03654"
+    },
+    {
+      "sequence": 6710,
+      "at": "2026-10-09T00:50:34.667Z",
+      "kind": "transaction",
+      "data": {
+        "id": "5b9b4ba2-d061-4853-bf46-f09da1bf0ee1"
+      },
+      "previous": "605067319fd29193f08afb1d17db8f9ac0efb06098c2ab895c6fcd3501a03654",
+      "digest": "400858855b4d38345b05aa9e3635a9e7cd3c2fd06f9471609c3270294d9c8de1"
     }
   ]
 }
