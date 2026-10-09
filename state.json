@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7653,
+  "revision": 7655,
   "tasks": {
     "132": {
       "number": 132,
@@ -6777,7 +6777,7 @@
     },
     "165": {
       "number": 165,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791370361439,
       "attempts": {},
       "headSha": "bbba1d0a1eea8a5d90db6c54327dd3fa91acca14",
@@ -7111,7 +7111,7 @@
           }
         ]
       },
-      "updatedAt": 1791533726522,
+      "updatedAt": 1791535223490,
       "admission": {
         "number": 165,
         "headSha": "bbba1d0a1eea8a5d90db6c54327dd3fa91acca14",
@@ -7126,7 +7126,7 @@
         }
       },
       "error": "Prerequisite #158 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/158 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791533713723,
+      "blockedUntil": 1791535823490,
       "dependencies": [
         150,
         153,
@@ -164233,6 +164233,31 @@
       },
       "previous": "981d7b45eb662449f6e58bcc90797609c807478dadddd3ecd33557448afa6fae",
       "digest": "300b74d80ebf5fc55494ef3888bdb2c0f2363a06f2a1d9947055a4d2363c318a"
+    },
+    {
+      "sequence": 7654,
+      "at": "2026-10-09T08:40:23.490Z",
+      "kind": "task",
+      "data": {
+        "number": 165,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #158 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/158 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791535823490
+        }
+      },
+      "previous": "300b74d80ebf5fc55494ef3888bdb2c0f2363a06f2a1d9947055a4d2363c318a",
+      "digest": "a3aba107953d5c9f25cf02b37d0e3af0cd9d311c9cd607c58a9e58ebda6649ca"
+    },
+    {
+      "sequence": 7655,
+      "at": "2026-10-09T08:43:10.817Z",
+      "kind": "transaction",
+      "data": {
+        "id": "7da33408-9740-42c7-9ba8-5cddad66c519"
+      },
+      "previous": "a3aba107953d5c9f25cf02b37d0e3af0cd9d311c9cd607c58a9e58ebda6649ca",
+      "digest": "dcf23bc3d4958c72dbd97f2f6f0dbeee6b3d215ff070ca7336d7d35326701a1e"
     }
   ]
 }
