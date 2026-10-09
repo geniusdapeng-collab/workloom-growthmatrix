@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7075,
+  "revision": 7077,
   "tasks": {
     "132": {
       "number": 132,
@@ -5075,7 +5075,7 @@
     },
     "153": {
       "number": 153,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791359178476,
       "attempts": {},
       "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -5236,7 +5236,7 @@
           }
         ]
       },
-      "updatedAt": 1791518709976,
+      "updatedAt": 1791519027107,
       "admission": {
         "number": 153,
         "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -154276,6 +154276,46 @@
       },
       "previous": "e705fbf649ef512ed0e3584a658b3b6f75cdfd02524e3b1b26167cc90a0882e2",
       "digest": "57d1329e45e23cde7acfbb1829ed200307f4253f784336fc39fc3461f550f500"
+    },
+    {
+      "sequence": 7076,
+      "at": "2026-10-09T04:10:27.107Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              152
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.12"
+              }
+            ]
+          },
+          "dependencies": [
+            152
+          ]
+        }
+      },
+      "previous": "57d1329e45e23cde7acfbb1829ed200307f4253f784336fc39fc3461f550f500",
+      "digest": "5d7d7aee528464d1211f27a4b7de4e27477dab00f415e295bae2b0af0dffd386"
+    },
+    {
+      "sequence": 7077,
+      "at": "2026-10-09T04:13:05.422Z",
+      "kind": "transaction",
+      "data": {
+        "id": "bd618580-e182-4b3e-9ae4-4b7f09c49bf1"
+      },
+      "previous": "5d7d7aee528464d1211f27a4b7de4e27477dab00f415e295bae2b0af0dffd386",
+      "digest": "9c2559de7a517b4ca007a4ecab88766522321f993074fab860709340d283fc24"
     }
   ]
 }
