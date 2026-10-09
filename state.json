@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 6779,
+  "revision": 6781,
   "tasks": {
     "132": {
       "number": 132,
@@ -6302,7 +6302,7 @@
     },
     "161": {
       "number": 161,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791368515129,
       "attempts": {},
       "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
@@ -6470,7 +6470,7 @@
           }
         ]
       },
-      "updatedAt": 1791508815219,
+      "updatedAt": 1791509114888,
       "admission": {
         "number": 161,
         "headSha": "fd1089d472ec538c5cdd64a32b8d926261d81135",
@@ -149119,6 +149119,46 @@
       },
       "previous": "fcec587461ba5818ddd8005097b5d0ba4a04e403ee6dc6c88b32adf674eeb753",
       "digest": "5666accb91ff0b7eb001294e479d06055d80be059483f447eb7689da205e4ed0"
+    },
+    {
+      "sequence": 6780,
+      "at": "2026-10-09T01:25:14.888Z",
+      "kind": "task",
+      "data": {
+        "number": 161,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              160
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.20"
+              }
+            ]
+          },
+          "dependencies": [
+            160
+          ]
+        }
+      },
+      "previous": "5666accb91ff0b7eb001294e479d06055d80be059483f447eb7689da205e4ed0",
+      "digest": "1677f43bc6d6705e65f65c68ee94ff5d42c9b5b3c2a3ade3cfe448a059708b28"
+    },
+    {
+      "sequence": 6781,
+      "at": "2026-10-09T01:27:44.784Z",
+      "kind": "transaction",
+      "data": {
+        "id": "c21d564b-9ec5-401c-aedc-fdf7f5a7222a"
+      },
+      "previous": "1677f43bc6d6705e65f65c68ee94ff5d42c9b5b3c2a3ade3cfe448a059708b28",
+      "digest": "1f50dbdeb3ae6c0eab014343303e153fd90b0441b28612015c42ae7f4aaba278"
     }
   ]
 }
