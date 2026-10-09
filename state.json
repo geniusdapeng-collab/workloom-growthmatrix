@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 6803,
+  "revision": 6805,
   "tasks": {
     "132": {
       "number": 132,
@@ -5942,7 +5942,7 @@
     },
     "158": {
       "number": 158,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791364616335,
       "attempts": {},
       "admission": {
@@ -5954,7 +5954,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791509114888,
+      "updatedAt": 1791510616018,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -6120,7 +6120,7 @@
         "ciPolicyChanges": []
       },
       "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/158 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791509415219,
+      "blockedUntil": 1791511216018,
       "dependencies": [
         157
       ]
@@ -149550,6 +149550,31 @@
       },
       "previous": "cc1d45a1a77b0aba1382829875459277c447bbc6745c307174a91acc9954af71",
       "digest": "956bd233103d1a050345e3e9955843f8879d1c936c469078fb3e15c28a76f474"
+    },
+    {
+      "sequence": 6804,
+      "at": "2026-10-09T01:50:16.018Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/158 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791511216018
+        }
+      },
+      "previous": "956bd233103d1a050345e3e9955843f8879d1c936c469078fb3e15c28a76f474",
+      "digest": "2bbc7ac47cb0ac1543a57ba7153895920dcb05ef95ae840386f049d636381826"
+    },
+    {
+      "sequence": 6805,
+      "at": "2026-10-09T01:50:39.731Z",
+      "kind": "transaction",
+      "data": {
+        "id": "e9e01f73-f19b-4756-b436-9ca8b6a2913d"
+      },
+      "previous": "2bbc7ac47cb0ac1543a57ba7153895920dcb05ef95ae840386f049d636381826",
+      "digest": "4c9d833e2ce3b51bfd29f2569683b13ef69713ca9fe8098fdd25617f6d5eadef"
     }
   ]
 }
