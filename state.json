@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 6688,
+  "revision": 6690,
   "tasks": {
     "132": {
       "number": 132,
@@ -5433,7 +5433,7 @@
     },
     "155": {
       "number": 155,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791360181033,
       "attempts": {},
       "headSha": "e405885fc5c78266b5830c358ceb1a8ae983ea5e",
@@ -5574,7 +5574,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791506110278,
+      "updatedAt": 1791506413003,
       "admission": {
         "number": 155,
         "headSha": "71eb49c142a0952db14e7ef83d857e876e22999c",
@@ -147501,6 +147501,47 @@
       },
       "previous": "7c1daafb267fb84318b55b1002a7ff54e5cd83ed22b3a76d99e916b7b0373260",
       "digest": "16d949bd4f61cab1686e4be8474b0bf0ab287982695f7d336791922b38fcf4fe"
+    },
+    {
+      "sequence": 6689,
+      "at": "2026-10-09T00:40:13.003Z",
+      "kind": "task",
+      "data": {
+        "number": 155,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "e405885fc5c78266b5830c358ceb1a8ae983ea5e",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              145,
+              154
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.15"
+              }
+            ]
+          },
+          "dependencies": [
+            154
+          ]
+        }
+      },
+      "previous": "16d949bd4f61cab1686e4be8474b0bf0ab287982695f7d336791922b38fcf4fe",
+      "digest": "e03a8ca459bc04df99e271a66faa0b33919bd03a5ddcc25d63c0356632166a24"
+    },
+    {
+      "sequence": 6690,
+      "at": "2026-10-09T00:41:25.719Z",
+      "kind": "transaction",
+      "data": {
+        "id": "e1ecd926-8b69-4e53-9154-8aa721ec8dec"
+      },
+      "previous": "e03a8ca459bc04df99e271a66faa0b33919bd03a5ddcc25d63c0356632166a24",
+      "digest": "a131bcfa42d7ff6a1a6e30acd68aa89fadf890b626e10750335aa2f066629507"
     }
   ]
 }
