@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7017,
+  "revision": 7019,
   "tasks": {
     "132": {
       "number": 132,
@@ -5075,7 +5075,7 @@
     },
     "153": {
       "number": 153,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791359178476,
       "attempts": {},
       "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -5236,7 +5236,7 @@
           }
         ]
       },
-      "updatedAt": 1791516918907,
+      "updatedAt": 1791517215543,
       "admission": {
         "number": 153,
         "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -153250,6 +153250,46 @@
       },
       "previous": "65f958ce9d398273c452f863beef17b089cf341bc934df71ef495fd8c816aa15",
       "digest": "62201f9857fa862f244c1cc1c0399654bc663f3f938846a1121b5eda5d59cb7c"
+    },
+    {
+      "sequence": 7018,
+      "at": "2026-10-09T03:40:15.543Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              152
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.12"
+              }
+            ]
+          },
+          "dependencies": [
+            152
+          ]
+        }
+      },
+      "previous": "62201f9857fa862f244c1cc1c0399654bc663f3f938846a1121b5eda5d59cb7c",
+      "digest": "9ff76f2654173a9948993bc0401a84c05cbedfc01780d3c2a45e6a1ec5fd06cd"
+    },
+    {
+      "sequence": 7019,
+      "at": "2026-10-09T03:42:02.916Z",
+      "kind": "transaction",
+      "data": {
+        "id": "e5f93333-7758-469e-b782-2abe62dc4199"
+      },
+      "previous": "9ff76f2654173a9948993bc0401a84c05cbedfc01780d3c2a45e6a1ec5fd06cd",
+      "digest": "a1bf786738e1bd3faef5c365f370d71f7f35a42cc8f55e7db4eb3cb49ab3e5a1"
     }
   ]
 }
