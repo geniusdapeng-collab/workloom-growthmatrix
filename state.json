@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7743,
+  "revision": 7745,
   "tasks": {
     "132": {
       "number": 132,
@@ -6302,7 +6302,7 @@
     },
     "161": {
       "number": 161,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791368515129,
       "attempts": {},
       "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
@@ -6470,7 +6470,7 @@
           }
         ]
       },
-      "updatedAt": 1791537630473,
+      "updatedAt": 1791537925954,
       "admission": {
         "number": 161,
         "headSha": "fd1089d472ec538c5cdd64a32b8d926261d81135",
@@ -165743,6 +165743,46 @@
       },
       "previous": "e739ee3a396a28e3d38d32dccc6772a70f1a4e4fec5e93070a42f6a94c6cfe28",
       "digest": "1a323bef86946cf8a48cce585fa98368b8d29b572ce099af5d78fa86a25ee895"
+    },
+    {
+      "sequence": 7744,
+      "at": "2026-10-09T09:25:25.954Z",
+      "kind": "task",
+      "data": {
+        "number": 161,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "ca087f3b3f7b44146a0fbe58e3ce383f2df184ca",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              160
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.20"
+              }
+            ]
+          },
+          "dependencies": [
+            160
+          ]
+        }
+      },
+      "previous": "1a323bef86946cf8a48cce585fa98368b8d29b572ce099af5d78fa86a25ee895",
+      "digest": "ee3f03e33a22cd899579b35ee0510251fdacc02d75b2c2307c710c965a5cf680"
+    },
+    {
+      "sequence": 7745,
+      "at": "2026-10-09T09:27:31.856Z",
+      "kind": "transaction",
+      "data": {
+        "id": "3ea1a36e-41c8-45b3-b237-b515292ba9ce"
+      },
+      "previous": "ee3f03e33a22cd899579b35ee0510251fdacc02d75b2c2307c710c965a5cf680",
+      "digest": "adadd7bb782d45024f1c42ff90f6e585da68989b606906fd20a1001dcefcc02c"
     }
   ]
 }
