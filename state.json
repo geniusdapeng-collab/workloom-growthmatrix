@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7231,
+  "revision": 7233,
   "tasks": {
     "132": {
       "number": 132,
@@ -5279,7 +5279,7 @@
     },
     "154": {
       "number": 154,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791359195321,
       "attempts": {},
       "headSha": "0932f303a1ae3a7196be67d00e54667fab09e232",
@@ -5415,7 +5415,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791519027107,
+      "updatedAt": 1791523510864,
       "admission": {
         "number": 154,
         "headSha": "0932f303a1ae3a7196be67d00e54667fab09e232",
@@ -5429,7 +5429,7 @@
         151
       ],
       "error": "Prerequisite #151 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/151 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791519309976
+      "blockedUntil": 1791524110864
     },
     "155": {
       "number": 155,
@@ -156882,6 +156882,31 @@
       },
       "previous": "7a1a237ce91c9312143e4fef161aacb63004f2bebe93bcb4ade33408306ba0f7",
       "digest": "26ca425d575ef0d627018027172d0b664e027dc6f1899dcceeea3b4b6b915d85"
+    },
+    {
+      "sequence": 7232,
+      "at": "2026-10-09T05:25:10.864Z",
+      "kind": "task",
+      "data": {
+        "number": 154,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #151 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/151 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791524110864
+        }
+      },
+      "previous": "26ca425d575ef0d627018027172d0b664e027dc6f1899dcceeea3b4b6b915d85",
+      "digest": "cd1b2b4c0d82516421bd3b2e253f5155f7f778b30cbf635b2ef09445db807e86"
+    },
+    {
+      "sequence": 7233,
+      "at": "2026-10-09T05:26:56.792Z",
+      "kind": "transaction",
+      "data": {
+        "id": "fc69efc1-2ea3-496a-89f4-b3ebd514f956"
+      },
+      "previous": "cd1b2b4c0d82516421bd3b2e253f5155f7f778b30cbf635b2ef09445db807e86",
+      "digest": "9788676a8575dca2260efb0d36ab244e03430434e5cbb56451b28049adde2075"
     }
   ]
 }
