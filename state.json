@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7046,
+  "revision": 7048,
   "tasks": {
     "132": {
       "number": 132,
@@ -4711,7 +4711,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791517823423,
+      "updatedAt": 1791518417724,
       "admission": {
         "number": 150,
         "headSha": "e2d487faa52fcf556951035016d0ddbc66ccbd63",
@@ -4724,8 +4724,8 @@
       "dependencies": [
         149
       ],
-      "error": "检查/评审阻断：Codex review identity differs from the exact repository/source/main/policy",
-      "blockedUntil": 1791518423423,
+      "error": "Prerequisite #142 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/142 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791519017724,
       "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -153767,6 +153767,31 @@
       },
       "previous": "e9005c44cc6dcd368e51ebe90209a42f46f83d440e7d39719bdaee5d7fb3d771",
       "digest": "d465ae7b8e8cef943258cc23e23b3ab372a7ef02873dc080373e69f256469e05"
+    },
+    {
+      "sequence": 7047,
+      "at": "2026-10-09T04:00:17.724Z",
+      "kind": "task",
+      "data": {
+        "number": 150,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #142 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/142 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791519017724
+        }
+      },
+      "previous": "d465ae7b8e8cef943258cc23e23b3ab372a7ef02873dc080373e69f256469e05",
+      "digest": "2878f066814961d4f7b64917ee02823d0dc19dc492fdb8575a8ba680b1f2c247"
+    },
+    {
+      "sequence": 7048,
+      "at": "2026-10-09T04:00:59.008Z",
+      "kind": "transaction",
+      "data": {
+        "id": "1f92ad3c-84f4-485d-8586-f6a5c4d2e1fd"
+      },
+      "previous": "2878f066814961d4f7b64917ee02823d0dc19dc492fdb8575a8ba680b1f2c247",
+      "digest": "2f03c7efef37b4b7b381894fb6396807bf83cc82c3466d9f1183de210e55fb11"
     }
   ]
 }
