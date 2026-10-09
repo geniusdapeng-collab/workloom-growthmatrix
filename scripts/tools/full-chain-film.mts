@@ -4445,7 +4445,8 @@ if (STAGES.has("bgm") && existsSync(danmakuOut) && !DRY_RUN) {
       verdict: null, note: "按明确请求保留原节目，不生成音乐层" });
   } else {
     const mixArgs = ["--in", danmakuOut, "--out", out, "--policy", policy,
-      "--music-level", arg("--bgm-level", "-26"), "--ducking", arg("--bgm-ducking", "14"),
+      /** 2026-10-09 口径：默认音乐床电平从 -26dB 提到 -18dB（听不见=白做）；`--bgm-level` 可覆写。 */
+      "--music-level", arg("--bgm-level", "-18"), "--ducking", arg("--bgm-ducking", "14"),
       "--lufs", arg("--bgm-lufs", "-14"), "--true-peak", arg("--bgm-true-peak", "-1.5"),
       "--section", arg("--bgm-section", "auto"), "--bpm-strategy", "cut-driven", "--cut-times", CUT_GRID.join(","),
       "--evidence-dir", join(POST_DIR, "bgm-evidence")];
@@ -4485,7 +4486,24 @@ if (STAGES.has("bgm") && existsSync(danmakuOut) && !DRY_RUN) {
  *   ③ 合成音效 → 逐条 adelay 拼成 SFX 轨 → 与母版音轨混音（视频轨 copy）；
  *   ④ 复核：响度仍在 −14 LUFS ±1.5、剪辑点窗口内确有新增能量（"做了但听不见"要被抓出来）。
  */
-if (STAGES.has("sfx") && existsSync(scored) && !DRY_RUN) {
+/**
+ * 转场音效层启用口径（2026-10-09 产品所有者两轮反馈后定稿）：
+ * 原生硬切生产里，切点上的 whoosh/riser 会被听成"呲"；默认不铺，只有显式声明才启用
+ * （`--sfx-layer` / `--sfx-cut-whoosh`，或声明了逐刀运动掩体转场）；`--no-sfx` 永远优先关闭。
+ */
+const SFX_EXPLICIT = flag("--sfx-layer") || flag("--sfx-cut-whoosh") || Boolean(EFFECTIVE_CUT_TRANSITION);
+if (STAGES.has("sfx") && flag("--no-sfx")) {
+  record({ stage: "sfx", shotId: null, invoked: true, ok: true, cached: false, degraded: false, attempt: 1, ms: 0,
+    artifact: null, evidence: { applicable: false, skipReason: "调用方显式 --no-sfx：不铺转场音效层" },
+    verdict: null, note: "SFX 层按调用方声明关闭（保留原声 + 配乐）" });
+}
+if (STAGES.has("sfx") && !flag("--no-sfx") && !SFX_EXPLICIT && !DRY_RUN) {
+  record({ stage: "sfx", shotId: null, invoked: true, ok: true, cached: false, degraded: false, attempt: 1, ms: 0,
+    artifact: null,
+    evidence: { applicable: false, skipReason: "原生硬切生产默认不铺转场音效层（需 --sfx-layer / --sfx-cut-whoosh 显式开启）" },
+    verdict: null, note: "SFX 层按默认口径不适用：保留原声 + 配乐，不铺 whoosh/impact/riser" });
+}
+if (STAGES.has("sfx") && !flag("--no-sfx") && SFX_EXPLICIT && existsSync(scored) && !DRY_RUN) {
   rememberInputs("sfx", [scored]);
   const started = Date.now();
   const sfxDir = join(POST_DIR, "sfx");
@@ -4496,12 +4514,15 @@ if (STAGES.has("sfx") && existsSync(scored) && !DRY_RUN) {
     EFFECTIVE_CUT_TRANSITION ? EFFECTIVE_CUT_TRANSITION_AT.split(",").map((v) => Number(v.trim())).filter((v) => Number.isFinite(v) && v > 0) : []);
   /** 段落重音 = 进入快剪段的第一刀 + 最后一刀（模板可覆盖） */
   const accentTimes = cutTimes.length > 1 ? [cutTimes[0]!, cutTimes[cutTimes.length - 1]!] : cutTimes.slice(0, 1);
+  /** whoosh 只在**声明过逐刀运动掩体转场**时铺（硬切上的气流声是"呲"的主要来源）。 */
+  const whooshCuts = EFFECTIVE_CUT_TRANSITION ? cutTimes : (flag("--sfx-cut-whoosh") ? cutTimes : []);
+  const plannedCuts = [...new Set([...whooshCuts, ...accentTimes])].sort((a, b) => a - b);
   /**
    * 高潮那一刻 = 最后一个重音刀口（进入收尾镜之前）。
    * riser 由策划器**前置**到高潮之前（真机打回：riser 落在切点之后 = 高潮过去了才抬升）。
    */
   const climaxAtSec = accentTimes.length > 0 ? accentTimes[accentTimes.length - 1] : undefined;
-  const sfxPlan = planCutSfxDetailed({ cutTimes, durationSec: totalDuration, accentTimes, climaxAtSec }, CUT_SFX_POLICY);
+  const sfxPlan = planCutSfxDetailed({ cutTimes: plannedCuts, durationSec: totalDuration, accentTimes, climaxAtSec }, CUT_SFX_POLICY);
   /**
    * 开场钩子音（2026-09-27）：0–0.6s 是转场音效覆盖不到的窗口，单独摆一条。
    * 与转场音效的冲突在这里显式消解（不是静默丢弃）：钩子音**优先**——它是前 3 秒机制的一部分，
@@ -4869,7 +4890,7 @@ if (STAGES.has("deliver") && !DRY_RUN && (QUALITY !== "uhd" || masterApprovedFor
       if (!flag("--no-music")) {
         const mixed = plan.output.replace(/\.mp4$/i, "-bgm.mp4");
         const mixArgs = ["--in", plan.output, "--out", mixed, "--policy", "keep-dialogue",
-          "--music-level", String(-26 + plan.variant.musicLevelDeltaDb), "--ducking", "14", "--lufs", "-14",
+          "--music-level", String(-18 + plan.variant.musicLevelDeltaDb), "--ducking", "14", "--lufs", "-14",
           "--section", "auto", "--bpm-strategy", "cut-driven", "--cut-times", CUT_GRID.join(","),
           "--evidence-dir", join(POST_DIR, "bgm-evidence", plan.variant.id)];
         if (requestedVariantTrack?.bpm) mixArgs.push("--bgm-bpm", String(requestedVariantTrack.bpm));

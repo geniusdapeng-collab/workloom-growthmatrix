@@ -194,10 +194,12 @@ describe("封面设计稿", () => {
   });
 
   it("兜底稿也必须是三件套（人物 + 画面 + 标题），不能退化回只有标题", () => {
-    const plan = fallbackCoverPlan(input, { headline: "滕王阁 落霞秋水", heroShotId: "SC-05", personShotId: "SC-01" });
+    const plan = fallbackCoverPlan({ ...input, durationSeconds: 30 }, { headline: "滕王阁 落霞秋水", heroShotId: "SC-05", personShotId: "SC-01" });
     expect(plan.source).toBe("fallback");
     expect(plan.person.enabled).toBe(true);
-    expect(plan.subline).toContain("陈卓");
+    /** 2026-10-09 口径：封面兜底稿不得出现模特/真人姓名，只保留不含姓名的时长钩子。 */
+    expect(plan.subline ?? "").not.toContain("陈卓");
+    expect(plan.subline ?? "").toContain("秒");
     expect(plan.background.shotId).toBe("SC-05");
     expect(plan.headline.length).toBeLessThanOrEqual(12);
   });
