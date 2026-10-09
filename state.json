@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7154,
+  "revision": 7156,
   "tasks": {
     "132": {
       "number": 132,
@@ -5942,7 +5942,7 @@
     },
     "158": {
       "number": 158,
-      "status": "waiting_dependency",
+      "status": "parked",
       "firstSeen": 1791364616335,
       "attempts": {},
       "admission": {
@@ -5954,7 +5954,7 @@
         "owner": "admission/pr-158",
         "generation": {}
       },
-      "updatedAt": 1791520513886,
+      "updatedAt": 1791521415610,
       "headSha": "78dc16d820b02eb10f9fad97d3fdcd06cee3115a",
       "mainSha": "3a78ba78d3ff3b4bbbcbca7d4ee818d78521653b",
       "branch": "fix/T-2026-1007-0918-film-job-policy-assets",
@@ -6120,7 +6120,7 @@
         "ciPolicyChanges": []
       },
       "error": "Prerequisite #157 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/157 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
-      "blockedUntil": 1791520819857,
+      "blockedUntil": 1791522015610,
       "dependencies": [
         157
       ]
@@ -155642,6 +155642,31 @@
       },
       "previous": "edeacc6bb0f0054b529626cc4f891cd474ad8416cfd6bc226ee1763f94ce94f7",
       "digest": "15e9f244d9d18a5b0608cfec8cb471033ad34121b8fff9fd6a4818395aa31c34"
+    },
+    {
+      "sequence": 7155,
+      "at": "2026-10-09T04:50:15.610Z",
+      "kind": "task",
+      "data": {
+        "number": 158,
+        "patch": {
+          "status": "parked",
+          "error": "Prerequisite #157 is unreadable: CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/157 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791522015610
+        }
+      },
+      "previous": "15e9f244d9d18a5b0608cfec8cb471033ad34121b8fff9fd6a4818395aa31c34",
+      "digest": "87e20113fe3516a9ecd9ba8a3f8d0b1d4e23606e100e87af1a52bbd7c6ef2225"
+    },
+    {
+      "sequence": 7156,
+      "at": "2026-10-09T04:53:13.771Z",
+      "kind": "transaction",
+      "data": {
+        "id": "b0158e42-440e-43e1-8680-05e819a0a34c"
+      },
+      "previous": "87e20113fe3516a9ecd9ba8a3f8d0b1d4e23606e100e87af1a52bbd7c6ef2225",
+      "digest": "224522c3f848b927d4e44d0104471f13c2a3bf9684ff21053ba8252091c960a4"
     }
   ]
 }
