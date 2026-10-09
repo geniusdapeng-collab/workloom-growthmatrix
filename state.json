@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7448,
+  "revision": 7450,
   "tasks": {
     "132": {
       "number": 132,
@@ -4711,7 +4711,7 @@
         "hasFailedChecks": false,
         "ciPolicyChanges": []
       },
-      "updatedAt": 1791529219168,
+      "updatedAt": 1791529520477,
       "admission": {
         "number": 150,
         "headSha": "e2d487faa52fcf556951035016d0ddbc66ccbd63",
@@ -4724,8 +4724,8 @@
       "dependencies": [
         149
       ],
-      "error": "检查/评审阻断：Codex review identity differs from the exact repository/source/main/policy",
-      "blockedUntil": 1791529819168,
+      "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/150 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+      "blockedUntil": 1791530120477,
       "alignmentCount": 1,
       "recoveryCount": 0,
       "reviewFailures": null,
@@ -160709,6 +160709,31 @@
       },
       "previous": "3c0a83e9bca0d07dda39907a9124f6b5ba0cc6b132ad3f546f421d314911ec28",
       "digest": "5b341a2cc9d89474974e736371e67969d50df772fb51e5533268c2610844e8ae"
+    },
+    {
+      "sequence": 7449,
+      "at": "2026-10-09T07:05:20.477Z",
+      "kind": "task",
+      "data": {
+        "number": 150,
+        "patch": {
+          "status": "parked",
+          "error": "CNB 429 https://api.cnb.cool/workloom-ai/workloom-growthmatrix/-/pulls/150 :: {\"errcode\":8,\"errmsg\":\"Too many requests. Please try again later.\"}\n",
+          "blockedUntil": 1791530120477
+        }
+      },
+      "previous": "5b341a2cc9d89474974e736371e67969d50df772fb51e5533268c2610844e8ae",
+      "digest": "aa23b92440855a1911c0bac4f2d7d5987bff06a1030986cf299fe776b132f4ab"
+    },
+    {
+      "sequence": 7450,
+      "at": "2026-10-09T07:05:43.838Z",
+      "kind": "transaction",
+      "data": {
+        "id": "c13340f6-c2a4-4cb6-8534-fa5053aa43c0"
+      },
+      "previous": "aa23b92440855a1911c0bac4f2d7d5987bff06a1030986cf299fe776b132f4ab",
+      "digest": "1dc8b0be09c5642c5cdb872ce3e2ac1f06919e2c701096f2aa80ac87f96c1f7e"
     }
   ]
 }
