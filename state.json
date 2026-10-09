@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repo": "workloom-ai/workloom-growthmatrix",
-  "revision": 7763,
+  "revision": 7765,
   "tasks": {
     "132": {
       "number": 132,
@@ -5075,7 +5075,7 @@
     },
     "153": {
       "number": 153,
-      "status": "parked",
+      "status": "waiting_dependency",
       "firstSeen": 1791359178476,
       "attempts": {},
       "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -5236,7 +5236,7 @@
           }
         ]
       },
-      "updatedAt": 1791537925954,
+      "updatedAt": 1791538227090,
       "admission": {
         "number": 153,
         "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
@@ -166111,6 +166111,46 @@
       },
       "previous": "ae164f27c73f1385d3b1fe077994e90079400884d2fbb3a439de5191bd508abd",
       "digest": "ad8f1d8245c232ebf331b373e12c6359c570444cbcd943ff763eae82639499e4"
+    },
+    {
+      "sequence": 7764,
+      "at": "2026-10-09T09:30:27.090Z",
+      "kind": "task",
+      "data": {
+        "number": 153,
+        "patch": {
+          "status": "waiting_dependency",
+          "headSha": "9e2bfd5bb0b076d1e500e50f88e6bb6536bb58e0",
+          "intent": {
+            "taskId": "T-2026-1007-0918",
+            "ready": true,
+            "dependsOn": [
+              152
+            ],
+            "releases": [
+              {
+                "kind": "desktop",
+                "version": "0.1.12"
+              }
+            ]
+          },
+          "dependencies": [
+            152
+          ]
+        }
+      },
+      "previous": "ad8f1d8245c232ebf331b373e12c6359c570444cbcd943ff763eae82639499e4",
+      "digest": "aab6ed66b7fe4de9eee62d6bd69441cc5eb5dfb1ceb75a6d7adb220b84eef78d"
+    },
+    {
+      "sequence": 7765,
+      "at": "2026-10-09T09:33:48.544Z",
+      "kind": "transaction",
+      "data": {
+        "id": "3c6ca7ba-bcf5-4efb-849a-b8f43e2b64f8"
+      },
+      "previous": "aab6ed66b7fe4de9eee62d6bd69441cc5eb5dfb1ceb75a6d7adb220b84eef78d",
+      "digest": "4bc5efb06b23acfdc2e461d5db0f44851daadbb1c462db19c7519dd512aa74ec"
     }
   ]
 }
