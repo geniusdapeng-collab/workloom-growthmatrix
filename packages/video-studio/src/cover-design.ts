@@ -77,6 +77,16 @@ export const COVER_FONTS = {
 
 export type CoverFontId = keyof typeof COVER_FONTS;
 
+/**
+ * 封面**内部标签黑名单**（2026-10-10 产品所有者口径）：
+ * "封面不要出现这些给内部看的标签——产出的视频都是默认用来直接对外投放的。"
+ * 命中即判非法（设计师出稿同样拦截）；需要表达风格请用面向观众的题材词（如"城市漫游""夜色""快剪"）。
+ */
+export const COVER_INTERNAL_LABEL_BLOCKLIST = [
+  "暖调胶片", "冷调技术", "高对比社交", "社交高对比",
+  "胶片感", "变体版本", "内部样片", "内部版", "草稿版", "调色版", "测试版"
+] as const;
+
 export interface CoverPlan {
   /** 主标题（≤ 12 个视觉字符，最多两行，行内用 `\n` 断行） */
   headline: string;
@@ -332,6 +342,13 @@ const visualLength = (text: string): number => [...text.replace(/\n/g, "")].leng
  */
 export function validateCoverPlan(plan: CoverPlan, input: CoverDesignInput = { shots: [] }): CoverPlan {
   const issues: string[] = [];
+  /**
+   * 内部标签硬闸（2026-10-10 产品所有者口径）：对外投放封面不得出现内部风格/工序名；
+   * 设计师出稿与兜底稿一视同仁。
+   */
+  const internalLabel = COVER_INTERNAL_LABEL_BLOCKLIST.find((label) =>
+    [plan.headline, plan.subline, plan.badge].map((value) => String(value ?? "")).join(" ").includes(label));
+  if (internalLabel) issues.push(`封面文案含内部标签「${internalLabel}」——对外投放封面不得出现内部风格/工序名`);
   /**
    * 平台口径（2026-09-27）：标题长度上限随平台（抖音 12 / 小红书 14 / B站 16 / 英文平台按词 ≤5）。
    * `domain="cover_design_invalid"` 的既有错误语义不变；缺省平台落 douyin，旧调用行为不变。
