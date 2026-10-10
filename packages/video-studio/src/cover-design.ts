@@ -77,6 +77,16 @@ export const COVER_FONTS = {
 
 export type CoverFontId = keyof typeof COVER_FONTS;
 
+/**
+ * 封面**内部标签黑名单**（2026-10-10 产品所有者口径）：
+ * "封面不要出现这些给内部看的标签——产出的视频都是默认用来直接对外投放的。"
+ * 命中即判非法（设计师出稿同样拦截）；需要表达风格请用面向观众的题材词（如"城市漫游""夜色""快剪"）。
+ */
+export const COVER_INTERNAL_LABEL_BLOCKLIST = [
+  "暖调胶片", "冷调技术", "高对比社交", "社交高对比",
+  "胶片感", "变体版本", "内部样片", "内部版", "草稿版", "调色版", "测试版"
+] as const;
+
 export interface CoverPlan {
   /** 主标题（≤ 12 个视觉字符，最多两行，行内用 `\n` 断行） */
   headline: string;
@@ -178,7 +188,13 @@ export interface CoverDesignInput {
    * 禁止第三种"人物小图贴在地标/商品上"——两种主视觉打架，真机被打回三次。
    */
   archetype?: "person-led" | "subject-led";
-  brief?: { platform?: string; audience?: string; goal?: string; tone?: string; coverHook?: string } | null;
+  brief?: { platform?: string; audience?: string; goal?: string; tone?: string; coverHook?: string;
+    /**
+     * 副标题覆盖（可选，≤24 字）。
+     * 2026-10-09 产品所有者口径：**封面不得默认出现模特/真人的姓名**（"封面不要显示陈卓名字"）——
+     * 需要名字时必须由调用方在这里显式给出；不给则兜底稿使用不含姓名的文案。
+     */
+    coverSubline?: string } | null;
   /**
    * 平台（ID 或中文别名，如 `douyin` / `抖音` / `抖音/快手`）。
    * 语义已升格为一等参数：驱动的画幅、安全区、标题带、标题字数上限与文案政策；
@@ -326,6 +342,13 @@ const visualLength = (text: string): number => [...text.replace(/\n/g, "")].leng
  */
 export function validateCoverPlan(plan: CoverPlan, input: CoverDesignInput = { shots: [] }): CoverPlan {
   const issues: string[] = [];
+  /**
+   * 内部标签硬闸（2026-10-10 产品所有者口径）：对外投放封面不得出现内部风格/工序名；
+   * 设计师出稿与兜底稿一视同仁。
+   */
+  const internalLabel = COVER_INTERNAL_LABEL_BLOCKLIST.find((label) =>
+    [plan.headline, plan.subline, plan.badge].map((value) => String(value ?? "")).join(" ").includes(label));
+  if (internalLabel) issues.push(`封面文案含内部标签「${internalLabel}」——对外投放封面不得出现内部风格/工序名`);
   /**
    * 平台口径（2026-09-27）：标题长度上限随平台（抖音 12 / 小红书 14 / B站 16 / 英文平台按词 ≤5）。
    * `domain="cover_design_invalid"` 的既有错误语义不变；缺省平台落 douyin，旧调用行为不变。
@@ -508,11 +531,16 @@ export function fallbackCoverPlan(
     ? hammer.fontId as CoverFontId
     : null;
   const hammerPalette = Array.isArray(hammer?.palette) ? hammer!.palette.filter((c) => HEX.test(String(c))) : [];
-  const sublineFallback = input.character?.name
-    ? (isEnglishCoverPlatform(spec)
-      ? (durationText ? `${input.character.name} · ${Math.round(seconds)}s` : input.character.name)
-      : (durationText ? `${input.character.name}带你 ${durationText}看懂` : `${input.character.name}带你一次看懂`))
-    : undefined;
+  /**
+   * 副标题（2026-10-09 口径修订）：旧行为把模特/真人姓名写进副标题，客户明确要求封面不出现姓名；
+   * 现在优先使用调用方显式给的 `brief.coverSubline`，否则生成不含姓名的时长钩子（无时长则不给副标题）。
+   */
+  const sublineOverride = typeof input.brief?.coverSubline === "string" ? input.brief.coverSubline.trim() : "";
+  const sublineFallback = sublineOverride
+    ? sublineOverride
+    : (isEnglishCoverPlatform(spec)
+      ? (durationText ? `${Math.round(seconds)}s` : undefined)
+      : (durationText ? `${durationText}速览` : undefined));
   const plan: CoverPlan = {
     headline,
     subline: sublineFallback,
