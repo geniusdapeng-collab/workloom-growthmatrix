@@ -43,6 +43,7 @@ import { findTracks, loadAllLocalTracks, mix as bgmMix } from "../bgm-bridge/cor
 import { audioStemDigest, renderAudioStems, verifyAudioStemBundle,
   muxAudioProgram, snapshotAudioStemArtifact } from "../bgm-bridge/audio-stems.mjs";
 import { createAudioStemReceiptVerifier } from "../bgm-bridge/audio-stems-trust.mjs";
+import { displayNamesForDelivery } from "../../library/naming.mjs";
 
 /* ============================ 工具面与错误 ============================ */
 
@@ -849,6 +850,31 @@ export async function buildCover({
 
 /* ============================ 交付包（主流程） ============================ */
 
+/**
+ * 封面两两差异（2026-10-11 客户反馈"几个版本的封面都还是用的同一个封面"）：
+ * 缩到 64×36 灰度求平均绝对差（MAD）。identical（sha 相同）/ near-duplicate（<2）判硬失败，
+ * similar（<6）在回执里提示——旧实现的 coverDivergence 是空占位，拦不住"两张一样的封面"。
+ */
+async function imageDivergence(a, b, bins) {
+  const [hashA, hashB] = [await sha256File(a), await sha256File(b)];
+  if (hashA === hashB) return { meanAbsDiff: 0, verdict: "identical" };
+  const dir = await tempDir("workloom-cover-divergence-");
+  const rawFile = path.join(dir, "diff.raw");
+  await runBin(bins.ffmpeg, [
+    "-hide_banner", "-loglevel", "error", "-y", "-i", a, "-i", b,
+    "-lavfi", "[0:v]scale=64:36,format=gray[x];[1:v]scale=64:36,format=gray[y];[x][y]blend=all_mode=difference",
+    "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "gray", rawFile,
+  ], { label: "ffmpeg(cover-divergence)" });
+  const bytes = await fsp.readFile(rawFile);
+  if (!bytes.length) return { meanAbsDiff: Number.NaN, verdict: "similar" };
+  let total = 0;
+  for (const value of bytes) total += value;
+  const meanAbsDiff = round(total / bytes.length, 2);
+  if (meanAbsDiff < 2) return { meanAbsDiff, verdict: "near-duplicate" };
+  if (meanAbsDiff < 6) return { meanAbsDiff, verdict: "similar" };
+  return { meanAbsDiff, verdict: "distinct" };
+}
+
 async function writeJson(file, value) {
   await fsp.mkdir(path.dirname(file), { recursive: true });
   await fsp.writeFile(file, `${JSON.stringify(value, null, 2)}\n`, "utf8");
@@ -1301,6 +1327,7 @@ export async function buildDeliveryPackage({
 
   /* Requested recipes and produced hashes are facts; rendered-source quality is not voted on. */
   const divergence = [];
+  const coverDivergence = [];
   for (let i = 0; i < variantsOut.length; i += 1) {
     for (let j = i + 1; j < variantsOut.length; j += 1) {
       const a = variantsOut[i], b = variantsOut[j];
@@ -1309,6 +1336,17 @@ export async function buildDeliveryPackage({
         outputHashes: [a.artifacts.video.sha256, b.artifacts.video.sha256] });
     }
   }
+  /** 变体封面两两差异化（硬门）：identical / near-duplicate 直接判失败，防止"几个版本同一个封面"回归。 */
+  for (let i = 0; i < variantsOut.length; i += 1) {
+    for (let j = i + 1; j < variantsOut.length; j += 1) {
+      const a = variantsOut[i];
+      const b = variantsOut[j];
+      const diff = await imageDivergence(a.artifacts.cover.path, b.artifacts.cover.path, bins);
+      coverDivergence.push({ a: a.id, b: b.id, diff });
+    }
+  }
+  const duplicateCoverPairs = coverDivergence.filter((row) => row.diff.verdict === "identical" || row.diff.verdict === "near-duplicate");
+
   const packageChecks = [
     { kind: "audio_source_provenance", ok: true, detail: { sourceScope: audioScope(project), embeddedAudioUsed: masterStems === null, stemsVerified: masterStems !== null, qualityReviewed: false } },
     {
@@ -1327,6 +1365,15 @@ export async function buildDeliveryPackage({
       kind: "covers_valid",
       ok: variantsOut.every((variant) => variant.artifacts.cover.checks.every((check) => check.ok === true)),
       detail: variantsOut.map((variant) => ({ id: variant.id, checks: variant.artifacts.cover.checks })),
+    },
+    {
+      kind: "covers_distinct",
+      ok: duplicateCoverPairs.length === 0,
+      detail: {
+        basis: "变体封面两两 64×36 灰度平均绝对差（MAD）；identical/near-duplicate(<2) 判失败，similar(<6) 提示",
+        pairs: coverDivergence.map((row) => ({ a: row.a, b: row.b, meanAbsDiff: row.diff.meanAbsDiff, verdict: row.diff.verdict })),
+        duplicates: duplicateCoverPairs.map((row) => ({ a: row.a, b: row.b, meanAbsDiff: row.diff.meanAbsDiff, verdict: row.diff.verdict })),
+      },
     },
     { kind: "bgm_layer", ok: audioFailures.length === 0, detail: { failed: audioFailures, qualityReviewed: false, note: "所请求的配乐必须实际产出；加工失败直接返回错误" } },
     { kind: "softsub_video_unchanged", ok: variantsOut.every((variant) => !variant.artifacts.softsub || variant.artifacts.softsub.checks.every((check) => check.ok === true)), detail: variantsOut.filter((variant) => variant.artifacts.softsub).map((variant) => ({ id: variant.id, checks: variant.artifacts.softsub.checks.map((check) => check.kind) })) },
@@ -1521,7 +1568,13 @@ note: "计划口径 = 镜头卡/PRD 的目标总时长；实际口径 = 逐镜�
         : { sourceAuthority: "original-program-bytes", stemsVerified: false, qualityReviewed: false },
     })),
     divergence,
-    coverDivergence: null,
+    displayNames: displayNamesForDelivery({
+      title: project.title ?? project.projectId ?? "未命名",
+      version: project.version ?? null,
+      resolution: [width, height],
+      variants: variantsOut.map((variant) => ({ id: variant.id, name: variant.name })),
+    }),
+    coverDivergence: coverDivergence.map((row) => ({ a: row.a, b: row.b, meanAbsDiff: row.diff.meanAbsDiff, verdict: row.diff.verdict })),
     checks: packageChecks,
     enhancements: normalised.map((clip) => ({
       shotId: clip.shotId,
