@@ -87,6 +87,12 @@ async function main() {
     case "health":
       line(JSON.stringify((await callTool("postread.health", {})).result, null, 2));
       return 0;
+    case "quality": {
+      if (typeof flags["delivery-dir"] !== "string") throw new PostError("--delivery-dir 缺失", "bad_request");
+      const outcome = await callTool("postread.quality", { delivery_dir: flags["delivery-dir"] });
+      line(JSON.stringify(outcome.result, null, 2));
+      return outcome.receipt.synced ? 0 : 3;
+    }
     case "variants": {
       for (const pack of listVariantPacks()) {
         line(`${pack.id} · ${pack.name} —— ${pack.positioning}`);
@@ -121,6 +127,7 @@ async function main() {
           ? { zhPath: flags.srt, enPath: typeof flags["srt-en"] === "string" ? flags["srt-en"] : null }
           : null,
         variants,
+        danmaku: flags.danmaku ? readJson(flags.danmaku, "--danmaku") : null,
         outDir: flags["out-dir"],
         burnSubtitles: flags["burn-subtitles"] === true,
         softSubtitles: flags["no-soft-subtitles"] !== true,
@@ -216,7 +223,7 @@ async function main() {
     }
     default:
       process.stderr.write(
-        "用法：post-cli <health|variants|plan|deliver|impact|reedit|triage> [--flags]\n"
+        "用法：post-cli <health|quality|variants|plan|deliver|impact|reedit|triage> [--flags]\n"
         + "参见 bundles/ai-video/connectors/post-bridge/README.md\n",
       );
       return 2;

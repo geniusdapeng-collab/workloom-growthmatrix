@@ -3,7 +3,7 @@
 把「一支片子交给用户」这件事做成可审计的确定性流程：**母版不烧字幕 → 同一批镜头派生多个风格变体 →
 交付清单 + 工程文件 → 用户反馈按层增量本地重合成（不重新生成镜头）**。
 
-**2026-10-07 当前默认**：成功渲染镜头直接正式后期。源片人物、服装、动作、原始规格、黑画面、音频、对白与口型不再作二次品质评审；不因旧品质失败或组件配方改变重生成。默认使用原节目音，不自动调用 ASR/TTS、不要求签章签发者。每个实际请求的后期层加工一次；实际缺文件、字节变化、权限/路径/许可错误和加工失败仍停止交付。回执标 `qualityReviewed=false`，品质分数与差异为 `null`。
+**当前交付合同（2026-10-14）**：成功源素材核对任务、来源和当前字节后直接进入正式后期；交付出口必须重新检查实际母版及每个请求变体的完整解码、画布、时间轴、字幕/弹幕和真实加工链。技术失败只进入本地修复，不能以旧绿色报告、`passed` 或关闭复检参数放行。人物、服装、动作、观感与经营效果仍需独立艺术审片，报告保留 `artisticQualityReviewed=false`；技术验收不授权付费重生成。
 
 ## 为什么单独做一层
 
@@ -30,13 +30,14 @@ WorkLoom（大脑：岗位/技能/围栏/事件账本）         Mac 后期工�
 
 **大文件不出工位**：服务器只传路径与参数，工位本地读写素材，只回元数据与小图。
 
-## 工具面（6 个）
+## 工具面（7 个：读 4 / 写 3）
 
 | 工具 | 类型 | 用途 |
 |---|---|---|
 | `postread.health` | 读 | 工位体检（ffmpeg / 变体包 / LUT / 曲库 / 字幕工位） |
 | `postread.plan` | 读 | 交付计划：镜头清单、变体差异轴、步骤与成本口径（不动文件） |
 | `postread.impact` | 读 | **变更影响分析**：patch → 重算哪些层 / 是否需重生成镜头 / 花钱闸 |
+| `postread.quality` | 读 | 回读当前交付目录：完整解码、原生或明确目标画布、请求环节及输入/输出 SHA 绑定的真实加工凭证 |
 | `postwrite.package` | 写 | 出交付包：干净母版 + 旁挂字幕 + 多风格变体 + 封面/文案 + 软字幕轨 + 清单 + 工程文件 |
 | `postwrite.reedit` | 写 | **本地层增量重合成**：读工程文件 + patch → 新版本目录；镜头不动、复用带哈希证据 |
 | `postwrite.triage` | 写 | 反馈分诊：自由文本 → 归因码 / 受影响层 / 是否重生成点名镜头 / 给用户的话 / patch 提示 |
@@ -56,6 +57,8 @@ WorkLoom（大脑：岗位/技能/围栏/事件账本）         Mac 后期工�
   film-project.json                          工程文件（层结构 + 产物血缘）——返修入口
   delivery-manifest.json                     交付清单（全产物 sha256 + 真实配方 + 未做品质复评 + 成本口径）
   delivery-report.md                         人看版说明（变体对照表 + 返修路径 + 未达标项）
+  quality/post-quality-release.json          当前最终产物技术报告（源/产物 SHA、各环节状态、艺术未审）
+  quality/processing/*.json                      操作前输入 SHA、实际参数与操作后输出 SHA 的加工凭证
   versions/v2/…                              返修版本目录（只增不覆盖）
 ```
 
@@ -67,6 +70,7 @@ post-cli variants
 post-cli plan     --project project.json --shots a.mp4,b.mp4 [--quality hd|uhd] [--variants warm-story,clean-tech]
 post-cli deliver  --project project.json --shots signed-shots.json --out-dir out/ \
                   [--quality hd|uhd] [--srt subs.srt] [--srt-en subs.en.srt] [--burn-subtitles] [--no-soft-subtitles]
+post-cli quality  --delivery-dir out/
 post-cli impact   --project out/film-project.json --patch patch.json
 post-cli reedit   --project out/film-project.json --patch patch.json [--shot SC-03=/path/new.mp4] \
                   [--audio-stems-by-shot signed-replacement-sources.json]
@@ -77,9 +81,7 @@ post-cli triage   --feedback "配乐太吵，另外第 3 个镜头人物走形"
 
 ## 默认原节目音与显式独立音轨合同
 
-默认交付接受视频路径或 JSON 镜头清单，按源片原节目音加工；源片无音轨时按实际时间轴加入静音，回执如实记 `sourceAuthority=original-program-bytes`、`stemsVerified=false`，没有独立角色品质结论。
-
-明确提供 `shots[].audioStems` 时才使用签章分轨合同，并要求 `project.audioScope={tenantId,workspaceId,projectId,revision}`。`revision` 是画面/原稿的生成版本，独立于后期工程 v1/v2；CLI 的 JSON 清单保留该显式引用。错误引用不自动丢弃或退回原节目音。下述严格校验只适用于该显式选择。
+默认接受视频路径或 JSON 镜头清单，保留源片已有原节目声；没有音轨时由拼接器按实际画面时间轴补静音，不自动合成对白。只有显式提供 `shots[].audioStems` 才启用下述独立音轨授权合同，并要求 `project.audioScope={tenantId,workspaceId,projectId,revision}`；`revision` 是源画面版本，与后期 v1/v2 独立。显式的空值、错误来源或缺角色不被当作省略，也不能回退原声。CLI 用 JSON 清单携带这些引用。
 
 每镜必须明确 `dialogue/ambience/foley/music` 四个角色。可用源含 `status:"ready"`、音频路径、SHA256、
 `sourceKind`、权威 `receipt`，可选 `inSec/durationSec/offsetSec`；不适用角色用
@@ -99,16 +101,14 @@ post-cli triage   --feedback "配乐太吵，另外第 3 个镜头人物走形"
 画面及该节目轨。签章、源快照、角色/节目 WAV、工具指纹与配方摘要记录在 `work/audio-stems/*/audio-stems.json`。
 工程/清单固定该文件与配方的哈希；返修重新校验当前签章、所有字节和确定性重放结果。过期回执可留档，不能授权新使用。
 
-原工程明确选择签章分轨时，替换镜头必须同时提供 `audioStemsByShot`（工具为 `audio_stems_by_shot`，CLI 如上），且签章绑定新视频。默认原节目音工程继续使用新视频的实际原节目音。
-改转场会重建同样的音轨时间线；改 BGM 从独立节目轨重混。旧工程只能保留文案/封面等草稿返修，
-`independent_audio_sources=false`；不会从旧成片推断干净轨。真实音频重混每次重新执行，旧混音元数据不能授权缓存成功。
+原工程明确选择签章分轨时，原工程启用独立音轨时，替换镜头必须同时提供 `audioStemsByShot`（工具为 `audio_stems_by_shot`，CLI 如上），且签章绑定新视频。默认原节目音工程继续使用新视频的实际原节目音。
+改转场会重建对应音轨时间线；改 BGM 从授权节目轨或原节目声重混。未启用独立音轨的工程保持已有原节目声，不从混音成片推断干净角色。真实音频重混每次重新执行，旧混音元数据不能授权缓存成功。
 音频回执本身有冻结哈希，失败音频不会在下一轮仅改文案后变成通过。
 
 同一 HTTP 幂等键的相同在途请求共用作业；不同参数返回 `idempotency_conflict`，完成后再次提交返回
 `idempotency_revalidation_required`，避免旧成功绕过过期签章。已存在完成工程的输出目录不得重做 package，须走返修版本。
 
-`quality` 缺省为 `hd`。`uhd` 对应竖屏 2160×3840、横屏 3840×2160、方屏 2160×2160、4:5 2160×2700。
-请求 UHD 时，成功低分辨率源片默认接受，以 FFmpeg 实际缩放/补边到所请求画布，不强制模型增强或画质证明。归一化回执记录 `processingMode=ffmpeg-scale-pad`、真实参数和源/产物摘要；实际产物宽高不符请求则失败，不能仅在清单写 UHD。
+`quality` 缺省为 `hd`。没有显式 `project.resolution` 时，计划回读源素材的显示宽高，选取能保留每个源轴的原生画布；明确画布必须是正、安全整数、偶数边长，支持自定义尺寸及 UHD。换画幅须提供 `project.resolutionPolicy.reframeApproved=true` 和 `reframeReason`；降采样另需 `project.allowDownscale=true` 或 `resolutionPolicy.downscaleApproved=true`。明确输出画布由 FFmpeg 实际编码，不自动调用增强模型；请求增强另走其执行合同。清单记录 `nativeResolution`、`resolutionPolicy`、逐镜来源与实际宽高，名称含 UHD 不能替代实际规格。帧率采用本次明确请求或工位默认设置，报告回读实际帧时钟，不声称所有源帧率均原样复制。
 
 在 Apple Silicon macOS 工位上先安装本机工具（安装脚本校验固定版本与哈希）：
 
@@ -147,21 +147,24 @@ node bundles/ai-video/connectors/post-bridge/cli.mjs health
 | `clean-tech` | 产品/科技/知识 | cool-technical 0.7 · hard · corporate-clean -25dB · 参数卡封面 · 简洁理性口吻 |
 | `bold-promo` | 带货/本地生活 | high-contrast-social 0.9 · xfade 0.35s · sports-hype -21dB · 促销横幅 · 直接叫卖口吻 |
 
-当前交付按请求实际产出并记录这些配方。清单 `divergence` 的画面、音轨和封面指标为 `null`，不因相似、静音或画面品质重试。G-DLV1 只阻断实际所请求变体缺产物。以下历史真机数据不代表本轮品质或耗时验证。
+配方给出明确风格意图；技术出口保证请求的文件和实际加工链成立。配方差异、像素差或曲目不同不等于观感出色，不能替代看过和听过后的审片结论。静黑、静音和单个版本仍按本仓请求数量合同处理；技术报告如实保留艺术未审状态。
 
-## 实际交付合同
+## 当前媒体技术验收（失败不发布）
 
-| 项目 | 记录与失败处置 |
-|---|---|
-| 母版与字幕 | 母版不烧字；软字幕执行视频/音频 copy，记录实际轨道、元数据、时间轴和摘要，不默认逐帧/PCM 评分 |
-| 变体与封面 | 所请求文件实际存在、可读取并记录尺寸/摘要；按请求配方加工一次，无差异或墨迹品质闸 |
-| 时间轴与规格 | 核对当前工程请求的实际产物时间轴、画布与轨道；源片原始规格不作品质闸 |
-| 配乐 | 原节目音或显式签章分轨 + 请求混音参数；一次实际加工，无响度/人声/可闻度品质重试 |
-| 复用证据 | 复用层给出实际 SHA-256；源字节变化、缺产物或缺证据直接失败（G-DLV7） |
+| 项目 | 可复算依据 | 失败处置 |
+|---|---|---|
+| 母版与请求变体 | 当前非空文件、SHA、FFprobe 和全片 FFmpeg 解码 | 缺件、截断、坏编码或请求变体缺失停止出口 |
+| 原生画布与明确导出 | 源显示宽高、目标每轴、实际成片画布与批准的换画幅/降采样 | 规格不符或未批准的降采样失败 |
+| 转场/调色/实体/配乐 | 实际输入 SHA、请求、加工结果与输出 SHA；每刀实际切点及音效放置 | 任意 JSON、旧回执或他变体凭证不能放行 |
+| 字幕与弹幕 | 所有条目的时间、字体解析和实际文件；软轨完整视频/音频编码包 SHA | 越片尾、空请求产物或丢台词失败 |
+| 声音 | 实际编码成片的响度/真峰值，默认 report；明确 block 合同按其阈值 | 留实测建议或按明确阈值失败，不自动再混/付费重生成 |
+| 返修与整理 | 复用层当前 SHA、版本前置条件、最终 copied 字节与当前报告一致 | 来源被换、旧文件混入或加工链缺失失败 |
+
+`postread.quality`/CLI quality 每次回读当前文件，服务器不缓存这类成功。七个必需状态为 cover / bgm / subtitles / danmaku / transitions / color / resolution；本次不适用时必须有具体理由。报告的技术通过与 `artisticQualityReviewed=false` 同时存在。艺术审片另外观察肤色、产品色、清晰度、快慢段、呼吸点、声音层次与文字可读性；未实看片段不得声称“大片品质”。
 
 ## 真机验证数据（2026-09-24，本地 Mac + ffmpeg 6.0）
 
-以下为旧品质/混音合同的历史记录，不能作为 2026-10-07 当前流程或本轮耗时验收；原签章合同的合成媒体与正常入口回归见 `docs/repairs/T-2026-0927-0037.md`。
+以下为旧品质/混音合同的历史记录，不能作为 2026-10-07 当前技术合同或本轮耗时验收；原签章合同的合成媒体与正常入口回归见 `docs/repairs/T-2026-0927-0037.md`。
 
 | 场景 | 结果 |
 |---|---|
@@ -190,7 +193,7 @@ const toolExecutor = createPostBridgeExecutor({
 ## 与其它工位的关系
 
 - **字幕工位**：旁挂字幕文件与软字幕轨由它产出（`subtitlewrite.sidecar` / `subtitlewrite.softmux`），本工位负责编排并记录真实加工结果；
-- **调色/配乐工位**：变体的调色与混音直接调用其内核，一次实际加工，不做源片/后期品质评审；
+- **调色/配乐工位**：变体的调色与混音直接调用其内核，保留真实加工证据和当前技术检查，艺术审片另列；
 - **渲染链路**：用户明确请求改画面内容时才提出渲染计划（点名镜头 + G8 前置人审），本工位只做"重生成之后的本地合成"。
 
 ## 纪律

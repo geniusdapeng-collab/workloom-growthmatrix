@@ -38,9 +38,10 @@
  */
 
 import process from "node:process";
+import path from "node:path";
 import fs from "node:fs";
 
-import { BgmError, analyze, analyzeStructure, best, callTool, compose, findRecipes, findTracks, mix, separate } from "./core.mjs";
+import { allowedRoots, assertPathAllowed, BgmError, analyze, analyzeStructure, best, callTool, compose, findRecipes, findTracks, mix, separate } from "./core.mjs";
 import { CATALOGS } from "./sources.mjs";
 
 function parseArgs(argv) {
@@ -109,6 +110,12 @@ async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const { flags } = parseArgs(rest);
   const line = (text = "") => process.stdout.write(`${text}\n`);
+  const reportFile = flags.report === undefined ? null : assertPathAllowed(String(flags.report), allowedRoots(), "report");
+  const writeReport = (value) => {
+    if (!reportFile) return;
+    fs.mkdirSync(path.dirname(reportFile), { recursive: true });
+    fs.writeFileSync(reportFile, `${JSON.stringify(value, null, 2)}\n`, { flag: "wx", mode: 0o600 });
+  };
 
   switch (command) {
     case "health": {
@@ -249,6 +256,7 @@ async function main() {
         sectionStartSec: number(flags["section-start"]),
         sectionEndSec: number(flags["section-end"]),
       });
+      writeReport(result);
       line(`已配乐：${result.output.path}`);
       line(`  策略 ${result.policy} · 请求 BGM ${result.mix.musicLevelDb}dB · 让位参数 ${result.mix.duckingDbTarget} · 时间线 ${result.output.durationSeconds}s`);
       line(`  来源 ${result.independentAudio.sourceAuthority} · 未进行音频品质复评`);
@@ -406,6 +414,7 @@ async function main() {
         sourcePolicy: typeof flags["source-policy"] === "string" ? flags["source-policy"] : "compose-only",
         catalog: catalogFlag(flags.catalog),
       });
+      writeReport(result);
       if (result.verdict === "no_bgm_needed") {
         line(`结论：无需配乐 —— ${result.reason}`);
         return 0;

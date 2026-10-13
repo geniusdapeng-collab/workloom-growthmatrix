@@ -65,3 +65,5 @@ export * from "./plausibility-review.js";
 
 /** Provider-success sources enter official postproduction without quality review. */
 export * from "./post-render-acceptance.js";
+export * from "./rhythm-plan.js";
+export * from "./cinematic-contract.js";

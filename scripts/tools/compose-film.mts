@@ -20,6 +20,9 @@
  *     --recipe real-estate [--graded-out outputs/nanyuan-graded-30s.mp4] \
  *     [--keep-temp] [--json]
  */
+import { probeMedia as probeColorMedia } from "../../bundles/ai-video/connectors/color-bridge/core.mjs";
+import { resolveColorManagement } from "../../bundles/ai-video/connectors/color-bridge/processing-quality.mjs";
+import { probeMedia as probeVideoFacts } from "../../bundles/ai-video/connectors/subtitle-bridge/measure.mjs";
 import { execFileSync } from "node:child_process";
 import { createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -119,9 +122,13 @@ console.log(`拼接 ${clips.length} 个镜头 → ${width}x${height} @${fps}fps�
 
 /* ---------- ① 归一化 ---------- */
 const normalized: string[] = [];
+const inputBindings = await Promise.all(clips.map(async path => ({ path, sha256: await sha256File(path) })));
+const colorNormalizations: Array<Record<string, unknown>> = [];
 const sourceReceipts = clips.map(file => inspectPostInput({ file, ffprobe: FFPROBE }));
 const normalizedSeconds: number[] = [];
-clips.forEach((clip, index) => {
+for (const [index, clip] of clips.entries()) {
+  const sourceColor = resolveColorManagement({ probe: await probeColorMedia(clip, { bins: { ffmpeg: FFMPEG, ffprobe: FFPROBE } }) });
+
   const target = join(temp, `norm-${String(index).padStart(2, "0")}.mp4`);
   /**
    * 每段音轨必须与画面**等长**（2026-09-26 真机事故修复）：
@@ -131,17 +138,20 @@ clips.forEach((clip, index) => {
    * 下游无论走 concat 滤镜还是 demuxer，时间轴都不会再漂。
    */
   const source = sourceReceipts[index]!;
-  const inFrames = Math.max(1, Math.round(source.durationSec * fps));
+  const sourceClock = await probeVideoFacts(clip, { bins: { ffmpeg: FFMPEG, ffprobe: FFPROBE } });
+  if (!(sourceClock.videoDuration > 0)) throw new Error(`COMPOSE_SOURCE_VIDEO_CLOCK_MISSING: ${clip}`);
+  const inFrames = Math.max(1, Math.round(sourceClock.videoDuration * fps));
   const targetDuration = inFrames / fps;
   run(FFMPEG, [
     "-y", "-i", clip,
     ...(!source.hasAudio ? ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo"] : []),
     "-map", "0:v:0", "-map", source.hasAudio ? "0:a:0" : "1:a:0",
-    "-vf", `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,fps=${fps}`,
+    "-vf", `${sourceColor.chain},scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,fps=${fps}`,
     "-af", "apad",
     "-t", targetDuration.toFixed(6),
     "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
     "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
+    "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709", "-color_range", "tv",
     "-movflags", "+faststart", target,
   ]);
   const streamDurations = run(FFPROBE, [
@@ -151,12 +161,13 @@ clips.forEach((clip, index) => {
   const targetAudio = Number(streamDurations.find((row) => row[0] === "audio")?.[1] ?? 0);
   const avDelta = Math.abs(targetVideo - targetAudio);
   normalized.push(target);
+  colorNormalizations.push({ sourcePath: clip, ...sourceColor });
   normalizedSeconds.push(targetDuration);
   console.log(`  ① 归一化 ${basename(clip)} → ${targetVideo.toFixed(2)}s（音轨 ${targetAudio.toFixed(2)}s，Δ${(avDelta * 1000).toFixed(0)}ms）`);
   if (avDelta > 0.01) {
     console.log(`       ⚠ 该段音画长度差 ${(avDelta * 1000).toFixed(0)}ms > 10ms，正式合成按既定时间轴继续，未做相关性或口型二检`);
   }
-});
+}
 
 /* ---------- ② 拼接 ---------- */
 const raw = join(temp, "raw.mp4");
@@ -175,6 +186,7 @@ const shotSeconds = normalizedSeconds;
 const listFile = join(temp, "concat.txt");
 writeFileSync(listFile, normalized.map((file, index) =>
   `file '${file}'\nduration ${shotSeconds[index]!.toFixed(6)}`).join("\n"), "utf8");
+const executedCuts: Array<{ type: string; at: number; duration: number; enteringShot: number }> = [];
 const audioExact = normalized.map((_, index) =>
   `[${index}:a]atrim=end=${shotSeconds[index]!.toFixed(6)},asetpts=N/SR/TB,`
   + `apad=whole_dur=${shotSeconds[index]!.toFixed(6)}[aex${index}]`);
@@ -199,6 +211,7 @@ if (transition && transitionDuration > 0) {
     /** 硬切走 concat；0 秒 xfade 会在混合刀口上提前切走上一镜。 */
     const overlap = useTransition ? transitionDuration : 0;
     offset += durations[index - 1]! - overlap;
+    executedCuts.push({ type: useTransition ? transition : "hard-cut", at: Math.max(0, offset), duration: overlap, enteringShot: index + 1 });
     const vOut = `[v${index}]`;
     const aOut = `[a${index}]`;
     steps.push(useTransition
@@ -229,7 +242,12 @@ if (transition && transitionDuration > 0) {
   const usedCuts = transitionAt.length === 0 ? normalized.length - 1
     : transitionAt.filter((i) => i >= 2 && i <= normalized.length).length;
   console.log(`  ② 逐刀转场：${transition} @${transitionDuration}s × ${usedCuts} 刀（其余硬切）`);
-} else {
+ } else {
+  let cutAt = 0;
+  for (let index = 1; index < normalized.length; index += 1) {
+    cutAt += shotSeconds[index - 1]!;
+    executedCuts.push({ type: "hard-cut", at: cutAt, duration: 0, enteringShot: index + 1 });
+  }
   /**
    * 硬切拼接的**音画对齐纪律**（2026-09-26 真机事故修复）：
    * 逐段 mp4 里 aac 音轨普遍比画面短几毫秒（编码器 priming + 帧对齐），
@@ -322,6 +340,14 @@ writeFileSync(composeReceiptPath, `${JSON.stringify({ policy: POST_RENDER_ACCEPT
   sourceReceipts, output: composed, requested: { width, height, fps, durationSec: retimeTo || null },
   transforms: { silencePadding: sourceReceipts.filter(source => !source.hasAudio).map(source => source.path), transition, transitionDuration, fade },
 }, null, 2)}\n`, "utf8");
+
+for (const binding of inputBindings) if (await sha256File(binding.path) !== binding.sha256) throw new Error(`COMPOSE_SOURCE_CHANGED: ${binding.path}`);
+const avReportPath = out.replace(/\.mp4$/i, ".av-sync.json");
+writeFileSync(avReportPath, `${JSON.stringify({ schemaVersion: "workloom.compose-timeline/v1", generatedAt: new Date().toISOString(),
+  output: out, outputSha256: await sha256File(out), inputBindings, shotCount: normalized.length,
+  cuts: executedCuts.map(cut => ({ ...cut, at: cut.at * retimeFactor })), timelineSeconds: shotSeconds, retimeFactor,
+  colorNormalizations, outputVideoDurationSec: (await probeVideoFacts(out, { bins: { ffmpeg: FFMPEG, ffprobe: FFPROBE } })).videoDuration,
+  sourceFilesUnchanged: true }, null, 2)}\n`, "utf8");
 
 /* ---------- ④ 明确请求的调色加工 ---------- */
 let gradedPath: string | null = null;

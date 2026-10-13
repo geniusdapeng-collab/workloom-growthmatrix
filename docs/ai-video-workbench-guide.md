@@ -1,5 +1,5 @@
 ---
-guideVersion: 2026-10-07.2
+guideVersion: 2026-10-14.1
 productId: workloom-ai-growthmatrix
 repository: workloom-ai/WorkLoom-growthmatrix
 ---
@@ -183,3 +183,13 @@ Matrix 没有 Growthtest 的命名入口 `film-standard-post.mts` 或其 `standa
 - 打包固定指南：[product-runtime-assets](../scripts/product-runtime-assets.mjs)，单独白名单此文档并登记 RUNTIME_ASSETS.json 摘要，不包含整个 docs 目录。
 
 读取能力的成功仅证明本次拿到完整指南。本次指南更新未调用模型、供应商、TTS、ASR 或媒体生成；生产可用性和客户设备上完整出片另用真实需求与回执验收。
+
+## 所有 AI 工作台共用的交付技术检查（2026-10-14）
+
+当前正式 package/reedit 与本仓已接通的生成后期出口，在实际加工后检查当前媒体与真实加工链。七环节为 cover / bgm / subtitles / danmaku / transitions / color / resolution；明确未请求的环节记录 not_applicable 和具体理由。硬切也是剪辑选择。默认按源片实测显示宽高保持原生画布，旋转先解释；明确降采样或换画幅须有对应策略。
+
+后期质检员 `post-quality-inspector` 使用 `postread.quality`（`delivery_dir` 为当前后期包）；也可使用 `node bundles/ai-video/connectors/post-bridge/cli.mjs quality --delivery-dir <目录>`。外部工作台统一调用 `growth.video.post.quality`：输入 `projectId`、产物根内相对 `outDir`、`kind=auto|post|generation`；CLI `node scripts/workloom-agent.mjs invoke growth.video.post.quality --input-file quality-input.json`，MCP 工具为 `workloom_growth_video_post_quality`。对生成 HD 的 `outDir` 或 UHD 的 `outDir/uhd` 自动读取不可变 release 的 `current.json`；返回 `complete=true` 只表示本次当前文件技术验收，`artisticQuality=unverified`。
+
+`growth.video.delivery.inspect` 保留字节清单检查，不能单独证明完整后期。实际解码、原生画布、请求层或凭证失败须本地返修；删除文件、改字节、传 skip_verify 或旧 passed 均不能代替检查。音频默认 report 记录实际响度/真峰值，明确 block 合同按其目标阻断。主机本地加工凭证不是防任意文件系统写权限攻击的加密签章。
+
+快剪先声明实际源区间、保护台词/动作和快段、hold/breath，再按 1x 截取；不加速口播凑节奏。impact/whoosh 按声明做本地声音加工，BPM 标签不等于实测节拍。新生成的电影摄影契约先冻结目的、景别、空间层次、光线、动作、动机机位、艺术与声音连续性；已成功素材不因新字段重复付费。详见 [节奏与电影摄影](video-rhythm-cinematic.md)、[实体调色](ai-video-entity-color.md)、[后期质检技能](../bundles/ai-video/skills/post-quality-inspection/SKILL.md)。
