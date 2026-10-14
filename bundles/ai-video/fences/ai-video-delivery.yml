@@ -1,4 +1,4 @@
-# 2026-10-07 产品所有者更新：成功渲染默认直接正式后期；不设源片或后期品质复评。
+# 2026-10-14：成功源片按真实任务/字节复用；正式后期由当前媒体与加工证据执行技术验收，艺术评审单列。
 # 交付包 · 多风格变体 · 本地返修围栏包（视频经理 · 后期交付与返修工位）
 # 与 ai-video-subtitle.yml / ai-video-color.yml / ai-video-bgm.yml 同口径：默认基线、只可加严、
 # 命中取严（block > review > auto）；求值语义：匹配命中后求值 when（沙箱，禁任意代码），
@@ -18,19 +18,20 @@ rules:
     is_baseline: true
     match:
       object_types: [final_video, video_asset, subtitle_track, subtitle_report, delivery_package]
-      actions: [postread.health, postread.plan, postread.impact, postwrite.package, postwrite.reedit, postwrite.triage, subtitlewrite.sidecar, subtitlewrite.softmux]
+      actions: [postread.health, postread.plan, postread.impact, postread.quality, postwrite.package, postwrite.reedit, postwrite.triage, subtitlewrite.sidecar, subtitlewrite.softmux]
     when: "true"
     note: 派生变体、出旁挂字幕文件、软字幕轨内嵌、按 patch 本地重合成，都是工位本地、非破坏、可回滚动作（原片只读 + 版本只增不覆盖 + 产物带 sha256），默认直通。覆盖原片（G-DLV2）、违反流复制合同（G-DLV3）、请求的变体缺产物（G-DLV1）、返修跳过影响分析（G-DLV4）、缺清单（G-DLV6）、复用无证据（G-DLV7）叠加升级，deny 优先并集取严。未命中写动作的保守默认是 review，故此处必须显式声明 auto。
 
   - rule_id: G-DLV1
-    name: 请求的变体必须实际产出
+    name: 请求产物与当前媒体的技术验收
     level: block
     is_baseline: true
     match:
       object_types: [delivery_package, final_video]
       actions: [postwrite.package, postwrite.reedit]
-    when: "params.variant_count == 0 or params.requested_variants_missing == true"
-    note: 2026-10-07 产品所有者口径：按本次请求生成真实变体文件；显式单变体可交付。成功源片与后期不做画面、音频、封面差异品质评审，也不因相似触发重生成。只阻断实际请求的产物缺失，不把未测量差异称为品质通过。
+    when: "params.variant_count == 0 or params.requested_variants_missing == true or params.post_quality_failed == true or params.output_missing == true or params.output_unreadable == true"
+    note: 保留本仓请求的版本数量合同；实际缺件、完整解码失败、原生或明确目标规格不符、请求环节及真实加工证据缺失均失败。执行器出口重新检查当前字节，调用方通过标志不能替代。艺术评分不作通用硬闸；技术失败只本地返修，不自动付费重生成。
+
 
   - rule_id: G-DLV2
     name: 母版不得烧字幕（字幕一律旁挂/软轨交付）

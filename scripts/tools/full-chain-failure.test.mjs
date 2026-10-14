@@ -8,8 +8,11 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { it } from "node:test";
+import { inspectGenerationManifest } from "./generation-quality.mjs";
 import { runInNewContext } from "node:vm";
 import ts from "typescript-governance";
+import * as materialPolicy from "../../packages/video-studio/src/material-policy.ts";
+import { appendCinematicContract, buildCinematicContract } from "../../packages/video-studio/src/cinematic-contract.ts";
 
 const filmPath = new URL("./full-chain-film.mts", import.meta.url);
 const source = ts.createSourceFile(filmPath.pathname, readFileSync(filmPath, "utf8"), ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
@@ -33,9 +36,6 @@ const stage = (name) => {
   assert.equal(statements.length, 1, `production stage ${name} must be unique`);
   return statements[0];
 };
-const materialPolicy = { exports: {} };
-runInNewContext(transpile(readFileSync(new URL("../../packages/video-studio/src/material-policy.ts", import.meta.url), "utf8")),
-  materialPolicy, { timeout: 1000, filename: "production-material-policy.js" });
 const predicates = ["isMaterialShot", "ASSET_REF_PATTERN", "isAssetRefLocal", "assetRefOf", "isAssetShot", "isProductMaterialShot", "materialShots", "localReviewRefsEarly"]
   .map(declaration).join("\n");
 const materialCode = stage("material-gen").getText(source);
@@ -63,22 +63,22 @@ function shot(kind, id) {
   };
 }
 async function renderSequence(kind, attempts = 1, options = {}) {
-  const rows = [], submissions = [], gates = [];
+  const rows = [], submissions = [], gates = [], transforms = [];
   const shots = [shot(kind, "S-01"), shot(kind, "S-02")];
   const person = { asset: { assetId: "fixture-person" } };
   const context = {
-    ...materialPolicy.exports, Error, join, basename, createHash,
-    cachedProviderSources: new Map(), acceptExistingRenderedClip: () => false, reusableProviderClip: () => null,
+    ...materialPolicy, appendCinematicContract, buildCinematicContract, Error, join, basename, createHash,
+    sourceDocument: options.explicitRhythm ? { rhythmPlan: { profile: "fast-cut" } } : {}, productionClipPaths: new Map(), cachedProviderSources: new Map(), acceptExistingRenderedClip: () => false, reusableProviderClip: () => null,
     recordProviderSource: () => {}, requiresGeneration: () => true,
-    inspectPostInput: ({ file }) => ({ path: file, durationSec: 5, width: 720, height: 1280, hasAudio: true, sha256: "b".repeat(64), qualityReviewed: false }),
+    inspectPostInput: ({ file }) => ({ path: file, durationSec: options.originalSeconds ?? 5, width: 720, height: 1280, hasAudio: true, sha256: "b".repeat(64), qualityReviewed: false }),
     postAcceptanceVerdict: () => ({ approved: true, degraded: false, status: "passed", score: null, hardFailures: [], rerun: false }),
     POST_RENDER_ACCEPTANCE_POLICY: "workloom.provider-success-direct-post/v1",
     shots, FIRST_PASS_ORDER: shots, STAGES: new Set(["material-gen"]),
     SOURCE_SIZE: { width: 720, height: 1280 }, ASPECT: "9:16", SOURCE_RESOLUTION: "720p",
     CLIP_DIR: "/fixture/clips", PLATE_DIR: "/fixture/plates", PROMPT_DIR: "/fixture/prompts",
     shotlist: { title: "controlled fault fixture" }, ENV: {}, MAX_ATTEMPTS: attempts,
-    MATERIAL_POST_ONLY: false, RESUME: false, DRY_RUN: false, MATERIAL_SPEED_RAMP: false,
-    MATERIAL_POST_CAMERA_MOVE: false, MATERIAL_PHOTO_TAIL_TRIM: false,
+    MATERIAL_POST_ONLY: false, RESUME: false, DRY_RUN: false, MATERIAL_SPEED_RAMP: Boolean(options.materialMotion),
+    MATERIAL_POST_CAMERA_MOVE: Boolean(options.materialMotion), MATERIAL_PHOTO_TAIL_TRIM: false,
     WORK_DIR: "/fixture/work", PROJECT: "fixture-film", scenePolicy: null,
     REFERENCE_INDEPENDENCE_POLICY: {}, ALLOW_FALLBACK_APPROVE: false,
     productLibrary: { byId: new Map() }, identityAnchors: new Map(),
@@ -97,7 +97,9 @@ async function renderSequence(kind, attempts = 1, options = {}) {
     record: (row) => { rows.push(row); return row; },
     recordGate: (gate) => { gates.push(gate); return { approved: !options.blockedGate, reason: "fixture prerequisites" }; },
     download: async () => {}, execFileSync: () => {}, mkdirSync: () => {},
-    normalizeClipDuration: (_in, _out, duration) => ({ from: duration, to: duration, factor: 1 }),
+    normalizeClipDuration: (_in, _out, duration) => { transforms.push("normalize"); return { from: duration, to: duration, factor: 1 }; },
+    applySpeedRamp: () => { transforms.push("speed-ramp"); return { total: 5, segments: [] }; },
+    applyCameraMovePunchCut: () => { transforms.push("camera-move"); return { total: 5, segments: [] }; },
     probe: () => ({ duration: 5, width: 720, height: 1280, hasAudio: true, acodec: "aac" }),
     measureMotionRichness: () => ({ meanEnergy: 10, maxEnergy: 20, rampRatio: 2, frames: 40, peakAtSec: 2 }),
     measureMotionEnergy: () => ({ energy: 10, peakAt: 2 }),
@@ -124,7 +126,7 @@ async function renderSequence(kind, attempts = 1, options = {}) {
   } catch (error) {
     failure = error;
   }
-  return { rows, submissions, gates, failure };
+  return { rows, submissions, gates, failure, transforms, productionClipPaths: context.productionClipPaths };
 }
 
 for (const kind of ["ordinary-material", "product-material", "asset-material", "ordinary-video", "asset-video"]) {
@@ -156,6 +158,23 @@ for (const kind of ["ordinary-material", "product-material", "asset-material"]) 
     const result = await renderSequence(kind, 2, { missingMaterial: true });
     assert.match(result.failure?.message ?? "", /^MATERIAL_REFERENCE_MISSING/);
     assert.deepEqual(result.submissions, []);
+  });
+}
+
+for (const kind of ["ordinary-material", "product-material", "asset-material", "ordinary-video", "asset-video"]) {
+  it(`explicit native rhythm ${kind}: fresh provider original reaches interval editing before duration/ramp/camera transforms`, async () => {
+    const result = await renderSequence(kind, 1, { providerFails: false, explicitRhythm: true, materialMotion: true, originalSeconds: 4 });
+    assert.equal(result.failure, null, result.failure?.stack);
+    assert.deepEqual(result.submissions, ["S-01", "S-02"]);
+    assert.deepEqual(result.transforms, [], "authored source intervals take precedence over matrix pre-retiming and material motion");
+    const completed = result.rows.filter(row => row.stage === (kind.includes("material") ? "material-gen" : "shot") && row.ok);
+    assert.equal(completed.length, 2);
+    for (const [index, row] of completed.entries()) {
+      const original = `/fixture/clips/S-0${index + 1}.raw.mp4`;
+      assert.equal(row.artifact, original); assert.equal(result.productionClipPaths.get(row.shotId), original);
+      assert.equal(row.evidence.normalized.factor, 1); assert.equal(row.evidence.normalized.from, 4); assert.equal(row.evidence.normalized.to, 4);
+      assert.equal(row.evidence.qualityReviewed, false);
+    }
   });
 }
 
@@ -304,9 +323,9 @@ function runActualCli(root, fixture, { exportFailure = false } = {}) {
   fs.writeFileSync(preload, `import fs from 'node:fs';import cp from 'node:child_process';import http from 'node:http';import https from 'node:https';import net from 'node:net';import {syncBuiltinESMExports} from 'node:module';
 const record=(x)=>fs.appendFileSync(${JSON.stringify(trace)},JSON.stringify({...x,pid:process.pid,at:new Date().toISOString()})+'\\n');
 const reject=()=>{record({kind:'network'});throw new Error('NETWORK_OR_PROVIDER_MUST_NOT_RUN')};globalThis.fetch=reject;for(const mod of [http,https]){mod.request=reject;mod.get=reject;}for(const [owner,name] of [[net,'connect'],[net,'createConnection'],[net.Socket.prototype,'connect']]){const original=owner[name];owner[name]=function(...args){const flat=args.flat();const socketPath=flat.find(x=>x&&typeof x==='object'&&typeof x.path==='string')?.path??flat.find(x=>typeof x==='string'&&x.startsWith('/'));if(typeof socketPath==='string'&&socketPath.startsWith('/')){record({kind:'local-ipc',socketPath});return original.apply(this,args);}return reject();};}
-for(const name of ['spawn','spawnSync','execFileSync']){const original=cp[name];cp[name]=function(command,args,...rest){const argv=Array.isArray(args)?args:[];record({kind:'process',command:String(command),argv});if(argv.some(x=>/signalstats|edgedetect|bbox|cropdetect|psnr|ssim|blackdetect|silencedetect/.test(String(x))))throw new Error('SOURCE_QUALITY_PROBE_MUST_NOT_RUN');if(argv.some(x=>String(x).includes('/voice-bridge/cli.mjs'))&&argv.some(x=>['verify','dub','speak','asr'].includes(String(x))))throw new Error('DEFAULT_TTS_ASR_MUST_NOT_RUN');${exportFailure ? "if(argv.includes('-filter_complex')&&argv.some(x=>String(x).includes('concat=')))throw new Error('INJECTED_ACTUAL_EXPORT_FAILURE');" : ""}return original.call(this,command,args,...rest);};}syncBuiltinESMExports();`);
+for(const name of ['spawn','spawnSync','execFileSync']){const original=cp[name];cp[name]=function(command,args,...rest){const argv=Array.isArray(args)?args:[];record({kind:'process',command:String(command),argv});if(argv.some(x=>/edgedetect|bbox|cropdetect|blackdetect|silencedetect/.test(String(x))))throw new Error('SOURCE_ARTISTIC_REVIEW_MUST_NOT_RUN');if(argv.some(x=>String(x).includes('/voice-bridge/cli.mjs'))&&argv.some(x=>['verify','dub','speak','asr'].includes(String(x))))throw new Error('DEFAULT_TTS_ASR_MUST_NOT_RUN');${exportFailure ? "if(argv.includes('-filter_complex')&&argv.some(x=>String(x).includes('concat=')))throw new Error('INJECTED_ACTUAL_EXPORT_FAILURE');" : ""}return original.call(this,command,args,...rest);};}syncBuiltinESMExports();`);
   const argv = ["--import", "tsx", filmPath.pathname, "--shots", fixture.source, "--project", fixture.project,
-    "--work-dir", fixture.work, "--out", fixture.out, "--keys-file", fixture.keys, "--aspect", "16:9", "--resolution", "720p", "--fps", "30",
+    "--work-dir", fixture.work, "--out", fixture.out, "--keys-file", fixture.keys, "--aspect", "16:9", "--resolution", "720p", "--fps", "30", "--allow-reframe", "--reframe-reason", "The synthetic 162x90 fixture explicitly requests a 16:9 720p presentation canvas.",
     "--platform", "youtube", "--cover-platform", "youtube", "--bgm-track", fixture.music, "--danmaku", fixture.danmaku, "--variants", "cool-tech"];
   const began = Date.now();
   const result = spawnSync(process.execPath, argv, { cwd: repositoryRoot, encoding: "utf8", timeout: 120000, maxBuffer: 32 << 20,
@@ -326,7 +345,7 @@ for(const name of ['spawn','spawnSync','execFileSync']){const original=cp[name];
 }
 
 for (const trackSelection of ["local-path", "registered-id"]) {
-it(`whole actual CLI (${trackSelection}): old quality-failed black/162x90/23fps/10.04s/no-audio provider success traverses default official post with zero provider/model/ASR/TTS calls`, { skip: !actualMediaAvailable, timeout: 150000 }, () => {
+it(`whole actual CLI (${trackSelection}): old quality-failed black/162x90/23fps/10.04s/no-audio provider success traverses default official post with zero provider/model/ASR/TTS calls`, { skip: !actualMediaAvailable, timeout: 180000 }, async () => {
   const root = fs.realpathSync(fs.mkdtempSync(join(os.tmpdir(), "matrix-actual-post-")));
   try {
     const fixture = makeActualCliFixture(root, "success"), musicPath = fixture.music;
@@ -347,11 +366,12 @@ it(`whole actual CLI (${trackSelection}): old quality-failed black/162x90/23fps/
     }
     assert.ok(summary.records.filter(row => ["cine-kb", "continuity", "micromotion", "prompt-review", "keyframe"].includes(row.stage)).every(row => row.invoked === false));
     assert.ok(summary.records.filter(row => row.verdict).every(row => row.verdict.score === null), "no scored source acceptance verdict");
-    const final = fs.readdirSync(fixture.out).find(name => /-10s-final\.mp4$/.test(name)); assert.ok(final, "final export uses actual duration naming");
-    const info = JSON.parse(execFileSync(mediaFfprobe, ["-v", "error", "-show_streams", "-show_format", "-of", "json", join(fixture.out, final)], { encoding: "utf8" }));
+    const pointer = JSON.parse(fs.readFileSync(join(fixture.out, "current.json"), "utf8")), release = pointer.releaseDir;
+    const final = fs.readdirSync(release).find(name => /-10s-final\.mp4$/.test(name)); assert.ok(final, "final export uses actual duration naming");
+    const info = JSON.parse(execFileSync(mediaFfprobe, ["-v", "error", "-show_streams", "-show_format", "-of", "json", join(release, final)], { encoding: "utf8" }));
     assert.ok(info.streams.some(stream => stream.codec_type === "video" && stream.width === 1280 && stream.height === 720));
     assert.ok(Math.abs(Number(info.format.duration) - 10) < 0.2);
-    assert.ok(fs.existsSync(join(fixture.out, `${fixture.project}-softsub.mp4`))); assert.ok(fs.existsSync(join(fixture.out, `${fixture.project}-with-cover.mp4`)));
+    assert.ok(fs.existsSync(join(release, `${fixture.project}-softsub.mp4`))); assert.ok(fs.existsSync(join(release, `${fixture.project}-with-cover.mp4`)));
     const processes = result.operations.filter(row => row.kind === "process");
     const mixes = processes.filter(row => row.argv.includes("mix") && row.argv.some(value => String(value).includes('/bgm-bridge/cli.mjs')));
     assert.equal(mixes.length, 2, "master and requested variant each mix the chosen track once");
@@ -365,10 +385,11 @@ it(`whole actual CLI (${trackSelection}): old quality-failed black/162x90/23fps/
     assert.ok(variantGrade, "requested variant color transformation actually ran");
     assert.equal(variantGrade.argv[variantGrade.argv.indexOf("--in") + 1], join(fixture.work, "post", fixture.project, "master-danmaku.mp4"),
       "variant starts from the real program before BGM; it must not mix music onto the already scored master");
-    const frameExtracts = processes.filter(row => row.argv.includes("-frames:v") && row.argv[row.argv.indexOf("-i") + 1]?.endsWith(".mp4"));
+    const frameExtracts = processes.filter(row => row.argv.includes("-frames:v") && row.argv[row.argv.indexOf("-i") + 1]?.endsWith(".mp4") && row.argv.at(-1)?.endsWith("-frame.png"));
     assert.equal(frameExtracts.length, 2, "one master cover and one requested variant cover");
-    assert.ok(frameExtracts.every(row => row.argv.at(-1)?.endsWith("-frame.png")), "single requested cover extraction is the only source frame read");
-    assert.ok(fs.readdirSync(fixture.out).some(name => name.endsWith("delivery-manifest.json")));
+    const manifest = JSON.parse(fs.readFileSync(join(release, `${fixture.project}-delivery-manifest.json`), "utf8"));
+    const currentQuality = await inspectGenerationManifest({ root: release, manifest, bins: { ffmpeg: mediaFfmpeg, ffprobe: mediaFfprobe } });
+    assert.equal(currentQuality.passed, true); assert.equal(currentQuality.artisticQualityReviewed, false); assert.equal(currentQuality.paidCalls, 0);
     console.info("ACTUAL_POST_CLI_EVIDENCE", JSON.stringify({ root, argv: result.evidence.argv, elapsedMs: result.evidence.elapsedMs, networkCalls: 0,
       stages: Object.keys(summary.stages), sourceSha256: createHash("sha256").update(fixture.original).digest("hex"), final, frameExtracts: frameExtracts.length }));
   } finally { if (process.env.WORKLOOM_KEEP_ACTUAL_POST_FIXTURE !== "1") fs.rmSync(root, { recursive: true, force: true }); }
@@ -538,6 +559,10 @@ for (const [name, mode] of [["subtitle", "sidecar"], ["subtitle", "burn"], ["dan
       subtitleSidecar: name === "mux" ? { dir: "/fixture/sidecar", srt: "/fixture/sidecar/technical-failure.zh.srt", ass: "/fixture/sidecar/technical-failure.zh.ass" } : null,
       softsubFile: null, shotlist: { title: "fixture" }, shots: [{ shotId: "source-success", duration: 10 }],
       acceptExistingRenderedClip: () => true, clipFor: () => "/fixture/source.mp4", rememberInputs: () => {},
+      // This AST failure fixture uses synthetic media facts; the complete CLI tests above probe actual files.
+      pinGenerationSources: (files, ids) => { assert.equal(files.length, ids.length); assert.equal(files.length, 1); },
+      rhythmMediaFacts: () => ({ videoSeconds: 10, width: 1280, height: 720 }),
+      CUT_GRID: [], cutTimesFromShots: () => [],
       existsSync: () => true, mkdirSync: () => {}, writeFileSync: () => {}, readFileSync: () => "[]", readdirSync: () => ["technical-failure.zh.srt"],
       execFileSync: () => {}, buildSrt: () => "1\n00:00:00,000 --> 00:00:01,000\nfixture\n", abs: value => value,
       arg: (_name, fallback = "") => fallback, flag: () => false, log: () => {}, ENV: {}, ALLOW_FALLBACK_APPROVE: false,
@@ -546,7 +571,7 @@ for (const [name, mode] of [["subtitle", "sidecar"], ["subtitle", "burn"], ["dan
       reviewStage: async () => ({ approved: true, degraded: false, reason: "fixture stale file exists", ms: 0 }),
       COMPOSE_ORDER: "", ORDER_POLICY: "storyboard", REUSE_PLAN: null, POST_ONLY_ASSEMBLY: false, QUALITY: "standard", SOURCE_RESOLUTION: "720p", OUTPUT_RESOLUTION: "720p",
       checkShotOrder: ids => ({ ok: true, expected: ids, actual: ids }), ENHANCE_ENGINE_DIR: "", OUTPUT_SIZE: { width: 1280, height: 720 }, REPO_ROOT: "/fixture/repo",
-      FPS: 30, XFADE: 0, EFFECTIVE_CUT_TRANSITION: "", EFFECTIVE_CUT_TRANSITION_AT: "", CUT_TRANSITION_DURATION: 0, expectedMasterSeconds: 10,
+      FPS: 30, FFPROBE: "fixture-ffprobe", FFMPEG: "fixture-ffmpeg", sourceDocument: {}, transitionLoss: 0, XFADE: 0, EFFECTIVE_CUT_TRANSITION: "", EFFECTIVE_CUT_TRANSITION_AT: "", CUT_TRANSITION_DURATION: 0, expectedMasterSeconds: 10,
     };
     const block = name === "compose" ? source.statements.find(node => ts.isIfStatement(node)
       && node.expression.getText(source) === 'STAGES.has("compose") && !DRY_RUN') : stage(name);
