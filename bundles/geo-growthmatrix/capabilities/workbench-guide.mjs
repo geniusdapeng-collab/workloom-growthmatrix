@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { TextDecoder } from "node:util";
 
 export const GUIDE_PATH = "docs/ai-video-workbench-guide.md";
-export const GUIDE_VERSION = "2026-10-14.1";
+export const GUIDE_VERSION = "2026-10-15.2";
 const PRODUCT_ID = "workloom-ai-growthmatrix";
 const REPOSITORY = "workloom-ai/WorkLoom-growthmatrix";
 const MAX_BYTES = 512 * 1024;

@@ -1,3 +1,4 @@
+import { assertDefaultAiColors } from './ai-color-cli-assertions.mjs';
 /** Execute the current production stage/loops with controlled provider failures.
  * The compiler only removes TypeScript syntax; the loops, catch blocks, and
  * manifest/record assignments come verbatim from full-chain-film.mts.
@@ -318,7 +319,7 @@ console.log(JSON.stringify({receiptPath,logDir}));`;
   if (scenario === "provider-rejected") { const receipt = JSON.parse(fs.readFileSync(locations.receiptPath, "utf8")); receipt.state = "rejected"; fs.writeFileSync(locations.receiptPath, JSON.stringify(receipt)); }
   return { project, work, out, source, keys, raw, music, danmaku, original, oldRow, ...locations };
 }
-function runActualCli(root, fixture, { exportFailure = false } = {}) {
+function runActualCli(root, fixture, { exportFailure = false, aiDefaults = false } = {}) {
   const trace = join(root, "actual-trace.jsonl"), preload = join(root, "no-provider-preload.mjs");
   fs.writeFileSync(preload, `import fs from 'node:fs';import cp from 'node:child_process';import http from 'node:http';import https from 'node:https';import net from 'node:net';import {syncBuiltinESMExports} from 'node:module';
 const record=(x)=>fs.appendFileSync(${JSON.stringify(trace)},JSON.stringify({...x,pid:process.pid,at:new Date().toISOString()})+'\\n');
@@ -326,7 +327,7 @@ const reject=()=>{record({kind:'network'});throw new Error('NETWORK_OR_PROVIDER_
 for(const name of ['spawn','spawnSync','execFileSync']){const original=cp[name];cp[name]=function(command,args,...rest){const argv=Array.isArray(args)?args:[];record({kind:'process',command:String(command),argv});if(argv.some(x=>/edgedetect|bbox|cropdetect|blackdetect|silencedetect/.test(String(x))))throw new Error('SOURCE_ARTISTIC_REVIEW_MUST_NOT_RUN');if(argv.some(x=>String(x).includes('/voice-bridge/cli.mjs'))&&argv.some(x=>['verify','dub','speak','asr'].includes(String(x))))throw new Error('DEFAULT_TTS_ASR_MUST_NOT_RUN');${exportFailure ? "if(argv.includes('-filter_complex')&&argv.some(x=>String(x).includes('concat=')))throw new Error('INJECTED_ACTUAL_EXPORT_FAILURE');" : ""}return original.call(this,command,args,...rest);};}syncBuiltinESMExports();`);
   const argv = ["--import", "tsx", filmPath.pathname, "--shots", fixture.source, "--project", fixture.project,
     "--work-dir", fixture.work, "--out", fixture.out, "--keys-file", fixture.keys, "--aspect", "16:9", "--resolution", "720p", "--fps", "30", "--allow-reframe", "--reframe-reason", "The synthetic 162x90 fixture explicitly requests a 16:9 720p presentation canvas.",
-    "--platform", "youtube", "--cover-platform", "youtube", "--bgm-track", fixture.music, "--danmaku", fixture.danmaku, "--variants", "cool-tech"];
+    "--platform", "youtube", "--cover-platform", "youtube", "--bgm-track", fixture.music, "--danmaku", fixture.danmaku, ...(aiDefaults ? [] : ["--variants", "cool-tech"])];
   const began = Date.now();
   const result = spawnSync(process.execPath, argv, { cwd: repositoryRoot, encoding: "utf8", timeout: 120000, maxBuffer: 32 << 20,
     env: { ...process.env, NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`, WL_FFMPEG: mediaFfmpeg, WL_FFPROBE: mediaFfprobe,
@@ -344,7 +345,7 @@ for(const name of ['spawn','spawnSync','execFileSync']){const original=cp[name];
   return { ...result, operations, evidence };
 }
 
-for (const trackSelection of ["local-path", "registered-id"]) {
+for (const trackSelection of ["local-path", "registered-id", "ai-defaults"]) {
 it(`whole actual CLI (${trackSelection}): old quality-failed black/162x90/23fps/10.04s/no-audio provider success traverses default official post with zero provider/model/ASR/TTS calls`, { skip: !actualMediaAvailable, timeout: 180000 }, async () => {
   const root = fs.realpathSync(fs.mkdtempSync(join(os.tmpdir(), "matrix-actual-post-")));
   try {
@@ -356,7 +357,7 @@ it(`whole actual CLI (${trackSelection}): old quality-failed black/162x90/23fps/
         title: "Offline synthetic registered track", file: musicPath, license: "workloom-self-generated",
         genre: "旅行", mood: "温润治愈", durationSec: 0.25, bpm: 100 }] }, null, 2));
     }
-    const result = runActualCli(root, fixture);
+    const result = runActualCli(root, fixture, { aiDefaults: trackSelection === "ai-defaults" });
     assert.equal(result.status, 0, `${result.error?.message ?? ""}\n${result.stdout}\n${result.stderr}`);
     assert.deepEqual(fs.readFileSync(fixture.raw), fixture.original);
     assert.ok(fs.readFileSync(join(fixture.logDir, "stages.jsonl"), "utf8").startsWith(fixture.oldRow), "legacy failed quality history remains byte-for-byte");
@@ -374,20 +375,21 @@ it(`whole actual CLI (${trackSelection}): old quality-failed black/162x90/23fps/
     assert.ok(fs.existsSync(join(release, `${fixture.project}-softsub.mp4`))); assert.ok(fs.existsSync(join(release, `${fixture.project}-with-cover.mp4`)));
     const processes = result.operations.filter(row => row.kind === "process");
     const mixes = processes.filter(row => row.argv.includes("mix") && row.argv.some(value => String(value).includes('/bgm-bridge/cli.mjs')));
-    assert.equal(mixes.length, 2, "master and requested variant each mix the chosen track once");
+    assert.equal(mixes.length, trackSelection === "ai-defaults" ? 4 : 2, "master and each requested variant mix once");
     assert.ok(mixes.every(row => row.argv[row.argv.indexOf("--bgm") + 1] === musicPath), "every mix receives the same actual path, never the registered ID");
     const delivery = summary.records.find(row => row.stage === "deliver" && row.ok);
     assert.ok(delivery.lineage.inputs.some(input => input.path === musicPath && input.sha256 === createHash("sha256").update(fs.readFileSync(musicPath)).digest("hex")),
       "variant delivery lineage binds the actual chosen track bytes");
     assert.equal(processes.filter(row => row.argv.some(value => String(value).includes('/voice-bridge/cli.mjs'))).length, 0);
     const variantGrade = processes.find(row => row.argv.some(value => String(value).includes('/color-bridge/cli.mjs'))
-      && row.argv.some(value => String(value).endsWith('-cool-tech.mp4')));
+      && row.argv.some(value => String(value).endsWith(trackSelection === "ai-defaults" ? '-warm-story.mp4' : '-cool-tech.mp4')));
     assert.ok(variantGrade, "requested variant color transformation actually ran");
     assert.equal(variantGrade.argv[variantGrade.argv.indexOf("--in") + 1], join(fixture.work, "post", fixture.project, "master-danmaku.mp4"),
       "variant starts from the real program before BGM; it must not mix music onto the already scored master");
     const frameExtracts = processes.filter(row => row.argv.includes("-frames:v") && row.argv[row.argv.indexOf("-i") + 1]?.endsWith(".mp4") && row.argv.at(-1)?.endsWith("-frame.png"));
-    assert.equal(frameExtracts.length, 2, "one master cover and one requested variant cover");
+    assert.equal(frameExtracts.length, trackSelection === "ai-defaults" ? 4 : 2, "one master and each requested variant cover");
     const manifest = JSON.parse(fs.readFileSync(join(release, `${fixture.project}-delivery-manifest.json`), "utf8"));
+    if (trackSelection === "ai-defaults") assertDefaultAiColors(manifest, summary.records);
     const currentQuality = await inspectGenerationManifest({ root: release, manifest, bins: { ffmpeg: mediaFfmpeg, ffprobe: mediaFfprobe } });
     assert.equal(currentQuality.passed, true); assert.equal(currentQuality.artisticQualityReviewed, false); assert.equal(currentQuality.paidCalls, 0);
     console.info("ACTUAL_POST_CLI_EVIDENCE", JSON.stringify({ root, argv: result.evidence.argv, elapsedMs: result.evidence.elapsedMs, networkCalls: 0,
