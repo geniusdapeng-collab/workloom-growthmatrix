@@ -1,17 +1,15 @@
 import { cp, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { assertProductSourceQuery, loadRegisteredProductSource, loadProductVisualReferences, verifyArchivedProductSource } from "./marketing-product-source.js";
 import { canonicalRenderJson } from "./gen/compiled-request.js";
+import { writeRegisteredProductFixture } from "./registered-product.fixture.js";
 
-const builtin = fileURLToPath(new URL("../../../../bundles/ai-video/library/products/demo-t001/", import.meta.url));
 let root: string, profile: Record<string, any>;
 beforeEach(async () => {
   root = await realpath(await mkdtemp(path.join(tmpdir(), "registered-marketing-source-")));
-  await cp(builtin, path.join(root, "demo-t001"), { recursive: true });
-  profile = JSON.parse(await readFile(path.join(root, "demo-t001/profile.json"), "utf8"));
+  profile = await writeRegisteredProductFixture(root);
 });
 afterEach(async () => { await rm(root, { recursive: true, force: true }); });
 const load = (selector: unknown = { id: "demo-t001" }) => loadRegisteredProductSource(selector, { libraryRoot: root });

@@ -3,6 +3,22 @@ import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { writeRegisteredProductFixture } from "./registered-product.fixture.js";
+
+const archiveFixture = vi.hoisted(() => ({ root: "" }));
+vi.mock("./marketing-product-source.js", async importOriginal => {
+  const original = await importOriginal<any>();
+  return { ...original,
+    loadRegisteredProductSource: (selector: unknown) => original.loadRegisteredProductSource(selector, { libraryRoot: archiveFixture.root }),
+    loadProductVisualReferences: (sources: unknown[]) => original.loadProductVisualReferences(sources, { libraryRoot: archiveFixture.root }),
+  };
+});
+vi.mock("../../../../packages/video-studio/src/product-archive.js", async importOriginal => {
+  const original = await importOriginal<any>();
+  return { ...original, loadProductArchive: (dir: string, options?: unknown) =>
+    original.loadProductArchive(dir.endsWith("/bundles/ai-video/library/products/demo-t001")
+      ? path.join(archiveFixture.root, "demo-t001") : dir, options) };
+});
 
 const fixture = vi.hoisted(() => ({ configs: [] as any[], inputs: [] as any[], results: [] as any[], rejectG1: false, rejectFinal: false, transportFinal: false, prepareCandidate: false }));
 vi.mock("../../../../packages/video-studio/src/index.js", async importOriginal => {
@@ -34,6 +50,8 @@ const rejected = () => ({ success: false, stages: {}, confirmations: { theme: { 
 beforeEach(async () => {
   vi.resetModules(); fixture.configs = []; fixture.inputs = []; fixture.results = [successful()]; fixture.rejectG1 = false; fixture.rejectFinal = false; fixture.transportFinal = false; fixture.prepareCandidate = false;
   root = await realpath(await mkdtemp(path.join(tmpdir(), "data-pipeline-cli-")));
+  archiveFixture.root = path.join(root, "synthetic-library");
+  await writeRegisteredProductFixture(archiveFixture.root);
   argv = process.argv; exitCode = process.exitCode;
   vi.stubEnv("LLM_BASE_URL", "https://judge.example.test"); vi.stubEnv("LLM_API_KEY", "test-only"); vi.stubEnv("LLM_MODEL", "test-judge");
   vi.spyOn(process.stdout, "write").mockImplementation(() => true);
