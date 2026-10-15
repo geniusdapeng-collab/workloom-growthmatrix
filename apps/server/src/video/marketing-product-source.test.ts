@@ -1,17 +1,37 @@
-import { cp, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { assertProductSourceQuery, loadRegisteredProductSource, loadProductVisualReferences, verifyArchivedProductSource } from "./marketing-product-source.js";
 import { canonicalRenderJson } from "./gen/compiled-request.js";
 
-const builtin = fileURLToPath(new URL("../../../../bundles/ai-video/library/products/demo-t001/", import.meta.url));
 let root: string, profile: Record<string, any>;
 beforeEach(async () => {
   root = await realpath(await mkdtemp(path.join(tmpdir(), "registered-marketing-source-")));
-  await cp(builtin, path.join(root, "demo-t001"), { recursive: true });
-  profile = JSON.parse(await readFile(path.join(root, "demo-t001/profile.json"), "utf8"));
+  // Public checkouts do not contain customer archives. Build an isolated,
+  // explicitly synthetic fixture instead of reading or mutating a live library.
+  const dir = path.join(root, "demo-t001");
+  await mkdir(path.join(dir, "photos"), { recursive: true });
+  const photo = Buffer.alloc(70_000, 0x42);
+  await writeFile(path.join(dir, "photos/hero.jpg"), photo);
+  profile = {
+    schemaVersion: "workloom.product-archive/v1", id: "demo-t001", type: "product",
+    displayName: "DEMO-T001 测试终端", brand: "示例品牌", model: "DEMO-T001",
+    source: {
+      kind: "user-upload", priority: 10, reviewStatus: "owner-confirmed",
+      extraction: { method: "synthetic-test-fixture", verified: false },
+      evidence: [1, 2, 4].map((slide) => ({
+        quote: `测试夹具第${slide}页：角度调节摄像头，双屏模式自由切换`,
+        file: "synthetic-fixture.pptx", slide, deckSha256: "a".repeat(64),
+        query: "synthetic fixture", url: "https://example.invalid/synthetic-fixture",
+      })),
+    },
+    photos: [{ id: "hero", file: "photos/hero.jpg", role: "hero", bytes: photo.length,
+      sha256: createHash("sha256").update(photo).digest("hex") }],
+    specs: { features: ["前置2MP双目人脸识别"] },
+  };
+  await writeFile(path.join(dir, "profile.json"), JSON.stringify(profile));
 });
 afterEach(async () => { await rm(root, { recursive: true, force: true }); });
 const load = (selector: unknown = { id: "demo-t001" }) => loadRegisteredProductSource(selector, { libraryRoot: root });
