@@ -29,6 +29,8 @@
  * 阶段日志：`<work-dir>/logs/stages.jsonl`（逐条：stage/shotId/invoked/ok/degraded/cached/verdict）
  * 阶段汇总：`<work-dir>/logs/stages.json`
  */
+import { AI_COLOR_POLICY_VERSION, type ContentColorDecision } from "../../packages/video-studio/src/ai-color-policy.js";
+import { resolveDeliveryVariants } from "../../packages/video-studio/src/deliver.js";
 import { auditRhythmPlan, rhythmSfxPlacements, type RhythmPlanInput } from "../../packages/video-studio/src/rhythm-plan.js";
 import { appendCinematicContract, auditCinematicContracts, buildCinematicContract, cinematicStyleRequested } from "../../packages/video-studio/src/cinematic-contract.js";
 import { executeRhythmEdit, executeRhythmSound, rhythmMediaFacts, rhythmFileSha256 } from "./rhythm-edit.mjs";
@@ -353,6 +355,13 @@ function characterIdOf(shot: Record<string, unknown>): string | null {
   return name.slice(0, 32);
 }
 
+const COLOR_MODE = arg("--color-mode", "preserve");
+if (!["preserve", "grade", "best"].includes(COLOR_MODE)) throw new Error("COLOR_MODE_INVALID: preserve|grade|best");
+if (COLOR_MODE === "preserve" && ["--color-profile", "--color-intensity", "--color-recipe"].some(key => process.argv.includes(key)))
+  throw new Error("COLOR_OPTIONS_CONFLICT: explicit creative controls require --color-mode grade or best");
+const AI_VARIANTS = resolveDeliveryVariants({ ...sourceDocument,
+  shots: sourceDocument.shots?.filter(shot => !ONLY.length || ONLY.includes(String(shot.shotId))) },
+  arg("--variants", "").split(",").map(id => id.trim()).filter(Boolean));
 const RESUME = !flag("--no-resume");
 const DRY_RUN = flag("--dry-run");
 const ALLOW_FALLBACK_APPROVE = flag("--allow-fallback-approve");
@@ -459,25 +468,28 @@ function pinGenerationSources(files: string[], ids: string[]): void {
   if (!sameAspect && !reframe) throw new Error("GENERATION_NATIVE_REFRAME_REQUIRES_REASON");
   if (!flag("--allow-downscale") && (native[0] > OUTPUT_SIZE.width || native[1] > OUTPUT_SIZE.height)) throw new Error("GENERATION_NATIVE_DOWNSCALE_REQUIRES_EXPLICIT_APPROVAL");
 }
-function generationRequirements(hasVariants = false): Array<Record<string, unknown>> {
+function generationRequirements(hasVariants = false, hasGradedVariants = false): Array<Record<string, unknown>> {
   const requested: Record<string, boolean> = {
     cover: STAGES.has("cover"), bgm: !flag("--no-bgm") && !flag("--no-music") && (bgmManifestInfo?.layer === "on" || hasVariants),
     subtitles: STAGES.has("subtitle") || STAGES.has("mux"), danmaku: DANMAKU_ENABLED && STAGES.has("danmaku"),
-    transitions: true, color: STAGES.has("color") || hasVariants, resolution: true,
+    transitions: true, color: (STAGES.has("color") && COLOR_MODE !== "preserve") || hasGradedVariants, resolution: true,
   };
   return Object.entries(requested).map(([name, required]) => required ? { name, requirement: "required" }
     : { name, requirement: "not_applicable", reason: `本次明确请求的阶段及开关未启用 ${name}` });
 }
 function generationArtifacts(scope: "master" | "delivery", masterFile: string,
-  variants: Array<{ id: string; path: string; gradeProfile: string | null; cover?: { path: string; sha256: string } | null; bgm?: unknown }> = [],
+  variants: Array<{ id: string; path: string; gradeProfile: string | null; gradeIntensity?: number; gradeLut?: string | null; colorSourceSha256?: string; colorDecision?: ContentColorDecision; cover?: { path: string; sha256: string } | null; bgm?: unknown }> = [],
   sidecars: string[] = []): Array<Record<string, any>> {
-  const requested = ["transitions", ...(STAGES.has("color") ? ["color"] : []),
+  const requested = ["transitions", ...(STAGES.has("color") && COLOR_MODE !== "preserve" ? ["color"] : []),
     ...(STAGES.has("subtitle") && SUBTITLE_MODE !== "sidecar" ? ["subtitles"] : []),
     ...(DANMAKU_ENABLED && STAGES.has("danmaku") ? ["danmaku"] : []), ...(bgmManifestInfo?.layer === "on" ? ["bgm"] : [])];
-  const artifacts: Array<Record<string, any>> = [{ id: "master", path: masterFile, media: "video", role: "master", requiredStages: requested, fps: FPS, durationSeconds: expectedMasterSeconds }];
+  const artifacts: Array<Record<string, any>> = [{ id: "master", path: masterFile, media: "video", role: "master", requiredStages: requested, ...(COLOR_MODE === "preserve" ? { expectedColorCount: 0 } : {}), fps: FPS, durationSeconds: expectedMasterSeconds }];
   for (const variant of variants) {
     artifacts.push({ id: `variant:${variant.id}`, path: variant.path, media: "video", role: "variant",
-      requiredStages: ["transitions", "color", ...(variant.bgm ? ["bgm"] : [])], expectedColorProfile: variant.gradeProfile, fps: FPS });
+      requiredStages: ["transitions", ...(variant.gradeProfile === null ? [] : ["color"]), ...(variant.bgm ? ["bgm"] : [])],
+      expectedColorCount: variant.gradeProfile === null ? 0 : 1,
+      ...(variant.gradeProfile === null ? {} : { expectedColorProfile: variant.gradeProfile, expectedColorLut: variant.gradeLut ?? null,
+        expectedColorIntensity: variant.gradeIntensity, expectedColorInputSha256: variant.colorSourceSha256 }), fps: FPS });
     if (variant.cover) artifacts.push({ id: `cover:${variant.id}`, path: variant.cover.path, media: "image", role: "cover" });
   }
   const cover = join(OUT_DIR, `${PROJECT}-cover.png`);
@@ -496,7 +508,7 @@ async function inspectCurrentGeneration(phase: string, scope: "master" | "delive
   variants: Parameters<typeof generationArtifacts>[2] = [], sidecars: string[] = []) {
   if (!generationNativeResolution) throw new Error("GENERATION_NATIVE_SOURCES_UNVERIFIED");
   const artifacts = generationArtifacts(scope, masterFile, variants, sidecars);
-  return generationQuality.inspect({ phase, scope, artifacts, requirements: generationRequirements(variants.length > 0),
+  return generationQuality.inspect({ phase, scope, artifacts, requirements: generationRequirements(variants.length > 0, variants.some(variant => variant.gradeProfile !== null)),
     resolution: [OUTPUT_SIZE.width, OUTPUT_SIZE.height], sourceResolution: generationNativeResolution,
     variantIds: variants.map(row => row.id), requiredOutputIds: artifacts.map(row => row.id), minimumVariantCount: variants.length === 1 ? 1 : 2,
     allowDownscale: flag("--allow-downscale"), allowReframe: flag("--allow-reframe"), reframeReason: arg("--reframe-reason", "") || null });
@@ -688,7 +700,7 @@ function lineageRecipe(stage: string): Record<string, unknown> {
     : stage === "danmaku" ? ["--danmaku", "--no-danmaku"] : [];
   const args = process.argv.slice(2), options: Record<string, string | boolean> = {};
   for (let i = 0; i < args.length; i++) if (prefixes.some((prefix) => args[i]!.startsWith(prefix))) options[args[i]!] = args[i + 1] && !args[i + 1]!.startsWith("--") ? args[i + 1]! : true;
-  return { component: lineageComponentHash, stage, platform: arg("--platform", "抖音/快手"), subtitleMode: SUBTITLE_MODE, options,
+  return { component: lineageComponentHash, colorPolicyVersion: AI_COLOR_POLICY_VERSION, colorMode: COLOR_MODE, variants: AI_VARIANTS, stage, platform: arg("--platform", "抖音/快手"), subtitleMode: SUBTITLE_MODE, options,
     ...(uhdDeliveryStage(stage) ? { quality: QUALITY, shotlistSha256: sourceFileHash } : {}) };
 }
 function lineageRecords(rows: StageRecord[], stage: string): StageRecord[] {
@@ -4507,47 +4519,8 @@ if (STAGES.has("compose") && !DRY_RUN) {
 }
 
 /* ---------- ⑤ 调色（color-bridge 按请求加工一次） ---------- */
-/** 未重跑调色时：磁盘上若已有"不早于 raw"的调色版就沿用它（只重跑后段的场景） */
-let colored = STAGES.has("color") ? master : preferDownstream(join(POST_DIR, "master-graded.mp4"), master, "color");
-if (STAGES.has("color") && existsSync(master)) {
-  rememberInputs("color", [master]);
-  const started = Date.now();
-  const graded = join(POST_DIR, "master-graded.mp4");
-  const recipe = arg("--color-recipe", "outdoor-travel");
-  /**
-   * `grade` 默认执行固定 profile 与强度；显式 `best` 按请求配方执行确定性加工一次。
-   * 两者均不读源片画面打分、不循环择优、不按调色可见性或风格品质决定放行。
-   */
-  const colorMode = arg("--color-mode", "grade");
-  const profile = arg("--color-profile", "natural");
-  const intensity = arg("--color-intensity", "0.3");
-  const result = colorMode === "grade"
-    ? runCli(COLOR_CLI, ["grade", "--in", master, "--out", graded, "--profile", profile, "--intensity", intensity])
-    : runCli(COLOR_CLI, ["best", "--in", master, "--out", graded, "--recipe", recipe]);
-  const produced = existsSync(graded);
-  const info = produced ? probe(graded) : probe(master);
-  const verdict = await reviewStage({
-    stage: "color", projectId: PROJECT,
-    artifacts: [{ path: produced ? graded : master, kind: "video", probe: info }],
-    deterministic: [
-      { id: "grade-produced", pass: produced, detail: produced ? "调色母版已产出" : "请求的调色产物未生成" },
-      { id: "color-tool-exit", pass: result.ok, detail: result.ok ? "调色工位退出码 0" : `调色工位失败：${result.out.slice(-200)}`, hard: !result.ok }
-    ],
-    context: {
-      mode: colorMode,
-      ...(colorMode === "grade" ? { profile, intensity } : { recipe }),
-      toolOutput: result.out.slice(-800)
-    },
-    env: ENV, allowFallbackApprove: ALLOW_FALLBACK_APPROVE, log
-  });
-  const accepted = result.ok && produced && verdict.approved;
-  record({ stage: "color", shotId: null, invoked: true, ok: accepted, cached: false, degraded: false,
-    attempt: 1, ms: Date.now() - started, artifact: produced ? graded : null,
-    evidence: { mode: colorMode, ...(colorMode === "grade" ? { profile, intensity } : { recipe }),
-      tool: `color-bridge ${colorMode}`, qualityReviewed: false }, verdict });
-  if (!accepted) throw new Error(`COLOR_POST_FAILED: ${result.out.slice(-400)}; ${verdict.reason}`);
-  colored = graded;
-}
+/** Subtitles/danmaku share the ungraded source. Creative master grading runs afterwards. */
+let colored = master;
 
 /* ---------- ⑥ 字幕（subtitle-bridge：选型 + 版式 + 旁挂文件；烧录按需） ---------- */
 /**
@@ -4764,6 +4737,60 @@ async function resolveRequestedBgmTrack(requested: string): Promise<{ requested:
   return resolved;
 }
 /** 未重跑配乐时沿用磁盘上不早于上游的配乐版；重跑则由下面的 bgm 环节覆盖 */
+/** Capture the common source before any master look or background music. */
+const variantColorSource = danmakuOut;
+{
+  const master = variantColorSource;
+/** 未重跑调色时：磁盘上若已有"不早于 raw"的调色版就沿用它（只重跑后段的场景） */
+colored = COLOR_MODE === "preserve" || STAGES.has("color") ? master : preferDownstream(join(POST_DIR, "master-graded.mp4"), master, "color");
+if (STAGES.has("color") && COLOR_MODE !== "preserve" && existsSync(master)) {
+  rememberInputs("color", [master]);
+  const started = Date.now();
+  const graded = join(POST_DIR, "master-graded.mp4");
+  const recipe = arg("--color-recipe", "outdoor-travel");
+  /**
+   * `grade` 默认执行固定 profile 与强度；显式 `best` 按请求配方执行确定性加工一次。
+   * 两者均不读源片画面打分、不循环择优、不按调色可见性或风格品质决定放行。
+   */
+  const colorMode = COLOR_MODE;
+  const profile = arg("--color-profile", "natural");
+  const intensity = arg("--color-intensity", "0.3");
+  const result = colorMode === "grade"
+    ? runCli(COLOR_CLI, ["grade", "--in", master, "--out", graded, "--profile", profile, "--intensity", intensity])
+    : runCli(COLOR_CLI, ["best", "--in", master, "--out", graded, "--recipe", recipe]);
+  const produced = existsSync(graded);
+  const info = produced ? probe(graded) : probe(master);
+  const verdict = await reviewStage({
+    stage: "color", projectId: PROJECT,
+    artifacts: [{ path: produced ? graded : master, kind: "video", probe: info }],
+    deterministic: [
+      { id: "grade-produced", pass: produced, detail: produced ? "调色母版已产出" : "请求的调色产物未生成" },
+      { id: "color-tool-exit", pass: result.ok, detail: result.ok ? "调色工位退出码 0" : `调色工位失败：${result.out.slice(-200)}`, hard: !result.ok }
+    ],
+    context: {
+      mode: colorMode,
+      ...(colorMode === "grade" ? { profile, intensity } : { recipe }),
+      toolOutput: result.out.slice(-800)
+    },
+    env: ENV, allowFallbackApprove: ALLOW_FALLBACK_APPROVE, log
+  });
+  const accepted = result.ok && produced && verdict.approved;
+  record({ stage: "color", shotId: null, invoked: true, ok: accepted, cached: false, degraded: false,
+    attempt: 1, ms: Date.now() - started, artifact: produced ? graded : null,
+    evidence: { mode: colorMode, ...(colorMode === "grade" ? { profile, intensity } : { recipe }),
+      tool: `color-bridge ${colorMode}`, qualityReviewed: false }, verdict });
+  if (!accepted) throw new Error(`COLOR_POST_FAILED: ${result.out.slice(-400)}; ${verdict.reason}`);
+  colored = graded;
+}
+
+  if (COLOR_MODE === "preserve" && STAGES.has("color") && existsSync(master)) {
+    record({ stage: "color", shotId: null, invoked: false, ok: true, cached: false, degraded: false, attempt: 0, ms: 0,
+      artifact: master, evidence: { applicable: false, mode: "preserve", policyVersion: AI_COLOR_POLICY_VERSION,
+        sourceSha256: sha256FileSync(master), outputSha256: sha256FileSync(master) }, verdict: null,
+      note: "保留渲染色彩：不调用调色工位，不复用旧调色母版" });
+  }
+  danmakuOut = colored;
+}
 let scored = STAGES.has("bgm") ? danmakuOut : preferDownstream(join(POST_DIR, "master-scored.mp4"), danmakuOut, "bgm");
 if (STAGES.has("bgm") && existsSync(danmakuOut) && !DRY_RUN) {
   rememberInputs("bgm", [danmakuOut]);
@@ -5224,23 +5251,18 @@ if (STAGES.has("deliver") && !DRY_RUN && (QUALITY !== "uhd" || masterApprovedFor
    * 从尚未添加当前配乐的字幕/节目层派生请求变体，避免重复叠加配乐。
    * 各变体按真实请求与配方生成文件；没有配乐可闻度或跨变体差异品质二检。
    */
-  const variantSource = danmakuOut;
+  const variantSource = variantColorSource;
+  const variantColorSourceSha256 = sha256FileSync(variantSource);
   deliveryInputPaths.push(variantSource);
   const requestedVariantTrack = !flag("--no-music") && arg("--bgm-track", "")
     ? await resolveRequestedBgmTrack(arg("--bgm-track", "")) : null;
   if (requestedVariantTrack) deliveryInputPaths.push(requestedVariantTrack.path);
   rememberInputs("deliver", deliveryInputPaths);
-  const allVariantPlans = buildVariantPlan({ master: variantSource, outDir: OUT_DIR, projectId: PROJECT,
-    coverHook: arg("--cover-hook", shotlist.title ?? "") });
-  const requestedVariantIds = arg("--variants", "").split(",").map(id => id.trim()).filter(Boolean);
-  if (new Set(requestedVariantIds).size !== requestedVariantIds.length
-    || requestedVariantIds.some(id => !allVariantPlans.some(plan => plan.variant.id === id))) {
-    throw new Error("VARIANT_REQUEST_INVALID: 变体ID重复或未定义");
-  }
-  const variantPlans = requestedVariantIds.length ? allVariantPlans.filter(plan => requestedVariantIds.includes(plan.variant.id)) : allVariantPlans;
+  const variantPlans = buildVariantPlan({ master: variantSource, outDir: OUT_DIR, projectId: PROJECT,
+    coverHook: arg("--cover-hook", shotlist.title ?? ""), variants: AI_VARIANTS });
   const samples: [] = [], distinctness = null, variantAxes = null;
   const variantManifest: Array<{ id: string; label: string; path: string; sha256: string; note: string;
-    gradeProfile: string | null; width: number; height: number; cover: { path: string; sha256: string } | null;
+    gradeProfile: string | null; gradeIntensity?: number; gradeLut?: string | null; colorSourceSha256?: string; colorDecision?: ContentColorDecision; width: number; height: number; cover: { path: string; sha256: string } | null;
     bgm: { track: string; sha256: string } | null }> = [];
   const post = await import(join(REPO_ROOT, "bundles/ai-video/connectors/post-bridge/core.mjs")) as {
     buildCover: (options: Record<string, unknown>) => Promise<{ output: string; sha256: string }>;
@@ -5249,8 +5271,9 @@ if (STAGES.has("deliver") && !DRY_RUN && (QUALITY !== "uhd" || masterApprovedFor
   for (const plan of variantPlans) {
     try {
       if (plan.passthrough) {
-        const technical = runCli(COLOR_CLI, ["grade", "--in", variantSource, "--out", plan.output, "--no-auto", "--no-verify", "--no-defects"]);
-        if (!technical.ok) throw new Error(`VARIANT_TECHNICAL_COLOR_FAILED: ${technical.out}`);
+        copyFileSync(variantSource, plan.output);
+        if (sha256FileSync(plan.output) !== variantColorSourceSha256 || sha256FileSync(variantSource) !== variantColorSourceSha256)
+          throw new Error("VARIANT_ORIGINAL_COPY_CHANGED");
       }
       else {
         const grade = runCli(COLOR_CLI, [...plan.gradeArgs, "--out", plan.output]);
@@ -5287,7 +5310,9 @@ if (STAGES.has("deliver") && !DRY_RUN && (QUALITY !== "uhd" || masterApprovedFor
       const info = inspectPostInput({ file: plan.output, ffprobe: FFPROBE });
       if (info.width !== OUTPUT_SIZE.width || info.height !== OUTPUT_SIZE.height) throw new Error(`VARIANT_EXPORT_DIMENSIONS_INVALID: ${plan.variant.id}`);
       variantManifest.push({ id: plan.variant.id, label: plan.variant.label, path: plan.output, sha256: info.sha256,
-        note: plan.variant.note, gradeProfile: plan.variant.gradeProfile, width: info.width, height: info.height,
+        note: plan.variant.note, gradeProfile: plan.variant.gradeProfile,
+        gradeIntensity: plan.variant.gradeIntensity, gradeLut: plan.variant.gradeLut ?? null,
+        colorSourceSha256: variantColorSourceSha256, colorDecision: plan.variant.colorDecision, width: info.width, height: info.height,
         cover: variantCover, bgm: variantBgm });
     } catch (error) {
       record({ stage: "deliver", shotId: null, invoked: true, ok: false, cached: false, degraded: false,
@@ -5296,6 +5321,7 @@ if (STAGES.has("deliver") && !DRY_RUN && (QUALITY !== "uhd" || masterApprovedFor
       throw error;
     }
   }
+  if (sha256FileSync(variantSource) !== variantColorSourceSha256) throw new Error("VARIANT_COMMON_SOURCE_CHANGED");
   const gate = recordGate({ stepKey: "deliver", sourceStage: "deliver", checks: [
     { id: "master-resolution", pass: (() => { const info = probe(deliverablePath);
       return Number(info.width) === OUTPUT_SIZE.width && Number(info.height) === OUTPUT_SIZE.height; })(),
@@ -5372,6 +5398,8 @@ if (STAGES.has("deliver") && !DRY_RUN && (QUALITY !== "uhd" || masterApprovedFor
     samples,
     at: stamp()
   }), assets: assetHashes, generationQuality: deliveryGenerationQuality.manifest,
+  colorPolicy: { version: AI_COLOR_POLICY_VERSION, masterMode: COLOR_MODE,
+    commonSourceSha256: variantColorSourceSha256, independentVariants: true },
   qualityReport: { path: relative(OUT_DIR, deliveryGenerationQuality.qualityFile.path), sha256: deliveryGenerationQuality.qualityFile.sha256 }, quality: {
     tier: QUALITY, sourceResolution: SOURCE_RESOLUTION, outputResolution: OUTPUT_RESOLUTION,
     width: OUTPUT_SIZE.width, height: OUTPUT_SIZE.height,
