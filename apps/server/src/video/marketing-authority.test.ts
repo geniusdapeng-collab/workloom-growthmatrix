@@ -7,6 +7,17 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { prepareMarketingFacts, authorizeMarketingFacts, finalizeMarketingFacts, verifyMarketingFacts, restoreReviewedMarketingFacts, restoreMarketingOutputRejection, restoreMarketingReviewTransportCheckpoint, type PreparedMarketingFacts } from "./marketing-authority.js";
 import { fetchMarketingSource, requestSource } from "./marketing-source-fetcher.js";
 import { canonicalRenderJson, renderSha256 } from "./gen/compiled-request.js";
+import { writeRegisteredProductFixture } from "./registered-product.fixture.js";
+const archiveFixture = vi.hoisted(() => ({ root: "" }));
+// Only relocate the file dependency into this test's isolated synthetic library.
+// All original archive/path/hash/authorization implementations still execute.
+vi.mock("./marketing-product-source.js", async importOriginal => {
+  const original = await importOriginal<any>();
+  return { ...original,
+    loadRegisteredProductSource: (selector: unknown) => original.loadRegisteredProductSource(selector, { libraryRoot: archiveFixture.root }),
+    loadProductVisualReferences: (sources: unknown[]) => original.loadProductVisualReferences(sources, { libraryRoot: archiveFixture.root }),
+  };
+});
 const scope = { tenantId: "tenant-a", workspaceId: "ws-a", projectId: "P1", runId: "RUN1", attempt: 1 };
 const env = { LLM_BASE_URL: "https://judge.example.test", LLM_API_KEY: "test-only", LLM_MODEL: "test-judge" };
 const sourceUrl = "https://source.example.com/f3";
@@ -19,6 +30,8 @@ beforeAll(async () => {
 afterAll(async () => { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); });
 beforeEach(async () => {
   root = await realpath(await mkdtemp(path.join(tmpdir(), "marketing-authority-"))); modelCalls = []; extractionCalls = []; rejectJudge = false;
+  archiveFixture.root = path.join(root, "synthetic-library");
+  await writeRegisteredProductFixture(archiveFixture.root);
   vi.stubGlobal("fetch", vi.fn(async (_url, init) => { modelCalls.push(JSON.parse(String(init.body))); return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ approved: !rejectJudge, score: rejectJudge ? 10 : 96, issues: rejectJudge ? ["来源不支持此主张"] : [], suggestions: [], reason: rejectJudge ? "原文限定相冲突" : "逐项原文支持" }) } }] })); }));
 });
 afterEach(async () => { vi.unstubAllGlobals(); await rm(root, { recursive: true, force: true }); });
