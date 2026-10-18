@@ -76,8 +76,12 @@ pnpm exec tsx scripts/tools/video-doctor.mts   # 出片环境自检（缺什么�
 
 ```
 cine-kb → continuity → micromotion → spec（25 字段交付闸）→ plates → material-gen → videos
-        → voice（默认保留源音，仅明确统一旁白才配音）→ compose → color → subtitle → bgm → cover → mux → master → deliver
+        → voice（默认保留源音，仅明确统一旁白才配音）→ compose → color → subtitle（默认烧录）
+        → bgm → cover（默认烧封面）→ mux → master
 ```
+
+> 普通 AI 视频默认只交付一支母版，`deliver` 不进入缺省阶段。需要多风格版本时，调用方必须显式把
+> `deliver` 放进 `--stages`；弹幕也只有显式提供 `--danmaku` 或 `--auto-danmaku` 时才执行。
 
 > **成功源片/post-only 不自动追加 `spec`**（2026-10-07）：已有真实任务与源字节按当前请求直接正式后期。新生成才执行字段、人物资产与提示词准备；成功源片不因旧字段规范或缺新生成凭据重新生成或接受品质二检。
 
@@ -114,7 +118,7 @@ cine-kb → continuity → micromotion → spec（25 字段交付闸）→ plate
 ## 5. 交付物与验收
 
 交付目录（`--out`）应包含：`*-<实测时长>s-final.mp4`（母版，名称与实测时长一致）、
-`subtitles/`（srt/ass/vtt + 清单）、`*-softsub.mp4`、实际请求的变体 + 变体封面（未指定时默认三支）、
+`subtitles/`（srt/ass/vtt + 清单）、`*-softsub.mp4`、显式 `deliver` 请求的变体 + 变体封面（普通 AI 单母版不产变体）、
 `*-cover.png`、`*-delivery-manifest.json`（sha256/真实配方/qualityReviewed=false/组装声明/**分流结论**/**渲染台账**）、
 `*-render-ledger.md`（每一次花钱的账：提交几次、判不合格几次、平台拒收几次、canary 止损几次、后期返工几次）。
 台账保留历史 canary/拒绝等原记录；新流程不进行这些源片品质裁决。质量口径见 `docs/video-delivery-and-revision.md`；新生成前监制门设计见 `docs/producer-gate-design.md`。

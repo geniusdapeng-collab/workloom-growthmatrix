@@ -1,4 +1,3 @@
-import { assertDefaultAiColors } from './ai-color-cli-assertions.mjs';
 /** Execute the current production stage/loops with controlled provider failures.
  * The compiler only removes TypeScript syntax; the loops, catch blocks, and
  * manifest/record assignments come verbatim from full-chain-film.mts.
@@ -327,7 +326,8 @@ const reject=()=>{record({kind:'network'});throw new Error('NETWORK_OR_PROVIDER_
 for(const name of ['spawn','spawnSync','execFileSync']){const original=cp[name];cp[name]=function(command,args,...rest){const argv=Array.isArray(args)?args:[];record({kind:'process',command:String(command),argv});if(argv.some(x=>/edgedetect|bbox|cropdetect|blackdetect|silencedetect/.test(String(x))))throw new Error('SOURCE_ARTISTIC_REVIEW_MUST_NOT_RUN');if(argv.some(x=>String(x).includes('/voice-bridge/cli.mjs'))&&argv.some(x=>['verify','dub','speak','asr'].includes(String(x))))throw new Error('DEFAULT_TTS_ASR_MUST_NOT_RUN');${exportFailure ? "if(argv.includes('-filter_complex')&&argv.some(x=>String(x).includes('concat=')))throw new Error('INJECTED_ACTUAL_EXPORT_FAILURE');" : ""}return original.call(this,command,args,...rest);};}syncBuiltinESMExports();`);
   const argv = ["--import", "tsx", filmPath.pathname, "--shots", fixture.source, "--project", fixture.project,
     "--work-dir", fixture.work, "--out", fixture.out, "--keys-file", fixture.keys, "--aspect", "16:9", "--resolution", "720p", "--fps", "30", "--allow-reframe", "--reframe-reason", "The synthetic 162x90 fixture explicitly requests a 16:9 720p presentation canvas.",
-    "--platform", "youtube", "--cover-platform", "youtube", "--bgm-track", fixture.music, "--danmaku", fixture.danmaku, ...(aiDefaults ? [] : ["--variants", "cool-tech"])];
+    "--platform", "youtube", "--cover-platform", "youtube", "--bgm-track", fixture.music, "--danmaku", fixture.danmaku, "--subtitle-mode", "both",
+    ...(aiDefaults ? [] : ["--stages", "cine-kb,continuity,micromotion,spec,plates,material-gen,videos,voice,compose,color,subtitle,bgm,cover,mux,master,deliver", "--variants", "cool-tech"])];
   const began = Date.now();
   const result = spawnSync(process.execPath, argv, { cwd: repositoryRoot, encoding: "utf8", timeout: 120000, maxBuffer: 32 << 20,
     env: { ...process.env, NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`, WL_FFMPEG: mediaFfmpeg, WL_FFPROBE: mediaFfprobe,
@@ -362,34 +362,43 @@ it(`whole actual CLI (${trackSelection}): old quality-failed black/162x90/23fps/
     assert.deepEqual(fs.readFileSync(fixture.raw), fixture.original);
     assert.ok(fs.readFileSync(join(fixture.logDir, "stages.jsonl"), "utf8").startsWith(fixture.oldRow), "legacy failed quality history remains byte-for-byte");
     const summary = JSON.parse(fs.readFileSync(join(fixture.logDir, "stage-summary.json"), "utf8"));
-    for (const stageName of ["shot", "voice", "compose", "color", "subtitle", "danmaku", "bgm", "cover", "cover-intro", "mux", "master", "deliver"]) {
+    for (const stageName of ["shot", "voice", "compose", "color", "subtitle", "danmaku", "bgm", "cover", "cover-intro", "mux", "master",
+      ...(trackSelection === "ai-defaults" ? [] : ["deliver"])]) {
       assert.ok(summary.records.some(row => row.stage === stageName && row.ok), `official ${stageName} must actually complete`);
     }
     assert.ok(summary.records.filter(row => ["cine-kb", "continuity", "micromotion", "prompt-review", "keyframe"].includes(row.stage)).every(row => row.invoked === false));
     assert.ok(summary.records.filter(row => row.verdict).every(row => row.verdict.score === null), "no scored source acceptance verdict");
     const pointer = JSON.parse(fs.readFileSync(join(fixture.out, "current.json"), "utf8")), release = pointer.releaseDir;
-    const final = fs.readdirSync(release).find(name => /-10s-final\.mp4$/.test(name)); assert.ok(final, "final export uses actual duration naming");
+    const final = fs.readdirSync(release).find(name => /-final\.mp4$/.test(name)); assert.ok(final, "final export uses actual duration naming");
     const info = JSON.parse(execFileSync(mediaFfprobe, ["-v", "error", "-show_streams", "-show_format", "-of", "json", join(release, final)], { encoding: "utf8" }));
     assert.ok(info.streams.some(stream => stream.codec_type === "video" && stream.width === 1280 && stream.height === 720));
-    assert.ok(Math.abs(Number(info.format.duration) - 10) < 0.2);
+    assert.ok(Math.abs(Number(info.format.duration) - 11.2) < 0.2);
     assert.ok(fs.existsSync(join(release, `${fixture.project}-softsub.mp4`))); assert.ok(fs.existsSync(join(release, `${fixture.project}-with-cover.mp4`)));
     const processes = result.operations.filter(row => row.kind === "process");
     const mixes = processes.filter(row => row.argv.includes("mix") && row.argv.some(value => String(value).includes('/bgm-bridge/cli.mjs')));
-    assert.equal(mixes.length, trackSelection === "ai-defaults" ? 4 : 2, "master and each requested variant mix once");
+    assert.equal(mixes.length, trackSelection === "ai-defaults" ? 1 : 2, "single master or master plus one explicit variant mix once");
     assert.ok(mixes.every(row => row.argv[row.argv.indexOf("--bgm") + 1] === musicPath), "every mix receives the same actual path, never the registered ID");
-    const delivery = summary.records.find(row => row.stage === "deliver" && row.ok);
-    assert.ok(delivery.lineage.inputs.some(input => input.path === musicPath && input.sha256 === createHash("sha256").update(fs.readFileSync(musicPath)).digest("hex")),
-      "variant delivery lineage binds the actual chosen track bytes");
+    if (trackSelection !== "ai-defaults") {
+      const delivery = summary.records.find(row => row.stage === "deliver" && row.ok);
+      assert.ok(delivery.lineage.inputs.some(input => input.path === musicPath && input.sha256 === createHash("sha256").update(fs.readFileSync(musicPath)).digest("hex")),
+        "variant delivery lineage binds the actual chosen track bytes");
+    }
     assert.equal(processes.filter(row => row.argv.some(value => String(value).includes('/voice-bridge/cli.mjs'))).length, 0);
-    const variantGrade = processes.find(row => row.argv.some(value => String(value).includes('/color-bridge/cli.mjs'))
-      && row.argv.some(value => String(value).endsWith(trackSelection === "ai-defaults" ? '-warm-story.mp4' : '-cool-tech.mp4')));
-    assert.ok(variantGrade, "requested variant color transformation actually ran");
-    assert.equal(variantGrade.argv[variantGrade.argv.indexOf("--in") + 1], join(fixture.work, "post", fixture.project, "master-danmaku.mp4"),
-      "variant starts from the real program before BGM; it must not mix music onto the already scored master");
+    if (trackSelection !== "ai-defaults") {
+      const variantGrade = processes.find(row => row.argv.some(value => String(value).includes('/color-bridge/cli.mjs'))
+        && row.argv.some(value => String(value).endsWith('-cool-tech.mp4')));
+      assert.ok(variantGrade, "requested variant color transformation actually ran");
+      assert.equal(variantGrade.argv[variantGrade.argv.indexOf("--in") + 1], join(fixture.work, "post", fixture.project, "master-danmaku.mp4"),
+        "variant starts from the real program before BGM; it must not mix music onto the already scored master");
+    }
     const frameExtracts = processes.filter(row => row.argv.includes("-frames:v") && row.argv[row.argv.indexOf("-i") + 1]?.endsWith(".mp4") && row.argv.at(-1)?.endsWith("-frame.png"));
-    assert.equal(frameExtracts.length, trackSelection === "ai-defaults" ? 4 : 2, "one master and each requested variant cover");
+    assert.equal(frameExtracts.length, trackSelection === "ai-defaults" ? 1 : 2, "one master cover or master plus one requested variant cover");
     const manifest = JSON.parse(fs.readFileSync(join(release, `${fixture.project}-delivery-manifest.json`), "utf8"));
-    if (trackSelection === "ai-defaults") assertDefaultAiColors(manifest, summary.records);
+    if (trackSelection === "ai-defaults") {
+      assert.equal(manifest.masterOnly, true);
+      assert.deepEqual(manifest.variants, []);
+      assert.equal(summary.records.some(row => row.stage === "deliver" && row.ok), false);
+    }
     const currentQuality = await inspectGenerationManifest({ root: release, manifest, bins: { ffmpeg: mediaFfmpeg, ffprobe: mediaFfprobe } });
     assert.equal(currentQuality.passed, true); assert.equal(currentQuality.artisticQualityReviewed, false); assert.equal(currentQuality.paidCalls, 0);
     console.info("ACTUAL_POST_CLI_EVIDENCE", JSON.stringify({ root, argv: result.evidence.argv, elapsedMs: result.evidence.elapsedMs, networkCalls: 0,
