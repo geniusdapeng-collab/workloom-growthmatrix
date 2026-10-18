@@ -97,7 +97,7 @@ node scripts/workloom-agent.mjs invoke video.film.artifact --input-file artifact
 {
   "projectId": "VID-已有项目编号",
   "document": {"brief": {"requestOriginal": "完整需求原文"}, "shots": ["替换为完整真实镜头对象"]},
-  "stages": ["spec", "compose", "color", "subtitle", "bgm", "cover", "mux", "master", "deliver"],
+  "stages": ["spec", "compose", "color", "subtitle", "bgm", "cover", "mux", "master"],
   "options": {"routeKind": "narrative", "subtitleMode": "both", "reviewPolicy": "off"},
   "maxBudgetCny": 100,
   "idempotencyKey": "该次逻辑请求的稳定唯一键"
@@ -139,20 +139,20 @@ pnpm exec tsx scripts/tools/full-chain-film.mts \
   --shots work/film/shotlist.json --brief work/film/brief.json --project VID-真实项目 \
   --work-dir work/vm-VID-真实项目 --out work/out-VID-真实项目 \
   --route work/route.json --platform 抖音 --fps 24 \
-  --subtitle-mode both --review-policy off
+  --subtitle-mode burn --review-policy off
 ```
 
 新生成会使用用户已配置供应商/组件并可能产生费用；读取指南和计划并未授予费用权限。新营销片先确认商品档案/G1，真人先确认授权和清单；新逐镜卡通过 spec 后才提交。已成功镜头按真实 taskId、源请求与原文件 SHA-256 复用，即使旧品质分为 0 或历史记录为 failed 也直接进入后期；供应商 rejected/failed 或文件被改不属于成功复用。不删除旧失败记录，不因组件版本变化重生成；同一成功素材续跑不要求重新配置图片/视频生成或品质模型密钥。
 
 ## 7. 声音、后期和既有素材的真实边界
 
-本仓普通链有 `voice → compose → color → subtitle → bgm → cover → mux → master → deliver`，可选 danmaku/sfx，按请求和素材选择。**voice 默认沿用成功片段的节目音轨，不核听、不做 ASR/口型/对白品质审核、不自动补 TTS。** 仅用户明确要求统一旁白时，服务 options `unifiedNarration` 或 CLI `--unified-narration` 才调用实际配音加工；工具失败如实失败，不偷偷改用口播片。无音轨的成功片段也可进入后期，所需无声时间轴由实际合成工位产生，不能声称它原本有人声。
+本仓普通链默认是 `voice → compose → color → subtitle（烧录）→ bgm → cover（烧封面）→ mux → master` 的单母版。`deliver` 多版本与 danmaku/sfx 都只在显式请求时加入。**voice 默认沿用成功片段的节目音轨，不核听、不做 ASR/口型/对白品质审核、不自动补 TTS。** 仅用户明确要求统一旁白时，服务 options `unifiedNarration` 或 CLI `--unified-narration` 才调用实际配音加工；工具失败如实失败，不偷偷改用口播片。无音轨的成功片段也可进入后期，所需无声时间轴由实际合成工位产生，不能声称它原本有人声。
 
 Matrix 没有 Growthtest 的命名入口 `film-standard-post.mts` 或其 `standard-post-contract.ts`。本仓现有默认正式后期已可接收成功源片并保留原节目音作为加工来源；是否最终满足用户逐项要求，应看本仓实际回执与导出。`sourceAudioPreserved`/`original-program-bytes` 表示使用原节目音作来源，不是逐字节不变的最终音频承诺；剪辑、混音或编码会生成新文件，不能冒充签章独立分轨。
 
 手工提供的已有片段 `post-only` 仍声明 `assembly-mode=post-only` 与至少 8 字的 `assembly-reason`；来源不属于成功任务缓存时，组装卡按入口合同核对。成功任务续跑不重做源片品质审查。调色、字幕、弹幕、配乐、封面与变体各按请求实际加工一次；不抽样评分、选优或根据像素/音频分数自动返修。字幕实际 ASS/font/timeline、文件摘要、请求尺寸、软轨、实际编码与取件失败保留，`qualityReviewed=false` 不等于「品质已验收」。
 
-配乐没有显式分轨输入时默认按原节目音混音，回执为 `sourceAuthority=original-program-bytes`、`stemsVerified=false`；不要求签发密钥。无音轨时如实建立无声底轨；短配乐先生成有限长度材料，实际混音结束后取件。有显式签章分轨输入时校验租户、项目、签名、时限和文件字节，错误直接失败，不能因旧 `--declared-program-mix` 开关丢掉分轨引用；两种声明冲突也报错。用户禁止配乐时使用 `--no-music`，不偷偷加音乐。默认全链有三个变体，也可明确请求其中一个；清单保留真实配方与文件，风格差异指标为 `null`，不做品质差异放行。
+配乐没有显式分轨输入时默认按原节目音混音，回执为 `sourceAuthority=original-program-bytes`、`stemsVerified=false`；不要求签发密钥。无音轨时如实建立无声底轨；短配乐先生成有限长度材料，实际混音结束后取件。有显式签章分轨输入时校验租户、项目、签名、时限和文件字节，错误直接失败，不能因旧 `--declared-program-mix` 开关丢掉分轨引用；两种声明冲突也报错。用户禁止配乐时使用 `--no-music`，不偷偷加音乐。普通 AI 全链默认不产变体；显式加入 `deliver` 后按完整三版合同执行。清单保留真实配方与文件，风格差异指标为 `null`，不做品质差异放行。
 
 ## 8. 时间、失败和续跑
 
@@ -194,9 +194,11 @@ Matrix 没有 Growthtest 的命名入口 `film-standard-post.mts` 或其 `standa
 
 读取能力的成功仅证明本次拿到完整指南。本次指南更新未调用模型、供应商、TTS、ASR 或媒体生成；生产可用性和客户设备上完整出片另用真实需求与回执验收。
 
-## AI 生成普通全链的默认配色（2026-10-15）
+## AI 生成普通全链的默认单母版（2026-10-18）
 
-普通 `full-chain-film.mts` 的默认母版保持渲染素材的创作色彩，`color` 阶段记为 `preserve`，不调用调色工位；字幕、弹幕、原声、配乐、封面与请求的导出仍执行。默认三个呈现版本按下表输出，镜头只生成一次。
+普通 `full-chain-film.mts` 默认只交付一支母版：保留渲染素材的创作色彩，`color` 阶段记为 `preserve`；字幕默认烧录，封面默认烧进片头，BGM 默认混入。弹幕只有显式提供条目或传 `--auto-danmaku` 时执行。`deliver` 不进入缺省阶段，因此不会隐式生成调色变体或多版本。
+
+需要多风格版本时，调用方必须在 `--stages` 中显式加入 `deliver`：
 
 | 顺序 / ID | 实际处理 | 用途 |
 |---|---|---|
@@ -204,13 +206,13 @@ Matrix 没有 Growthtest 的命名入口 `film-standard-post.mts` 或其 `standa
 | 2 / `warm-story` | `warm-film`，`intensity=0.3`，关闭自动调整，不叠第二层暖 LUT | 收敛后的轻暖调 |
 | 3 / `content-auto` | 依据分镜声明的题材、光线、人物等属性及镜头时长选择一个克制的全片配方 | 给出可以复核依据的内容调色版本 |
 
-三个版本分别从同一份未调色、未混配乐的共同源派生；不从暖调母版继续叠加滤镜。`content-auto` 在商品颜色准确性、夜景、人像、美食、风光、运动及混合题材之间选择，并在 `colorDecision` 留下属性、时长权重、原因和局限；缺属性时保守处理并明确未判定。它没有像素分析、实体分割或艺术评分，也不保证每个镜头的观感都是最优。
+这三个显式变体分别从同一份未调色、未混配乐的共同源派生；不从暖调母版继续叠加滤镜。`content-auto` 在商品颜色准确性、夜景、人像、美食、风光、运动及混合题材之间选择，并在 `colorDecision` 留下属性、时长权重、原因和局限；缺属性时保守处理并明确未判定。它没有像素分析、实体分割或艺术评分，也不保证每个镜头的观感都是最优。
 
 显式母版调色需同时设置 `--color-mode grade` 与 `--color-profile` / `--color-intensity`；保留原有显式 `best` 请求。母版的选择不会改变三个变体的共同源。默认不沿用旧的已调色缓存；策略、参数和源摘要均参与恢复核验。显式 `--variants` 仍支持旧 ID `cool-tech,warm-film,punchy-social`，未知或重复 ID 明确失败。
 
 交付清单记录 `colorPolicy`、共同源 SHA-256、每个版本的 profile / LUT / intensity 和自动方案依据；技术验收追踪实际加工链，原色版须为 0 次调色，其它两版各 1 次，且输入绑定共同源。渲染片段及旧账本保持只读。
 
-素材剪辑 `edit-post.mts` / package 的既有首推 `warm-story` 仍采用同一套 D 配方。Growthtest 中显式 `--standard-post` 的版本清单与一句话导演的独立作品合同继续服从各自已提交设置；本节描述普通生成全链的默认三版，不把不同入口的交付数量混为一谈。
+素材剪辑 `edit-post.mts` / package 的既有首推 `warm-story` 仍采用同一套 D 配方。Growthtest 中显式 `--standard-post` 的版本清单与一句话导演的独立作品合同继续服从各自已提交设置；本节描述普通生成全链，多版本只按显式请求执行，不把不同入口的交付数量混为一谈。
 
 ## 所有 AI 工作台共用的交付技术检查（2026-10-14）
 
