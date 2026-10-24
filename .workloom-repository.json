@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "workloom.repository/v1",
+  "logicalId": "workloom-growthmatrix",
+  "productId": "workloom-ai-growthmatrix",
+  "lane": "isolated",
+  "primaryPlatform": "github",
+  "github": {
+    "repository": "geniusdapeng-collab/workloom-growthmatrix",
+    "url": "https://github.com/geniusdapeng-collab/workloom-growthmatrix",
+    "branch": "main"
+  },
+  "cnb": {
+    "repository": "workloom-ai/workloom-growthmatrix",
+    "url": "https://cnb.cool/workloom-ai/workloom-growthmatrix",
+    "branch": "main"
+  },
+  "mirrorPolicy": {
+    "platform": "cnb",
+    "mode": "deferred",
+    "automaticProductSync": false,
+    "configBackupBranchPrefix": "workloom/config-backup/"
+  },
+  "baseSync": {
+    "receive": "none",
+    "reflux": "none"
+  },
+  "registry": {
+    "repository": "geniusdapeng-collab/workloom-im",
+    "path": "sync/repository-registry.json"
+  }
+}
