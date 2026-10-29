@@ -397,10 +397,11 @@ export async function restoreMarketingReviewTransportCheckpoint(prepared: Prepar
         ref, sha256: receipt.contentSha256, verdict });
     } else if (verdict.status === "unverified" && verdict.approved === false && verdict.degraded === true && verdict.via === "fallback"
       && verdict.rerun === true && verdict.score === 0 && Array.isArray(verdict.hardFailures) && !verdict.hardFailures.length && verdict.model
-      && /timeout|timed out|fetch failed|ECONN|socket|network|aborted/i.test(verdict.reason)
+      && /timeout|timed out|fetch failed|ECONN|socket|network|aborted|网络结果未知/i.test(verdict.reason)
       && verdict.evidence?.some(item => item.path === file && item.sha256 === receipt.contentSha256 && item.scope === "complete-text")) {
       failures.push(`${shot.shotId}：${verdict.reason}`);
-    } else fail("MARKETING_REVIEW_RESUME_UNVERIFIED", "本次实际模型拒绝、确定性失败或不完整证据不能按传输失败接续");
+    } else fail("MARKETING_REVIEW_RESUME_UNVERIFIED",
+      `本次实际模型拒绝、确定性失败或不完整证据不能按传输失败接续（status=${verdict.status};via=${verdict.via};degraded=${String(verdict.degraded)};model=${verdict.model ?? "missing"};score=${String(verdict.score)};evidence=${String(verdict.evidence?.length ?? 0)};reason=${verdict.reason}）`);
   }
   if (!failures.length) fail("MARKETING_REVIEW_RESUME_REQUIRED", "没有当前完整稿的真实外部审核传输失败");
   return { passed, reason: failures.join("；") };
