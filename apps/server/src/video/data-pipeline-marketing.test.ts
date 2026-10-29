@@ -42,6 +42,7 @@ vi.mock("./data-mining-executor.js", async importOriginal => ({
 }));
 
 let root: string, argv: string[], exitCode: typeof process.exitCode;
+let judgeResponseSequence = 0;
 const cliEntry = new URL("../../../../scripts/tools/data-pipeline-run.mts", import.meta.url).href;
 const successful = () => ({ success: true, stages: { productionEngine: { shots: [{ shot_id: "S1", duration: 30,
   prompt: "展示台式双屏自助机DEMO-T001可调节角度摄像头。".repeat(60), fields: { 商品型号: "DEMO-T001", scene: "现代酒店柜台",
@@ -53,7 +54,8 @@ beforeEach(async () => {
   archiveFixture.root = path.join(root, "synthetic-library");
   await writeRegisteredProductFixture(archiveFixture.root);
   argv = process.argv; exitCode = process.exitCode;
-  vi.stubEnv("LLM_BASE_URL", "https://judge.example.test"); vi.stubEnv("LLM_API_KEY", "test-only"); vi.stubEnv("LLM_MODEL", "test-judge");
+  judgeResponseSequence = 0;
+  vi.stubEnv("LLM_BASE_URL", "https://judge.example.test"); vi.stubEnv("LLM_API_KEY", "test-only"); vi.stubEnv("LLM_MODEL", "deepseek-flash");
   vi.spyOn(process.stdout, "write").mockImplementation(() => true);
   vi.spyOn(console, "log").mockImplementation(() => undefined);
   vi.spyOn(process, "exit").mockImplementation((code) => { throw new Error(`exit:${code}`); });
@@ -76,7 +78,12 @@ beforeEach(async () => {
       const approved = !(fixture.rejectG1 && content.includes("G1_DOSSIER") || fixture.rejectFinal && content.includes("marketing-final-fact-review"));
       result = { approved, score: approved ? 96 : 10, issues: approved ? [] : ["测试：事实不支持"], suggestions: [], reason: approved ? "测试：逐项支持" : "测试：事实不支持" };
     }
-    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(result) } }] }));
+    return new Response(JSON.stringify({
+      id: `marketing-cli-fixture-${++judgeResponseSequence}`,
+      model: "deepseek-flash",
+      choices: [{ index: 0, finish_reason: "stop", message: { role: "assistant", content: JSON.stringify(result) } }],
+      usage: { prompt_tokens: 100, completion_tokens: 40, total_tokens: 140 },
+    }));
   }));
 });
 afterEach(async () => {
@@ -113,7 +120,7 @@ describe("营销CLI复用正式事实与G1", () => {
         await run(["--resume-preproduction", source]);
         const current = JSON.parse(await readFile(path.join(root, "result.json"), "utf8"));
         expect(current.success).toBe(true); expect(current.stages.productionEngine).toEqual(previous.stages.productionEngine);
-        expect(JSON.parse(await readFile(path.join(root, "final-facts-resume.json"), "utf8")).reason).toContain("timeout");
+        expect(JSON.parse(await readFile(path.join(root, "final-facts-resume.json"), "utf8")).reason).toContain("网络结果未知");
         expect(JSON.parse(await readFile(path.join(root, "meta.json"), "utf8")).renderSubmitted).toBe(false);
       } else await expect(run(["--resume-preproduction", source])).rejects.toThrow("RESUME_UNVERIFIED");
       expect(fixture.configs).toHaveLength(1); expect(fixture.inputs).toHaveLength(1);
