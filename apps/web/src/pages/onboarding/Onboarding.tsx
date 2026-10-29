@@ -18,7 +18,7 @@ import { Icon, clientChineseText } from "@workloom/ui";
 import { modelTestReplyText, onboardingStatusSystemText, publicationSystemText } from "./systemText";
 
 const PROVIDERS: Array<{ key: string; label: string; baseUrl: string; model: string }> = [
-  { key: "deepseek", label: "DeepSeek text.primary", baseUrl: "https://api.deepseek.com", model: "deepseek-flash" },
+  { key: "deepseek", label: "DeepSeek 主文本模型", baseUrl: "https://api.deepseek.com", model: "deepseek-flash" },
 ];
 
 const STEPS = ["环境自检", "真实大模型", "经营主体", "启用真实模式", "AI 服务前台"] as const;
@@ -433,7 +433,7 @@ export default function Onboarding() {
               <input className={`${inputCls} mt-1`} type="password" value={apiKey} onChange={(e) => { setApiKey(e.target.value); setTestResult(null); }} placeholder="sk-……" />
             </label>
             <label className="block text-body text-ink3">模型
-              <input className={`${inputCls} mt-1`} value={model} onChange={(e) => { setModel(e.target.value); setTestResult(null); }} placeholder="deepseek-flash" />
+              <input className={`${inputCls} mt-1`} value={model} onChange={(e) => { setModel(e.target.value); setTestResult(null); }} placeholder="DeepSeek 主文本模型" />
             </label>
             {testResult && (
               <div className={`break-words rounded-lg border px-3 py-2 text-body ${testResult.ok ? "border-go/50 bg-go/10 text-go" : "border-warn/50 bg-warn/10 text-warn"}`}>
