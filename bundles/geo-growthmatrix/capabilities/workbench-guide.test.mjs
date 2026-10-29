@@ -50,7 +50,7 @@ test("empty-input capability returns full canonical UTF-8, identity, version and
   assert.equal(result.result.path, GUIDE_PATH);
   assert.equal(result.result.guideVersion, GUIDE_VERSION);
   assert.equal(result.result.productId, "workloom-ai-growthmatrix");
-  assert.equal(result.result.repository, "workloom-ai/WorkLoom-growthmatrix");
+  assert.equal(result.result.repository, "geniusdapeng-collab/workloom-growthmatrix");
   assert.equal(result.result.boundaries.nativeStandardPostAvailable, false);
   assert.equal(result.result.boundaries.providerSuccessDirectPostAvailable, true);
   assert.equal(result.result.boundaries.sourceQualityReviewDefault, false);

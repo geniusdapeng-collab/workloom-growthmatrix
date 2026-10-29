@@ -1,7 +1,7 @@
 ---
 guideVersion: 2026-10-15.2
 productId: workloom-ai-growthmatrix
-repository: workloom-ai/WorkLoom-growthmatrix
+repository: geniusdapeng-collab/workloom-growthmatrix
 ---
 
 # Matrix 内置 AI 工作台：把视频需求交给系统

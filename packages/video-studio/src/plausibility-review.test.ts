@@ -26,7 +26,7 @@ const baseContext = {
 const jsonResponse = (payload: unknown, ok = true, status = 200) =>
   new Response(JSON.stringify(ok ? { choices: [{ message: { content: JSON.stringify(payload) } }] } : payload), { status });
 
-const llmEnv = { LLM_PROVIDER: "deepseek", LLM_API_KEY: "test-key", LLM_BASE_URL: "https://api.example.com/v1", LLM_MODEL: "test-model" };
+const llmEnv = { LLM_PROVIDER: "compatible", LLM_API_KEY: "test-key", LLM_BASE_URL: "https://api.example.com/v1", LLM_MODEL: "test-model" };
 
 /**
  * 通用性验收（T-2026-1011-0001）：
@@ -93,6 +93,29 @@ describe("实体与物理常识审核 agent", () => {
     });
     expect(passed.verdict).toBe("pass");
     expect(passed.findings).toHaveLength(1);
+  });
+
+  it("Flash text review pins canonical JSON and non-thinking mode", async () => {
+    let body: Record<string, unknown> | null = null;
+    const result = await reviewPlausibility(baseContext, {
+      env: {
+        LLM_BASE_URL: "https://api.deepseek.com",
+        DEEPSEEK_BASE_URL: "https://api.deepseek.com/anthropic",
+        DEEPSEEK_API_KEY: "test-only",
+        DEEPSEEK_MODEL: "deepseek-flash",
+      },
+      fetchImpl: (async (_input: string | URL | Request, init?: RequestInit) => {
+        body = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
+        return jsonResponse({ verdict: "pass", findings: [], promptPatches: [], reason: "ok" });
+      }) as typeof fetch,
+    });
+    expect(result.verdict).toBe("pass");
+    expect(body).toMatchObject({
+      model: "deepseek-flash",
+      response_format: { type: "json_object" },
+      max_tokens: 16_384,
+      thinking: { type: "disabled" },
+    });
   });
 
   it("无模型 / HTTP 失败 / 输出不可解析 → unverified（调用方 fail-closed）", async () => {
