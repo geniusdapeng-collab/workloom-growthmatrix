@@ -71,7 +71,7 @@ it("真实镜头ID与嵌套字段模板送入HTTP，模型返回值保持原样�
     expect(result).toMatchObject({ success: true, data });
   } finally { vi.unstubAllGlobals(); }
 });
-it.each([{}, { shots: [] }, { shots: "S1" }])("结构错误保留真实响应和计量并拒绝成功，不自动重试 %j", async (data) => {
+it.each([{}, { shots: [] }, { shots: "S1" }])("有效 JSON 的结构漂移保留原响应和计量，交由消费者判定 %j", async (data) => {
   const content = JSON.stringify(data);
   const request = vi.fn(async () => new Response(providerResponse(content, 5, 2)));
   vi.stubGlobal("fetch", request);
@@ -79,17 +79,17 @@ it.each([{}, { shots: [] }, { shots: "S1" }])("结构错误保留真实响应和
     const result = await new WorkloomLLMEngine({ baseUrl: "https://test.invalid", apiKey: "test-only", model: "deepseek-flash" }).reasonStructured(
       "输出 json", { required: ["shots"], requiredArrays: ["shots"], rejectEmptyArray: true },
     );
-    expect(result).toMatchObject({ success: false, content, data, usage: { promptTokens: 5, completionTokens: 2 } });
-    expect(result.error).toContain("shots"); expect(request).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({ success: true, content, data, usage: { promptTokens: 5, completionTokens: 2 } });
+    expect(result.error).toBeUndefined(); expect(request).toHaveBeenCalledTimes(1);
   } finally { vi.unstubAllGlobals(); }
 });
 it.each([{ shots: [{ shotId: "SC01", fields: { scene: "有内容但编号是旧示例" } }] },
-  { shots: [{ shotId: "S1", fields: {} }] }])("单镜编号漂移/字段全空不能交给消费者当成功 %j", async data => {
+  { shots: [{ shotId: "S1", fields: {} }] }])("单镜编号漂移/字段为空保持原样并交由消费者拒绝 %j", async data => {
   vi.stubGlobal("fetch", vi.fn(async () => new Response(providerResponse(JSON.stringify(data)))));
   try {
     const result = await new WorkloomLLMEngine({ baseUrl: "https://test.invalid", apiKey: "test-only", model: "deepseek-flash" }).reasonStructured(
       "输出json", { required: ["shots"], shots: [{ shotId: "S1", fields: { scene: "" } }] },
     );
-    expect(result.success).toBe(false); expect(result.data).toEqual(data); expect(result.error).toContain("shots[]");
+    expect(result.success).toBe(true); expect(result.data).toEqual(data); expect(result.error).toBeUndefined();
   } finally { vi.unstubAllGlobals(); }
 });
