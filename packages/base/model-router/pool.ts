@@ -86,6 +86,12 @@ export function poolFromEnv(opts: { mockOpts?: Record<string, { failFirst?: numb
   }
   const forced = process.env.LLM_FORCE_MODEL?.trim();
   if (forced && !pool.has(forced)) {
+    if (pinnedVendors.has(provider as ModelSpec["vendor"])) {
+      const spec = MODEL_CATALOG.find((model) => model.id === forced);
+      if (!spec || spec.vendor !== provider) {
+        throw new Error(`LLM_FORCE_MODEL=${forced} 与 LLM_PROVIDER=${provider} 的供应商不匹配`);
+      }
+    }
     const baseUrl = process.env.LLM_BASE_URL
       ?? process.env.DEEPSEEK_BASE_URL?.replace(/\/+$/, "").replace(/\/anthropic$/i, "");
     if (!baseUrl) throw new Error(`LLM_FORCE_MODEL=${forced} 但缺少 OpenAI 兼容端点`);

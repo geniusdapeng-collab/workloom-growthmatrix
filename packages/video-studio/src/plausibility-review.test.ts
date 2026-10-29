@@ -26,7 +26,7 @@ const baseContext = {
 const jsonResponse = (payload: unknown, ok = true, status = 200) =>
   new Response(JSON.stringify(ok ? { choices: [{ message: { content: JSON.stringify(payload) } }] } : payload), { status });
 
-const llmEnv = { LLM_PROVIDER: "deepseek", LLM_API_KEY: "test-key", LLM_BASE_URL: "https://api.example.com/v1", LLM_MODEL: "test-model" };
+const llmEnv = { LLM_PROVIDER: "compatible", LLM_API_KEY: "test-key", LLM_BASE_URL: "https://api.example.com/v1", LLM_MODEL: "test-model" };
 
 /**
  * 通用性验收（T-2026-1011-0001）：

@@ -143,6 +143,24 @@ describe("国产三档模型池", () => {
       }
     }
   });
+
+  it("rejects a forced cross-vendor model before it can reach a vendor-specific gateway", () => {
+    const keys = ["LLM_PROVIDER", "LLM_BASE_URL", "LLM_API_KEY", "DEEPSEEK_API_KEY", "LLM_FORCE_MODEL"] as const;
+    const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+    try {
+      process.env.LLM_PROVIDER = "deepseek";
+      process.env.LLM_BASE_URL = "https://api.deepseek.com";
+      process.env.LLM_API_KEY = "";
+      process.env.DEEPSEEK_API_KEY = "test-only";
+      process.env.LLM_FORCE_MODEL = "glm-5.3";
+      expect(() => poolFromEnv()).toThrow(/供应商不匹配/);
+    } finally {
+      for (const key of keys) {
+        if (previous[key] === undefined) delete process.env[key];
+        else process.env[key] = previous[key];
+      }
+    }
+  });
 });
 
 /* ================= 积分计量与三池账本 ================= */

@@ -25,10 +25,19 @@ function isDeepSeekEndpoint(value: string): boolean {
 }
 
 export function resolveVideoModel(env: Env = process.env): string {
-  const configured = clean(env.LLM_FORCE_MODEL) || clean(env.LLM_MODEL) || clean(env.DEEPSEEK_MODEL);
-  if (configured) return configured === "deepseek-v4-flash" ? DEEPSEEK_FLASH_MODEL : configured;
   const endpoint = clean(env.LLM_BASE_URL) || clean(env.DEEPSEEK_BASE_URL);
-  return isDeepSeekEndpoint(endpoint) || clean(env.DEEPSEEK_API_KEY) ? DEEPSEEK_FLASH_MODEL : "";
+  const deepSeekDeployment = clean(env.LLM_PROVIDER).toLowerCase() === "deepseek"
+    || isDeepSeekEndpoint(endpoint)
+    || (!clean(env.LLM_BASE_URL) && Boolean(clean(env.DEEPSEEK_API_KEY)));
+  // A DeepSeek deployment has one canonical text model. Legacy vendor defaults
+  // and cross-vendor pins must not turn into model IDs sent to that gateway.
+  if (deepSeekDeployment) return DEEPSEEK_FLASH_MODEL;
+
+  const forced = clean(env.LLM_FORCE_MODEL);
+  if (forced) return forced === "deepseek-v4-flash" ? DEEPSEEK_FLASH_MODEL : forced;
+
+  const configured = clean(env.LLM_MODEL) || clean(env.DEEPSEEK_MODEL);
+  return configured === "deepseek-v4-flash" ? DEEPSEEK_FLASH_MODEL : configured;
 }
 
 export function resolveOpenAiCompatibleBaseUrl(env: Env = process.env): string {

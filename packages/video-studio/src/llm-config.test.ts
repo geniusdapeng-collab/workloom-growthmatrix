@@ -14,6 +14,21 @@ describe("isolated video text model configuration", () => {
     expect(DEEPSEEK_FLASH_INPUT_TOKEN_BUDGET).toBe(1_032_192);
     expect(resolveVideoModel({ LLM_BASE_URL: "https://api.deepseek.com" })).toBe("deepseek-flash");
     expect(resolveVideoModel({ DEEPSEEK_MODEL: "deepseek-v4-flash" })).toBe("deepseek-flash");
+    expect(resolveVideoModel({
+      LLM_BASE_URL: "https://api.deepseek.com",
+      DEEPSEEK_API_KEY: "test-only",
+      LLM_MODEL: "deepseek-v4-pro",
+    })).toBe("deepseek-flash");
+    expect(resolveVideoModel({
+      DEEPSEEK_BASE_URL: "https://api.deepseek.com/anthropic",
+      DEEPSEEK_API_KEY: "test-only",
+      DEEPSEEK_MODEL: "kimi-k2p6",
+    })).toBe("deepseek-flash");
+    expect(resolveVideoModel({
+      LLM_PROVIDER: "deepseek",
+      LLM_BASE_URL: "https://gateway.example.test/v1",
+      LLM_FORCE_MODEL: "glm-5.3",
+    })).toBe("deepseek-flash");
   });
   it("uses documented token ratios instead of character counts", () => {
     expect(estimateDeepSeekTokens("你好")).toBe(2);
