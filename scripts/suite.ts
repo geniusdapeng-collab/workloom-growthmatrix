@@ -3520,7 +3520,13 @@ h2("协作·readonly 写契约/推进/回执 → 403（API 层强制，审计回
       const before = await countEvents("ceo.briefing");
       const r = await runBriefingBeat(app, scope, "daily");
       assert(r.eventId, "简报事件落库");
-      eq(await countEvents("ceo.briefing"), before + 1, "事件 +1");
+      const ownEvent = await qApp<{ n: string }>(
+        `SELECT count(*)::text AS n FROM biz_events
+         WHERE workspace_id=$1 AND event_id=$2 AND payload->'decision'->>'action'='ceo.briefing'`,
+        [scope.workspaceId, r.eventId],
+      );
+      eq(Number(ownEvent.rows[0]!.n), 1, "本次简报事件恰好落库一次");
+      assert(await countEvents("ceo.briefing") >= before + 1, "事件数至少 +1（允许并发简报）");
       assert(["rule", "llm"].includes(r.via), "via 留痕");
     } finally { await restoreArchive(arc); }
   });
