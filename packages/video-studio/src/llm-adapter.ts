@@ -280,40 +280,7 @@ export class WorkloomLLMEngine {
       "【目标JSON结构示例】",
       schemaText,
     ].join("\n");
-    const result = await this.reason(structuredPrompt, { ...options, forceJson: true });
-    if (!result.success || !schema || typeof schema !== "object" || Array.isArray(schema)) return result;
-    // The vendor schema doubles as a deterministic consumer contract. Validate
-    // exact root fields and shot IDs after the model call; never synthesize or
-    // repair semantic content.
-    const rules = schema as { required?: unknown; requiredArrays?: unknown; rejectEmptyArray?: unknown; shots?: unknown };
-    const data = result.data && typeof result.data === "object" && !Array.isArray(result.data)
-      ? result.data as Record<string, unknown> : {};
-    const required = Array.isArray(rules.required)
-      ? rules.required.filter((key): key is string => typeof key === "string") : [];
-    const arrays = Array.isArray(rules.requiredArrays) ? rules.requiredArrays : [];
-    const invalid = required.filter((key) => {
-      const value = data[key];
-      return value == null || (typeof value === "string" && !value.trim())
-        || (arrays.includes(key) && !Array.isArray(value))
-        || (rules.rejectEmptyArray === true && Array.isArray(value) && value.length === 0);
-    });
-    if (Array.isArray(rules.shots) && rules.shots.length && rules.shots.every((item) =>
-      item && typeof item === "object" && typeof item.shotId === "string"
-      && item.fields && typeof item.fields === "object" && !Array.isArray(item.fields))) {
-      const expectedIds = rules.shots.map((item) => item.shotId);
-      const rows = Array.isArray(data.shots) ? data.shots : [];
-      const ids = rows.map((item) => item && typeof item === "object" ? item.shotId : undefined);
-      if (rows.length !== expectedIds.length || new Set(ids).size !== rows.length
-          || ids.some((id) => !expectedIds.includes(id))) invalid.push("shots[].shotId");
-      if (rows.some((item) => !item || typeof item !== "object" || !item.fields
-          || typeof item.fields !== "object" || Array.isArray(item.fields)
-          || !Object.values(item.fields).some((value) => typeof value === "string" && value.trim()))) {
-        invalid.push("shots[].fields");
-      }
-    }
-    return invalid.length
-      ? { ...result, success: false, error: `JSON 缺少或违反必需字段: ${invalid.join(", ")}`, retryable: true }
-      : result;
+    return this.reason(structuredPrompt, { ...options, forceJson: true });
   }
 
   /**
