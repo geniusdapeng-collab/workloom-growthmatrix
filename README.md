@@ -1,25 +1,3 @@
-# WorkLoom GrowthMatrix · 获客流程隔离实验
-
-**用同一个工作区安排内容日历、视频制作和增长跟踪。**
-
-GrowthMatrix 面向需要把多条运营任务排进同一节奏的内容和增长团队。产品默认使用 `geo-growthmatrix` 行业包。团队可以按选题组织内容日历，用视频工位生成与交接成片，再根据已连接的数据复盘触达和线索。
-
-## 从哪里看流程
-
-| 关注点 | 仓内入口 |
-| --- | --- |
-| 排出内容生产与发布节奏 | [内容日历](bundles/geo-growthmatrix/pipelines/content-calendar.yml)、[运营节奏](bundles/geo-growthmatrix/pipelines/ops-rhythm.yml) |
-| 用同一选题规划社媒与 GEO 内容 | [双域内容流程](bundles/geo-growthmatrix/pipelines/dual-content-factory.yml) |
-| 推进视频制作和交付 | [本仓视频工作台指南](docs/ai-video-workbench-guide.md)、[AI 视频行业包](bundles/ai-video/bundle.json) |
-| 查找本地体验和连接方式 | [能力导览](docs/capabilities.auto.md)、[Agent 接入](docs/AGENT-CLIENTS.md) |
-
-增长流程以本仓行业包为准。真实采集、平台分发、线索承接和归因以各自工具接入和回执为准。GrowthMatrix 采用独立运行实例，视频 Studio 的时长和后期范围见本仓工作台指南。 [产品清单](product.manifest.json) · [GrowthMatrix 行业包](bundles/geo-growthmatrix/bundle.json) · [本仓规则](AGENTS.repo.md)
-
-## 原版说明与 Agent 指引
-
-<details>
-<summary>展开原版 README、运行和开发说明</summary>
-
 # WorkLoom GrowthMatrix · 获客增长系统（实验车道）
 
 WorkLoom GrowthMatrix 面向企业增长与内容运营团队，把目标、数字员工岗位、内容生产、任务协作和过程记录放进同一个工作空间。产品目标是连接意图洞察、社媒与 GEO 触达、线索承接、转化和复盘；当前代码中，**视频生产与交付有专用执行链，通用工作台和行业包提供组织与治理机制，部分增长工具仍处于声明或接入阶段**。
@@ -301,5 +279,3 @@ git diff --check
 ## 许可证
 
 主仓许可证见 [Apache-2.0 LICENSE](LICENSE)。第三方组件与 vendor 资产分别遵循其许可证和使用条件；清单见 [OPEN_SOURCE_COMPONENTS.md](docs/OPEN_SOURCE_COMPONENTS.md) 与 [oss-components.json](oss-components.json)。
-
-</details>
