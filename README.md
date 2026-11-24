@@ -1,8 +1,10 @@
-# WorkLoom GrowthMatrix · 获客增长系统（实验车道）
+# 骇客帝国 · WorkLoom GrowthMatrix（实验版）
 
-WorkLoom GrowthMatrix 面向企业增长与内容运营团队，把目标、数字员工岗位、内容生产、任务协作和过程记录放进同一个工作空间。产品目标是连接意图洞察、社媒与 GEO 触达、线索承接、转化和复盘；当前代码中，**视频生产与交付有专用执行链，通用工作台和行业包提供组织与治理机制，部分增长工具仍处于声明或接入阶段**。
+给内容策划和增长运营团队使用的独立实验工作区。在视频 Studio 把产品素材做成短片，管理渲染、后期和成片，再用同一选题组织短视频社媒营销和面向生成式搜索的 GEO 作业。
 
-[CNB 仓库](https://cnb.cool/workloom-ai/WorkLoom-growthmatrix) · [产品身份](product.manifest.json) · [代码入口导览](docs/capabilities.auto.md) · [开发指引](AGENTS.md) · [Apache-2.0](LICENSE)
+团队在同一工作区核对岗位、任务和交接。增长包提供内容、线索和复盘的流程设计，真实平台发布、能见度监测与线索归因需要配置对应连接器和业务数据。
+
+[GitHub 源码](https://github.com/geniusdapeng-collab/workloom-growthmatrix) · [产品身份](product.manifest.json) · [代码入口导览](docs/capabilities.auto.md) · [开发指引](AGENTS.md) · [Apache-2.0](LICENSE)
 
 > 本页按当前源码说明“有什么、从哪里进入、还依赖什么”，不把岗位或技能数量当作已交付能力数，也不把模拟结果当作生产效果。旧方案、截图和演示 PPT 可帮助理解背景；发生差异时，以 manifest、当前路由和实际执行代码为准。
 
@@ -21,7 +23,7 @@ WorkLoom GrowthMatrix 面向企业增长与内容运营团队，把目标、数�
 | 企业负责人、项目负责人 | 看清任务交给谁、交付什么、哪里待决定 | 工作台、任务线程、协作契约与组合看板组织交接和状态 | 看板和事件存在不等于营收归因已接通；演示订单不能当实际收入 |
 | 增长策略与渠道运营人员 | 同一选题用于社媒内容与 GEO，并积累可复用作业规范 | `geo-growthmatrix` 声明岗位、技能、围栏和管线，复用视频与视觉制作能力 | query 采集、能见度监测、线索评分和分发等专用工具仍需逐项接线与验收 |
 
-本仓身份是 `workloom-ai-growthmatrix`，角色为 `industry`，默认行业包为 `geo-growthmatrix`，仓库为 `workloom-ai/WorkLoom-growthmatrix`（CNB 自述：**骇客帝国 · 实验版**）。它是 WorkLoom 的**隔离实验副本**：基座内容不自动下发到本仓，本仓改动也不自动回流基座；同为隔离副本的是 `workloom-growthtest`，实验车道 `WorkLoom-growth` 是另一条独立线——三者互为不同实例，不把其它仓库的实验能力合并算入本仓。酒店包是组合依赖和垂直业务样例，不代表这里已经接通真实 PMS、OTA、支付或所有酒店经营数据。来源：[product.manifest.json](product.manifest.json)、[主包 manifest](bundles/geo-growthmatrix/bundle.json)。
+产品标识为 `workloom-ai-growthmatrix`，默认行业包为 `geo-growthmatrix`。本实验环境独立运行，基座资产与实验改动均按 `none-in-none-out` 策略隔离。酒店行业包提供可组合的行业能力和业务样例。真实 PMS、OTA、支付和经营数据需按运行实例接入。 [产品清单](product.manifest.json) · [GrowthMatrix 行业包](bundles/geo-growthmatrix/bundle.json)
 
 ## 功能状态：代码做到哪里
 
@@ -150,8 +152,8 @@ NATS/Redis 的事件总线库可在源码中找到，但当前主业务入口未
 ### 1. 克隆、依赖与专用数据库
 
 ```bash
-git clone https://cnb.cool/workloom-ai/WorkLoom-growthmatrix.git
-cd WorkLoom-growthmatrix
+git clone https://github.com/geniusdapeng-collab/workloom-growthmatrix.git
+cd workloom-growthmatrix
 pnpm install --frozen-lockfile
 test -f .env || cp .env.example .env
 docker compose up -d postgres
